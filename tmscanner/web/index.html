@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="TMscanner - Scanner QR TicketMada">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <!-- iOS PWA meta tags -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TMscanner">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Theme color for address bar -->
+  <meta name="theme-color" content="#FF6B4A">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>TMscanner</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    /* Splash screen while Flutter loads */
+    body {
+      margin: 0;
+      background-color: #FF6B4A;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .loading-splash {
+      text-align: center;
+      color: white;
+    }
+    .loading-splash .emoji { font-size: 80px; margin-bottom: 16px; }
+    .loading-splash .title { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+    .loading-splash .subtitle { font-size: 14px; opacity: 0.85; }
+  </style>
+</head>
+<body>
+  <div class="loading-splash" id="splash">
+    <div class="emoji">🎫</div>
+    <div class="title">TMscanner</div>
+    <div class="subtitle">Chargement...</div>
+  </div>
+  <script>
+    // Remove splash once Flutter is ready
+    window.addEventListener('flutter-first-frame', function() {
+      var splash = document.getElementById('splash');
+      if (splash) splash.remove();
+    });
+  </script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

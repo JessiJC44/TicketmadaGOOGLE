@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicketMada - Choisir vos places</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-cream: #FAF7F2;
+            --bg-dark: #1a1a1a;
+            --accent-coral: #FF6B4A;
+            --accent-yellow: #FECA57;
+            --accent-mint: #00D9A5;
+            --accent-blue: #4A90FF;
+            --accent-purple: #9B59B6;
+            --text-dark: #1a1a1a;
+            --text-light: #666;
+            --border-dark: #1a1a1a;
+            --shadow-brutal: 6px 6px 0px #1a1a1a;
+            --shadow-brutal-sm: 4px 4px 0px #1a1a1a;
+            --shadow-brutal-lg: 10px 10px 0px #1a1a1a;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg-cream); color: var(--text-dark); overflow-x: hidden; }
+
+        
+        /* Social Proof */
+        .social-proof-bar { display: flex; align-items: center; gap: 20px; padding: 10px 40px; background: #fff8f0; border-bottom: 3px solid var(--accent-yellow); }
+        .social-proof-bar .sp-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; gap: 24px; width: 100%; }
+        .sp-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; }
+        .sp-live { width: 8px; height: 8px; background: #e74c3c; border-radius: 50%; animation: sp-pulse 2s infinite; }
+        @keyframes sp-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .sp-fire { animation: sp-wiggle 2s infinite; display: inline-block; }
+        @keyframes sp-wiggle { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-5deg); } 75% { transform: rotate(5deg); } }
+
+        /* ── Navbar ── */
+        .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 16px 40px; background: var(--bg-cream); border-bottom: 3px solid var(--border-dark); }
+        .navbar-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+        .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); }
+        .logo-box { width: 45px; height: 45px; background: var(--accent-coral); border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; transform: rotate(-3deg); }
+        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.5rem; }
+        .logo-text span { color: var(--accent-coral); }
+        .nav-back { display: flex; align-items: center; gap: 8px; font-family: 'Syne', sans-serif; font-weight: 600; color: var(--text-dark); text-decoration: none; padding: 10px 20px; border: 3px solid var(--border-dark); background: white; box-shadow: var(--shadow-brutal-sm); transition: all 0.15s ease; }
+        .nav-back:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
+        .nav-cta { display: flex; gap: 12px; align-items: center; }
+        .lang-toggle { width: 42px; height: 42px; background: white; border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.3rem; box-shadow: 3px 3px 0px #1a1a1a; transition: all 0.2s; }
+        .lang-toggle:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0px #1a1a1a; }
+
+        /* ── Event Header ── */
+        .event-header { margin-top: 80px; padding: 30px 40px 20px; background: white; border-bottom: 3px solid var(--border-dark); }
+        .event-header-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; gap: 30px; }
+        .event-poster { width: 80px; height: 80px; border-radius: 12px; border: 3px solid var(--border-dark); object-fit: cover; box-shadow: var(--shadow-brutal-sm); }
+        .event-meta { flex: 1; }
+        .event-meta h1 { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; margin-bottom: 6px; }
+        .event-meta-row { display: flex; align-items: center; gap: 20px; color: var(--text-light); font-size: 0.95rem; }
+        .event-meta-row .v-icon { margin-right: 4px; }
+        .event-meta-badge { display: inline-block; background: var(--accent-mint); border: 2px solid var(--border-dark); padding: 4px 14px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; margin-left: 10px; }
+
+        /* ── Main Layout ── */
+        .main-content { max-width: 1400px; margin: 0 auto; padding: 30px 40px 60px; display: grid; grid-template-columns: 1fr 420px; gap: 30px; min-height: calc(100vh - 200px); }
+
+        /* ── Seat Map Panel ── */
+        .seatmap-panel { background: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal); overflow: hidden; }
+        .seatmap-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 3px solid var(--border-dark); background: var(--bg-cream); }
+        .seatmap-toolbar h3 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; }
+        .seatmap-zoom { display: flex; gap: 8px; }
+        .zoom-btn { width: 36px; height: 36px; background: white; border: 2px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; transition: all 0.15s; }
+        .zoom-btn:hover { background: var(--accent-yellow); transform: translate(-1px, -1px); box-shadow: 3px 3px 0px #1a1a1a; }
+
+        .seatmap-container { position: relative; padding: 20px; min-height: 450px; overflow: hidden; cursor: grab; background: #f8f6f1; }
+        .seatmap-container:active { cursor: grabbing; }
+        .seatmap-svg-wrapper { transform-origin: center center; transition: transform 0.2s ease; }
+
+        /* SVG seat map styles */
+        .seatmap-svg { width: 100%; height: auto; }
+        .seatmap-svg .zone-group { cursor: pointer; }
+        .seatmap-svg .zone-bg { transition: all 0.2s ease; stroke: var(--border-dark); stroke-width: 2; }
+        .seatmap-svg .zone-group:hover .zone-bg { filter: brightness(1.15); stroke-width: 3; }
+        .seatmap-svg .zone-group.active .zone-bg { stroke-width: 4; stroke: var(--accent-coral); filter: brightness(1.1); }
+        .seatmap-svg .zone-label { font-family: 'Syne', sans-serif; font-weight: 700; pointer-events: none; }
+        .seatmap-svg .zone-price { font-family: 'DM Sans', sans-serif; font-weight: 600; pointer-events: none; }
+        .seatmap-svg .zone-count { font-family: 'DM Sans', sans-serif; font-weight: 500; pointer-events: none; opacity: 0.8; }
+        .seatmap-svg .stage-rect { fill: var(--bg-dark); }
+        .seatmap-svg .stage-text { fill: white; font-family: 'Syne', sans-serif; font-weight: 800; }
+
+        /* Zone Legend */
+        .seatmap-legend { display: flex; flex-wrap: wrap; gap: 12px; padding: 16px 24px; border-top: 3px solid var(--border-dark); background: var(--bg-cream); }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; padding: 6px 12px; border: 2px solid transparent; border-radius: 4px; transition: all 0.15s; }
+        .legend-item:hover { border-color: var(--border-dark); background: white; }
+        .legend-item.active { border-color: var(--border-dark); background: white; box-shadow: var(--shadow-brutal-sm); }
+        .legend-dot { width: 16px; height: 16px; border: 2px solid var(--border-dark); }
+        .legend-avail { color: var(--text-light); font-weight: 400; font-size: 0.8rem; }
+
+        /* ── Listings Sidebar ── */
+        .listings-panel { display: flex; flex-direction: column; max-height: calc(100vh - 200px); position: sticky; top: 110px; }
+        .listings-header { background: var(--bg-dark); color: white; padding: 20px 24px; border: 3px solid var(--border-dark); border-bottom: none; }
+        .listings-header h3 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; margin-bottom: 4px; }
+        .listings-header p { font-size: 0.85rem; opacity: 0.7; }
+        .listings-filter { display: flex; gap: 8px; padding: 14px 20px; background: white; border: 3px solid var(--border-dark); border-top: none; border-bottom: none; overflow-x: auto; white-space: nowrap; -ms-overflow-style: none; scrollbar-width: none; }
+        .listings-filter::-webkit-scrollbar { display: none; }
+        .filter-chip { padding: 6px 14px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; border: 2px solid var(--border-dark); background: white; cursor: pointer; transition: all 0.15s; flex-shrink: 0; }
+        .filter-chip:hover { background: var(--accent-yellow); }
+        .filter-chip.active { background: var(--accent-coral); color: white; box-shadow: 3px 3px 0px #1a1a1a; }
+        .listings-sort { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; background: var(--bg-cream); border: 3px solid var(--border-dark); border-top: none; font-size: 0.8rem; color: var(--text-light); }
+        .sort-select { font-family: 'DM Sans', sans-serif; font-size: 0.8rem; font-weight: 600; border: 2px solid var(--border-dark); padding: 4px 8px; background: white; cursor: pointer; }
+
+        .listings-scroll { flex: 1; overflow-y: auto; border: 3px solid var(--border-dark); border-top: none; background: white; }
+        .listings-scroll::-webkit-scrollbar { width: 8px; }
+        .listings-scroll::-webkit-scrollbar-track { background: var(--bg-cream); }
+        .listings-scroll::-webkit-scrollbar-thumb { background: #ccc; border: 1px solid var(--border-dark); }
+
+        .listing-card { padding: 18px 20px; border-bottom: 2px solid #eee; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 16px; }
+        .listing-card:hover { background: #fef9f0; transform: translateX(4px); }
+        .listing-card.highlighted { background: #fff3e0; border-left: 4px solid var(--accent-coral); }
+        .listing-zone-dot { width: 14px; height: 14px; border: 2px solid var(--border-dark); flex-shrink: 0; }
+        .listing-info { flex: 1; min-width: 0; }
+        .listing-zone-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem; margin-bottom: 2px; }
+        .listing-detail { font-size: 0.8rem; color: var(--text-light); display: flex; align-items: center; gap: 10px; }
+        .listing-badges { display: flex; gap: 6px; margin-top: 6px; }
+        .listing-badge { font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border: 1.5px solid; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-urgency { background: #fff0f0; border-color: #e74c3c; color: #e74c3c; }
+        .badge-quality { background: #f0f8ff; border-color: var(--accent-blue); color: var(--accent-blue); }
+        .badge-standing { background: #f5f0ff; border-color: var(--accent-purple); color: var(--accent-purple); }
+        .listing-price-col { text-align: right; flex-shrink: 0; }
+        .listing-price { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.15rem; }
+        .listing-price-unit { font-size: 0.7rem; color: var(--text-light); }
+        .listing-per { font-size: 0.7rem; color: var(--text-light); }
+
+        .listings-empty { padding: 40px 20px; text-align: center; color: var(--text-light); }
+        .listings-empty .v-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.3; }
+
+        /* ── Quantity Popup ── */
+        .qty-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26,26,26,0.85); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .qty-overlay.active { opacity: 1; pointer-events: all; }
+        .qty-card { background: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal-lg); padding: 40px; max-width: 480px; width: 90%; position: relative; }
+        .qty-close { position: absolute; top: 14px; right: 14px; width: 40px; height: 40px; background: white; border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.2rem; transition: all 0.15s; }
+        .qty-close:hover { background: var(--accent-coral); color: white; }
+        .qty-card h3 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.5rem; margin-bottom: 6px; }
+        .qty-zone-info { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; color: var(--text-light); }
+        .qty-zone-dot { width: 18px; height: 18px; border: 2px solid var(--border-dark); }
+        .qty-label { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 16px; }
+        .qty-selector { display: flex; align-items: center; gap: 0; margin-bottom: 24px; }
+        .qty-btn { width: 52px; height: 52px; background: white; border: 3px solid var(--border-dark); font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+        .qty-btn:hover { background: var(--accent-yellow); }
+        .qty-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .qty-btn:disabled:hover { background: white; }
+        .qty-display { width: 80px; height: 52px; border-top: 3px solid var(--border-dark); border-bottom: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.5rem; background: var(--bg-cream); }
+        .qty-summary { background: var(--bg-cream); border: 3px solid var(--border-dark); padding: 20px; margin-bottom: 24px; }
+        .qty-line { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; }
+        .qty-line:last-child { margin-bottom: 0; padding-top: 10px; border-top: 2px dashed var(--border-dark); font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; }
+        .qty-confirm { width: 100%; padding: 18px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; background: var(--accent-coral); color: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .qty-confirm:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
+
+        
+        /* View from Seat */
+        .view-seat-panel { margin-top: 0; padding: 20px 24px; border-top: 3px solid var(--border-dark); background: white; display: none; }
+        .view-seat-panel.active { display: block; }
+        .view-seat-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .view-seat-header h4 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem; }
+        .view-seat-header span { font-size: 0.8rem; color: var(--text-light); }
+        .view-seat-preview { position: relative; width: 100%; height: 180px; border: 3px solid var(--border-dark); overflow: hidden; background: #1a1a1a; }
+        .view-seat-svg { width: 100%; height: 100%; }
+        .view-seat-info { display: flex; gap: 20px; margin-top: 12px; }
+        .view-seat-tag { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-light); }
+        .view-seat-tag .v-icon { color: var(--accent-mint); }
+
+        
+        /* Price Alert Popup */
+        .alert-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26,26,26,0.85); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .alert-overlay.active { opacity: 1; pointer-events: all; }
+        .alert-card { background: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal-lg); padding: 36px; max-width: 440px; width: 90%; position: relative; }
+        .alert-close { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; background: white; border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: 'Syne'; font-weight: 700; font-size: 1rem; }
+        .alert-close:hover { background: var(--accent-coral); color: white; }
+        .alert-card h3 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; margin-bottom: 8px; }
+        .alert-card p { font-size: 0.9rem; color: var(--text-light); margin-bottom: 20px; line-height: 1.5; }
+        .alert-input { width: 100%; padding: 14px 16px; border: 3px solid var(--border-dark); font-family: 'DM Sans'; font-size: 1rem; margin-bottom: 12px; }
+        .alert-input:focus { outline: none; box-shadow: 4px 4px 0px var(--accent-coral); }
+        .alert-zones { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        .alert-zone-chip { padding: 6px 14px; border: 2px solid var(--border-dark); font-family: 'Syne'; font-weight: 600; font-size: 0.75rem; cursor: pointer; transition: all 0.15s; }
+        .alert-zone-chip.selected { color: white; box-shadow: 3px 3px 0px #1a1a1a; }
+        .alert-submit { width: 100%; padding: 16px; font-family: 'Syne'; font-weight: 700; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; background: var(--accent-coral); color: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal); cursor: pointer; transition: all 0.15s; }
+        .alert-submit:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
+        .alert-success { text-align: center; padding: 20px 0; }
+        .alert-success-icon { font-size: 2.5rem; margin-bottom: 10px; }
+        .alert-btn-inline { padding: 8px 16px; font-family: 'Syne'; font-weight: 600; font-size: 0.75rem; background: white; border: 2px solid var(--border-dark); color: #1a1a1a; cursor: pointer; transition: all 0.15s; margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; }
+        .alert-btn-inline:hover { background: var(--accent-yellow); transform: translate(-1px, -1px); box-shadow: 3px 3px 0px #1a1a1a; }
+
+        /* ── Responsive ── */
+        @media (max-width: 1100px) {
+            .main-content { grid-template-columns: 1fr; }
+            .listings-panel { position: static; max-height: none; }
+        }
+        @media (max-width: 768px) {
+            .event-header { padding: 20px; }
+            .event-header-inner { flex-direction: column; align-items: flex-start; gap: 16px; }
+            .event-meta h1 { font-size: 1.3rem; }
+            .main-content { padding: 20px; }
+            .navbar { padding: 12px 20px; }
+        }
+    
+    /* Related Events */
+    .related-section {
+        padding: 40px 24px;
+        border-top: 3px solid #1a1a1a;
+        background: white;
+    }
+    .related-header { margin-bottom: 24px; }
+    .related-title {
+        font-family: 'Syne', sans-serif;
+        font-weight: 800;
+        font-size: 1.5rem;
+    }
+    .related-subtitle {
+        color: #666;
+        font-size: 0.85rem;
+        margin-top: 4px;
+    }
+    .related-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 16px;
+    }
+    .related-card {
+        border: 3px solid #1a1a1a;
+        box-shadow: 4px 4px 0px #1a1a1a;
+        background: white;
+        text-decoration: none;
+        color: #1a1a1a;
+        transition: all 0.2s;
+        overflow: hidden;
+    }
+    .related-card:hover {
+        transform: translate(-3px, -3px);
+        box-shadow: 7px 7px 0px #1a1a1a;
+    }
+    .related-img {
+        height: 120px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    .related-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        position: absolute;
+        top: 0; left: 0;
+    }
+    .related-emoji {
+        font-size: 2.5rem;
+        position: relative;
+        z-index: 1;
+        opacity: 0.3;
+    }
+    .related-img img + .related-emoji { display: none; }
+    .related-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: #FECA57;
+        border: 2px solid #1a1a1a;
+        padding: 2px 8px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        z-index: 2;
+    }
+    .related-info { padding: 12px; }
+    .related-name {
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-bottom: 6px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .related-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        font-size: 0.75rem;
+        color: #666;
+        margin-bottom: 8px;
+    }
+    .related-price {
+        font-size: 0.8rem;
+        color: #FF6B4A;
+        font-weight: 600;
+    }
+    </style>
+</head>
+<body>
+<script src="../js/site-config.js"></script>
+
+<div id="app">
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="ticketmada-landing.html" class="logo">
+                <div class="logo-box">🎫</div>
+                <span class="logo-text">Ticket<span>Mada</span></span>
+            </a>
+            <a href="ticketmada-landing.html" class="nav-back">
+                <v-icon size="small">mdi-arrow-left</v-icon>
+                {{ lang === 'fr' ? 'Retour aux événements' : 'Back to events' }}
+            </a>
+            <div class="nav-cta">
+                <button class="lang-toggle" @click="toggleLang">{{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Event Header Bar -->
+    <div class="event-header">
+        <div class="event-header-inner">
+            <img :src="event.image_url || 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=100'" alt="" class="event-poster">
+            <div class="event-meta">
+                <h1>{{ event.emoji }} {{ event.name }}</h1>
+                <div class="event-meta-row">
+                    <span><v-icon size="x-small">mdi-calendar</v-icon> {{ formatDate(event.date_start) }}</span>
+                    <span><v-icon size="x-small">mdi-map-marker</v-icon> {{ event.venue }}</span>
+                    <span><v-icon size="x-small">mdi-account-group</v-icon> {{ event.capacity ? event.capacity.toLocaleString() : '—' }} {{ lang === 'fr' ? 'places' : 'seats' }}</span>
+                    <span class="event-meta-badge" v-if="event.status === 'active'">{{ lang === 'fr' ? 'En vente' : 'On sale' }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Social Proof Bar -->
+    <div class="social-proof-bar">
+        <div class="sp-inner">
+            <div class="sp-item"><span class="sp-live"></span> 👥 <strong>{{ viewersCount }}</strong> {{ lang === 'fr' ? 'personnes consultent' : 'people viewing' }}</div>
+            <div class="sp-item"><span class="sp-fire">🔥</span> <strong>{{ recentSales }}</strong> {{ lang === 'fr' ? 'ventes cette heure' : 'sales this hour' }}</div>
+            <div class="sp-item" v-if="event.tickets_sold">🎫 {{ Math.round((event.tickets_sold / event.capacity) * 100) }}% {{ lang === 'fr' ? 'vendu' : 'sold' }}</div>
+        </div>
+    </div>
+
+    <!-- Main: Seat Map + Listings -->
+    <div class="main-content">
+        <!-- Left: Interactive Venue Canvas -->
+        <div class="seatmap-panel">
+            <div class="seatmap-toolbar">
+                <h3>{{ lang === 'fr' ? '🗺️ Plan de la salle' : '🗺️ Venue Map' }}</h3>
+                <div class="seatmap-zoom">
+                    <button class="zoom-btn" @click="canvasZoomOut" title="Zoom out">−</button>
+                    <button class="zoom-btn" @click="canvasReset" title="Reset">⟲</button>
+                    <button class="zoom-btn" @click="canvasZoomIn" title="Zoom in">+</button>
+                </div>
+            </div>
+            <div id="venue-canvas-container" style="width:100%;height:480px;"></div>
+            <div class="seatmap-legend">
+                <div class="legend-item" v-for="zone in mapZones" :key="'leg-'+zone.id"
+                     :class="{ active: focusedZone === zone.id }"
+                     @click="zoomToZone(zone.id)">
+                    <div class="legend-dot" :style="{ background: zone.color }"></div>
+                    {{ zone.name }} — {{ formatPrice(zone.price) }} Ar
+                    <span class="legend-avail">({{ zone.available }})</span>
+                </div>
+            </div>
+            <div style="font-size:0.75rem;color:#999;text-align:center;margin-top:6px;">
+                {{ lang === 'fr' ? '🖱️ Cliquez sur un siège pour le sélectionner · Glissez pour déplacer · Scrollez pour zoomer' : '🖱️ Click a seat to select · Drag to pan · Scroll to zoom' }}
+            </div>
+            <!-- View from Seat -->
+            <div class="view-seat-panel" :class="{ active: selectedZone }">
+                <div class="view-seat-header">
+                    <h4>👁️ {{ lang === 'fr' ? 'Vue depuis' : 'View from' }} {{ getZone(selectedZone)?.name || '' }}</h4>
+                    <span>{{ getZone(selectedZone)?.name }} · {{ formatPrice(getZone(selectedZone)?.price || 0) }} Ar</span>
+                </div>
+                <div class="view-seat-preview">
+                    <svg class="view-seat-svg" viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Stage perspective view -->
+                        <defs>
+                            <linearGradient id="stageLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" :style="'stop-color:' + (getZone(selectedZone)?.color || '#4A90FF') + ';stop-opacity:0.4'" />
+                                <stop offset="100%" style="stop-color:#1a1a1a;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <rect x="0" y="0" width="500" height="200" fill="#1a1a1a"/>
+                        <!-- Ambient light -->
+                        <ellipse cx="250" cy="80" rx="200" ry="100" fill="url(#stageLight)" opacity="0.5"/>
+                        <!-- Stage floor -->
+                        <polygon :points="viewStagePoints" fill="#2a2a2a" stroke="#444" stroke-width="1"/>
+                        <!-- Stage lights -->
+                        <circle cx="150" cy="15" r="4" fill="#FECA57" opacity="0.8"/>
+                        <circle cx="250" cy="10" r="5" fill="#FF6B4A" opacity="0.9"/>
+                        <circle cx="350" cy="15" r="4" fill="#4A90FF" opacity="0.8"/>
+                        <line x1="150" y1="19" x2="200" y2="80" stroke="#FECA57" stroke-width="1" opacity="0.15"/>
+                        <line x1="250" y1="15" x2="250" y2="85" stroke="#FF6B4A" stroke-width="1" opacity="0.2"/>
+                        <line x1="350" y1="19" x2="300" y2="80" stroke="#4A90FF" stroke-width="1" opacity="0.15"/>
+                        <!-- Performers silhouettes -->
+                        <circle cx="200" cy="95" r="6" fill="#555"/>
+                        <rect x="197" y="101" width="6" height="14" rx="2" fill="#555"/>
+                        <circle cx="250" cy="88" r="7" fill="#666"/>
+                        <rect x="246" y="95" width="8" height="16" rx="2" fill="#666"/>
+                        <circle cx="300" cy="95" r="6" fill="#555"/>
+                        <rect x="297" y="101" width="6" height="14" rx="2" fill="#555"/>
+                        <!-- Crowd silhouettes (closer = larger based on zone) -->
+                        <g :opacity="viewCrowdOpacity">
+                            <circle v-for="h in viewCrowdHeads" :key="h.x" :cx="h.x" :cy="h.y" :r="h.r" fill="#333"/>
+                        </g>
+                        <!-- Zone label -->
+                        <rect x="10" y="170" width="120" height="24" rx="4" :fill="getZone(selectedZone)?.color || '#4A90FF'" opacity="0.9"/>
+                        <text x="70" y="186" text-anchor="middle" fill="white" font-size="11" font-family="Syne" font-weight="700">{{ getZone(selectedZone)?.name || '' }}</text>
+                    </svg>
+                </div>
+                <div class="view-seat-info">
+                    <div class="view-seat-tag"><v-icon size="x-small">mdi-eye</v-icon> {{ viewQualityText }}</div>
+                    <div class="view-seat-tag"><v-icon size="x-small">mdi-ruler</v-icon> {{ viewDistanceText }}</div>
+                    <div class="view-seat-tag"><v-icon size="x-small">mdi-volume-high</v-icon> {{ viewSoundText }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Ticket Listings Sidebar -->
+        <div class="listings-panel">
+            <div class="listings-header">
+                <h3>{{ lang === 'fr' ? '🎫 Billets disponibles' : '🎫 Available Tickets' }}</h3>
+                <p>{{ totalAvailable }} {{ lang === 'fr' ? 'billets restants' : 'tickets remaining' }}</p>
+                <button class="alert-btn-inline" @click="showPriceAlert = true"><v-icon size="x-small">mdi-bell-outline</v-icon> {{ lang === 'fr' ? 'Alerte prix' : 'Price alert' }}</button>
+            </div>
+
+            <div class="listings-filter">
+                <button class="filter-chip" :class="{ active: selectedZone === null }" @click="selectedZone = null">
+                    {{ lang === 'fr' ? 'Tous' : 'All' }}
+                </button>
+                <button class="filter-chip" v-for="zone in venueZones" :key="'f-'+zone.id"
+                        :class="{ active: selectedZone === zone.id }"
+                        @click="selectZone(zone.id)">
+                    {{ zone.shortName || zone.name }}
+                </button>
+            </div>
+
+            <div class="listings-sort">
+                <span>{{ filteredListings.length }} {{ lang === 'fr' ? 'résultats' : 'results' }}</span>
+                <select class="sort-select" v-model="sortBy">
+                    <option value="price-asc">{{ lang === 'fr' ? 'Prix ↑' : 'Price ↑' }}</option>
+                    <option value="price-desc">{{ lang === 'fr' ? 'Prix ↓' : 'Price ↓' }}</option>
+                    <option value="zone">{{ lang === 'fr' ? 'Par zone' : 'By zone' }}</option>
+                </select>
+            </div>
+
+            <div class="listings-scroll">
+                <div v-if="filteredListings.length === 0" class="listings-empty">
+                    <v-icon>mdi-ticket-outline</v-icon>
+                    <p>{{ lang === 'fr' ? 'Aucun billet dans cette section' : 'No tickets in this section' }}</p>
+                </div>
+                <div class="listing-card" v-for="listing in filteredListings" :key="listing.id"
+                     :class="{ highlighted: selectedZone === listing.zoneId }"
+                     @click="openQuantity(listing)">
+                    <div class="listing-zone-dot" :style="{ background: listing.color }"></div>
+                    <div class="listing-info">
+                        <div class="listing-zone-name">{{ listing.zoneName }}</div>
+                        <div class="listing-detail">
+                            <span><v-icon size="x-small">mdi-seat</v-icon> {{ listing.seatInfo }}</span>
+                            <span><v-icon size="x-small">mdi-eye</v-icon> {{ listing.viewQuality }}</span>
+                        </div>
+                        <div class="listing-badges">
+                            <span class="listing-badge badge-urgency" v-if="listing.available <= 10">
+                                {{ listing.available <= 3 ? (lang === 'fr' ? 'Dernières places !' : 'Last tickets!') : listing.available + (lang === 'fr' ? ' restants' : ' left') }}
+                            </span>
+                            <span class="listing-badge badge-standing" v-if="listing.standing">{{ lang === 'fr' ? 'Debout' : 'Standing' }}</span>
+                            <span class="listing-badge badge-quality" v-if="listing.qualityBadge">{{ listing.qualityBadge }}</span>
+                        </div>
+                    </div>
+                    <div class="listing-price-col">
+                        <div class="listing-price">{{ formatPrice(listing.price) }}</div>
+                        <div class="listing-price-unit">Ar</div>
+                        <div class="listing-per">/ {{ lang === 'fr' ? 'place' : 'ticket' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quantity Selector Popup -->
+    <div class="qty-overlay" :class="{ active: showQty }" @click.self="showQty = false">
+        <div class="qty-card" v-if="qtyListing">
+            <div class="qty-close" @click="showQty = false">✕</div>
+            <h3>{{ lang === 'fr' ? 'Combien de billets ?' : 'How many tickets?' }}</h3>
+            <div class="qty-zone-info">
+                <div class="qty-zone-dot" :style="{ background: qtyListing.color }"></div>
+                <span>{{ qtyListing.zoneName }} — {{ qtyListing.seatInfo }}</span>
+            </div>
+            <div class="qty-label">{{ lang === 'fr' ? 'Sélectionnez la quantité' : 'Select quantity' }}</div>
+            <div class="qty-selector">
+                <button class="qty-btn" @click="qty = Math.max(1, qty - 1)" :disabled="qty <= 1">−</button>
+                <div class="qty-display">{{ qty }}</div>
+                <button class="qty-btn" @click="qty = Math.min(qtyListing.available, Math.min(10, qty + 1))" :disabled="qty >= Math.min(10, qtyListing.available)">+</button>
+            </div>
+            <div class="qty-summary">
+                <div class="qty-line">
+                    <span>{{ qty }}× {{ qtyListing.zoneName }}</span>
+                    <span>{{ formatPrice(qtyListing.price * qty) }} Ar</span>
+                </div>
+                <div class="qty-line">
+                    <span>{{ lang === 'fr' ? 'Frais de service' : 'Service fee' }}</span>
+                    <span>{{ formatPrice(Math.round(qtyListing.price * qty * 0.03)) }} Ar</span>
+                </div>
+                <div class="qty-line">
+                    <span>{{ lang === 'fr' ? 'Total' : 'Total' }}</span>
+                    <span>{{ formatPrice(Math.round(qtyListing.price * qty * 1.03)) }} Ar</span>
+                </div>
+            </div>
+            <button class="qty-confirm" @click="confirmPurchase">
+                <v-icon>mdi-cart</v-icon>
+                {{ lang === 'fr' ? 'Continuer' : 'Continue' }} — {{ formatPrice(Math.round(qtyListing.price * qty * 1.03)) }} Ar
+            </button>
+        </div>
+    </div>
+
+    <!-- Price Alert Popup -->
+    <div class="alert-overlay" :class="{ active: showPriceAlert }" @click.self="showPriceAlert = false">
+        <div class="alert-card" v-if="!alertSent">
+            <div class="alert-close" @click="showPriceAlert = false">✕</div>
+            <h3>🔔 {{ lang === 'fr' ? 'Alerte prix' : 'Price Alert' }}</h3>
+            <p>{{ lang === 'fr' ? 'Recevez une notification quand le prix baisse pour cet événement.' : 'Get notified when the price drops for this event.' }}</p>
+            <input class="alert-input" type="email" v-model="alertEmail" :placeholder="lang === 'fr' ? 'Votre adresse email' : 'Your email address'">
+            <div style="font-family:Syne;font-weight:700;font-size:0.8rem;margin-bottom:10px;">{{ lang === 'fr' ? 'Zones à surveiller :' : 'Zones to watch:' }}</div>
+            <div class="alert-zones">
+                <div class="alert-zone-chip" v-for="zone in mapZones" :key="'alert-'+zone.id"
+                     :class="{ selected: alertZones.includes(zone.id) }"
+                     :style="alertZones.includes(zone.id) ? 'background:' + zone.color + ';border-color:' + zone.color : ''"
+                     @click="toggleAlertZone(zone.id)">
+                    {{ zone.name }}
+                </div>
+            </div>
+            <button class="alert-submit" @click="submitAlert">
+                {{ lang === 'fr' ? 'Activer l\'alerte' : 'Enable alert' }}
+            </button>
+        </div>
+        <div class="alert-card" v-else>
+            <div class="alert-close" @click="showPriceAlert = false; alertSent = false;">✕</div>
+            <div class="alert-success">
+                <div class="alert-success-icon">✅</div>
+                <h3>{{ lang === 'fr' ? 'Alerte activée !' : 'Alert enabled!' }}</h3>
+                <p>{{ lang === 'fr' ? 'Vous recevrez un email à ' + alertEmail + ' dès qu\'un prix baisse.' : 'You will receive an email at ' + alertEmail + ' when a price drops.' }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Events / You May Also Like -->
+    <div v-if="relatedEvents.length" class="related-section">
+        <div class="related-header">
+            <div class="related-title">{{ lang === 'fr' ? 'Vous aimerez aussi' : 'You may also like' }}</div>
+            <div class="related-subtitle">{{ lang === 'fr' ? 'Événements similaires à Madagascar' : 'Similar events in Madagascar' }}</div>
+        </div>
+        <div class="related-grid">
+            <a v-for="rel in relatedEvents" :key="rel.id" 
+               :href="'ticketmada-event.html?id=' + rel.id" 
+               class="related-card">
+                <div class="related-img" :style="{ background: rel.color || '#FF6B4A' }">
+                    <img v-if="rel.image_url" :src="rel.image_url" :alt="rel.name" 
+                         @error="$event.target.style.display='none'">
+                    <span class="related-emoji">{{ rel.emoji || '🎫' }}</span>
+                    <div class="related-badge" v-if="rel.hot">🔥 {{ lang === 'fr' ? 'Populaire' : 'Hot' }}</div>
+                </div>
+                <div class="related-info">
+                    <div class="related-name">{{ rel.name }}</div>
+                    <div class="related-meta">
+                        <span>📅 {{ formatDate(rel.date_start) }}</span>
+                        <span>📍 {{ rel.venue }}</span>
+                    </div>
+                    <div class="related-price">
+                        {{ lang === 'fr' ? 'À partir de' : 'From' }} 
+                        <strong>{{ (rel.min_price || 20000).toLocaleString() }} Ar</strong>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="../js/api-client.js"></script>
+<script src="../js/venue-canvas.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
+<script>
+const { createApp } = Vue;
+
+const app = createApp({
+    data() {
+        return {
+            lang: localStorage.getItem('ticketmada-lang') || 'fr',
+            event: {},
+            eventId: null,
+            // Map state
+            zoom: 1,
+            panX: 0,
+            panY: 0,
+            selectedZone: null,
+            hoverZone: null,
+            // Listing state
+            sortBy: 'price-asc',
+            // Quantity popup
+            showQty: false,
+            qtyListing: null,
+            qty: 2,
+            // Generated map data
+            viewersCount: 0,
+            recentSales: 0,
+            showPriceAlert: false,
+            alertEmail: '',
+            alertZones: [],
+            alertSent: false,
+            venueCanvas: null,
+            canvasSelected: [],
+            focusedZone: null,
+            venueZones: [],
+            relatedEvents: [],
+            venueTemplate: 'arena',
+            mapZones: [],
+            listings: []
+        };
+    },
+    computed: {
+        svgViewBox() { return '0 0 700 500'; },
+        viewStagePoints() {
+            const z = this.selectedZone;
+            const depths = { pit: '100,130 400,130 450,190 50,190', vip: '120,120 380,120 430,190 70,190', premium: '140,110 360,110 420,190 80,190', standard: '160,100 340,100 400,190 100,190', eco: '180,90 320,90 380,190 120,190' };
+            return depths[z] || '150,105 350,105 410,190 90,190';
+        },
+        viewCrowdOpacity() {
+            return { pit: 0, vip: 0.3, premium: 0.5, standard: 0.6, eco: 0.7 }[this.selectedZone] || 0.4;
+        },
+        viewCrowdHeads() {
+            const z = this.selectedZone;
+            if (z === 'pit') return [];
+            const rows = { vip: 1, premium: 2, standard: 3, eco: 4 }[z] || 2;
+            const heads = [];
+            for (let r = 0; r < rows; r++) {
+                const y = 160 + r * 14;
+                const count = 12 + r * 4;
+                for (let i = 0; i < count; i++) {
+                    heads.push({ x: 50 + (400 / count) * i + Math.random() * 10, y: y + Math.random() * 6, r: 5 - r * 0.5 });
+                }
+            }
+            return heads;
+        },
+        viewQualityText() {
+            const q = { pit: {fr:'Immersive',en:'Immersive'}, vip: {fr:'Parfaite',en:'Perfect'}, premium: {fr:'Très bonne',en:'Great'}, standard: {fr:'Bonne',en:'Good'}, eco: {fr:'Correcte',en:'Fair'} };
+            return (q[this.selectedZone] || q.standard)[this.lang];
+        },
+        viewDistanceText() {
+            const d = { pit: '0-5m', vip: '5-15m', premium: '15-30m', standard: '30-50m', eco: '50m+' };
+            return d[this.selectedZone] || '—';
+        },
+        viewSoundText() {
+            const s = { pit: {fr:'Intense',en:'Intense'}, vip: {fr:'Excellente',en:'Excellent'}, premium: {fr:'Très bon',en:'Very good'}, standard: {fr:'Bon',en:'Good'}, eco: {fr:'Correct',en:'Fair'} };
+            return (s[this.selectedZone] || s.standard)[this.lang];
+        },
+        stageX() { return 200; },
+        stageY() { return 10; },
+        stageW() { return 300; },
+        stageH() { return 50; },
+        totalAvailable() { return this.mapZones.reduce((s, z) => s + z.available, 0); },
+        filteredListings() {
+            let list = this.selectedZone ? this.listings.filter(l => l.zoneId === this.selectedZone) : [...this.listings];
+            if (this.sortBy === 'price-asc') list.sort((a, b) => a.price - b.price);
+            else if (this.sortBy === 'price-desc') list.sort((a, b) => b.price - a.price);
+            else if (this.sortBy === 'zone') list.sort((a, b) => a.zoneOrder - b.zoneOrder);
+            return list;
+        }
+    },
+    methods: {
+        toggleLang() {
+            this.lang = this.lang === 'fr' ? 'en' : 'fr';
+            localStorage.setItem('ticketmada-lang', this.lang);
+            // Rebuild canvas with new lang
+            if (this.venueCanvas) {
+                this.venueCanvas.config.lang = this.lang;
+                this.initVenueCanvas();
+            }
+        },
+        formatDate(d) {
+            if (!d) return '—';
+            const dt = new Date(d);
+            return dt.toLocaleDateString(this.lang === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
+        },
+        formatPrice(p) {
+            return p ? p.toLocaleString('fr-FR') : '0';
+        },
+        selectZone(id) {
+            this.selectedZone = this.selectedZone === id ? null : id;
+            this.focusedZone = this.selectedZone;
+            if (this.venueCanvas && this.selectedZone) {
+                this.venueCanvas.zoomToBlock(this.selectedZone);
+            } else if (this.venueCanvas) {
+                this.venueCanvas.resetView();
+            }
+        },
+        getZone(id) {
+            return this.mapZones.find(z => z.id === id);
+        },
+        toggleAlertZone(id) {
+            const idx = this.alertZones.indexOf(id);
+            if (idx >= 0) this.alertZones.splice(idx, 1);
+            else this.alertZones.push(id);
+        },
+        submitAlert() {
+            if (!this.alertEmail || !this.alertEmail.includes('@')) return;
+            if (!this.alertZones.length) this.alertZones = this.mapZones.map(z => z.id);
+            this.alertSent = true;
+        },
+        // VenueCanvas zoom controls
+        canvasZoomIn() { if (this.venueCanvas) this.venueCanvas.zoomIn(); },
+        canvasZoomOut() { if (this.venueCanvas) this.venueCanvas.zoomOut(); },
+        canvasReset() { if (this.venueCanvas) { this.venueCanvas.resetView(); this.focusedZone = null; this.selectedZone = null; } },
+        zoomToZone(zoneId) {
+            this.focusedZone = this.focusedZone === zoneId ? null : zoneId;
+            this.selectedZone = this.focusedZone;
+            if (this.venueCanvas && this.focusedZone) {
+                this.venueCanvas.zoomToBlock(this.focusedZone);
+            } else if (this.venueCanvas) {
+                this.venueCanvas.resetView();
+            }
+        },
+        openQuantity(listing) {
+            this.qtyListing = listing;
+            this.qty = 2;
+            this.showQty = true;
+        },
+        confirmPurchase() {
+            // If user selected seats on canvas, build info from those
+            let zoneName = this.qtyListing.zoneName;
+            let zoneColor = this.qtyListing.color;
+            let price = this.qtyListing.price;
+            
+            const params = new URLSearchParams({
+                event_id: this.event.id || this.eventId,
+                event_name: this.event.name || 'Événement',
+                zone_name: zoneName,
+                zone_color: zoneColor,
+                qty: this.qty,
+                price: price,
+                date: this.formatDate(this.event.date_start),
+                venue: this.event.venue || '',
+                image: this.event.image_url || '',
+                available: this.qtyListing.available
+            });
+            window.location.href = 'ticketmada-checkout.html?' + params.toString();
+        },
+                async loadRelatedEvents() {
+            const category = this.event.category || 'concerts';
+            const currentId = this.event.id || this.eventId;
+            try {
+                const res = await window.api.get('/events');
+                if (res.events) {
+                    this.relatedEvents = res.events
+                        .filter(e => e.id != currentId)
+                        .slice(0, 4)
+                        .map(e => ({
+                            ...e,
+                            color: ['#FF6B4A','#4A90FF','#00D9A5','#FECA57','#9B59B6'][e.id % 5],
+                            hot: e.tickets_sold > (e.capacity * 0.7),
+                            min_price: 20000
+                        }));
+                }
+            } catch(e) {
+                this.relatedEvents = [
+                    { id: 2, name: 'Jaojoby - Le Roi du Salegy', emoji: '🎷', date_start: '2026-05-20', venue: 'Toamasina', color: '#4A90FF', min_price: 30000, hot: true },
+                    { id: 3, name: 'Festival Donia 2026', emoji: '🏝️', date_start: '2026-06-10', venue: 'Nosy Be', color: '#00D9A5', min_price: 50000, hot: false },
+                    { id: 4, name: 'Erick Manana Acoustique', emoji: '🎸', date_start: '2026-05-05', venue: 'Antsirabe', color: '#FECA57', min_price: 25000, hot: false },
+                    { id: 5, name: 'CNaPS Sport vs Fosa Juniors', emoji: '⚽', date_start: '2026-04-28', venue: 'Antananarivo', color: '#9B59B6', min_price: 15000, hot: true }
+                ].filter(e => e.id != currentId);
+            }
+        },
+        
+        initVenueCanvas() {
+            const capacity = this.event.capacity || 5000;
+            const ticketsSold = this.event.tickets_sold || 0;
+            const remaining = Math.max(0, capacity - ticketsSold);
+            const dist = { pit: 0.07, vip: 0.08, premium: 0.20, standard: 0.35, eco: 0.30 };
+            
+            // Define the 5 zones with seat grid sizing
+            const zoneConfigs = [
+                { id: 'pit', name: this.lang === 'fr' ? 'Fosse' : 'Pit', color: '#9B59B6', price: 60000, rows: 3, seatsPerRow: 12 },
+                { id: 'vip', name: 'VIP', color: '#FF6B4A', price: 150000, rows: 3, seatsPerRow: 16 },
+                { id: 'premium', name: 'Premium', color: '#FECA57', price: 80000, rows: 5, seatsPerRow: 20 },
+                { id: 'standard', name: 'Standard', color: '#4A90FF', price: 40000, rows: 6, seatsPerRow: 24 },
+                { id: 'eco', name: this.lang === 'fr' ? 'Économique' : 'Economy', color: '#00D9A5', price: 20000, rows: 5, seatsPerRow: 22 }
+            ];
+            
+            // Calculate available and capacity per zone
+            const zones = zoneConfigs.map(z => {
+                const cap = z.rows * z.seatsPerRow;
+                const avail = Math.round(remaining * (dist[z.id] || 0.2));
+                return { ...z, capacity: cap, available: Math.min(avail, cap) };
+            });
+            
+            // Populate mapZones for legend and sidebar
+            this.mapZones = zones.map(z => ({
+                id: z.id,
+                name: z.name,
+                color: z.color,
+                price: z.price,
+                available: z.available,
+                shortName: z.id === 'pit' ? (this.lang === 'fr' ? 'Fosse' : 'Pit') : z.name
+            }));
+            this.venueZones = this.mapZones;
+            
+            // Generate listings from zones
+            this.listings = [];
+            const viewQualities = {
+                vip: { fr: 'Vue parfaite', en: 'Perfect view' },
+                premium: { fr: 'Très bonne vue', en: 'Great view' },
+                standard: { fr: 'Bonne vue', en: 'Good view' },
+                eco: { fr: 'Vue correcte', en: 'Fair view' },
+                pit: { fr: 'Vue immersive', en: 'Immersive view' }
+            };
+            const qualityBadges = { vip: 'VIP', premium: 'Premium', pit: 'Fosse' };
+            
+            zones.forEach((zone, idx) => {
+                const groupCount = Math.min(4, Math.max(1, Math.ceil(zone.available / 50)));
+                for (let g = 0; g < groupCount; g++) {
+                    const rowLetter = String.fromCharCode(65 + g * 3 + Math.floor(Math.random() * 3));
+                    const seatStart = Math.floor(Math.random() * 20) + 1;
+                    const groupAvail = g === groupCount - 1
+                        ? zone.available - Math.floor(zone.available / groupCount) * (groupCount - 1)
+                        : Math.floor(zone.available / groupCount);
+                    
+                    this.listings.push({
+                        id: zone.id + '-' + g,
+                        zoneId: zone.id,
+                        zoneName: zone.name,
+                        color: zone.color,
+                        seatInfo: zone.id === 'pit'
+                            ? (this.lang === 'fr' ? 'Accès fosse' : 'Pit access')
+                            : (this.lang === 'fr' ? 'Rang. ' + rowLetter + ', Places ' + seatStart + '-' + (seatStart + 8) : 'Row ' + rowLetter + ', Seats ' + seatStart + '-' + (seatStart + 8)),
+                        viewQuality: viewQualities[zone.id]?.[this.lang] || viewQualities.standard[this.lang],
+                        price: zone.price,
+                        available: groupAvail,
+                        standing: zone.id === 'pit',
+                        qualityBadge: qualityBadges[zone.id] || null,
+                        zoneOrder: idx
+                    });
+                }
+            });
+            
+            // Destroy old canvas if exists
+            if (this.venueCanvas) {
+                this.venueCanvas.destroy();
+            }
+            
+            // Create VenueCanvas instance
+            const self = this;
+            this.venueCanvas = new VenueCanvas('venue-canvas-container', {
+                seatRadius: 8,
+                seatGap: 4,
+                blockGap: 35,
+                maxSelect: 10,
+                lang: this.lang,
+                onChange(selected) {
+                    self.canvasSelected = selected;
+                    // Auto-select the zone of the last selected seat
+                    if (selected.length > 0) {
+                        const lastSeat = selected[selected.length - 1];
+                        const blockId = lastSeat.id.split('-')[0];
+                        self.selectedZone = blockId;
+                        self.focusedZone = blockId;
+                    }
+                }
+            });
+            
+            // Generate venue from zones
+            this.venueCanvas.generateFromZones(zones, 'concert');
+        }
+    },
+    async mounted() {
+        document.documentElement.lang = this.lang;
+        // Get event ID from URL params
+        const params = new URLSearchParams(window.location.search);
+        this.eventId = params.get('id') || 1;
+
+        // Try to load event from API
+        try {
+            const result = await window.api.get('/events/' + this.eventId);
+            if (result.event) {
+                this.event = result.event;
+            }
+        } catch (e) {
+            console.warn('API not available, using demo event');
+        }
+
+        // Fallback demo event if API failed
+        if (!this.event.name) {
+            this.event = {
+                id: 1,
+                name: 'Dama Live - Tournée Nationale 2026',
+                emoji: '🎤',
+                date_start: '2026-04-15',
+                venue: 'Antananarivo',
+                capacity: 15000,
+                tickets_sold: 12500,
+                image_url: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400',
+                status: 'active',
+                category: 'concerts'
+            };
+        }
+
+        document.title = 'TicketMada - ' + this.event.name;
+        // Try to load zone availability from API
+        try {
+            const seatsResult = await window.api.get('/events/' + this.eventId + '/seats');
+            if (seatsResult.zones) { this.apiZones = seatsResult.zones; }
+        } catch(e) { console.warn('Seats API not available, using calculated zones'); }
+        this.alertEmail = window.api?.getUser()?.email || '';
+        this.initVenueCanvas();
+
+        
+        // Social proof simulation
+        this.viewersCount = Math.floor(Math.random() * 25) + 12;
+        this.recentSales = Math.floor(Math.random() * 6) + 3;
+        setInterval(() => {
+            this.viewersCount += Math.floor(Math.random() * 5) - 2;
+            this.viewersCount = Math.max(6, this.viewersCount);
+            if (Math.random() > 0.6) this.recentSales = Math.min(this.recentSales + 1, 20);
+        }, 10000);
+
+        
+        // Load related events
+        this.loadRelatedEvents();
+
+        // Keyboard: Escape closes popup
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') this.showQty = false; });
+    }
+});
+
+app.use(Vuetify.createVuetify());
+app.mount('#app');
+</script>
+</body>
+</html>

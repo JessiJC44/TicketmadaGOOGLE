@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicketMada Organisateurs - Créez & Gérez vos Événements</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-cream: #FAF7F2;
+            --bg-dark: #1a1a1a;
+            --accent-coral: #FF6B4A;
+            --accent-yellow: #FECA57;
+            --accent-mint: #00D9A5;
+            --accent-blue: #4A90FF;
+            --accent-purple: #9B59B6;
+            --text-dark: #1a1a1a;
+            --text-light: #666;
+            --border-dark: #1a1a1a;
+            --shadow-brutal: 6px 6px 0px #1a1a1a;
+            --shadow-brutal-lg: 10px 10px 0px #1a1a1a;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg-cream); color: var(--text-dark); overflow-x: hidden; }
+        
+        @keyframes vibrate {
+            0%, 100% { transform: rotate(-2deg) translate(0, 0); }
+            25% { transform: rotate(-2deg) translate(-1px, -0.5px); }
+            50% { transform: rotate(-2deg) translate(1px, 0.5px); }
+            75% { transform: rotate(-2deg) translate(-0.5px, 1px); }
+        }
+        .hero-badge { animation: vibrate 1.8s ease-in-out 0.3s; }
+        .hero-badge:hover { animation: vibrate 1.2s ease-in-out infinite; }
+        
+        @keyframes growUp { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+        .chart-bar { transform-origin: bottom; transform: scaleY(0); }
+        .chart-bar.animated { animation: growUp 1s ease-out forwards; animation-delay: calc(var(--bar-index) * 0.1s); }
+        
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .float-animation { animation: float 3s ease-in-out infinite; }
+        
+        .brutal-card { background: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal); transition: all 0.2s ease; }
+        .brutal-card:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
+        .brutal-btn { display: inline-flex; align-items: center; gap: 10px; padding: 16px 32px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; border: 3px solid var(--border-dark); cursor: pointer; transition: all 0.15s ease; text-decoration: none; }
+        .brutal-btn-primary { background: var(--accent-coral); color: white; box-shadow: var(--shadow-brutal); }
+        .brutal-btn-primary:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
+        .brutal-btn-secondary { background: white; color: var(--text-dark); box-shadow: var(--shadow-brutal); }
+        .brutal-btn-secondary:hover { background: var(--accent-yellow); transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
+        .brutal-btn-dark { background: var(--bg-dark); color: white; box-shadow: var(--shadow-brutal); }
+        .brutal-btn-dark:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0px var(--accent-coral); }
+        
+        .lang-toggle { width: 45px; height: 45px; background: white; border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 1.4rem; box-shadow: 3px 3px 0px #1a1a1a; }
+        .lang-toggle:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0px #1a1a1a; }
+        
+        .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 20px 40px; background: var(--bg-cream); border-bottom: 3px solid var(--border-dark); }
+        .navbar-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+        .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); margin-right: 60px; }
+        .logo-box { width: 50px; height: 50px; background: var(--accent-coral); border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transform: rotate(-3deg); }
+        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; }
+        .logo-text span { color: var(--accent-coral); }
+        .nav-links { display: flex; gap: 45px; list-style: none; flex: 1; }
+        .nav-links a { font-family: 'Syne', sans-serif; font-weight: 600; color: var(--text-dark); text-decoration: none; position: relative; padding: 5px 0; }
+        .nav-links a::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 3px; background: var(--accent-coral); transition: width 0.3s ease; }
+        .nav-links a:hover::after { width: 100%; }
+        .nav-cta { display: flex; gap: 16px; margin-left: 60px; align-items: center; }
+        
+        .hero { min-height: 100vh; padding: 140px 40px 80px; display: flex; align-items: center; position: relative; overflow: hidden; }
+        .hero-bg-shapes { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+        .shape { position: absolute; border: 3px solid var(--border-dark); }
+        .shape-1 { width: 200px; height: 200px; background: var(--accent-yellow); top: 15%; right: 5%; transform: rotate(15deg); }
+        .shape-2 { width: 150px; height: 150px; background: var(--accent-mint); bottom: 20%; left: 5%; border-radius: 50%; }
+        .shape-3 { width: 100px; height: 100px; background: var(--accent-coral); top: 40%; left: 15%; transform: rotate(-10deg); }
+        .shape-4 { width: 80px; height: 80px; background: var(--accent-blue); bottom: 30%; right: 15%; border-radius: 50%; }
+        .hero-inner { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1.2fr 1fr; gap: 80px; align-items: center; position: relative; z-index: 1; }
+        .hero-badge { display: inline-block; background: var(--accent-yellow); border: 3px solid var(--border-dark); padding: 10px 20px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 30px; transform: rotate(-2deg); }
+        .hero-title { font-family: 'Syne', sans-serif; font-size: 4rem; font-weight: 800; line-height: 1.05; margin-bottom: 30px; }
+        .hero-title .highlight { position: relative; display: inline-block; }
+        .hero-title .highlight::after { content: ''; position: absolute; bottom: 5px; left: 0; width: 100%; height: 20px; background: var(--accent-coral); z-index: -1; transform: skewX(-3deg); }
+        .hero-description { font-size: 1.25rem; color: var(--text-light); line-height: 1.7; margin-bottom: 40px; max-width: 550px; }
+        .hero-actions { display: flex; gap: 20px; margin-bottom: 60px; flex-wrap: wrap; }
+        .hero-stats { display: flex; gap: 50px; padding-top: 40px; border-top: 3px solid var(--border-dark); }
+        .stat { text-align: left; }
+        .stat-number { font-family: 'Syne', sans-serif; font-size: 3rem; font-weight: 800; color: var(--accent-coral); }
+        .stat-label { font-size: 0.95rem; color: var(--text-light); margin-top: 5px; }
+        
+        .hero-visual { position: relative; perspective: 1000px; }
+        .dashboard-preview { position: relative; transform: rotateY(-8deg) rotateX(3deg); transform-style: preserve-3d; }
+        .dashboard-main { background: white; border: 3px solid var(--border-dark); border-radius: 20px; padding: 25px; box-shadow: var(--shadow-brutal-lg); }
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px dashed var(--border-dark); }
+        .dashboard-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; }
+        .dashboard-dots { display: flex; gap: 8px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--border-dark); }
+        .dot-red { background: #FF6B6B; }
+        .dot-yellow { background: var(--accent-yellow); }
+        .dot-green { background: var(--accent-mint); }
+        .dashboard-stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        .mini-stat { padding: 15px; border: 2px solid var(--border-dark); text-align: center; }
+        .mini-stat:nth-child(1) { background: rgba(255, 107, 74, 0.15); }
+        .mini-stat:nth-child(2) { background: rgba(0, 217, 165, 0.15); }
+        .mini-stat:nth-child(3) { background: rgba(254, 202, 87, 0.15); }
+        .mini-stat-value { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; }
+        .mini-stat-label { font-size: 0.75rem; color: var(--text-light); margin-top: 3px; }
+        .dashboard-chart { height: 100px; background: linear-gradient(to top, rgba(255, 107, 74, 0.2), transparent); border: 2px solid var(--border-dark); position: relative; display: flex; align-items: flex-end; padding: 8px; gap: 6px; overflow: hidden; }
+        .chart-bar { flex: 1; background: var(--accent-coral); border: 2px solid var(--border-dark); }
+        .floating-card { position: absolute; background: white; border: 3px solid var(--border-dark); padding: 12px 16px; box-shadow: var(--shadow-brutal); }
+        .floating-card-1 { top: -25px; right: -35px; transform: rotate(5deg); }
+        .floating-card-2 { bottom: 30px; left: -50px; transform: rotate(-3deg); }
+        .floating-card-3 { top: 40%; right: -60px; transform: rotate(2deg); }
+        .floating-icon { font-size: 1.3rem; margin-bottom: 5px; }
+        .floating-text { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.8rem; }
+        
+        /* Key Features Grid */
+        .key-features { padding: 80px 40px; background: white; border-top: 3px solid var(--border-dark); }
+        .key-features-inner { max-width: 1400px; margin: 0 auto; }
+        .key-features-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .key-feature-item { display: flex; align-items: center; gap: 15px; padding: 25px; border: 2px solid var(--border-dark); background: var(--bg-cream); }
+        .key-feature-icon { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 2px solid var(--border-dark); flex-shrink: 0; }
+        .key-feature-item:nth-child(1) .key-feature-icon { background: var(--accent-coral); }
+        .key-feature-item:nth-child(2) .key-feature-icon { background: var(--accent-mint); }
+        .key-feature-item:nth-child(3) .key-feature-icon { background: var(--accent-yellow); }
+        .key-feature-item:nth-child(4) .key-feature-icon { background: var(--accent-blue); }
+        .key-feature-text h4 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 3px; }
+        .key-feature-text p { font-size: 0.85rem; color: var(--text-light); }
+        
+        /* Features Section */
+        .features { padding: 120px 40px; border-bottom: 3px solid var(--border-dark); }
+        .section-header { max-width: 800px; margin: 0 auto 80px; text-align: center; }
+        .section-badge { display: inline-block; background: var(--accent-mint); border: 3px solid var(--border-dark); padding: 10px 25px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 25px; }
+        .section-title { font-family: 'Syne', sans-serif; font-size: 3rem; font-weight: 800; margin-bottom: 20px; }
+        .section-description { font-size: 1.2rem; color: var(--text-light); line-height: 1.7; }
+        
+        .features-tabs { max-width: 1400px; margin: 0 auto; }
+        .tabs-nav { display: flex; gap: 10px; margin-bottom: 50px; flex-wrap: wrap; justify-content: center; }
+        .tab-btn { background: white; border: 3px solid var(--border-dark); padding: 14px 28px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.2s ease; box-shadow: 4px 4px 0px #1a1a1a; }
+        .tab-btn:hover, .tab-btn.active { background: var(--accent-coral); color: white; transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .feature-showcase { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+        .feature-showcase.reverse { direction: rtl; }
+        .feature-showcase.reverse > * { direction: ltr; }
+        .feature-text h3 { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; margin-bottom: 20px; }
+        .feature-text p { color: var(--text-light); line-height: 1.8; margin-bottom: 25px; }
+        .feature-list { list-style: none; margin-bottom: 30px; }
+        .feature-list li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px dashed rgba(0,0,0,0.1); }
+        .feature-list li::before { content: '✓'; width: 28px; height: 28px; background: var(--accent-mint); border: 2px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold; flex-shrink: 0; }
+        .feature-visual { position: relative; }
+        .feature-image { width: 100%; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal-lg); background: white; padding: 20px; }
+        .seatmap-illustration { display: flex; align-items: center; justify-content: center; min-height: 300px; }
+        .seatmap-seat { opacity: 0; animation: seatAppear 0.3s ease forwards; }
+        @keyframes seatAppear { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+        .seatmap-cursor { animation: cursorMove 4s ease-in-out infinite; }
+        @keyframes cursorMove { 0%, 100% { transform: translate(0, 0); opacity: 1; } 25% { transform: translate(32px, 0); } 50% { transform: translate(64px, -40px); opacity: 0.8; } 75% { transform: translate(32px, -40px); } }
+        
+        /* Use Cases */
+        .use-cases { padding: 120px 40px; background: var(--bg-dark); color: white; }
+        .use-cases .section-badge { background: var(--accent-coral); color: white; }
+        .use-cases .section-title { color: white; }
+        .use-cases .section-description { color: rgba(255,255,255,0.7); }
+        .use-cases-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; }
+        .use-case-card { background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); padding: 35px 25px; text-align: center; transition: all 0.3s ease; }
+        .use-case-card:hover { background: rgba(255,255,255,0.1); transform: translateY(-10px); }
+        .use-case-icon { font-size: 3rem; margin-bottom: 20px; }
+        .use-case-card h3 { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 12px; }
+        .use-case-card p { color: rgba(255,255,255,0.7); font-size: 0.9rem; line-height: 1.6; }
+        
+        /* API Banner */
+        .api-banner { padding: 60px 40px; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); border-top: 3px solid var(--border-dark); border-bottom: 3px solid var(--border-dark); }
+        .api-banner-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 40px; }
+        .api-banner-content h3 { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; color: white; margin-bottom: 10px; }
+        .api-banner-content p { color: rgba(255,255,255,0.9); font-size: 1.1rem; }
+        .api-banner .brutal-btn { background: white; color: var(--accent-blue); border-color: white; }
+        .api-banner .brutal-btn:hover { background: var(--accent-yellow); color: var(--text-dark); }
+        
+        /* How It Works */
+        .how-it-works { padding: 120px 40px; }
+        .steps-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; position: relative; }
+        .steps-line { position: absolute; top: 50px; left: 12%; right: 12%; height: 4px; background: var(--accent-coral); z-index: 0; }
+        .step-card { background: white; border: 3px solid var(--border-dark); padding: 40px 25px; text-align: center; position: relative; z-index: 1; box-shadow: var(--shadow-brutal); transition: all 0.3s ease; }
+        .step-card:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
+        .step-number { width: 60px; height: 60px; background: var(--accent-coral); border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; margin: 0 auto 25px; color: white; }
+        .step-card h3 { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 12px; }
+        .step-card p { color: var(--text-light); line-height: 1.6; font-size: 0.95rem; }
+        
+        /* Pricing */
+        .pricing { padding: 120px 40px; background: white; border-top: 3px solid var(--border-dark); }
+        .pricing-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+        .pricing-card { padding: 50px 40px; position: relative; border: 3px solid var(--border-dark); background: var(--bg-cream); box-shadow: var(--shadow-brutal); }
+        .pricing-card.featured { background: var(--accent-coral); color: white; transform: scale(1.05); }
+        .pricing-card.featured .pricing-features li { border-color: rgba(255,255,255,0.2); }
+        .pricing-badge { position: absolute; top: -15px; right: 30px; background: var(--accent-yellow); border: 3px solid var(--border-dark); padding: 8px 20px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; color: var(--text-dark); transform: rotate(3deg); }
+        .pricing-name { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 700; margin-bottom: 10px; }
+        .pricing-description { font-size: 0.95rem; opacity: 0.8; margin-bottom: 30px; }
+        .pricing-price { font-family: 'Syne', sans-serif; font-size: 3rem; font-weight: 800; margin-bottom: 10px; }
+        .pricing-price span { font-size: 1rem; font-weight: 500; }
+        .pricing-period { font-size: 0.9rem; opacity: 0.7; margin-bottom: 30px; }
+        .pricing-features { list-style: none; margin-bottom: 40px; }
+        .pricing-features li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px dashed rgba(0,0,0,0.1); }
+        .pricing-features li::before { content: '✓'; width: 24px; height: 24px; background: var(--accent-mint); border: 2px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; }
+        .pricing-card.featured .pricing-features li::before { background: white; color: var(--accent-coral); }
+        .pricing-card .brutal-btn { width: 100%; justify-content: center; }
+        .pricing-card.featured .brutal-btn { background: white; color: var(--accent-coral); }
+        
+        /* Testimonials */
+        .testimonials { padding: 120px 40px; background: var(--accent-yellow); border-top: 3px solid var(--border-dark); border-bottom: 3px solid var(--border-dark); }
+        .testimonials .section-badge { background: white; }
+        .testimonials-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px; }
+        .testimonial-card { background: white; padding: 40px; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal); }
+        .testimonial-quote { font-size: 1.15rem; line-height: 1.8; margin-bottom: 30px; position: relative; }
+        .testimonial-quote::before { content: '"'; font-family: 'Syne', sans-serif; font-size: 5rem; font-weight: 800; color: var(--accent-coral); position: absolute; top: -30px; left: -10px; opacity: 0.3; }
+        .testimonial-author { display: flex; align-items: center; gap: 15px; }
+        .testimonial-avatar { width: 60px; height: 60px; background: var(--accent-mint); border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; }
+        .testimonial-info h4 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; }
+        .testimonial-info p { color: var(--text-light); font-size: 0.9rem; }
+        
+        /* CTA */
+        .cta { padding: 120px 40px; text-align: center; }
+        .cta-container { max-width: 900px; margin: 0 auto; }
+        .cta-title { font-family: 'Syne', sans-serif; font-size: 3.5rem; font-weight: 800; margin-bottom: 25px; line-height: 1.1; }
+        .cta-description { font-size: 1.3rem; color: var(--text-light); margin-bottom: 50px; }
+        .cta-actions { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+        .cta-features { display: flex; justify-content: center; gap: 40px; margin-top: 50px; flex-wrap: wrap; }
+        .cta-feature { display: flex; align-items: center; gap: 10px; font-weight: 500; }
+        .cta-feature-icon { width: 30px; height: 30px; background: var(--accent-mint); border: 2px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
+        
+        /* Footer */
+        .footer { background: var(--bg-dark); color: white; padding: 80px 40px 40px; border-top: 3px solid var(--border-dark); }
+        .footer-inner { max-width: 1400px; margin: 0 auto; }
+        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 60px; margin-bottom: 60px; }
+        .footer-brand .logo-text { color: white; }
+        .footer-brand p { color: rgba(255,255,255,0.6); margin: 25px 0; line-height: 1.7; }
+        .social-links { display: flex; gap: 12px; }
+        .social-link { width: 45px; height: 45px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: white; text-decoration: none; transition: all 0.3s ease; }
+        .social-link:hover { background: var(--accent-coral); border-color: var(--accent-coral); }
+        .footer-column h4 { font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 25px; }
+        .footer-column ul { list-style: none; }
+        .footer-column li { margin-bottom: 12px; }
+        .footer-column a { color: rgba(255,255,255,0.6); text-decoration: none; transition: color 0.3s ease; }
+        .footer-column a:hover { color: var(--accent-coral); }
+        .footer-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); font-size: 0.9rem; }
+        
+        @media (max-width: 1200px) {
+            .hero-inner { grid-template-columns: 1fr; text-align: center; }
+            .hero-description { margin: 0 auto 40px; }
+            .hero-actions, .hero-stats { justify-content: center; }
+            .hero-visual { display: none; }
+            .feature-showcase { grid-template-columns: 1fr; }
+            .feature-showcase.reverse { direction: ltr; }
+            .key-features-grid, .use-cases-grid, .steps-container { grid-template-columns: repeat(2, 1fr); }
+            .steps-line { display: none; }
+            .pricing-grid { grid-template-columns: 1fr; max-width: 500px; }
+            .pricing-card.featured { transform: none; }
+            .api-banner-inner { flex-direction: column; text-align: center; }
+        }
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .hero-title { font-size: 2.5rem; }
+            .section-title { font-size: 2.2rem; }
+            .key-features-grid, .use-cases-grid, .steps-container, .testimonials-grid, .footer-grid { grid-template-columns: 1fr; }
+            .cta-title { font-size: 2.5rem; }
+            .cta-features { flex-direction: column; gap: 15px; }
+            .hero-stats { flex-direction: column; gap: 25px; }
+            .tabs-nav { gap: 8px; }
+            .tab-btn { padding: 10px 18px; font-size: 0.85rem; }
+        }
+
+        .auth-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26, 26, 26, 0.95); z-index: 2000; display: none; align-items: center; justify-content: center; }
+        .auth-modal.active { display: flex; }
+        .auth-close { position: absolute; top: -60px; right: 0; width: 50px; height: 50px; background: white; border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.5rem; font-family: 'Syne', sans-serif; }
+        .auth-card { width: 100%; max-width: 480px; padding: 50px; position: relative; }
+        .auth-header { text-align: center; margin-bottom: 40px; }
+        .auth-header h2 { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; margin-bottom: 10px; }
+        .auth-header p { color: var(--text-light); }
+        .social-auth { display: flex; flex-direction: column; gap: 14px; margin-bottom: 30px; }
+        .social-auth-btn { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 16px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s ease; border: 3px solid var(--border-dark); }
+        .google-btn { background: white; color: var(--text-dark); box-shadow: 4px 4px 0px #1a1a1a; }
+        .google-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
+        .facebook-btn { background: #1877F2; color: white; box-shadow: 4px 4px 0px #1a1a1a; }
+        .facebook-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
+        .divider { text-align: center; position: relative; margin: 20px 0; color: var(--text-light); }
+        .divider::before, .divider::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: #ddd; }
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+        .auth-form { display: flex; flex-direction: column; gap: 20px; }
+        .auth-form .form-group { margin-bottom: 0; }
+        .auth-form label { display: block; font-family: 'Syne', sans-serif; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; }
+        .auth-form input { width: 100%; padding: 14px 16px; border: 3px solid var(--border-dark); font-family: 'DM Sans', sans-serif; font-size: 1rem; }
+        .auth-form input:focus { outline: none; box-shadow: 4px 4px 0px var(--accent-coral); }
+        .auth-submit { margin-top: 10px; width: 100%; justify-content: center; }
+        .auth-footer { text-align: center; margin-top: 24px; color: var(--text-light); }
+        .auth-footer a { color: var(--accent-coral); text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+<script src="../js/site-config.js"></script>
+
+    <div id="app">
+        <nav class="navbar">
+            <div class="navbar-inner">
+                <a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
+                <ul class="nav-links">
+                    <li><a href="#fonctionnalites">{{ t.nav.features }}</a></li>
+                    <li><a href="#comment-ca-marche">{{ t.nav.howItWorks }}</a></li>
+                    <li><a href="#tarifs">{{ t.nav.pricing }}</a></li>
+                    <li><a href="#temoignages">{{ t.nav.testimonials }}</a></li>
+                </ul>
+                <div class="nav-cta">
+                    <button class="lang-toggle" @click="toggleLang" :title="lang === 'fr' ? 'Switch to English' : 'Passer en Français'">{{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}</button>
+                    <template v-if="!isLoggedIn">
+                        <a href="#" class="brutal-btn brutal-btn-secondary" @click.prevent="openAuth('login')">{{ t.nav.login }}</a>
+                        <a href="#" class="brutal-btn brutal-btn-primary" @click.prevent="openAuth('register')">{{ t.nav.createEvent }}</a>
+                    </template>
+                    <div class="profile-wrapper" v-else>
+                        <button class="profile-avatar-btn" @click="showProfileMenu = !showProfileMenu" v-html="profileAvatar"></button>
+                        <div class="profile-dropdown" :class="{ open: showProfileMenu }">
+                            <div class="profile-dropdown-header">
+                                <div class="profile-dropdown-avatar" v-html="profileAvatar"></div>
+                                <div class="profile-dropdown-info">
+                                    <div class="profile-dropdown-name">{{ profileName }}</div>
+                                    <div class="profile-dropdown-email">{{ profileEmail }}</div>
+                                    <span class="profile-dropdown-role" :class="profileRole">{{ profileRoleLabel }}</span>
+                                </div>
+                            </div>
+                            <div class="profile-dropdown-items">
+                                <a class="profile-dropdown-item" :href="dashboardUrl"><v-icon size="small">mdi-view-dashboard</v-icon> Dashboard</a>
+                                <a class="profile-dropdown-item" :href="dashboardUrl + '?page=events'"><v-icon size="small">mdi-calendar-plus</v-icon> {{ lang === 'fr' ? 'Créer un événement' : 'Create event' }}</a>
+                                <div class="profile-dropdown-divider"></div>
+                                <button class="profile-dropdown-item logout" @click="handleLogout"><v-icon size="small">mdi-logout</v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Logout' }}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <section class="hero">
+            <div class="hero-bg-shapes"><div class="shape shape-1"></div><div class="shape shape-2"></div><div class="shape shape-3"></div><div class="shape shape-4"></div></div>
+            <div class="hero-inner">
+                <div class="hero-content">
+                    <div class="hero-badge">{{ t.hero.badge }}</div>
+                    <h1 class="hero-title" v-html="t.hero.title"></h1>
+                    <p class="hero-description">{{ t.hero.description }}</p>
+                    <div class="hero-actions">
+                        <a href="#" class="brutal-btn brutal-btn-primary" @click.prevent="openAuth('register')">{{ t.hero.cta1 }}<v-icon>mdi-arrow-right</v-icon></a>
+                        <a href="#fonctionnalites" class="brutal-btn brutal-btn-secondary">{{ t.hero.cta2 }}</a>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat"><div class="stat-number counter" data-target="500" data-suffix="K+">0</div><div class="stat-label">{{ t.hero.stat1 }}</div></div>
+                        <div class="stat"><div class="stat-number counter" data-target="2500" data-suffix="+">0</div><div class="stat-label">{{ t.hero.stat2 }}</div></div>
+                        <div class="stat"><div class="stat-number counter" data-target="98" data-suffix="%">0</div><div class="stat-label">{{ t.hero.stat3 }}</div></div>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="dashboard-preview">
+                        <div class="dashboard-main">
+                            <div class="dashboard-header"><span class="dashboard-title">📊 {{ t.dashboard.title }}</span><div class="dashboard-dots"><div class="dot dot-red"></div><div class="dot dot-yellow"></div><div class="dot dot-green"></div></div></div>
+                            <div class="dashboard-stats-row">
+                                <div class="mini-stat"><div class="mini-stat-value counter" data-target="1247">0</div><div class="mini-stat-label">{{ t.dashboard.tickets }}</div></div>
+                                <div class="mini-stat"><div class="mini-stat-value"><span class="counter" data-target="12" data-suffix=".4M">0</span></div><div class="mini-stat-label">{{ t.dashboard.revenue }}</div></div>
+                                <div class="mini-stat"><div class="mini-stat-value counter" data-target="89" data-suffix="%">0</div><div class="mini-stat-label">{{ t.dashboard.scanRate }}</div></div>
+                            </div>
+                            <div class="dashboard-chart" id="animated-chart">
+                                <div class="chart-bar" style="--bar-index: 0; height: 40%;"></div>
+                                <div class="chart-bar" style="--bar-index: 1; height: 65%;"></div>
+                                <div class="chart-bar" style="--bar-index: 2; height: 45%;"></div>
+                                <div class="chart-bar" style="--bar-index: 3; height: 80%;"></div>
+                                <div class="chart-bar" style="--bar-index: 4; height: 60%;"></div>
+                                <div class="chart-bar" style="--bar-index: 5; height: 90%;"></div>
+                                <div class="chart-bar" style="--bar-index: 6; height: 75%;"></div>
+                            </div>
+                        </div>
+                        <div class="floating-card floating-card-1 float-animation"><div class="floating-icon">✅</div><div class="floating-text">{{ t.dashboard.paymentReceived }}</div></div>
+                        <div class="floating-card floating-card-2 float-animation" style="animation-delay: 0.5s;"><div class="floating-icon">🎟️</div><div class="floating-text">+25 {{ t.dashboard.ticketsShort }}</div></div>
+                        <div class="floating-card floating-card-3 float-animation" style="animation-delay: 1s;"><div class="floating-icon">📱</div><div class="floating-text">QR Scan OK</div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Key Features Bar -->
+        <section class="key-features">
+            <div class="key-features-inner">
+                <div class="key-features-grid">
+                    <div class="key-feature-item" v-for="(item, index) in t.keyFeatures" :key="index">
+                        <div class="key-feature-icon">{{ keyFeatureIcons[index] }}</div>
+                        <div class="key-feature-text"><h4>{{ item.title }}</h4><p>{{ item.subtitle }}</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Features Tabs -->
+        <section class="features" id="fonctionnalites">
+            <div class="section-header"><div class="section-badge">{{ t.features.badge }}</div><h2 class="section-title">{{ t.features.title }}</h2><p class="section-description">{{ t.features.description }}</p></div>
+            
+            <div class="features-tabs">
+                <div class="tabs-nav">
+                    <button class="tab-btn" :class="{ active: activeTab === index }" v-for="(tab, index) in t.features.tabs" :key="index" @click="activeTab = index">{{ tab.name }}</button>
+                </div>
+                
+                <div class="tab-content" :class="{ active: activeTab === index }" v-for="(tab, index) in t.features.tabs" :key="index">
+                    <div class="feature-showcase" :class="{ reverse: index % 2 === 1 }">
+                        <div class="feature-text">
+                            <h3>{{ tab.title }}</h3>
+                            <p>{{ tab.description }}</p>
+                            <ul class="feature-list"><li v-for="feat in tab.features" :key="feat">{{ feat }}</li></ul>
+                            <a href="#fonctionnalites" class="brutal-btn brutal-btn-primary">{{ t.features.learnMore }}</a>
+                        </div>
+                        <div class="feature-visual">
+                            <div class="feature-image">
+                                <!-- Seat map illustration for tab index 1 (Plan de salle) -->
+                                <div v-if="index === 1" class="seatmap-illustration">
+                                    <svg viewBox="0 0 440 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:440px;">
+                                        <!-- Stage -->
+                                        <rect x="100" y="10" width="240" height="36" rx="18" fill="#1a1a1a"/>
+                                        <text x="220" y="33" text-anchor="middle" fill="white" font-size="13" font-family="Syne,sans-serif" font-weight="700">SCÈNE</text>
+                                        <!-- VIP Row -->
+                                        <g class="seatmap-row" v-for="(s, si) in 10" :key="'vip-'+si">
+                                            <rect :x="70 + si * 32" y="66" width="24" height="24" rx="4" :fill="si < 6 ? '#FF6B4A' : (si < 8 ? '#FECA57' : '#e0e0e0')" stroke="#1a1a1a" stroke-width="1.5" class="seatmap-seat" :style="'animation-delay:' + (si * 0.06) + 's'"/>
+                                        </g>
+                                        <text x="32" y="83" text-anchor="middle" fill="#666" font-size="10" font-family="DM Sans,sans-serif">VIP</text>
+                                        <!-- Row A -->
+                                        <g v-for="(s, si) in 12" :key="'a-'+si">
+                                            <rect :x="38 + si * 32" y="108" width="24" height="24" rx="4" :fill="si < 9 ? '#4A90FF' : '#e0e0e0'" stroke="#1a1a1a" stroke-width="1.5" class="seatmap-seat" :style="'animation-delay:' + (si * 0.05 + 0.2) + 's'"/>
+                                        </g>
+                                        <text x="20" y="125" text-anchor="middle" fill="#666" font-size="10" font-family="DM Sans,sans-serif">A</text>
+                                        <!-- Row B -->
+                                        <g v-for="(s, si) in 12" :key="'b-'+si">
+                                            <rect :x="38 + si * 32" y="148" width="24" height="24" rx="4" :fill="si < 7 ? '#4A90FF' : (si < 10 ? '#00D9A5' : '#e0e0e0')" stroke="#1a1a1a" stroke-width="1.5" class="seatmap-seat" :style="'animation-delay:' + (si * 0.05 + 0.4) + 's'"/>
+                                        </g>
+                                        <text x="20" y="165" text-anchor="middle" fill="#666" font-size="10" font-family="DM Sans,sans-serif">B</text>
+                                        <!-- Row C -->
+                                        <g v-for="(s, si) in 12" :key="'c-'+si">
+                                            <rect :x="38 + si * 32" y="188" width="24" height="24" rx="4" :fill="si < 4 ? '#4A90FF' : '#e0e0e0'" stroke="#1a1a1a" stroke-width="1.5" class="seatmap-seat" :style="'animation-delay:' + (si * 0.05 + 0.6) + 's'"/>
+                                        </g>
+                                        <text x="20" y="205" text-anchor="middle" fill="#666" font-size="10" font-family="DM Sans,sans-serif">C</text>
+                                        <!-- Row D -->
+                                        <g v-for="(s, si) in 12" :key="'d-'+si">
+                                            <rect :x="38 + si * 32" y="228" width="24" height="24" rx="4" fill="#e0e0e0" stroke="#1a1a1a" stroke-width="1.5" class="seatmap-seat" :style="'animation-delay:' + (si * 0.05 + 0.8) + 's'"/>
+                                        </g>
+                                        <text x="20" y="245" text-anchor="middle" fill="#666" font-size="10" font-family="DM Sans,sans-serif">D</text>
+                                        <!-- Legend -->
+                                        <rect x="70" y="278" width="14" height="14" rx="3" fill="#FF6B4A" stroke="#1a1a1a" stroke-width="1"/>
+                                        <text x="90" y="290" fill="#333" font-size="10" font-family="DM Sans,sans-serif">VIP</text>
+                                        <rect x="130" y="278" width="14" height="14" rx="3" fill="#4A90FF" stroke="#1a1a1a" stroke-width="1"/>
+                                        <text x="150" y="290" fill="#333" font-size="10" font-family="DM Sans,sans-serif">Réservé</text>
+                                        <rect x="210" y="278" width="14" height="14" rx="3" fill="#00D9A5" stroke="#1a1a1a" stroke-width="1"/>
+                                        <text x="230" y="290" fill="#333" font-size="10" font-family="DM Sans,sans-serif">Sélectionné</text>
+                                        <rect x="310" y="278" width="14" height="14" rx="3" fill="#e0e0e0" stroke="#1a1a1a" stroke-width="1"/>
+                                        <text x="330" y="290" fill="#333" font-size="10" font-family="DM Sans,sans-serif">Libre</text>
+                                        <!-- Cursor animation -->
+                                        <g class="seatmap-cursor">
+                                            <circle cx="198" cy="200" r="8" fill="rgba(255,107,74,0.3)" stroke="#FF6B4A" stroke-width="2"/>
+                                            <circle cx="198" cy="200" r="3" fill="#FF6B4A"/>
+                                        </g>
+                                    </svg>
+                                </div>
+                                <div v-else style="height: 300px; display: flex; align-items: center; justify-content: center; font-size: 5rem;">{{ tab.icon }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Use Cases -->
+        <section class="use-cases">
+            <div class="section-header"><div class="section-badge">{{ t.useCases.badge }}</div><h2 class="section-title">{{ t.useCases.title }}</h2><p class="section-description">{{ t.useCases.description }}</p></div>
+            <div class="use-cases-grid">
+                <div class="use-case-card" v-for="(useCase, index) in t.useCases.items" :key="index">
+                    <div class="use-case-icon">{{ useCaseIcons[index] }}</div>
+                    <h3>{{ useCase.title }}</h3>
+                    <p>{{ useCase.description }}</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- API Banner -->
+        <section class="api-banner">
+            <div class="api-banner-inner">
+                <div class="api-banner-content">
+                    <h3>{{ t.apiBanner.title }}</h3>
+                    <p>{{ t.apiBanner.description }}</p>
+                </div>
+                <a href="ticketmada-ticketing.html" class="brutal-btn">{{ t.apiBanner.cta }} <v-icon>mdi-arrow-right</v-icon></a>
+            </div>
+        </section>
+        
+        <!-- How It Works -->
+        <section class="how-it-works" id="comment-ca-marche">
+            <div class="section-header"><div class="section-badge">{{ t.howItWorks.badge }}</div><h2 class="section-title">{{ t.howItWorks.title }}</h2><p class="section-description">{{ t.howItWorks.description }}</p></div>
+            <div class="steps-container">
+                <div class="steps-line"></div>
+                <div class="step-card" v-for="(step, index) in t.howItWorks.steps" :key="index"><div class="step-number">{{ index + 1 }}</div><h3>{{ step.title }}</h3><p>{{ step.description }}</p></div>
+            </div>
+        </section>
+        
+        <!-- Pricing -->
+        <section class="pricing" id="tarifs">
+            <div class="section-header"><div class="section-badge">{{ t.pricing.badge }}</div><h2 class="section-title">{{ t.pricing.title }}</h2><p class="section-description">{{ t.pricing.description }}</p></div>
+            <div class="pricing-grid">
+                <div class="pricing-card" v-for="(plan, index) in t.pricing.plans" :key="index" :class="{ featured: index === 1 }">
+                    <div class="pricing-badge" v-if="index === 1">{{ t.pricing.popular }}</div>
+                    <div class="pricing-name">{{ plan.name }}</div>
+                    <div class="pricing-description">{{ plan.description }}</div>
+                    <div class="pricing-price" v-html="plan.price"></div>
+                    <div class="pricing-period">{{ plan.period }}</div>
+                    <ul class="pricing-features"><li v-for="feat in plan.features" :key="feat">{{ feat }}</li></ul>
+                    <a href="#" class="brutal-btn" :class="index === 1 ? 'brutal-btn-primary' : 'brutal-btn-secondary'" @click.prevent="openAuth('register')">{{ plan.cta }}</a>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Testimonials -->
+        <section class="testimonials" id="temoignages">
+            <div class="section-header"><div class="section-badge">{{ t.testimonials.badge }}</div><h2 class="section-title">{{ t.testimonials.title }}</h2></div>
+            <div class="testimonials-grid">
+                <div class="testimonial-card" v-for="testimonial in testimonials" :key="testimonial.name">
+                    <p class="testimonial-quote">{{ lang === 'fr' ? testimonial.quoteFr : testimonial.quoteEn }}</p>
+                    <div class="testimonial-author"><div class="testimonial-avatar">{{ testimonial.initials }}</div><div class="testimonial-info"><h4>{{ testimonial.name }}</h4><p>{{ testimonial.role }}</p></div></div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- CTA -->
+        <section class="cta">
+            <div class="cta-container">
+                <h2 class="cta-title">{{ t.cta.title }}</h2>
+                <p class="cta-description">{{ t.cta.description }}</p>
+                <div class="cta-actions">
+                    <a href="#" class="brutal-btn brutal-btn-primary" @click.prevent="openAuth('register')">{{ t.cta.cta1 }} <v-icon>mdi-arrow-right</v-icon></a>
+                    <a href="#comment-ca-marche" class="brutal-btn brutal-btn-secondary">{{ t.cta.cta2 }}</a>
+                </div>
+                <div class="cta-features">
+                    <div class="cta-feature" v-for="feat in t.cta.features" :key="feat"><div class="cta-feature-icon">✓</div><span>{{ feat }}</span></div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-inner">
+                <div class="footer-grid">
+                    <div class="footer-brand"><a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a><p>{{ t.footer.description }}</p><div class="social-links"><a href="#" class="social-link"><v-icon>mdi-facebook</v-icon></a><a href="#" class="social-link"><v-icon>mdi-instagram</v-icon></a><a href="#" class="social-link"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.045 4.126H5.078z"/></svg></a><a href="#" class="social-link"><v-icon>mdi-linkedin</v-icon></a></div></div>
+                    <div class="footer-column"><h4>{{ t.footer.product }}</h4><ul><li><a href="#fonctionnalites">{{ t.nav.features }}</a></li><li><a href="#tarifs">{{ t.nav.pricing }}</a></li><li><a href="ticketmada-ticketing.html">API</a></li></ul></div>
+                    <div class="footer-column"><h4>{{ t.footer.resources }}</h4><ul><li><a href="#">{{ t.footer.helpCenter }}</a></li><li><a href="#">Blog</a></li><li><a href="#">{{ t.footer.guides }}</a></li></ul></div>
+                    <div class="footer-column"><h4>{{ t.footer.company }}</h4><ul><li><a href="#">{{ t.footer.about }}</a></li><li><a href="#">{{ t.footer.contact }}</a></li><li><a href="#">{{ t.footer.careers }}</a></li></ul></div>
+                </div>
+                <div class="footer-bottom"><p>© 2026 TicketMada. {{ t.footer.rights }}</p><div style="display: flex; gap: 30px;"><a href="#" style="color: rgba(255,255,255,0.5); text-decoration: none;">{{ t.footer.terms }}</a><a href="#" style="color: rgba(255,255,255,0.5); text-decoration: none;">{{ t.footer.privacy }}</a></div></div>
+            </div>
+        </footer>
+
+        <div class="auth-modal" :class="{ active: showAuth }">
+            <div class="auth-card brutal-card">
+                <div class="auth-close" @click="showAuth = false">✕</div>
+                <div class="auth-header"><h2>{{ authMode === 'login' ? (lang === 'fr' ? 'Connexion' : 'Login') : (lang === 'fr' ? 'Créer un compte' : 'Create account') }}</h2><p>{{ authMode === 'login' ? (lang === 'fr' ? 'Heureux de vous revoir !' : 'Welcome back!') : (lang === 'fr' ? 'Rejoignez TicketMada' : 'Join TicketMada') }}</p></div>
+                <div class="social-auth">
+                    <button class="social-auth-btn google-btn" @click.prevent="loginWith('Google')"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>{{ lang === 'fr' ? 'Continuer avec Google' : 'Continue with Google' }}</button>
+                    <button class="social-auth-btn facebook-btn" @click.prevent="loginWith('Facebook')"><v-icon>mdi-facebook</v-icon>{{ lang === 'fr' ? 'Continuer avec Facebook' : 'Continue with Facebook' }}</button>
+                </div>
+                <div class="divider">{{ lang === 'fr' ? 'ou' : 'or' }}</div>
+                <form class="auth-form" @submit.prevent="handleAuth">
+                    <div class="form-group" v-if="authMode === 'register'"><label>{{ lang === 'fr' ? 'Nom complet' : 'Full name' }}</label><input type="text" :placeholder="lang === 'fr' ? 'Votre nom' : 'Your name'" v-model="authForm.name"></div>
+                    <div class="form-group"><label>Email</label><input type="email" placeholder="votre@email.com" v-model="authForm.email"></div>
+                    <div class="form-group"><label>{{ lang === 'fr' ? 'Mot de passe' : 'Password' }}</label><input type="password" placeholder="••••••••" v-model="authForm.password"></div>
+                    <button type="submit" class="brutal-btn brutal-btn-primary auth-submit">{{ authMode === 'login' ? (lang === 'fr' ? 'Se connecter' : 'Log in') : (lang === 'fr' ? 'Créer mon compte' : 'Create account') }}</button>
+                </form>
+                <p class="auth-footer"><template v-if="authMode === 'login'">{{ lang === 'fr' ? 'Pas de compte ?' : 'No account?' }} <a href="#" @click.prevent="authMode = 'register'">{{ lang === 'fr' ? "S'inscrire" : 'Sign up' }}</a></template><template v-else>{{ lang === 'fr' ? 'Déjà un compte ?' : 'Already have an account?' }} <a href="#" @click.prevent="authMode = 'login'">{{ lang === 'fr' ? 'Se connecter' : 'Log in' }}</a></template></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api-client.js"></script>
+    <script src="../js/oauth-simulation.js"></script>
+    <script src="../js/profile-menu.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
+    <script>
+        const translations = {
+            fr: {
+                nav: { features: 'Fonctionnalités', howItWorks: 'Comment ça marche', pricing: 'Tarifs', testimonials: 'Témoignages', login: 'Connexion', createEvent: 'Créer un événement' },
+                hero: { badge: '✨ Pour les organisateurs', title: 'Gestion 360° de vos<br><span class="highlight">événements</span>', description: 'Billetterie en ligne et au guichet, plan de salle interactif, contrôle d\'accès QR code, gestion d\'équipe, finance et marketing. Tout en une seule plateforme.', cta1: 'Commencer gratuitement', cta2: 'Voir une démo', stat1: 'Billets vendus', stat2: 'Événements créés', stat3: 'Satisfaction' },
+                dashboard: { title: 'Tableau de bord', tickets: 'Billets vendus', revenue: 'Revenus (Ar)', scanRate: 'Taux de scan', paymentReceived: 'Paiement reçu!', ticketsShort: 'billets' },
+                keyFeatures: [
+                    { title: 'Vos données, votre contrôle', subtitle: 'Exportez vos clients sans limite' },
+                    { title: 'Argent immédiat', subtitle: 'Revenus versés mensuellement' },
+                    { title: 'Support local', subtitle: 'Équipe basée à Madagascar' },
+                    { title: 'Cloud sécurisé', subtitle: 'Disponible 24/7' }
+                ],
+                features: {
+                    badge: 'Fonctionnalités', title: 'Tout ce dont vous avez besoin', description: 'Une plateforme complète pour créer, vendre et gérer vos événements de A à Z.', learnMore: 'En savoir plus',
+                    tabs: [
+                        { name: '🎫 Billetterie', icon: '🎫', title: 'Billetterie en ligne & au guichet', description: 'Vendez vos billets 24/7 en ligne et gérez les ventes au guichet avec notre interface dédiée. Billets électroniques sécurisés avec QR code unique.', features: ['Vente en ligne 24/7 via Mobile Money et Carte Bancaire', 'Interface guichet pour vente sur place', 'E-tickets personnalisables avec votre branding', 'Historique complet de chaque billet émis', 'Gestion des invitations VIP'] },
+                        { name: '🗺️ Plan de salle', icon: '🗺️', title: 'Plan de salle interactif', description: 'Créez des plans de salle avec placement numéroté. Vos clients choisissent leurs places avec une vue de la scène depuis leur siège.', features: ['Éditeur de plan drag & drop', 'Vue depuis le siège (photo)', 'Synchronisation multi-points de vente', 'Gestion des zones et catégories', 'Placement automatique ou manuel'] },
+                        { name: '📱 Contrôle d\'accès', icon: '📱', title: 'Contrôle d\'accès QR Code', description: 'Scannez les billets avec notre app mobile. Anti-fraude intégré : un seul scan valide par billet, même si dupliqué.', features: ['Application mobile iOS & Android', 'Fonctionne hors-ligne', 'Détection automatique des doublons', 'Statistiques d\'entrées en temps réel', 'Gestion des quotas par zone'] },
+                        { name: '👥 Équipe', icon: '👥', title: 'Gestion d\'équipe multi-rôles', description: 'Invitez vos collaborateurs et attribuez des rôles : manager, analyste, guichetier, contrôleur. Chacun accède uniquement à ses fonctions.', features: ['Rôles prédéfinis (manager, analyste, guichetier)', 'Permissions personnalisables', 'Historique des actions par utilisateur', 'Collaboration en temps réel', 'Utilisateurs illimités'] },
+                        { name: '📊 Analytics', icon: '📊', title: 'Tableau de bord temps réel', description: 'Suivez vos ventes, revenus et taux de conversion en temps réel. Exportez vos données pour vos analyses.', features: ['Dashboard en temps réel', 'Rapports de ventes détaillés', 'Statistiques par canal de vente', 'Export CSV/Excel', 'Comparaison entre événements'] },
+                        { name: '💰 Finance', icon: '💰', title: 'Gestion financière', description: 'Suivez vos revenus et demandez le versement de vos fonds à tout moment. Pas besoin d\'attendre la fin de l\'événement.', features: ['Versements mensuels ou sur demande', 'Suivi des transactions en temps réel', 'Rapports financiers détaillés', 'Gestion des remboursements', 'Historique complet'] }
+                    ]
+                },
+                useCases: {
+                    badge: 'Types d\'événements', title: 'Pour tous vos événements', description: 'Concerts, festivals, conférences, événements sportifs... Notre plateforme s\'adapte à tous vos besoins.',
+                    items: [
+                        { title: 'Concerts & Festivals', description: 'Gérez des milliers de spectateurs avec plan de salle et contrôle d\'accès.' },
+                        { title: 'Événements culturels', description: 'Théâtre, expositions, spectacles. Billetterie simple et élégante.' },
+                        { title: 'Sports', description: 'Matchs, tournois, compétitions. Gestion des équipes et supporters.' },
+                        { title: 'Conférences', description: 'Séminaires, formations, événements professionnels avec inscriptions.' }
+                    ]
+                },
+                apiBanner: { title: 'Vous avez un site web et voulez intégrer TicketMada ?', description: 'Utilisez notre API gratuite pour intégrer la billetterie directement sur votre site.', cta: 'Découvrir le Ticketing API' },
+                howItWorks: { badge: 'Comment ça marche', title: '4 étapes simples', description: 'De la création au contrôle d\'accès le jour J', steps: [{ title: 'Créez votre événement', description: 'En 30 min : date, lieu, affiche, plan de salle, catégories et tarifs.' },{ title: 'Configurez la vente', description: 'Points de vente, modes de paiement, équipe et rôles.' },{ title: 'Lancez les ventes', description: 'Partagez votre page et suivez les ventes en temps réel.' },{ title: 'Accueillez vos clients', description: 'Scannez les billets avec l\'app mobile le jour J.' }] },
+                pricing: { badge: 'Tarification', title: 'Tarifs transparents', description: 'Zéro frais cachés. Payez uniquement quand vous vendez.', popular: 'Populaire', plans: [{ name: 'Starter', description: 'Événements gratuits', price: 'Gratuit', period: 'Sans engagement', features: ['Événements illimités', 'Billets électroniques', 'Page personnalisée', 'App de scan', 'Support email'], cta: 'Commencer' },{ name: 'Pro', description: 'Événements payants', price: '3% <span>/ billet</span>', period: '+ frais de paiement', features: ['Tout de Starter +', 'Plan de salle interactif', 'Multi-utilisateurs', 'Analytics avancés', 'Codes promo', 'Support prioritaire'], cta: 'Essayer Pro' },{ name: 'Enterprise', description: 'Grands événements', price: 'Sur devis', period: 'Tarif négocié', features: ['Tout de Pro +', 'API complète', 'White-label', 'Account manager', 'Formation équipe', 'SLA garanti'], cta: 'Nous contacter' }] },
+                testimonials: { badge: 'Témoignages', title: 'Ils nous font confiance' },
+                cta: { title: 'Prêt à créer votre prochain événement ?', description: 'Rejoignez des milliers d\'organisateurs qui utilisent TicketMada.', cta1: 'Créer mon événement', cta2: 'Parler à un expert', features: ['Mise en place gratuite', 'Aucun engagement', 'Support local'] },
+                footer: { description: 'La plateforme de billetterie #1 à Madagascar pour les organisateurs.', product: 'Produit', resources: 'Ressources', company: 'Entreprise', helpCenter: 'Centre d\'aide', guides: 'Guides', about: 'À propos', contact: 'Contact', careers: 'Carrières', rights: 'Tous droits réservés.', terms: 'CGU', privacy: 'Confidentialité' }
+            },
+            en: {
+                nav: { features: 'Features', howItWorks: 'How it works', pricing: 'Pricing', testimonials: 'Testimonials', login: 'Login', createEvent: 'Create event' },
+                hero: { badge: '✨ For organizers', title: '360° management of<br>your <span class="highlight">events</span>', description: 'Online & on-site ticketing, interactive seating plans, QR code access control, team management, finance and marketing. All in one platform.', cta1: 'Start for free', cta2: 'See a demo', stat1: 'Tickets sold', stat2: 'Events created', stat3: 'Satisfaction' },
+                dashboard: { title: 'Dashboard', tickets: 'Tickets sold', revenue: 'Revenue (Ar)', scanRate: 'Scan rate', paymentReceived: 'Payment received!', ticketsShort: 'tickets' },
+                keyFeatures: [
+                    { title: 'Your data, your control', subtitle: 'Export your customers without limits' },
+                    { title: 'Immediate funds', subtitle: 'Revenue paid monthly' },
+                    { title: 'Local support', subtitle: 'Team based in Madagascar' },
+                    { title: 'Secure cloud', subtitle: 'Available 24/7' }
+                ],
+                features: {
+                    badge: 'Features', title: 'Everything you need', description: 'A complete platform to create, sell and manage your events from A to Z.', learnMore: 'Learn more',
+                    tabs: [
+                        { name: '🎫 Ticketing', icon: '🎫', title: 'Online & on-site ticketing', description: 'Sell tickets 24/7 online and manage on-site sales with our dedicated interface. Secure e-tickets with unique QR code.', features: ['24/7 online sales via Mobile Money and Card', 'Box office interface for on-site sales', 'Customizable e-tickets with your branding', 'Complete history of each ticket issued', 'VIP invitation management'] },
+                        { name: '🗺️ Seating', icon: '🗺️', title: 'Interactive seating plan', description: 'Create seating plans with numbered seats. Your customers choose their seats with a view from their seat.', features: ['Drag & drop plan editor', 'View from seat (photo)', 'Multi-point of sale sync', 'Zone and category management', 'Automatic or manual seating'] },
+                        { name: '📱 Access', icon: '📱', title: 'QR Code access control', description: 'Scan tickets with our mobile app. Built-in anti-fraud: only one valid scan per ticket, even if duplicated.', features: ['iOS & Android mobile app', 'Works offline', 'Automatic duplicate detection', 'Real-time entry statistics', 'Quota management by zone'] },
+                        { name: '👥 Team', icon: '👥', title: 'Multi-role team management', description: 'Invite collaborators and assign roles: manager, analyst, cashier, controller. Each accesses only their functions.', features: ['Predefined roles (manager, analyst, cashier)', 'Customizable permissions', 'Action history per user', 'Real-time collaboration', 'Unlimited users'] },
+                        { name: '📊 Analytics', icon: '📊', title: 'Real-time dashboard', description: 'Track your sales, revenue and conversion rates in real time. Export your data for analysis.', features: ['Real-time dashboard', 'Detailed sales reports', 'Statistics by sales channel', 'CSV/Excel export', 'Event comparison'] },
+                        { name: '💰 Finance', icon: '💰', title: 'Financial management', description: 'Track your revenue and request fund payout at any time. No need to wait for the event to end.', features: ['Monthly or on-demand payouts', 'Real-time transaction tracking', 'Detailed financial reports', 'Refund management', 'Complete history'] }
+                    ]
+                },
+                useCases: {
+                    badge: 'Event types', title: 'For all your events', description: 'Concerts, festivals, conferences, sports events... Our platform adapts to all your needs.',
+                    items: [
+                        { title: 'Concerts & Festivals', description: 'Manage thousands of attendees with seating plans and access control.' },
+                        { title: 'Cultural events', description: 'Theater, exhibitions, shows. Simple and elegant ticketing.' },
+                        { title: 'Sports', description: 'Matches, tournaments, competitions. Team and fan management.' },
+                        { title: 'Conferences', description: 'Seminars, training, professional events with registrations.' }
+                    ]
+                },
+                apiBanner: { title: 'Have a website and want to integrate TicketMada?', description: 'Use our free API to integrate ticketing directly on your site.', cta: 'Discover Ticketing API' },
+                howItWorks: { badge: 'How it works', title: '4 simple steps', description: 'From creation to access control on D-day', steps: [{ title: 'Create your event', description: 'In 30 min: date, venue, poster, seating plan, categories and prices.' },{ title: 'Configure sales', description: 'Points of sale, payment methods, team and roles.' },{ title: 'Launch sales', description: 'Share your page and track sales in real-time.' },{ title: 'Welcome your guests', description: 'Scan tickets with the mobile app on the day.' }] },
+                pricing: { badge: 'Pricing', title: 'Transparent pricing', description: 'Zero hidden fees. Pay only when you sell.', popular: 'Popular', plans: [{ name: 'Starter', description: 'Free events', price: 'Free', period: 'No commitment', features: ['Unlimited events', 'E-tickets', 'Custom page', 'Scan app', 'Email support'], cta: 'Get started' },{ name: 'Pro', description: 'Paid events', price: '3% <span>/ ticket</span>', period: '+ payment fees', features: ['All of Starter +', 'Interactive seating', 'Multi-users', 'Advanced analytics', 'Promo codes', 'Priority support'], cta: 'Try Pro' },{ name: 'Enterprise', description: 'Large events', price: 'Custom quote', period: 'Negotiated rate', features: ['All of Pro +', 'Full API', 'White-label', 'Account manager', 'Team training', 'Guaranteed SLA'], cta: 'Contact us' }] },
+                testimonials: { badge: 'Testimonials', title: 'They trust us' },
+                cta: { title: 'Ready to create your next event?', description: 'Join thousands of organizers using TicketMada.', cta1: 'Create my event', cta2: 'Talk to an expert', features: ['Free setup', 'No commitment', 'Local support'] },
+                footer: { description: 'The #1 ticketing platform in Madagascar for organizers.', product: 'Product', resources: 'Resources', company: 'Company', helpCenter: 'Help Center', guides: 'Guides', about: 'About', contact: 'Contact', careers: 'Careers', rights: 'All rights reserved.', terms: 'Terms', privacy: 'Privacy' }
+            }
+        };
+        
+        function animateCounters() {
+            document.querySelectorAll('.counter').forEach(counter => {
+                const target = parseFloat(counter.getAttribute('data-target'));
+                const suffix = counter.getAttribute('data-suffix') || '';
+                let current = 0, started = false;
+                const observer = new IntersectionObserver(entries => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting && !started) {
+                            started = true;
+                            const update = () => { current += target / 60; if (current < target) { const val = Number.isInteger(target) ? Math.floor(current) : current.toFixed(1); counter.textContent = val.toLocaleString() + suffix; setTimeout(update, 33); } else { const val = Number.isInteger(target) ? target : target.toFixed(1); counter.textContent = val.toLocaleString() + suffix; } };
+                            update();
+                        }
+                    });
+                }, { threshold: 0.5 });
+                observer.observe(counter);
+            });
+        }
+        
+        function animateChart() {
+            const chartBars = document.querySelectorAll('.chart-bar');
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => { if (entry.isIntersecting) { chartBars.forEach(bar => bar.classList.add('animated')); observer.unobserve(entry.target); } });
+            }, { threshold: 0.5 });
+            const chart = document.getElementById('animated-chart');
+            if (chart) observer.observe(chart);
+        }
+        
+        const { createApp } = Vue;
+        const app = createApp({
+            data() {
+                return {
+                    lang: localStorage.getItem('ticketmada-lang') || 'fr',
+                    activeTab: 0,
+                    showAuth: false,
+                    authMode: 'login',
+                    authForm: { name: '', email: '', password: '' },
+                    isLoggedIn: false, showProfileMenu: false,
+                    keyFeatureIcons: ['🔐', '💵', '🇲🇬', '☁️'],
+                    useCaseIcons: ['🎸', '🎭', '⚽', '🎤'],
+                    testimonials: [
+                        { quoteFr: 'TicketMada a révolutionné notre façon de gérer les événements. Le dashboard temps réel est incroyable, et le plan de salle interactif a éliminé les erreurs de réservation.', quoteEn: 'TicketMada revolutionized how we manage events. The real-time dashboard is amazing, and the interactive seating plan eliminated booking errors.', name: 'Rakoto Andriamahefa', role: 'Directeur, Festival Donia', initials: 'RA' },
+                        { quoteFr: 'L\'app de scan est ultra rapide et fonctionne même sans internet. Plus de files d\'attente interminables à l\'entrée de nos concerts!', quoteEn: 'The scan app is ultra fast and works even offline. No more endless queues at our concert entrances!', name: 'Nirina Rasoamanana', role: 'Productrice, Live Nation MG', initials: 'NR' },
+                        { quoteFr: 'La gestion multi-rôles nous permet de déléguer efficacement. Chaque membre de l\'équipe a accès exactement à ce dont il a besoin.', quoteEn: 'Multi-role management allows us to delegate effectively. Each team member has access to exactly what they need.', name: 'Jean-Marc Razafindrakoto', role: 'Gérant, Palais des Sports', initials: 'JR' },
+                        { quoteFr: 'Le versement des fonds sur demande est un game-changer. On n\'attend plus la fin de l\'événement pour récupérer notre argent.', quoteEn: 'On-demand fund payout is a game-changer. We no longer wait until the end of the event to get our money.', name: 'Sandra Randrianarisoa', role: 'Organisatrice indépendante', initials: 'SR' }
+                    ]
+                };
+            },
+            computed: {
+                t() { return translations[this.lang]; },
+                profileName() { const u = window.api?.getUser(); return u ? u.name : ''; },
+                profileEmail() { const u = window.api?.getUser(); return u ? u.email : ''; },
+                profileRole() { return window.api?.getUserRole() || 'buyer'; },
+                profileRoleLabel() { return { superadmin: 'Super Admin', admin: 'Admin', organizer: 'Organisateur', buyer: 'Membre' }[this.profileRole] || 'Membre'; },
+                profileAvatar() { const g = window.ProfileMenu?.detectGender(this.profileName) || 'neutral'; return window.ProfileMenu?.getAvatarSVG(this.profileName, g) || ''; },
+                dashboardUrl() { return (this.profileRole === 'superadmin' || this.profileRole === 'admin') ? '/Admin/ticketmada-superadmin.html' : '/Admin/ticketmada-dashboard.html'; }
+            },
+            methods: {
+                toggleLang() { this.lang = this.lang === 'fr' ? 'en' : 'fr'; localStorage.setItem('ticketmada-lang', this.lang); document.documentElement.lang = this.lang; },
+                openAuth(mode) { this.authMode = mode; this.showAuth = true; },
+                async handleLogout() { await window.api.logout(); this.isLoggedIn = false; this.showProfileMenu = false; },
+                async handleAuth() {
+                    try {
+                        let result;
+                        if (this.authMode === 'login') { result = await window.api.login(this.authForm.email, this.authForm.password); }
+                        else { result = await window.api.register(this.authForm.name, this.authForm.email, this.authForm.password, 'organizer'); }
+                        if (result.error) {
+                            if (result.status === 0) {
+                                const name = this.authForm.name || this.authForm.email.split('@')[0];
+                                window.api.setAuth('sim-' + Date.now(), { name: name, email: this.authForm.email, role: 'organizer' });
+                                this.isLoggedIn = true; this.showAuth = false;
+                            }
+                        } else { this.isLoggedIn = true; this.showAuth = false; }
+                    } catch(e) { console.error('Auth error:', e); }
+                },
+                loginWith(provider) {
+                    const vm = this;
+                    vm.showAuth = false;
+                    window.OAuthSim.show(provider, async (name, email) => {
+                        try {
+                            const result = await window.api.oauthLogin(provider, name, email);
+                            if (!result.error) { vm.isLoggedIn = true; }
+                            else {
+                                window.api.setAuth('sim-' + Date.now(), { name: name, email: email, role: 'organizer' });
+                                vm.isLoggedIn = true;
+                            }
+                        } catch(e) {
+                            console.warn('OAuth API failed, using local fallback:', e);
+                            window.api.setAuth('sim-' + Date.now(), { name: name, email: email, role: 'organizer' });
+                            vm.isLoggedIn = true;
+                        }
+                    });
+                }
+            },
+            mounted() {
+                document.documentElement.lang = this.lang; animateCounters(); animateChart();
+                if (window.api && window.api.isLoggedIn()) { this.isLoggedIn = true; }
+                if (window.ProfileMenu) window.ProfileMenu.injectStyles();
+                document.addEventListener('click', e => { if (!e.target.closest('.profile-wrapper')) this.showProfileMenu = false; });
+                document.addEventListener('keydown', e => { if (e.key === 'Escape') { this.showAuth = false; this.showProfileMenu = false; } });
+            }
+        });
+        app.use(Vuetify.createVuetify());
+        app.mount('#app');
+    </script>
+</body>
+</html>

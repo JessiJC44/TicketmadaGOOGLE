@@ -1,0 +1,17 @@
+{
+  "name": "ticketmada-api",
+  "version": "1.0.0",
+  "description": "TicketMada event ticketing API - Node.js + SQLite",
+  "main": "server-node.js",
+  "scripts": {
+    "start": "node server-node.js",
+    "seed": "node -e \"require('./server-node.js')\" && echo 'DB seeded'"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "bcryptjs": "^2.4.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

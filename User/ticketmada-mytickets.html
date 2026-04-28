@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicketMada - Mes Billets</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <style>
+        :root { --bg-cream:#FAF7F2;--bg-dark:#1a1a1a;--accent-coral:#FF6B4A;--accent-yellow:#FECA57;--accent-mint:#00D9A5;--accent-blue:#4A90FF;--accent-purple:#9B59B6;--text-dark:#1a1a1a;--text-light:#666;--border-dark:#1a1a1a;--shadow-brutal:6px 6px 0px #1a1a1a;--shadow-brutal-sm:4px 4px 0px #1a1a1a; }
+        * { margin:0;padding:0;box-sizing:border-box; }
+        body { font-family:'DM Sans',sans-serif;background:var(--bg-cream);color:var(--text-dark); }
+        .navbar { position:fixed;top:0;left:0;right:0;z-index:1000;padding:16px 40px;background:var(--bg-cream);border-bottom:3px solid var(--border-dark); }
+        .navbar-inner { max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between; }
+        .logo { display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text-dark); }
+        .logo-box { width:42px;height:42px;background:var(--accent-coral);border:3px solid var(--border-dark);display:flex;align-items:center;justify-content:center;font-size:1.2rem;transform:rotate(-3deg); }
+        .logo-text { font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem; }
+        .logo-text span { color:var(--accent-coral); }
+        .nav-back { display:flex;align-items:center;gap:6px;font-family:'Syne',sans-serif;font-weight:600;font-size:0.85rem;color:var(--text-dark);text-decoration:none;padding:10px 16px;border:3px solid var(--border-dark);background:white;box-shadow:var(--shadow-brutal-sm);transition:all 0.15s; }
+        .nav-back:hover { transform:translate(-2px,-2px);box-shadow:6px 6px 0px #1a1a1a; }
+
+        .page-content { max-width:1200px;margin:0 auto;padding:100px 40px 60px; }
+        .page-title { font-family:'Syne',sans-serif;font-weight:800;font-size:2rem;margin-bottom:8px; }
+        .page-subtitle { color:var(--text-light);margin-bottom:30px; }
+
+        /* Tabs */
+        .tabs { display:flex;gap:0;margin-bottom:30px;border:3px solid var(--border-dark); }
+        .tab { flex:1;padding:14px 20px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.5px;text-align:center;cursor:pointer;background:white;border-right:3px solid var(--border-dark);transition:all 0.15s; }
+        .tab:last-child { border-right:none; }
+        .tab:hover { background:#fef9f0; }
+        .tab.active { background:var(--accent-coral);color:white; }
+        .tab-count { display:inline-block;background:rgba(0,0,0,0.15);padding:2px 8px;border-radius:10px;font-size:0.7rem;margin-left:6px; }
+        .tab.active .tab-count { background:rgba(255,255,255,0.3); }
+
+        /* Ticket card */
+        .ticket-card { background:white;border:3px solid var(--border-dark);box-shadow:var(--shadow-brutal);margin-bottom:20px;display:grid;grid-template-columns:auto 1fr auto;overflow:hidden; }
+        .ticket-card:hover { transform:translate(-2px,-2px);box-shadow:8px 8px 0px #1a1a1a; }
+        .ticket-qr { width:130px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;background:var(--bg-cream);border-right:3px dashed var(--border-dark);position:relative; }
+        .ticket-qr::before,.ticket-qr::after { content:'';position:absolute;width:20px;height:20px;background:var(--bg-cream);border-radius:50%;border:3px solid var(--border-dark); }
+        .ticket-qr::before { top:-12px;right:-12px; }
+        .ticket-qr::after { bottom:-12px;right:-12px; }
+        .qr-code { width:80px;height:80px;border:2px solid var(--border-dark);display:flex;align-items:center;justify-content:center;margin-bottom:8px;background:white; }
+        .qr-code svg { width:60px;height:60px; }
+        .ticket-code { font-family:'JetBrains Mono',monospace;font-size:0.7rem;font-weight:600;color:var(--text-light);letter-spacing:1px; }
+        .ticket-info { padding:20px 24px;display:flex;flex-direction:column;justify-content:center; }
+        .ticket-event-name { font-family:'Syne',sans-serif;font-weight:700;font-size:1.15rem;margin-bottom:6px; }
+        .ticket-details { display:flex;flex-wrap:wrap;gap:16px;font-size:0.85rem;color:var(--text-light);margin-bottom:8px; }
+        .ticket-details span { display:flex;align-items:center;gap:4px; }
+        .ticket-type { display:inline-block;padding:4px 12px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;border:2px solid; }
+        .type-vip { background:#fff5f0;border-color:var(--accent-coral);color:var(--accent-coral); }
+        .type-standard { background:#f0f5ff;border-color:var(--accent-blue);color:var(--accent-blue); }
+        .type-premium { background:#fef9f0;border-color:#b8860b;color:#b8860b; }
+        .ticket-status-col { display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 24px;border-left:3px solid var(--border-dark);min-width:140px;background:var(--bg-cream); }
+        .ticket-status { font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.5px;padding:6px 16px;border:2px solid;margin-bottom:10px; }
+        .status-active { background:#f0fff8;border-color:var(--accent-mint);color:var(--accent-mint); }
+        .status-scanned { background:#f0f5ff;border-color:var(--accent-blue);color:var(--accent-blue); }
+        .status-refunded { background:#fff0f0;border-color:#e74c3c;color:#e74c3c; }
+        .ticket-price { font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem; }
+        .ticket-price small { font-size:0.65rem;color:var(--text-light);font-weight:400; }
+
+        /* Stats bar */
+        .stats-bar { display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:30px; }
+        .stat-card { background:white;border:3px solid var(--border-dark);box-shadow:var(--shadow-brutal-sm);padding:20px;text-align:center; }
+        .stat-value { font-family:'Syne',sans-serif;font-weight:800;font-size:1.8rem; }
+        .stat-label { font-size:0.75rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.5px;margin-top:4px; }
+
+        .empty-state { text-align:center;padding:60px 20px; }
+        .empty-state .icon { font-size:3.5rem;margin-bottom:16px;opacity:0.3; }
+        .empty-state h3 { font-family:'Syne',sans-serif;margin-bottom:8px; }
+        .empty-state p { color:var(--text-light);margin-bottom:20px; }
+        .empty-btn { display:inline-flex;align-items:center;gap:8px;padding:14px 28px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;text-transform:uppercase;background:var(--accent-coral);color:white;border:3px solid var(--border-dark);box-shadow:var(--shadow-brutal);text-decoration:none;transition:all 0.15s; }
+        .empty-btn:hover { transform:translate(-3px,-3px);box-shadow:9px 9px 0px #1a1a1a; }
+
+        @media (max-width:900px) {
+            .ticket-card { grid-template-columns:1fr; }
+            .ticket-qr { width:auto;border-right:none;border-bottom:3px dashed var(--border-dark);flex-direction:row;gap:16px; }
+            .ticket-qr::before,.ticket-qr::after { display:none; }
+            .ticket-status-col { border-left:none;border-top:3px solid var(--border-dark);flex-direction:row;justify-content:space-between; }
+            .stats-bar { grid-template-columns:repeat(2,1fr); }
+        }
+    </style>
+</head>
+<body>
+<script src="../js/site-config.js"></script>
+
+<div id="app">
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
+            <a href="ticketmada-landing.html" class="nav-back"><v-icon size="small">mdi-arrow-left</v-icon> {{ lang === 'fr' ? 'Accueil' : 'Home' }}</a>
+        </div>
+    </nav>
+
+    <div class="page-content">
+        <h1 class="page-title">🎫 {{ lang === 'fr' ? 'Mes Billets' : 'My Tickets' }}</h1>
+        <p class="page-subtitle">{{ userName ? (lang === 'fr' ? 'Bienvenue, ' : 'Welcome, ') + userName : '' }}</p>
+
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-value">{{ tickets.length }}</div>
+                <div class="stat-label">{{ lang === 'fr' ? 'Total billets' : 'Total tickets' }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="color:var(--accent-mint);">{{ activeCount }}</div>
+                <div class="stat-label">{{ lang === 'fr' ? 'Actifs' : 'Active' }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="color:var(--accent-blue);">{{ scannedCount }}</div>
+                <div class="stat-label">{{ lang === 'fr' ? 'Utilisés' : 'Used' }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ formatPrice(totalSpent) }}</div>
+                <div class="stat-label">{{ lang === 'fr' ? 'Total dépensé (Ar)' : 'Total spent (Ar)' }}</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab" :class="{ active: activeTab === 'all' }" @click="activeTab = 'all'">
+                {{ lang === 'fr' ? 'Tous' : 'All' }}<span class="tab-count">{{ tickets.length }}</span>
+            </div>
+            <div class="tab" :class="{ active: activeTab === 'active' }" @click="activeTab = 'active'">
+                {{ lang === 'fr' ? 'Actifs' : 'Active' }}<span class="tab-count">{{ activeCount }}</span>
+            </div>
+            <div class="tab" :class="{ active: activeTab === 'scanned' }" @click="activeTab = 'scanned'">
+                {{ lang === 'fr' ? 'Utilisés' : 'Used' }}<span class="tab-count">{{ scannedCount }}</span>
+            </div>
+            <div class="tab" :class="{ active: activeTab === 'refunded' }" @click="activeTab = 'refunded'">
+                {{ lang === 'fr' ? 'Remboursés' : 'Refunded' }}<span class="tab-count">{{ refundedCount }}</span>
+            </div>
+        </div>
+
+        <!-- Ticket list -->
+        <div v-if="filteredTickets.length">
+            <div class="ticket-card" v-for="t in filteredTickets" :key="t.id">
+                <div class="ticket-qr">
+                    <div class="qr-code">
+                        <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="2" width="14" height="14" fill="#1a1a1a"/><rect x="4" y="4" width="10" height="10" fill="white"/><rect x="6" y="6" width="6" height="6" fill="#1a1a1a"/>
+                            <rect x="34" y="2" width="14" height="14" fill="#1a1a1a"/><rect x="36" y="4" width="10" height="10" fill="white"/><rect x="38" y="6" width="6" height="6" fill="#1a1a1a"/>
+                            <rect x="2" y="34" width="14" height="14" fill="#1a1a1a"/><rect x="4" y="36" width="10" height="10" fill="white"/><rect x="6" y="38" width="6" height="6" fill="#1a1a1a"/>
+                            <rect v-for="dot in qrDots(t.id)" :key="dot.x+'-'+dot.y" :x="dot.x" :y="dot.y" width="3" height="3" fill="#1a1a1a"/>
+                        </svg>
+                    </div>
+                    <div class="ticket-code">{{ t.id_code }}</div>
+                </div>
+                <div class="ticket-info">
+                    <div class="ticket-event-name">{{ t.event_name || ('Event #' + t.event_id) }}</div>
+                    <div class="ticket-details">
+                        <span><v-icon size="x-small">mdi-calendar</v-icon> {{ formatDate(t.created_at) }}</span>
+                        <span><v-icon size="x-small">mdi-seat</v-icon> {{ t.type }}</span>
+                        <span v-if="t.scanned_at"><v-icon size="x-small">mdi-qrcode-scan</v-icon> {{ lang === 'fr' ? 'Scanné' : 'Scanned' }} {{ formatDate(t.scanned_at) }}</span>
+                    </div>
+                    <span class="ticket-type" :class="'type-' + t.type.toLowerCase()">{{ t.type }}</span>
+                </div>
+                <div class="ticket-status-col">
+                    <div class="ticket-status" :class="'status-' + t.status">
+                        {{ statusLabel(t.status) }}
+                    </div>
+                    <div class="ticket-price">{{ formatPrice(t.price) }} <small>Ar</small></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="empty-state" v-else>
+            <div class="icon">🎫</div>
+            <h3>{{ lang === 'fr' ? 'Aucun billet' : 'No tickets' }}</h3>
+            <p>{{ lang === 'fr' ? 'Vous n\'avez pas encore de billets dans cette catégorie.' : 'You don\'t have any tickets in this category yet.' }}</p>
+            <a href="ticketmada-landing.html" class="empty-btn"><v-icon size="small">mdi-magnify</v-icon> {{ lang === 'fr' ? 'Explorer les événements' : 'Explore events' }}</a>
+        </div>
+    </div>
+</div>
+
+<script src="../js/api-client.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
+<script>
+const { createApp } = Vue;
+const app = createApp({
+    data() {
+        return {
+            lang: localStorage.getItem('ticketmada-lang') || 'fr',
+            activeTab: 'all',
+            tickets: [],
+            userName: ''
+        };
+    },
+    computed: {
+        activeCount() { return this.tickets.filter(t => t.status === 'active').length; },
+        scannedCount() { return this.tickets.filter(t => t.status === 'scanned').length; },
+        refundedCount() { return this.tickets.filter(t => t.status === 'refunded').length; },
+        totalSpent() { return this.tickets.reduce((s, t) => s + (t.price || 0), 0); },
+        filteredTickets() {
+            if (this.activeTab === 'all') return this.tickets;
+            return this.tickets.filter(t => t.status === this.activeTab);
+        }
+    },
+    methods: {
+        formatDate(d) { if (!d) return ''; return new Date(d).toLocaleDateString(this.lang === 'fr' ? 'fr-FR' : 'en-US', { day:'numeric',month:'short',year:'numeric' }); },
+        formatPrice(p) { return p ? p.toLocaleString('fr-FR') : '0'; },
+        statusLabel(s) {
+            const labels = { active: { fr:'Actif', en:'Active' }, scanned: { fr:'Utilisé', en:'Used' }, refunded: { fr:'Remboursé', en:'Refunded' } };
+            return (labels[s] || labels.active)[this.lang];
+        },
+        qrDots(id) {
+            // Generate pseudo-random QR pattern from ticket ID
+            const dots = [];
+            const seed = typeof id === 'number' ? id : (id || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+            for (let i = 0; i < 40; i++) {
+                const x = 18 + ((seed * (i + 1) * 7) % 28);
+                const y = 18 + ((seed * (i + 1) * 13) % 28);
+                if (x < 34 || y < 16 || (x < 16 && y > 32)) continue;
+                dots.push({ x, y });
+            }
+            return dots;
+        },
+        async loadTickets() {
+            const user = window.api?.getUser();
+            if (user) {
+                this.userName = user.name;
+                try {
+                    const r = await window.api.get('/tickets?buyer_id=' + user.id);
+                    if (r.tickets) { this.tickets = r.tickets; return; }
+                } catch (e) {}
+            }
+            // Demo fallback
+            this.userName = this.userName || 'Sedra';
+            this.tickets = [
+                { id: 1, id_code: 'TKT-008501', event_id: 2, event_name: 'Festival Donia 2026', type: 'VIP', price: 200000, status: 'active', created_at: '2026-03-03', scanned_at: null },
+                { id: 5, id_code: 'TKT-001234', event_id: 1, event_name: 'Dama Live - Tournée 2026', type: 'VIP', price: 150000, status: 'active', created_at: '2026-03-01', scanned_at: null },
+                { id: 2, id_code: 'TKT-008500', event_id: 2, event_name: 'Festival Donia 2026', type: 'Standard', price: 80000, status: 'scanned', created_at: '2026-03-02', scanned_at: '2026-03-02 14:30:00' },
+                { id: 6, id_code: 'TKT-001235', event_id: 2, event_name: 'Festival Donia 2026', type: 'Standard', price: 80000, status: 'scanned', created_at: '2026-02-28', scanned_at: '2026-02-28 16:45:00' },
+                { id: 3, id_code: 'TKT-008499', event_id: 9, event_name: 'Donia Beach Party', type: 'Standard', price: 50000, status: 'active', created_at: '2026-03-02', scanned_at: null },
+                { id: 7, id_code: 'TKT-001236', event_id: 3, event_name: 'CNaPS vs Fosa Juniors', type: 'Standard', price: 15000, status: 'refunded', created_at: '2026-02-27', scanned_at: null }
+            ];
+        }
+    },
+    mounted() {
+        document.documentElement.lang = this.lang;
+        this.loadTickets();
+    }
+});
+app.use(Vuetify.createVuetify());
+app.mount('#app');
+</script>
+</body>
+</html>

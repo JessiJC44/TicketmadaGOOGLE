@@ -1,0 +1,53 @@
+name: tmscanner
+description: TMscanner — Application mobile de scan QR pour TicketMada
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # QR Scanner
+  mobile_scanner: ^5.2.3
+
+  # HTTP Client
+  dio: ^5.7.0
+
+  # Local Storage
+  shared_preferences: ^2.3.4
+
+  # Audio Feedback
+  audioplayers: ^6.1.0
+
+  # Haptic Feedback
+  vibration: ^2.0.0
+
+  # Network Detection
+  connectivity_plus: ^6.1.1
+
+  # Charts
+  fl_chart: ^0.69.2
+
+  # Google Fonts (Syne + DM Sans)
+  google_fonts: ^6.2.1
+
+  # Navigation
+  go_router: ^14.6.2
+
+  # Icons
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/sounds/
+    - assets/images/

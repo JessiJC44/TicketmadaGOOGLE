@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicketMada - Plateforme de Billetterie Événementielle</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-cream: #FAF7F2;
+            --bg-dark: #1a1a1a;
+            --accent-coral: #FF6B4A;
+            --accent-yellow: #FECA57;
+            --accent-mint: #00D9A5;
+            --accent-blue: #4A90FF;
+            --text-dark: #1a1a1a;
+            --text-light: #666;
+            --border-dark: #1a1a1a;
+            --shadow-brutal: 6px 6px 0px #1a1a1a;
+            --shadow-brutal-lg: 10px 10px 0px #1a1a1a;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg-cream); color: var(--text-dark); overflow-x: hidden; }
+        
+        @keyframes vibrate {
+            0%, 100% { transform: rotate(-2deg) translate(0, 0); }
+            25% { transform: rotate(-2deg) translate(-1px, -0.5px); }
+            50% { transform: rotate(-2deg) translate(1px, 0.5px); }
+            75% { transform: rotate(-2deg) translate(-0.5px, 1px); }
+        }
+        
+        .hero-badge { animation: vibrate 1.8s ease-in-out 0.3s; }
+        .hero-badge:hover { animation: vibrate 1.2s ease-in-out infinite; }
+        
+        .brutal-card { background: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal); transition: all 0.2s ease; }
+        .brutal-card:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
+        
+        .brutal-btn { display: inline-flex; align-items: center; gap: 10px; padding: 16px 32px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; border: 3px solid var(--border-dark); cursor: pointer; transition: all 0.15s ease; text-decoration: none; }
+        .brutal-btn-primary { background: var(--accent-coral); color: white; box-shadow: var(--shadow-brutal); }
+        .brutal-btn-primary:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
+        .brutal-btn-secondary { background: white; color: var(--text-dark); box-shadow: var(--shadow-brutal); }
+        .brutal-btn-secondary:hover { background: var(--accent-yellow); transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
+        .brutal-btn-small { padding: 10px 20px; font-size: 0.85rem; }
+        
+        .lang-toggle { width: 45px; height: 45px; background: white; border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 1.4rem; box-shadow: 3px 3px 0px #1a1a1a; }
+        .lang-toggle:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0px #1a1a1a; }
+        
+        .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 20px 40px; background: var(--bg-cream); border-bottom: 3px solid var(--border-dark); }
+        .navbar-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+        .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); }
+        .logo-box { width: 50px; height: 50px; background: var(--accent-coral); border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transform: rotate(-3deg); }
+        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; }
+        .logo-text span { color: var(--accent-coral); }
+        .nav-links { display: flex; gap: 40px; list-style: none; }
+        .nav-links a { font-family: 'Syne', sans-serif; font-weight: 600; color: var(--text-dark); text-decoration: none; position: relative; padding: 5px 0; }
+        .nav-links a::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 3px; background: var(--accent-coral); transition: width 0.3s ease; }
+        .nav-links a:hover::after { width: 100%; }
+        .nav-cta { display: flex; gap: 16px; align-items: center; }
+        .nav-search { width: 45px; height: 45px; background: white; border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; }
+        .nav-search:hover { background: var(--accent-yellow); transform: translate(-2px, -2px); box-shadow: 4px 4px 0px #1a1a1a; }
+        
+        .hero { min-height: 100vh; padding: 140px 40px 80px; display: flex; align-items: center; position: relative; overflow: hidden; }
+        .hero-bg-shapes { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+        .shape { position: absolute; border: 3px solid var(--border-dark); }
+        .shape-1 { width: 200px; height: 200px; background: var(--accent-yellow); top: 15%; right: 5%; transform: rotate(15deg); }
+        .shape-2 { width: 150px; height: 150px; background: var(--accent-mint); bottom: 20%; left: 5%; border-radius: 50%; }
+        .shape-3 { width: 100px; height: 100px; background: var(--accent-coral); top: 40%; left: 15%; transform: rotate(-10deg); }
+        .shape-4 { width: 80px; height: 80px; background: var(--accent-blue); bottom: 30%; right: 15%; border-radius: 50%; }
+        .hero-inner { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; position: relative; z-index: 1; }
+        .hero-badge { display: inline-block; background: var(--accent-yellow); border: 3px solid var(--border-dark); padding: 10px 20px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 30px; transform: rotate(-2deg); }
+        .hero-title { font-family: 'Syne', sans-serif; font-size: 4.5rem; font-weight: 800; line-height: 1.05; margin-bottom: 30px; }
+        .hero-title .highlight { position: relative; display: inline-block; }
+        .hero-title .highlight::after { content: ''; position: absolute; bottom: 5px; left: 0; width: 100%; height: 20px; background: var(--accent-coral); z-index: -1; transform: skewX(-3deg); }
+        .hero-description { font-size: 1.3rem; color: var(--text-light); line-height: 1.7; margin-bottom: 40px; max-width: 550px; }
+        .hero-actions { display: flex; gap: 20px; margin-bottom: 60px; }
+        .hero-stats { display: flex; gap: 50px; padding-top: 40px; border-top: 3px solid var(--border-dark); }
+        .stat { text-align: left; }
+        .stat-number { font-family: 'Syne', sans-serif; font-size: 3rem; font-weight: 800; color: var(--accent-coral); }
+        .stat-label { font-size: 0.95rem; color: var(--text-light); margin-top: 5px; }
+        
+        .hero-visual { position: relative; }
+        .event-cards-stack { position: relative; height: 500px; }
+        .event-card { position: absolute; width: 320px; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .event-card:nth-child(1) { top: 0; right: 20px; z-index: 3; transform: rotate(-3deg); }
+        .event-card:nth-child(2) { top: 80px; right: 120px; z-index: 2; transform: rotate(2deg); }
+        .event-card:nth-child(3) { top: 160px; right: 40px; z-index: 1; transform: rotate(-5deg); }
+        .event-card:hover { transform: translateY(-10px) rotate(0deg) scale(1.02); z-index: 10; box-shadow: 12px 12px 0px #1a1a1a; }
+        .event-card-image { width: 100%; height: 180px; object-fit: cover; border-bottom: 3px solid var(--border-dark); }
+        .event-card-content { padding: 20px; background: white; }
+        .event-card-date { display: inline-block; background: var(--accent-coral); border: 2px solid var(--border-dark); padding: 6px 14px; font-family: 'Syne', sans-serif; font-size: 0.75rem; font-weight: 700; margin-bottom: 12px; transform: rotate(-1deg); }
+        .event-card-title { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; }
+        .event-card-venue { color: var(--text-light); font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
+        .event-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 16px; border-top: 2px dashed var(--border-dark); }
+        .event-price { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; }
+        .event-price span { font-size: 0.8rem; font-weight: 500; color: var(--text-light); }
+        
+        .categories { padding: 100px 40px; background: white; border-top: 3px solid var(--border-dark); border-bottom: 3px solid var(--border-dark); }
+        .categories-inner { max-width: 1400px; margin: 0 auto; }
+        .categories-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 50px; }
+        .categories-header h2 { font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; }
+        .categories-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; }
+        .category-card { padding: 30px; text-align: center; cursor: pointer; }
+        .category-icon { width: 80px; height: 80px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; border: 3px solid var(--border-dark); }
+        .category-card:nth-child(1) .category-icon { background: var(--accent-coral); transform: rotate(-5deg); }
+        .category-card:nth-child(2) .category-icon { background: var(--accent-yellow); transform: rotate(3deg); }
+        .category-card:nth-child(3) .category-icon { background: var(--accent-mint); transform: rotate(-3deg); }
+        .category-card:nth-child(4) .category-icon { background: var(--accent-blue); transform: rotate(5deg); }
+        .category-card h3 { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; }
+        .category-card p { color: var(--text-light); font-size: 0.9rem; }
+        
+        .events { padding: 100px 40px; }
+        .events-inner { max-width: 1400px; margin: 0 auto; }
+        .section-header { max-width: 800px; margin: 0 auto 60px; text-align: center; }
+        .section-badge { display: inline-block; background: var(--accent-mint); border: 3px solid var(--border-dark); padding: 10px 25px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 25px; }
+        .section-title { font-family: 'Syne', sans-serif; font-size: 3rem; font-weight: 800; margin-bottom: 20px; }
+        .section-description { font-size: 1.2rem; color: var(--text-light); line-height: 1.7; }
+        .events-filter { display: flex; justify-content: center; gap: 15px; margin-bottom: 50px; }
+        .filter-btn { background: white; border: 3px solid var(--border-dark); padding: 12px 28px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.2s ease; box-shadow: 4px 4px 0px #1a1a1a; }
+        .filter-btn:hover, .filter-btn.active { background: var(--accent-coral); color: white; transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
+        .events-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; }
+        .event-item { overflow: hidden; }
+        .event-image-container { position: relative; height: 200px; overflow: hidden; border-bottom: 3px solid var(--border-dark); }
+        .event-image-container img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+        .event-item:hover .event-image-container img { transform: scale(1.1); }
+        .event-badge { position: absolute; top: 15px; left: 15px; background: var(--accent-yellow); border: 2px solid var(--border-dark); padding: 6px 14px; font-family: 'Syne', sans-serif; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; transform: rotate(-2deg); }
+        .event-wishlist { position: absolute; top: 15px; right: 15px; width: 40px; height: 40px; background: white; border: 2px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; }
+        .event-wishlist:hover { background: var(--accent-coral); color: white; }
+        .event-info { padding: 20px; background: white; }
+        .event-date-location { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; color: var(--text-light); font-size: 0.85rem; }
+        .event-info h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; }
+        .event-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 2px dashed var(--border-dark); }
+        .event-footer .price { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 800; }
+        .event-footer .price span { font-size: 0.8rem; font-weight: 400; color: var(--text-light); }
+        
+        .features { padding: 100px 40px; background: var(--bg-dark); color: white; border-top: 3px solid var(--border-dark); border-bottom: 3px solid var(--border-dark); }
+        .features .section-badge { background: var(--accent-coral); color: white; }
+        .features .section-title { color: white; }
+        .features .section-description { color: rgba(255,255,255,0.7); }
+        .features-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+        .feature-card { background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); padding: 40px; transition: all 0.3s ease; }
+        .feature-card:hover { background: rgba(255,255,255,0.1); transform: translateY(-5px); }
+        .feature-icon { width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 3px solid white; margin-bottom: 25px; }
+        .feature-card:nth-child(1) .feature-icon { background: var(--accent-coral); transform: rotate(-5deg); }
+        .feature-card:nth-child(2) .feature-icon { background: var(--accent-yellow); transform: rotate(3deg); }
+        .feature-card:nth-child(3) .feature-icon { background: var(--accent-mint); transform: rotate(-3deg); }
+        .feature-card:nth-child(4) .feature-icon { background: var(--accent-blue); transform: rotate(5deg); }
+        .feature-card:nth-child(5) .feature-icon { background: var(--accent-yellow); transform: rotate(-2deg); }
+        .feature-card:nth-child(6) .feature-icon { background: var(--accent-coral); transform: rotate(4deg); }
+        .feature-card h3 { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 700; margin-bottom: 15px; }
+        .feature-card p { color: rgba(255,255,255,0.7); line-height: 1.7; }
+        
+        .cta { padding: 120px 40px; background: var(--accent-yellow); border-top: 3px solid var(--border-dark); border-bottom: 3px solid var(--border-dark); text-align: center; }
+        .cta-container { max-width: 900px; margin: 0 auto; }
+        .cta-badge { display: inline-block; background: white; border: 3px solid var(--border-dark); padding: 10px 25px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 25px; }
+        .cta-title { font-family: 'Syne', sans-serif; font-size: 3.5rem; font-weight: 800; margin-bottom: 25px; line-height: 1.1; }
+        .cta-description { font-size: 1.3rem; color: var(--text-dark); margin-bottom: 50px; opacity: 0.8; }
+        .cta-actions { display: flex; gap: 20px; justify-content: center; }
+        .cta .brutal-btn-primary { background: var(--bg-dark); }
+        
+        .footer { background: var(--bg-dark); color: white; padding: 80px 40px 40px; border-top: 3px solid var(--border-dark); }
+        .footer-inner { max-width: 1400px; margin: 0 auto; }
+        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 60px; margin-bottom: 60px; }
+        .footer-brand .logo-text { color: white; }
+        .footer-brand p { color: rgba(255,255,255,0.6); margin: 25px 0; line-height: 1.7; }
+        .social-links { display: flex; gap: 12px; }
+        .social-link { width: 45px; height: 45px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: white; text-decoration: none; transition: all 0.3s ease; }
+        .social-link:hover { background: var(--accent-coral); border-color: var(--accent-coral); }
+        .footer-column h4 { font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 25px; }
+        .footer-column ul { list-style: none; }
+        .footer-column li { margin-bottom: 12px; }
+        .footer-column a { color: rgba(255,255,255,0.6); text-decoration: none; transition: color 0.3s ease; }
+        .footer-column a:hover { color: var(--accent-coral); }
+        .footer-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); font-size: 0.9rem; }
+        .footer-legal { display: flex; gap: 30px; }
+        .footer-legal a { color: rgba(255,255,255,0.5); text-decoration: none; }
+        .footer-legal a:hover { color: var(--accent-coral); }
+        
+        .search-modal, .auth-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26, 26, 26, 0.95); z-index: 2000; display: none; align-items: center; justify-content: center; }
+        .search-modal { align-items: flex-start; padding-top: 150px; }
+        .search-modal.active, .auth-modal.active { display: flex; }
+        .search-container { width: 100%; max-width: 700px; padding: 0 20px; }
+        .search-input { width: 100%; background: white; border: 3px solid var(--border-dark); padding: 24px 60px 24px 70px; font-family: 'DM Sans', sans-serif; font-size: 1.2rem; color: var(--text-dark); outline: none; box-shadow: var(--shadow-brutal-lg); }
+        .search-input::placeholder { color: var(--text-light); }
+        .search-icon { position: absolute; left: 24px; top: 50%; transform: translateY(-50%); color: var(--text-light); font-size: 1.4rem; }
+        .search-close, .auth-close { position: absolute; width: 50px; height: 50px; background: white; border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.5rem; font-family: 'Syne', sans-serif; }
+        .search-close { top: 40px; right: 40px; }
+        .auth-close { top: -60px; right: 0; }
+        .auth-card { width: 100%; max-width: 480px; padding: 50px; position: relative; }
+        .auth-header { text-align: center; margin-bottom: 40px; }
+        .auth-header h2 { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; margin-bottom: 10px; }
+        .auth-header p { color: var(--text-light); }
+        .social-auth { display: flex; flex-direction: column; gap: 14px; margin-bottom: 30px; }
+        .social-auth-btn { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 16px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s ease; border: 3px solid var(--border-dark); }
+        .google-btn { background: white; color: var(--text-dark); box-shadow: 4px 4px 0px #1a1a1a; }
+        .google-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
+        .facebook-btn { background: #1877F2; color: white; box-shadow: 4px 4px 0px #1a1a1a; }
+        .facebook-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
+        .divider { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; color: var(--text-light); font-family: 'Syne', sans-serif; font-weight: 600; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 3px; background: var(--border-dark); }
+        .auth-form { display: flex; flex-direction: column; gap: 20px; }
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .form-group label { font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 600; }
+        .form-group input { background: white; border: 3px solid var(--border-dark); padding: 16px 20px; font-family: 'DM Sans', sans-serif; font-size: 1rem; color: var(--text-dark); outline: none; transition: all 0.2s ease; }
+        .form-group input:focus { box-shadow: 4px 4px 0px var(--accent-coral); }
+        .auth-submit { margin-top: 10px; width: 100%; justify-content: center; }
+        .auth-footer { text-align: center; margin-top: 24px; color: var(--text-light); }
+        .auth-footer a { color: var(--accent-coral); text-decoration: none; font-weight: 600; }
+        
+        @media (max-width: 1200px) {
+            .hero-inner { grid-template-columns: 1fr; text-align: center; }
+            .hero-description { margin: 0 auto 40px; }
+            .hero-actions, .hero-stats { justify-content: center; }
+            .hero-visual { display: none; }
+            .events-grid, .categories-grid, .features-grid { grid-template-columns: repeat(2, 1fr); }
+            .footer-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .hero-title { font-size: 2.8rem; }
+            .section-title { font-size: 2.2rem; }
+            .events-grid, .categories-grid, .features-grid, .footer-grid { grid-template-columns: 1fr; }
+            .cta-title { font-size: 2.5rem; }
+            .hero-stats { flex-direction: column; gap: 25px; }
+            .events-filter { flex-wrap: wrap; }
+            .footer-bottom { flex-direction: column; gap: 20px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+<script src="../js/site-config.js"></script>
+
+    <div id="app">
+        <nav class="navbar">
+            <div class="navbar-inner">
+                <a href="ticketmada-landing.html" class="logo">
+                    <div class="logo-box">🎫</div>
+                    <span class="logo-text">Ticket<span>Mada</span></span>
+                </a>
+                <ul class="nav-links">
+                    <li><a href="#events">{{ t.nav.events }}</a></li>
+                    <li><a href="#concerts">{{ t.nav.concerts }}</a></li>
+                    <li><a href="#festivals">{{ t.nav.festivals }}</a></li>
+                    <li><a href="#sports">{{ t.nav.sports }}</a></li>
+                    <li><a href="ticketmada-organisateur.html">{{ t.nav.organizers }}</a></li>
+                </ul>
+                <div class="nav-cta">
+                    <button class="lang-toggle" @click="toggleLang" :title="lang === 'fr' ? 'Switch to English' : 'Passer en Français'">{{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}</button>
+                    <button class="nav-search" @click="showSearch = true"><v-icon>mdi-magnify</v-icon></button>
+                    <template v-if="!isLoggedIn">
+                        <a href="#" class="brutal-btn brutal-btn-secondary brutal-btn-small" @click.prevent="openAuth('login')">{{ t.nav.login }}</a>
+                        <a href="#" class="brutal-btn brutal-btn-primary brutal-btn-small" @click.prevent="openAuth('register')">{{ t.nav.signup }}</a>
+                    </template>
+                    <template v-else>
+                        <div style="display:flex;align-items:center;gap:10px;cursor:pointer;position:relative;" @click="showProfileMenu = !showProfileMenu">
+                            <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;border:2px solid #1a1a1a;" v-html="userAvatar"></div>
+                            <span style="font-weight:600;font-size:0.85rem;">{{ userName }}</span>
+                        </div>
+                        <div v-if="showProfileMenu" style="position:absolute;top:60px;right:20px;background:white;border:3px solid #1a1a1a;box-shadow:6px 6px 0 #1a1a1a;padding:10px 0;z-index:100;min-width:180px;">
+                            <a href="ticketmada-mytickets.html" style="display:block;padding:10px 20px;color:#1a1a1a;text-decoration:none;font-size:0.85rem;font-weight:500;">🎟️ Mes billets</a>
+                            <a href="ticketmada-search.html" style="display:block;padding:10px 20px;color:#1a1a1a;text-decoration:none;font-size:0.85rem;font-weight:500;">🔍 Recherche</a>
+                            <div style="height:1px;background:#eee;margin:4px 0;"></div>
+                            <a href="#" @click.prevent="handleLogout" style="display:block;padding:10px 20px;color:#e74c3c;text-decoration:none;font-size:0.85rem;font-weight:500;">🚪 Déconnexion</a>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </nav>
+        
+        <section class="hero">
+            <div class="hero-bg-shapes"><div class="shape shape-1"></div><div class="shape shape-2"></div><div class="shape shape-3"></div><div class="shape shape-4"></div></div>
+            <div class="hero-inner">
+                <div class="hero-content">
+                    <div class="hero-badge">{{ t.hero.badge }}</div>
+                    <h1 class="hero-title" v-html="t.hero.title"></h1>
+                    <p class="hero-description">{{ t.hero.description }}</p>
+                    <div class="hero-actions">
+                        <a href="#events" class="brutal-btn brutal-btn-primary">{{ t.hero.cta1 }}<v-icon>mdi-arrow-right</v-icon></a>
+                        <a href="ticketmada-organisateur.html" class="brutal-btn brutal-btn-secondary">{{ t.hero.cta2 }}</a>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat"><div class="stat-number counter" data-target="500" data-suffix="K+">0</div><div class="stat-label">{{ t.hero.stat1 }}</div></div>
+                        <div class="stat"><div class="stat-number counter" data-target="2500" data-suffix="+">0</div><div class="stat-label">{{ t.hero.stat2 }}</div></div>
+                        <div class="stat"><div class="stat-number counter" data-target="150" data-suffix="K+">0</div><div class="stat-label">{{ t.hero.stat3 }}</div></div>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="event-cards-stack">
+                        <div class="event-card brutal-card" v-for="(event, index) in featuredEvents" :key="index">
+                            <img :src="event.image" :alt="event.title" class="event-card-image">
+                            <div class="event-card-content">
+                                <span class="event-card-date">{{ event.date }}</span>
+                                <h3 class="event-card-title">{{ event.title }}</h3>
+                                <p class="event-card-venue"><v-icon size="small">mdi-map-marker</v-icon>{{ event.venue }}</p>
+                                <div class="event-card-footer"><span class="event-price">{{ event.price }} <span>Ar</span></span><a :href="'ticketmada-event.html?id=' + event.id" class="brutal-btn brutal-btn-primary brutal-btn-small">{{ t.buttons.book }}</a></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="categories">
+            <div class="categories-inner">
+                <div class="categories-header"><h2>{{ t.categories.title }}</h2><a href="#events" class="brutal-btn brutal-btn-secondary brutal-btn-small">{{ t.categories.viewAll }}</a></div>
+                <div class="categories-grid">
+                    <div class="category-card brutal-card" v-for="(category, index) in categories" :key="index">
+                        <div class="category-icon">{{ category.icon }}</div>
+                        <h3>{{ t.categories.items[index] }}</h3>
+                        <p><span class="counter" :data-target="category.countNum">0</span> {{ t.categories.events }}</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="events" id="events">
+            <div class="events-inner">
+                <div class="section-header"><div class="section-badge">{{ t.eventsSection.badge }}</div><h2 class="section-title">{{ t.eventsSection.title }}</h2><p class="section-description">{{ t.eventsSection.description }}</p></div>
+                <div class="events-filter">
+                    <button class="filter-btn" :class="{ active: activeCategory === 'all' }" @click="activeCategory = 'all'">{{ t.filters.all }}</button>
+                    <button class="filter-btn" :class="{ active: activeCategory === 'concerts' }" @click="activeCategory = 'concerts'">{{ t.filters.concerts }}</button>
+                    <button class="filter-btn" :class="{ active: activeCategory === 'festivals' }" @click="activeCategory = 'festivals'">{{ t.filters.festivals }}</button>
+                    <button class="filter-btn" :class="{ active: activeCategory === 'sports' }" @click="activeCategory = 'sports'">{{ t.filters.sports }}</button>
+                </div>
+                <div class="events-grid">
+                    <div class="event-item brutal-card" v-for="event in filteredEvents" :key="event.id">
+                        <div class="event-image-container">
+                            <img :src="event.image" :alt="event.title">
+                            <span class="event-badge" v-if="event.badgeKey">{{ t.badges[event.badgeKey] }}</span>
+                            <button class="event-wishlist"><v-icon size="small">mdi-heart-outline</v-icon></button>
+                        </div>
+                        <div class="event-info">
+                            <div class="event-date-location"><span><v-icon size="x-small">mdi-calendar</v-icon> {{ event.date }}</span><span><v-icon size="x-small">mdi-map-marker</v-icon> {{ event.location }}</span></div>
+                            <h3>{{ event.title }}</h3>
+                            <div class="event-footer"><span class="price">{{ event.price }} <span>Ar</span></span><a :href="'ticketmada-event.html?id=' + event.id" class="brutal-btn brutal-btn-primary brutal-btn-small">{{ t.buttons.buy }}</a></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="features">
+            <div class="section-header"><div class="section-badge">{{ t.features.badge }}</div><h2 class="section-title">{{ t.features.title }}</h2><p class="section-description">{{ t.features.description }}</p></div>
+            <div class="features-grid">
+                <div class="feature-card" v-for="(feature, index) in t.features.items" :key="index">
+                    <div class="feature-icon">{{ featureIcons[index] }}</div>
+                    <h3>{{ feature.title }}</h3>
+                    <p>{{ feature.description }}</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="cta">
+            <div class="cta-container">
+                <div class="cta-badge">{{ t.cta.badge }}</div>
+                <h2 class="cta-title">{{ t.cta.title }}</h2>
+                <p class="cta-description">{{ t.cta.description }}</p>
+                <div class="cta-actions">
+                    <a href="ticketmada-organisateur.html" class="brutal-btn brutal-btn-primary">{{ t.cta.cta1 }} <v-icon>mdi-arrow-right</v-icon></a>
+                    <a href="ticketmada-organisateur.html" class="brutal-btn brutal-btn-secondary">{{ t.cta.cta2 }}</a>
+                </div>
+            </div>
+        </section>
+        
+        <footer class="footer">
+            <div class="footer-inner">
+                <div class="footer-grid">
+                    <div class="footer-brand">
+                        <a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
+                        <p>{{ t.footer.description }}</p>
+                        <div class="social-links"><a href="#" class="social-link"><v-icon>mdi-facebook</v-icon></a><a href="#" class="social-link"><v-icon>mdi-instagram</v-icon></a><a href="#" class="social-link"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.045 4.126H5.078z"/></svg></a><a href="#" class="social-link"><v-icon>mdi-youtube</v-icon></a></div>
+                    </div>
+                    <div class="footer-column"><h4>{{ t.footer.events }}</h4><ul><li><a href="#events" @click="activeCategory = 'concerts'">{{ t.nav.concerts }}</a></li><li><a href="#events" @click="activeCategory = 'festivals'">{{ t.nav.festivals }}</a></li><li><a href="#events" @click="activeCategory = 'sports'">{{ t.nav.sports }}</a></li></ul></div>
+                    <div class="footer-column"><h4>{{ t.nav.organizers }}</h4><ul><li><a href="ticketmada-organisateur.html">{{ t.footer.createEvent }}</a></li><li><a href="ticketmada-organisateur.html#tarifs">{{ t.footer.pricing }}</a></li></ul></div>
+                    <div class="footer-column"><h4>{{ t.footer.support }}</h4><ul><li><a href="#">{{ t.footer.helpCenter }}</a></li><li><a href="#">FAQ</a></li></ul></div>
+                    <div class="footer-column"><h4>{{ t.footer.company }}</h4><ul><li><a href="#">{{ t.footer.about }}</a></li><li><a href="#">{{ t.footer.careers }}</a></li></ul></div>
+                </div>
+                <div class="footer-bottom"><p>© 2026 TicketMada. {{ t.footer.rights }}</p><div class="footer-legal"><a href="#">{{ t.footer.terms }}</a><a href="#">{{ t.footer.privacy }}</a></div></div>
+            </div>
+        </footer>
+        
+                    <div class="search-container">
+                        <div style="position: relative;">
+                            <v-icon class="search-icon">mdi-magnify</v-icon>
+                            <input type="text" class="search-input" :placeholder="t.search.placeholder" v-model="searchQuery" @keyup.esc="showSearch = false" @keyup.enter="goToSearch" @input="fetchSuggestions" ref="searchInput">
+                        </div>
+                        <div v-if="suggestions.length" style="margin-top: 10px; background: white; border: 3px solid #1a1a1a; box-shadow: 6px 6px 0 #1a1a1a;">
+                            <div v-for="s in suggestions" :key="s.id" @click="goToEvent(s.id)" style="padding: 15px 20px; border-bottom: 2px solid #eee; cursor: pointer; display: flex; align-items: center; gap: 15px;">
+                                <span style="font-size: 1.2rem;">{{ s.emoji || '🎫' }}</span>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 700; font-size: 0.95rem;">{{ s.name }}</div>
+                                    <div style="font-size: 0.8rem; color: #666;">{{ s.venue }} · {{ s.category }}</div>
+                                </div>
+                                <v-icon size="small">mdi-chevron-right</v-icon>
+                            </div>
+                        </div>
+                    </div>
+        
+        <div class="auth-modal" :class="{ active: showAuth }">
+            <div class="auth-card brutal-card">
+                <div class="auth-close" @click="showAuth = false">✕</div>
+                <div class="auth-header"><h2>{{ authMode === 'login' ? t.auth.loginTitle : t.auth.signupTitle }}</h2><p>{{ authMode === 'login' ? t.auth.loginSubtitle : t.auth.signupSubtitle }}</p></div>
+                <div class="social-auth">
+                    <button class="social-auth-btn google-btn" @click="loginWith('google')"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>{{ t.auth.continueGoogle }}</button>
+                    <button class="social-auth-btn facebook-btn" @click="loginWith('facebook')"><v-icon>mdi-facebook</v-icon>{{ t.auth.continueFacebook }}</button>
+                </div>
+                <div class="divider">{{ t.auth.or }}</div>
+                <form class="auth-form" @submit.prevent="handleAuth">
+                    <div class="form-group" v-if="authMode === 'register'"><label>{{ t.auth.fullName }}</label><input type="text" :placeholder="t.auth.namePlaceholder" v-model="authForm.name"></div>
+                    <div class="form-group"><label>Email</label><input type="email" placeholder="votre@email.com" v-model="authForm.email"></div>
+                    <div class="form-group"><label>{{ t.auth.password }}</label><input type="password" placeholder="••••••••" v-model="authForm.password"></div>
+                    <button type="submit" class="brutal-btn brutal-btn-primary auth-submit">{{ authMode === 'login' ? t.auth.loginBtn : t.auth.signupBtn }}</button>
+                </form>
+                <p class="auth-footer"><template v-if="authMode === 'login'">{{ t.auth.noAccount }} <a href="#" @click.prevent="authMode = 'register'">{{ t.auth.signupLink }}</a></template><template v-else>{{ t.auth.hasAccount }} <a href="#" @click.prevent="authMode = 'login'">{{ t.auth.loginLink }}</a></template></p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../js/api-client.js"></script>
+    <script src="../js/oauth-simulation.js"></script>
+    <script src="../js/profile-menu.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
+    <script>
+        const translations = {
+            fr: {
+                nav: { events: 'Événements', concerts: 'Concerts', festivals: 'Festivals', sports: 'Sports', organizers: 'Organisateurs', login: 'Connexion', signup: "S'inscrire" },
+                hero: { badge: '🎉 La billetterie #1 à Madagascar', title: 'Vivez des<br><span class="highlight">expériences</span><br>inoubliables', description: 'Découvrez et réservez vos billets pour les meilleurs concerts, festivals et événements. Paiement sécurisé, billets instantanés.', cta1: 'Explorer les événements', cta2: 'Créer un événement', stat1: 'Billets vendus', stat2: 'Événements', stat3: 'Utilisateurs' },
+                categories: { title: 'Explorez par catégorie', viewAll: 'Voir tout', events: 'événements', items: ['Concerts', 'Festivals', 'Sports', 'Théâtre'] },
+                eventsSection: { badge: 'À ne pas manquer', title: 'Événements populaires', description: 'Les événements les plus attendus à Madagascar' },
+                filters: { all: 'Tous', concerts: 'Concerts', festivals: 'Festivals', sports: 'Sports' },
+                badges: { popular: 'Populaire', festival: 'Festival', soon: 'Bientôt', vip: 'VIP' },
+                buttons: { book: 'Réserver', buy: 'Acheter' },
+                features: { badge: 'Pourquoi TicketMada', title: 'Simple, rapide, sécurisé', description: 'Tout ce dont vous avez besoin pour vos événements', items: [{ title: 'Billets instantanés', description: 'Recevez vos billets par email immédiatement. QR code sécurisé.' },{ title: 'Paiement sécurisé', description: 'Mobile Money, Visa, Mastercard. Transactions protégées.' },{ title: 'Application mobile', description: 'Gérez vos billets depuis votre smartphone.' },{ title: 'Support 24/7', description: 'Une équipe dédiée pour vous accompagner.' },{ title: 'Remboursement facile', description: 'Politique claire. Annulez facilement.' },{ title: 'Événements exclusifs', description: 'Préventes et offres réservées aux membres.' }] },
+                cta: { badge: 'Pour les organisateurs', title: 'Créez votre prochain événement', description: 'Gérez vos billets, suivez vos ventes en temps réel.', cta1: 'Commencer gratuitement', cta2: 'En savoir plus' },
+                footer: { description: 'La plateforme de billetterie #1 à Madagascar.', events: 'Événements', createEvent: 'Créer un événement', pricing: 'Tarification', support: 'Support', helpCenter: "Centre d'aide", company: 'Entreprise', about: 'À propos', careers: 'Carrières', rights: 'Tous droits réservés.', terms: 'CGU', privacy: 'Confidentialité' },
+                search: { placeholder: 'Rechercher un événement...' },
+                auth: { loginTitle: 'Connexion', signupTitle: 'Créer un compte', loginSubtitle: 'Heureux de vous revoir !', signupSubtitle: 'Rejoignez TicketMada', continueGoogle: 'Continuer avec Google', continueFacebook: 'Continuer avec Facebook', or: 'ou', fullName: 'Nom complet', namePlaceholder: 'Votre nom', password: 'Mot de passe', loginBtn: 'Se connecter', signupBtn: 'Créer mon compte', noAccount: 'Pas de compte ?', signupLink: "S'inscrire", hasAccount: 'Déjà un compte ?', loginLink: 'Se connecter' }
+            },
+            en: {
+                nav: { events: 'Events', concerts: 'Concerts', festivals: 'Festivals', sports: 'Sports', organizers: 'Organizers', login: 'Login', signup: 'Sign up' },
+                hero: { badge: '🎉 #1 Ticketing Platform in Madagascar', title: 'Live<br><span class="highlight">unforgettable</span><br>experiences', description: 'Discover and book tickets for the best concerts, festivals and events. Secure payment, instant tickets.', cta1: 'Explore events', cta2: 'Create an event', stat1: 'Tickets sold', stat2: 'Events', stat3: 'Users' },
+                categories: { title: 'Browse by category', viewAll: 'View all', events: 'events', items: ['Concerts', 'Festivals', 'Sports', 'Theater'] },
+                eventsSection: { badge: "Don't miss out", title: 'Popular events', description: 'The most anticipated events in Madagascar' },
+                filters: { all: 'All', concerts: 'Concerts', festivals: 'Festivals', sports: 'Sports' },
+                badges: { popular: 'Popular', festival: 'Festival', soon: 'Coming soon', vip: 'VIP' },
+                buttons: { book: 'Book', buy: 'Buy' },
+                features: { badge: 'Why TicketMada', title: 'Simple, fast, secure', description: 'Everything you need for your events', items: [{ title: 'Instant tickets', description: 'Receive your tickets by email immediately. Secure QR code.' },{ title: 'Secure payment', description: 'Mobile Money, Visa, Mastercard. Protected transactions.' },{ title: 'Mobile app', description: 'Manage your tickets from your smartphone.' },{ title: '24/7 Support', description: 'A dedicated team to assist you.' },{ title: 'Easy refunds', description: 'Clear policy. Cancel easily.' },{ title: 'Exclusive events', description: 'Pre-sales and member-only offers.' }] },
+                cta: { badge: 'For organizers', title: 'Create your next event', description: 'Manage your tickets, track sales in real-time.', cta1: 'Start for free', cta2: 'Learn more' },
+                footer: { description: 'The #1 ticketing platform in Madagascar.', events: 'Events', createEvent: 'Create an event', pricing: 'Pricing', support: 'Support', helpCenter: 'Help Center', company: 'Company', about: 'About', careers: 'Careers', rights: 'All rights reserved.', terms: 'Terms', privacy: 'Privacy' },
+                search: { placeholder: 'Search for an event...' },
+                auth: { loginTitle: 'Login', signupTitle: 'Create account', loginSubtitle: 'Welcome back!', signupSubtitle: 'Join TicketMada', continueGoogle: 'Continue with Google', continueFacebook: 'Continue with Facebook', or: 'or', fullName: 'Full name', namePlaceholder: 'Your name', password: 'Password', loginBtn: 'Log in', signupBtn: 'Create account', noAccount: 'No account?', signupLink: 'Sign up', hasAccount: 'Already have an account?', loginLink: 'Log in' }
+            }
+        };
+        
+        function animateCounters() {
+            document.querySelectorAll('.counter').forEach(counter => {
+                const target = parseInt(counter.getAttribute('data-target'));
+                const suffix = counter.getAttribute('data-suffix') || '';
+                let current = 0, started = false;
+                const observer = new IntersectionObserver(entries => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting && !started) {
+                            started = true;
+                            const update = () => { current += target / 60; if (current < target) { counter.textContent = Math.floor(current).toLocaleString() + suffix; setTimeout(update, 33); } else { counter.textContent = target.toLocaleString() + suffix; } };
+                            update();
+                        }
+                    });
+                }, { threshold: 0.5 });
+                observer.observe(counter);
+            });
+        }
+        
+        const { createApp } = Vue;
+        const app = createApp({
+            data() {
+                return {
+                    lang: localStorage.getItem('ticketmada-lang') || 'fr',
+                    isLoggedIn: false, showProfileMenu: false,
+                    showSearch: false, showAuth: false, authMode: 'login', searchQuery: '', activeCategory: 'all',
+                    suggestions: [],
+                    authForm: { name: '', email: '', password: '' },
+                    featureIcons: ['🎫', '🔒', '📱', '💬', '🔄', '⭐'],
+                    featuredEvents: [{ title: 'Dama & The Gang', date: '15 Avril 2026', venue: 'Stade Mahamasina', price: '50,000', image: 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=400&h=300&fit=crop' },{ title: 'Jazz Festival Tana', date: '22-24 Mai 2026', venue: 'Palais des Sports', price: '35,000', image: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&h=300&fit=crop' },{ title: 'Electronic Night', date: '8 Juin 2026', venue: 'Le Glacier', price: '25,000', image: 'https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=400&h=300&fit=crop' }],
+                    categories: [{ icon: '🎸', countNum: 156 },{ icon: '🎪', countNum: 42 },{ icon: '⚽', countNum: 89 },{ icon: '🎭', countNum: 34 }],
+                    events: [{ id: 1, title: 'Dama Live - Tournée Nationale 2026', date: '15 Avr', location: 'Antananarivo', price: '50,000', category: 'concerts', badgeKey: 'popular', image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop' },{ id: 2, title: 'Festival Donia - Nosy Be', date: '20-22 Mai', location: 'Nosy Be', price: '120,000', category: 'festivals', badgeKey: 'festival', image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400&h=300&fit=crop' },{ id: 3, title: 'Match CNaPS vs Fosa Juniors', date: '28 Mar', location: 'Mahamasina', price: '15,000', category: 'sports', image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400&h=300&fit=crop' },{ id: 4, title: 'Erick Manana Unplugged', date: '5 Avr', location: 'IFM Tana', price: '35,000', category: 'concerts', image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=300&fit=crop' },{ id: 5, title: 'Madajazzcar 2026', date: '10-15 Oct', location: 'Antananarivo', price: '80,000', category: 'festivals', badgeKey: 'soon', image: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&h=300&fit=crop' },{ id: 6, title: 'Course de Côte - Diego', date: '12 Juin', location: 'Diego Suarez', price: '25,000', category: 'sports', image: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=400&h=300&fit=crop' },{ id: 7, title: 'Jaojoby en Concert', date: '18 Mai', location: 'Toamasina', price: '40,000', category: 'concerts', image: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=400&h=300&fit=crop' },{ id: 8, title: 'Beach Festival Anakao', date: '1-3 Juil', location: 'Anakao', price: '150,000', category: 'festivals', badgeKey: 'vip', image: 'https://images.unsplash.com/photo-1504680177321-2e6a879aac86?w=400&h=300&fit=crop' }]
+                };
+            },
+            computed: {
+                t() { return translations[this.lang]; },
+                filteredEvents() { return this.activeCategory === 'all' ? this.events : this.events.filter(e => e.category === this.activeCategory); },
+                userName() { const u = window.api?.getUser(); return u ? u.name : ''; },
+                userAvatar() {
+                    const name = this.userName;
+                    if (!name) return '';
+                    if (window.ProfileMenu) { const g = window.ProfileMenu.detectGender(name); return window.ProfileMenu.getAvatarSVG(name, g, 36); }
+                    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                }
+            },
+            methods: {
+                goToSearch() {
+                    if (this.searchQuery.trim()) {
+                        window.location.href = 'ticketmada-search.html?q=' + encodeURIComponent(this.searchQuery.trim());
+                    }
+                },
+                goToEvent(id) { window.location.href = 'ticketmada-event.html?id=' + id; },
+                async fetchSuggestions() {
+                    if (this.searchQuery.length < 2) { this.suggestions = []; return; }
+                    try {
+                        const data = await window.api.get('/events/search?q=' + encodeURIComponent(this.searchQuery) + '&limit=5');
+                        this.suggestions = data.events || [];
+                    } catch(e) { console.error('Search error', e); }
+                },
+                toggleLang() { this.lang = this.lang === 'fr' ? 'en' : 'fr'; localStorage.setItem('ticketmada-lang', this.lang); document.documentElement.lang = this.lang; },
+                openAuth(mode) { this.authMode = mode; this.showAuth = true; },
+                loginWith(provider) {
+                    const vm = this;
+                    window.OAuthSim.show(provider, async (name, email) => {
+                        try {
+                            const result = await window.api.oauthLogin(provider, name, email);
+                            if (!result.error) { vm.isLoggedIn = true; vm.showAuth = false; }
+                            else { window.api.setAuth('sim-' + Date.now(), { name, email, role: 'buyer' }); vm.isLoggedIn = true; vm.showAuth = false; }
+                        } catch(e) { window.api.setAuth('sim-' + Date.now(), { name, email, role: 'buyer' }); vm.isLoggedIn = true; vm.showAuth = false; }
+                    });
+                },
+                async handleAuth() {
+                    try {
+                        let result;
+                        if (this.authMode === 'login') { result = await window.api.login(this.authForm.email, this.authForm.password); }
+                        else { result = await window.api.register(this.authForm.name, this.authForm.email, this.authForm.password, 'buyer'); }
+                        if (result.error) {
+                            if (result.status === 0) { const name = this.authForm.name || this.authForm.email.split('@')[0]; window.api.setAuth('sim-' + Date.now(), { name, email: this.authForm.email, role: 'buyer' }); this.isLoggedIn = true; this.showAuth = false; }
+                        } else { this.isLoggedIn = true; this.showAuth = false; }
+                    } catch(e) { console.log('Auth error'); }
+                },
+                async handleLogout() { if (window.api) await window.api.logout(); this.isLoggedIn = false; }
+            },
+            watch: { showSearch(val) { if (val) this.$nextTick(() => this.$refs.searchInput?.focus()); } },
+            async mounted() {
+                document.documentElement.lang = this.lang; animateCounters();
+                if (window.api && window.api.isLoggedIn()) { this.isLoggedIn = true; }
+                if (window.ProfileMenu) window.ProfileMenu.injectStyles();
+                
+                // Fetch real data from API
+                try {
+                    const eventsData = await window.api.get('/events/featured');
+                    if (eventsData && eventsData.events) {
+                        this.events = eventsData.events.map(e => ({
+                            id: e.id,
+                            title: e.name,
+                            date: new Date(e.date_start).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
+                            location: e.venue,
+                            price: (e.capacity > 0 ? 15000 : 0).toLocaleString(), // Placeholder price logic
+                            category: e.category,
+                            badgeKey: e.badge,
+                            image: e.image_url || 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop'
+                        }));
+                        this.featuredEvents = this.events.slice(0,3).map(e => ({
+                            title: e.title,
+                            date: e.date,
+                            venue: e.location,
+                            price: e.price,
+                            image: e.image
+                        }));
+                    }
+                    
+                    const catsData = await window.api.get('/events/categories');
+                    if (catsData && catsData.categories) {
+                        this.categories = catsData.categories.map(c => ({
+                            icon: c.icon,
+                            countNum: c.count
+                        }));
+                    }
+                } catch(e) { console.error('Failed to load real data', e); }
+
+                document.addEventListener('click', (e) => { if (this.showProfileMenu && !e.target.closest('.nav-cta')) this.showProfileMenu = false; });
+                document.addEventListener('keydown', e => { if (e.key === 'Escape') { this.showSearch = false; this.showAuth = false; this.showProfileMenu = false; } if (e.key === 'k' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); this.showSearch = true; } });
+            }
+        });
+        app.use(Vuetify.createVuetify());
+        app.mount('#app');
+    </script>
+</body>
+</html>

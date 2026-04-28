@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicketMada API - Intégrez la billetterie sur votre site</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-cream: #FAF7F2;
+            --bg-dark: #1a1a1a;
+            --accent-coral: #FF6B4A;
+            --accent-yellow: #FECA57;
+            --accent-mint: #00D9A5;
+            --accent-blue: #4A90FF;
+            --accent-purple: #9B59B6;
+            --text-dark: #1a1a1a;
+            --text-light: #666;
+            --border-dark: #1a1a1a;
+            --shadow-brutal: 6px 6px 0px #1a1a1a;
+            --shadow-brutal-lg: 10px 10px 0px #1a1a1a;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg-cream); color: var(--text-dark); overflow-x: hidden; }
+        
+        @keyframes vibrate {
+            0%, 100% { transform: rotate(-2deg) translate(0, 0); }
+            25% { transform: rotate(-2deg) translate(-1px, -0.5px); }
+            50% { transform: rotate(-2deg) translate(1px, 0.5px); }
+            75% { transform: rotate(-2deg) translate(-0.5px, 1px); }
+        }
+        .hero-badge { animation: vibrate 1.8s ease-in-out 0.3s; }
+        .hero-badge:hover { animation: vibrate 1.2s ease-in-out infinite; }
+        
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        .float-animation { animation: float 4s ease-in-out infinite; }
+        
+        @keyframes typing { from { width: 0; } to { width: 100%; } }
+        @keyframes blink { 50% { border-color: transparent; } }
+        
+        .brutal-card { background: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal); transition: all 0.2s ease; }
+        .brutal-card:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
+        .brutal-btn { display: inline-flex; align-items: center; gap: 10px; padding: 16px 32px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; border: 3px solid var(--border-dark); cursor: pointer; transition: all 0.15s ease; text-decoration: none; }
+        .brutal-btn-primary { background: var(--accent-coral); color: white; box-shadow: var(--shadow-brutal); }
+        .brutal-btn-primary:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
+        .brutal-btn-secondary { background: white; color: var(--text-dark); box-shadow: var(--shadow-brutal); }
+        .brutal-btn-secondary:hover { background: var(--accent-yellow); transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
+        .brutal-btn-dark { background: var(--bg-dark); color: white; box-shadow: var(--shadow-brutal); }
+        .brutal-btn-dark:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0px var(--accent-coral); }
+        
+        .lang-toggle { width: 45px; height: 45px; background: white; border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 1.4rem; box-shadow: 3px 3px 0px #1a1a1a; }
+        .lang-toggle:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0px #1a1a1a; }
+        
+        .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 20px 40px; background: var(--bg-cream); border-bottom: 3px solid var(--border-dark); }
+        .navbar-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+        .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); }
+        .logo-box { width: 50px; height: 50px; background: var(--accent-coral); border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transform: rotate(-3deg); }
+        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; }
+        .logo-text span { color: var(--accent-coral); }
+        .nav-links { display: flex; gap: 40px; list-style: none; }
+        .nav-links a { font-family: 'Syne', sans-serif; font-weight: 600; color: var(--text-dark); text-decoration: none; position: relative; padding: 5px 0; }
+        .nav-links a::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 3px; background: var(--accent-coral); transition: width 0.3s ease; }
+        .nav-links a:hover::after { width: 100%; }
+        .nav-cta { display: flex; gap: 16px; align-items: center; }
+        
+        /* Hero */
+        .hero { min-height: 100vh; padding: 140px 40px 80px; display: flex; align-items: center; position: relative; overflow: hidden; background: linear-gradient(180deg, var(--bg-cream) 0%, white 100%); }
+        .hero-bg-shapes { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+        .shape { position: absolute; border: 3px solid var(--border-dark); }
+        .shape-1 { width: 180px; height: 180px; background: var(--accent-blue); top: 10%; right: 8%; transform: rotate(15deg); opacity: 0.7; }
+        .shape-2 { width: 120px; height: 120px; background: var(--accent-purple); bottom: 25%; left: 8%; border-radius: 50%; opacity: 0.7; }
+        .shape-3 { width: 80px; height: 80px; background: var(--accent-mint); top: 50%; left: 20%; transform: rotate(-10deg); opacity: 0.7; }
+        .hero-inner { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; position: relative; z-index: 1; }
+        .hero-badge { display: inline-block; background: var(--accent-blue); border: 3px solid var(--border-dark); padding: 10px 20px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 30px; transform: rotate(-2deg); color: white; }
+        .hero-title { font-family: 'Syne', sans-serif; font-size: 3.8rem; font-weight: 800; line-height: 1.1; margin-bottom: 30px; }
+        .hero-title .highlight { position: relative; display: inline-block; }
+        .hero-title .highlight::after { content: ''; position: absolute; bottom: 5px; left: 0; width: 100%; height: 18px; background: var(--accent-blue); z-index: -1; transform: skewX(-3deg); opacity: 0.3; }
+        .hero-description { font-size: 1.25rem; color: var(--text-light); line-height: 1.7; margin-bottom: 40px; max-width: 550px; }
+        .hero-actions { display: flex; gap: 20px; flex-wrap: wrap; }
+        
+        /* Code Preview */
+        .code-preview { position: relative; }
+        .code-window { background: var(--bg-dark); border: 3px solid var(--border-dark); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-brutal-lg); }
+        .code-header { background: #2d2d2d; padding: 15px 20px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #444; }
+        .code-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .code-dot-red { background: #FF5F56; }
+        .code-dot-yellow { background: #FFBD2E; }
+        .code-dot-green { background: #27C93F; }
+        .code-title { margin-left: 15px; color: #888; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+        .code-body { padding: 25px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.8; overflow-x: auto; }
+        .code-body pre { margin: 0; color: #f8f8f2; }
+        .code-comment { color: #6272a4; }
+        .code-keyword { color: #ff79c6; }
+        .code-string { color: #f1fa8c; }
+        .code-function { color: #50fa7b; }
+        .code-variable { color: #8be9fd; }
+        .code-number { color: #bd93f9; }
+        
+        .floating-badge { position: absolute; background: white; border: 3px solid var(--border-dark); padding: 12px 18px; box-shadow: var(--shadow-brutal); display: flex; align-items: center; gap: 10px; }
+        .floating-badge-1 { top: -20px; right: -20px; transform: rotate(5deg); }
+        .floating-badge-2 { bottom: 30px; left: -30px; transform: rotate(-3deg); }
+        .floating-badge-icon { font-size: 1.3rem; }
+        .floating-badge-text { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; }
+        
+        /* How It Works */
+        .how-it-works { padding: 120px 40px; background: white; border-top: 3px solid var(--border-dark); }
+        .section-header { max-width: 800px; margin: 0 auto 80px; text-align: center; }
+        .section-badge { display: inline-block; background: var(--accent-mint); border: 3px solid var(--border-dark); padding: 10px 25px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 25px; }
+        .section-title { font-family: 'Syne', sans-serif; font-size: 3rem; font-weight: 800; margin-bottom: 20px; }
+        .section-description { font-size: 1.2rem; color: var(--text-light); line-height: 1.7; }
+        
+        .workflow-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px; }
+        .workflow-card { display: flex; gap: 25px; padding: 35px; border: 3px solid var(--border-dark); background: var(--bg-cream); box-shadow: var(--shadow-brutal); transition: all 0.2s ease; }
+        .workflow-card:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
+        .workflow-number { width: 60px; height: 60px; background: var(--accent-coral); border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; color: white; flex-shrink: 0; }
+        .workflow-content h3 { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 700; margin-bottom: 10px; }
+        .workflow-content p { color: var(--text-light); line-height: 1.6; }
+        
+        /* Integration Options */
+        .integration-options { padding: 120px 40px; background: var(--bg-dark); color: white; border-top: 3px solid var(--border-dark); }
+        .integration-options .section-badge { background: var(--accent-coral); color: white; }
+        .integration-options .section-title { color: white; }
+        .integration-options .section-description { color: rgba(255,255,255,0.7); }
+        
+        .options-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px; }
+        .option-card { background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); padding: 50px 40px; transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .option-card:hover { background: rgba(255,255,255,0.1); transform: translateY(-10px); }
+        .option-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 5px; }
+        .option-card:nth-child(1)::before { background: var(--accent-coral); }
+        .option-card:nth-child(2)::before { background: var(--accent-blue); }
+        .option-icon { font-size: 3.5rem; margin-bottom: 25px; }
+        .option-card h3 { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 700; margin-bottom: 15px; }
+        .option-card p { color: rgba(255,255,255,0.7); line-height: 1.7; margin-bottom: 25px; }
+        .option-features { list-style: none; margin-bottom: 30px; }
+        .option-features li { display: flex; align-items: center; gap: 12px; padding: 10px 0; color: rgba(255,255,255,0.9); }
+        .option-features li::before { content: '✓'; width: 24px; height: 24px; background: var(--accent-mint); border: 2px solid white; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; color: var(--bg-dark); }
+        
+        /* API Features */
+        .api-features { padding: 120px 40px; }
+        .api-features-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+        .api-feature-card { padding: 40px; border: 3px solid var(--border-dark); background: white; box-shadow: var(--shadow-brutal); transition: all 0.2s ease; }
+        .api-feature-card:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
+        .api-feature-icon { width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 3px solid var(--border-dark); margin-bottom: 25px; }
+        .api-feature-card:nth-child(1) .api-feature-icon { background: var(--accent-coral); transform: rotate(-5deg); }
+        .api-feature-card:nth-child(2) .api-feature-icon { background: var(--accent-yellow); transform: rotate(3deg); }
+        .api-feature-card:nth-child(3) .api-feature-icon { background: var(--accent-mint); transform: rotate(-3deg); }
+        .api-feature-card:nth-child(4) .api-feature-icon { background: var(--accent-blue); transform: rotate(5deg); }
+        .api-feature-card:nth-child(5) .api-feature-icon { background: var(--accent-purple); transform: rotate(-2deg); }
+        .api-feature-card:nth-child(6) .api-feature-icon { background: var(--accent-coral); transform: rotate(4deg); }
+        .api-feature-card h3 { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 700; margin-bottom: 12px; }
+        .api-feature-card p { color: var(--text-light); line-height: 1.6; }
+        
+        /* Pricing */
+        .pricing { padding: 120px 40px; background: var(--accent-yellow); border-top: 3px solid var(--border-dark); border-bottom: 3px solid var(--border-dark); }
+        .pricing .section-badge { background: white; }
+        .pricing-content { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: center; }
+        .pricing-info h3 { font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; margin-bottom: 20px; }
+        .pricing-info p { font-size: 1.15rem; line-height: 1.7; margin-bottom: 30px; }
+        .pricing-highlights { list-style: none; }
+        .pricing-highlights li { display: flex; align-items: center; gap: 15px; padding: 15px 0; border-bottom: 2px dashed rgba(0,0,0,0.1); font-size: 1.1rem; }
+        .pricing-highlights li::before { content: '✓'; width: 30px; height: 30px; background: var(--accent-coral); border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; }
+        .pricing-card { background: white; border: 3px solid var(--border-dark); padding: 50px; box-shadow: var(--shadow-brutal-lg); text-align: center; }
+        .pricing-card-badge { display: inline-block; background: var(--accent-mint); border: 2px solid var(--border-dark); padding: 8px 20px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 25px; }
+        .pricing-card-price { font-family: 'Syne', sans-serif; font-size: 4rem; font-weight: 800; margin-bottom: 10px; }
+        .pricing-card-price span { font-size: 1.2rem; color: var(--text-light); }
+        .pricing-card-period { color: var(--text-light); margin-bottom: 30px; }
+        .pricing-card .brutal-btn { width: 100%; justify-content: center; }
+        
+        /* CTA */
+        .cta { padding: 120px 40px; text-align: center; }
+        .cta-container { max-width: 900px; margin: 0 auto; }
+        .cta-title { font-family: 'Syne', sans-serif; font-size: 3.5rem; font-weight: 800; margin-bottom: 25px; line-height: 1.1; }
+        .cta-description { font-size: 1.3rem; color: var(--text-light); margin-bottom: 50px; }
+        .cta-actions { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+        
+        /* Footer */
+        .footer { background: var(--bg-dark); color: white; padding: 80px 40px 40px; border-top: 3px solid var(--border-dark); }
+        .footer-inner { max-width: 1400px; margin: 0 auto; }
+        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 60px; margin-bottom: 60px; }
+        .footer-brand .logo-text { color: white; }
+        .footer-brand p { color: rgba(255,255,255,0.6); margin: 25px 0; line-height: 1.7; }
+        .social-links { display: flex; gap: 12px; }
+        .social-link { width: 45px; height: 45px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: white; text-decoration: none; transition: all 0.3s ease; }
+        .social-link:hover { background: var(--accent-coral); border-color: var(--accent-coral); }
+        .footer-column h4 { font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 25px; }
+        .footer-column ul { list-style: none; }
+        .footer-column li { margin-bottom: 12px; }
+        .footer-column a { color: rgba(255,255,255,0.6); text-decoration: none; transition: color 0.3s ease; }
+        .footer-column a:hover { color: var(--accent-coral); }
+        .footer-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); font-size: 0.9rem; }
+        
+        @media (max-width: 1200px) {
+            .hero-inner, .pricing-content { grid-template-columns: 1fr; }
+            .hero-title { font-size: 3rem; }
+            .code-preview { margin-top: 60px; }
+            .workflow-grid, .options-grid { grid-template-columns: 1fr; }
+            .api-features-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .hero-title { font-size: 2.5rem; }
+            .section-title { font-size: 2.2rem; }
+            .api-features-grid, .footer-grid { grid-template-columns: 1fr; }
+            .cta-title { font-size: 2.5rem; }
+            .pricing-card-price { font-size: 3rem; }
+        }
+
+        .auth-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26, 26, 26, 0.95); z-index: 2000; display: none; align-items: center; justify-content: center; }
+        .auth-modal.active { display: flex; }
+        .auth-close { position: absolute; top: -60px; right: 0; width: 50px; height: 50px; background: white; border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.5rem; font-family: 'Syne', sans-serif; }
+        .auth-card { width: 100%; max-width: 480px; padding: 50px; position: relative; }
+        .auth-header { text-align: center; margin-bottom: 40px; }
+        .auth-header h2 { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; margin-bottom: 10px; }
+        .auth-header p { color: var(--text-light); }
+        .social-auth { display: flex; flex-direction: column; gap: 14px; margin-bottom: 30px; }
+        .social-auth-btn { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 16px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s ease; border: 3px solid var(--border-dark); }
+        .google-btn { background: white; color: var(--text-dark); box-shadow: 4px 4px 0px #1a1a1a; }
+        .google-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
+        .facebook-btn { background: #1877F2; color: white; box-shadow: 4px 4px 0px #1a1a1a; }
+        .facebook-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
+        .divider { text-align: center; position: relative; margin: 20px 0; color: var(--text-light); }
+        .divider::before, .divider::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: #ddd; }
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+        .auth-form { display: flex; flex-direction: column; gap: 20px; }
+        .auth-form .form-group { margin-bottom: 0; }
+        .auth-form label { display: block; font-family: 'Syne', sans-serif; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; }
+        .auth-form input { width: 100%; padding: 14px 16px; border: 3px solid var(--border-dark); font-family: 'DM Sans', sans-serif; font-size: 1rem; }
+        .auth-form input:focus { outline: none; box-shadow: 4px 4px 0px var(--accent-coral); }
+        .auth-submit { margin-top: 10px; width: 100%; justify-content: center; }
+        .auth-footer { text-align: center; margin-top: 24px; color: var(--text-light); }
+        .auth-footer a { color: var(--accent-coral); text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+<script src="../js/site-config.js"></script>
+
+    <div id="app">
+        <nav class="navbar">
+            <div class="navbar-inner">
+                <a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
+                <ul class="nav-links">
+                    <li><a href="#fonctionnement">{{ t.nav.howItWorks }}</a></li>
+                    <li><a href="#options">{{ t.nav.options }}</a></li>
+                    <li><a href="#features">{{ t.nav.features }}</a></li>
+                    <li><a href="#tarifs">{{ t.nav.pricing }}</a></li>
+                </ul>
+                <div class="nav-cta">
+                    <button class="lang-toggle" @click="toggleLang" :title="lang === 'fr' ? 'Switch to English' : 'Passer en Français'">{{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}</button>
+                    <template v-if="!isLoggedIn">
+                        <a href="ticketmada-organisateur.html" class="brutal-btn brutal-btn-secondary">{{ t.nav.organizers }}</a>
+                        <a href="#" class="brutal-btn brutal-btn-primary" @click.prevent="openAuth('register')">{{ t.nav.getStarted }}</a>
+                    </template>
+                    <div class="profile-wrapper" v-else>
+                        <button class="profile-avatar-btn" @click="showProfileMenu = !showProfileMenu" v-html="profileAvatar"></button>
+                        <div class="profile-dropdown" :class="{ open: showProfileMenu }">
+                            <div class="profile-dropdown-header">
+                                <div class="profile-dropdown-avatar" v-html="profileAvatar"></div>
+                                <div class="profile-dropdown-info">
+                                    <div class="profile-dropdown-name">{{ profileName }}</div>
+                                    <div class="profile-dropdown-email">{{ profileEmail }}</div>
+                                    <span class="profile-dropdown-role" :class="profileRole">{{ profileRoleLabel }}</span>
+                                </div>
+                            </div>
+                            <div class="profile-dropdown-items">
+                                <a class="profile-dropdown-item" :href="dashboardUrl"><v-icon size="small">mdi-view-dashboard</v-icon> Dashboard</a>
+                                <a class="profile-dropdown-item" :href="dashboardUrl + '?page=events'"><v-icon size="small">mdi-calendar-plus</v-icon> {{ lang === 'fr' ? 'Créer un événement' : 'Create event' }}</a>
+                                <div class="profile-dropdown-divider"></div>
+                                <button class="profile-dropdown-item logout" @click="handleLogout"><v-icon size="small">mdi-logout</v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Logout' }}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Hero -->
+        <section class="hero">
+            <div class="hero-bg-shapes"><div class="shape shape-1"></div><div class="shape shape-2"></div><div class="shape shape-3"></div></div>
+            <div class="hero-inner">
+                <div class="hero-content">
+                    <div class="hero-badge">{{ t.hero.badge }}</div>
+                    <h1 class="hero-title" v-html="t.hero.title"></h1>
+                    <p class="hero-description">{{ t.hero.description }}</p>
+                    <div class="hero-actions">
+                        <a href="#" class="brutal-btn brutal-btn-primary" @click.prevent="openAuth('register')">{{ t.hero.cta1 }}<v-icon>mdi-arrow-right</v-icon></a>
+                        <a href="#fonctionnement" class="brutal-btn brutal-btn-secondary">{{ t.hero.cta2 }}</a>
+                    </div>
+                </div>
+                <div class="code-preview">
+                    <div class="code-window">
+                        <div class="code-header">
+                            <div class="code-dot code-dot-red"></div>
+                            <div class="code-dot code-dot-yellow"></div>
+                            <div class="code-dot code-dot-green"></div>
+                            <span class="code-title">ticketmada-widget.js</span>
+                        </div>
+                        <div class="code-body">
+                            <pre><span class="code-comment">// Intégrez TicketMada en 3 lignes</span>
+<span class="code-keyword">import</span> { <span class="code-variable">TicketMada</span> } <span class="code-keyword">from</span> <span class="code-string">'@ticketmada/sdk'</span>;
+
+<span class="code-keyword">const</span> <span class="code-variable">widget</span> = <span class="code-keyword">new</span> <span class="code-function">TicketMada</span>({
+  <span class="code-variable">apiKey</span>: <span class="code-string">'votre_cle_api'</span>,
+  <span class="code-variable">eventId</span>: <span class="code-string">'evt_123456'</span>,
+  <span class="code-variable">container</span>: <span class="code-string">'#ticketing'</span>
+});
+
+<span class="code-variable">widget</span>.<span class="code-function">render</span>();
+
+<span class="code-comment">// C'est tout ! 🎉</span></pre>
+                        </div>
+                    </div>
+                    <div class="floating-badge floating-badge-1 float-animation"><span class="floating-badge-icon">🔌</span><span class="floating-badge-text">Plug & Play</span></div>
+                    <div class="floating-badge floating-badge-2 float-animation" style="animation-delay: 0.5s;"><span class="floating-badge-icon">🆓</span><span class="floating-badge-text">API Gratuite</span></div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- How It Works -->
+        <section class="how-it-works" id="fonctionnement">
+            <div class="section-header"><div class="section-badge">{{ t.howItWorks.badge }}</div><h2 class="section-title">{{ t.howItWorks.title }}</h2><p class="section-description">{{ t.howItWorks.description }}</p></div>
+            <div class="workflow-grid">
+                <div class="workflow-card" v-for="(step, index) in t.howItWorks.steps" :key="index">
+                    <div class="workflow-number">{{ index + 1 }}</div>
+                    <div class="workflow-content"><h3>{{ step.title }}</h3><p>{{ step.description }}</p></div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Integration Options -->
+        <section class="integration-options" id="options">
+            <div class="section-header"><div class="section-badge">{{ t.options.badge }}</div><h2 class="section-title">{{ t.options.title }}</h2><p class="section-description">{{ t.options.description }}</p></div>
+            <div class="options-grid">
+                <div class="option-card" v-for="(option, index) in t.options.items" :key="index">
+                    <div class="option-icon">{{ optionIcons[index] }}</div>
+                    <h3>{{ option.title }}</h3>
+                    <p>{{ option.description }}</p>
+                    <ul class="option-features"><li v-for="feat in option.features" :key="feat">{{ feat }}</li></ul>
+                    <a href="#" class="brutal-btn brutal-btn-secondary" @click.prevent="openAuth('register')">{{ option.cta }}</a>
+                </div>
+            </div>
+        </section>
+        
+        <!-- API Features -->
+        <section class="api-features" id="features">
+            <div class="section-header"><div class="section-badge">{{ t.apiFeatures.badge }}</div><h2 class="section-title">{{ t.apiFeatures.title }}</h2><p class="section-description">{{ t.apiFeatures.description }}</p></div>
+            <div class="api-features-grid">
+                <div class="api-feature-card" v-for="(feature, index) in t.apiFeatures.items" :key="index">
+                    <div class="api-feature-icon">{{ featureIcons[index] }}</div>
+                    <h3>{{ feature.title }}</h3>
+                    <p>{{ feature.description }}</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Pricing -->
+        <section class="pricing" id="tarifs">
+            <div class="section-header"><div class="section-badge">{{ t.pricing.badge }}</div><h2 class="section-title">{{ t.pricing.title }}</h2></div>
+            <div class="pricing-content">
+                <div class="pricing-info">
+                    <h3>{{ t.pricing.infoTitle }}</h3>
+                    <p>{{ t.pricing.infoDescription }}</p>
+                    <ul class="pricing-highlights"><li v-for="highlight in t.pricing.highlights" :key="highlight">{{ highlight }}</li></ul>
+                </div>
+                <div class="pricing-card">
+                    <div class="pricing-card-badge">{{ t.pricing.cardBadge }}</div>
+                    <div class="pricing-card-price">3% <span>/ {{ t.pricing.perTicket }}</span></div>
+                    <div class="pricing-card-period">{{ t.pricing.period }}</div>
+                    <a href="#" class="brutal-btn brutal-btn-primary" @click.prevent="openAuth('register')">{{ t.pricing.cta }}</a>
+                </div>
+            </div>
+        </section>
+        
+        <!-- CTA -->
+        <section class="cta">
+            <div class="cta-container">
+                <h2 class="cta-title">{{ t.cta.title }}</h2>
+                <p class="cta-description">{{ t.cta.description }}</p>
+                <div class="cta-actions">
+                    <a href="#" class="brutal-btn brutal-btn-primary" @click.prevent="openAuth('register')">{{ t.cta.cta1 }} <v-icon>mdi-arrow-right</v-icon></a>
+                    <a href="ticketmada-organisateur.html" class="brutal-btn brutal-btn-secondary">{{ t.cta.cta2 }}</a>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-inner">
+                <div class="footer-grid">
+                    <div class="footer-brand"><a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a><p>{{ t.footer.description }}</p><div class="social-links"><a href="#" class="social-link"><v-icon>mdi-facebook</v-icon></a><a href="#" class="social-link"><v-icon>mdi-instagram</v-icon></a><a href="#" class="social-link"><v-icon>mdi-twitter</v-icon></a><a href="#" class="social-link"><v-icon>mdi-github</v-icon></a></div></div>
+                    <div class="footer-column"><h4>{{ t.footer.product }}</h4><ul><li><a href="ticketmada-organisateur.html">{{ t.nav.organizers }}</a></li><li><a href="#">{{ t.footer.docs }}</a></li><li><a href="#">{{ t.footer.changelog }}</a></li></ul></div>
+                    <div class="footer-column"><h4>{{ t.footer.developers }}</h4><ul><li><a href="#">{{ t.footer.apiRef }}</a></li><li><a href="#">SDK</a></li><li><a href="#">{{ t.footer.examples }}</a></li></ul></div>
+                    <div class="footer-column"><h4>{{ t.footer.support }}</h4><ul><li><a href="#">{{ t.footer.helpCenter }}</a></li><li><a href="#">{{ t.footer.contact }}</a></li><li><a href="#">{{ t.footer.status }}</a></li></ul></div>
+                </div>
+                <div class="footer-bottom"><p>© 2026 TicketMada. {{ t.footer.rights }}</p><div style="display: flex; gap: 30px;"><a href="#" style="color: rgba(255,255,255,0.5); text-decoration: none;">{{ t.footer.terms }}</a><a href="#" style="color: rgba(255,255,255,0.5); text-decoration: none;">{{ t.footer.privacy }}</a></div></div>
+            </div>
+        </footer>
+
+        <div class="auth-modal" :class="{ active: showAuth }">
+            <div class="auth-card brutal-card">
+                <div class="auth-close" @click="showAuth = false">✕</div>
+                <div class="auth-header"><h2>{{ authMode === 'login' ? (lang === 'fr' ? 'Connexion' : 'Login') : (lang === 'fr' ? 'Créer un compte' : 'Create account') }}</h2><p>{{ authMode === 'login' ? (lang === 'fr' ? 'Heureux de vous revoir !' : 'Welcome back!') : (lang === 'fr' ? 'Rejoignez TicketMada' : 'Join TicketMada') }}</p></div>
+                <div class="social-auth">
+                    <button class="social-auth-btn google-btn" @click.prevent="loginWith('Google')"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>{{ lang === 'fr' ? 'Continuer avec Google' : 'Continue with Google' }}</button>
+                    <button class="social-auth-btn facebook-btn" @click.prevent="loginWith('Facebook')"><v-icon>mdi-facebook</v-icon>{{ lang === 'fr' ? 'Continuer avec Facebook' : 'Continue with Facebook' }}</button>
+                </div>
+                <div class="divider">{{ lang === 'fr' ? 'ou' : 'or' }}</div>
+                <form class="auth-form" @submit.prevent="handleAuth">
+                    <div class="form-group" v-if="authMode === 'register'"><label>{{ lang === 'fr' ? 'Nom complet' : 'Full name' }}</label><input type="text" :placeholder="lang === 'fr' ? 'Votre nom' : 'Your name'" v-model="authForm.name"></div>
+                    <div class="form-group"><label>Email</label><input type="email" placeholder="votre@email.com" v-model="authForm.email"></div>
+                    <div class="form-group"><label>{{ lang === 'fr' ? 'Mot de passe' : 'Password' }}</label><input type="password" placeholder="••••••••" v-model="authForm.password"></div>
+                    <button type="submit" class="brutal-btn brutal-btn-primary auth-submit">{{ authMode === 'login' ? (lang === 'fr' ? 'Se connecter' : 'Log in') : (lang === 'fr' ? 'Créer mon compte' : 'Create account') }}</button>
+                </form>
+                <p class="auth-footer"><template v-if="authMode === 'login'">{{ lang === 'fr' ? 'Pas de compte ?' : 'No account?' }} <a href="#" @click.prevent="authMode = 'register'">{{ lang === 'fr' ? "S'inscrire" : 'Sign up' }}</a></template><template v-else>{{ lang === 'fr' ? 'Déjà un compte ?' : 'Already have an account?' }} <a href="#" @click.prevent="authMode = 'login'">{{ lang === 'fr' ? 'Se connecter' : 'Log in' }}</a></template></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api-client.js"></script>
+    <script src="../js/oauth-simulation.js"></script>
+    <script src="../js/profile-menu.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
+    <script>
+        const translations = {
+            fr: {
+                nav: { howItWorks: 'Fonctionnement', options: 'Options', features: 'Fonctionnalités', pricing: 'Tarifs', organizers: 'Organisateurs', getStarted: 'Commencer' },
+                hero: { badge: '🔌 Ticketing API', title: 'Intégrez la <span class="highlight">billetterie</span><br>sur votre site', description: 'Utilisez notre API gratuite pour intégrer TicketMada directement sur votre site web. Gardez vos visiteurs sur votre plateforme tout en profitant de notre infrastructure de billetterie.', cta1: 'Obtenir ma clé API', cta2: 'Voir la documentation' },
+                howItWorks: {
+                    badge: 'Comment ça marche', title: 'Intégration en 4 étapes', description: 'De l\'inscription à la première vente en quelques minutes.',
+                    steps: [
+                        { title: 'Souscrivez au Ticketing', description: 'Créez votre compte organisateur et souscrivez à notre offre Ticketing pour obtenir votre clé API.' },
+                        { title: 'Créez votre événement', description: 'Configurez votre événement dans le dashboard : dates, tarifs, catégories de billets.' },
+                        { title: 'Intégrez le widget', description: 'Copiez quelques lignes de code sur votre site. Widget personnalisable à vos couleurs.' },
+                        { title: 'Vendez et suivez', description: 'Les ventes apparaissent en temps réel dans votre dashboard. Versements automatiques.' }
+                    ]
+                },
+                options: {
+                    badge: 'Options d\'intégration', title: 'Deux façons d\'intégrer', description: 'Choisissez l\'option qui correspond le mieux à vos besoins techniques.',
+                    items: [
+                        { title: 'Widget JavaScript', description: 'Intégration rapide sans code serveur. Copiez-collez quelques lignes et c\'est prêt.', features: ['Installation en 5 minutes', 'Personnalisation CSS complète', 'Responsive automatique', 'Paiement sécurisé intégré'], cta: 'Voir le guide' },
+                        { title: 'API REST Complète', description: 'Contrôle total pour les développeurs. Créez votre propre expérience utilisateur.', features: ['Endpoints RESTful', 'Webhooks temps réel', 'SDK JavaScript/PHP', 'Sandbox de test'], cta: 'Documentation API' }
+                    ]
+                },
+                apiFeatures: {
+                    badge: 'Fonctionnalités API', title: 'Une API puissante', description: 'Tout ce dont vous avez besoin pour créer une expérience billetterie personnalisée.',
+                    items: [
+                        { title: 'Webhooks temps réel', description: 'Recevez des notifications instantanées : nouvelles ventes, scans, remboursements.' },
+                        { title: 'Multi-événements', description: 'Gérez plusieurs événements avec une seule intégration.' },
+                        { title: 'Personnalisation totale', description: 'Adaptez l\'apparence du widget à votre charte graphique.' },
+                        { title: 'Paiements sécurisés', description: 'Mobile Money, Visa, Mastercard. PCI DSS compliant.' },
+                        { title: 'Analytics intégrés', description: 'Suivez les conversions et performances directement.' },
+                        { title: 'Support développeur', description: 'Documentation complète, exemples de code, support dédié.' }
+                    ]
+                },
+                pricing: {
+                    badge: 'Tarification', title: 'Tarif simple et transparent', infoTitle: 'Payez uniquement sur les ventes', infoDescription: 'L\'API est gratuite. Vous ne payez que lorsque vous vendez des billets.', highlights: ['API gratuite et illimitée', 'Aucun frais de setup', 'Versements mensuels automatiques', 'Support technique inclus'], cardBadge: 'Tarif unique', perTicket: 'billet vendu', period: '+ frais de paiement (Mobile Money / Carte)', cta: 'Commencer maintenant'
+                },
+                cta: { title: 'Prêt à intégrer TicketMada ?', description: 'Obtenez votre clé API et commencez à vendre en quelques minutes.', cta1: 'Obtenir ma clé API', cta2: 'Retour aux organisateurs' },
+                footer: { description: 'La plateforme de billetterie #1 à Madagascar.', product: 'Produit', developers: 'Développeurs', support: 'Support', docs: 'Documentation', changelog: 'Changelog', apiRef: 'Référence API', examples: 'Exemples', helpCenter: 'Centre d\'aide', contact: 'Contact', status: 'Statut système', rights: 'Tous droits réservés.', terms: 'CGU', privacy: 'Confidentialité' }
+            },
+            en: {
+                nav: { howItWorks: 'How it works', options: 'Options', features: 'Features', pricing: 'Pricing', organizers: 'Organizers', getStarted: 'Get started' },
+                hero: { badge: '🔌 Ticketing API', title: 'Integrate <span class="highlight">ticketing</span><br>on your website', description: 'Use our free API to integrate TicketMada directly on your website. Keep your visitors on your platform while leveraging our ticketing infrastructure.', cta1: 'Get my API key', cta2: 'View documentation' },
+                howItWorks: {
+                    badge: 'How it works', title: 'Integration in 4 steps', description: 'From signup to first sale in minutes.',
+                    steps: [
+                        { title: 'Subscribe to Ticketing', description: 'Create your organizer account and subscribe to our Ticketing offer to get your API key.' },
+                        { title: 'Create your event', description: 'Configure your event in the dashboard: dates, prices, ticket categories.' },
+                        { title: 'Integrate the widget', description: 'Copy a few lines of code to your site. Customizable widget to match your colors.' },
+                        { title: 'Sell and track', description: 'Sales appear in real-time in your dashboard. Automatic payouts.' }
+                    ]
+                },
+                options: {
+                    badge: 'Integration options', title: 'Two ways to integrate', description: 'Choose the option that best fits your technical needs.',
+                    items: [
+                        { title: 'JavaScript Widget', description: 'Quick integration without server code. Copy-paste a few lines and you\'re done.', features: ['5-minute installation', 'Full CSS customization', 'Automatic responsive', 'Built-in secure payment'], cta: 'View guide' },
+                        { title: 'Full REST API', description: 'Total control for developers. Create your own user experience.', features: ['RESTful endpoints', 'Real-time webhooks', 'JavaScript/PHP SDK', 'Test sandbox'], cta: 'API Documentation' }
+                    ]
+                },
+                apiFeatures: {
+                    badge: 'API Features', title: 'A powerful API', description: 'Everything you need to create a custom ticketing experience.',
+                    items: [
+                        { title: 'Real-time webhooks', description: 'Receive instant notifications: new sales, scans, refunds.' },
+                        { title: 'Multi-event', description: 'Manage multiple events with a single integration.' },
+                        { title: 'Full customization', description: 'Adapt the widget appearance to your brand guidelines.' },
+                        { title: 'Secure payments', description: 'Mobile Money, Visa, Mastercard. PCI DSS compliant.' },
+                        { title: 'Built-in analytics', description: 'Track conversions and performance directly.' },
+                        { title: 'Developer support', description: 'Complete documentation, code examples, dedicated support.' }
+                    ]
+                },
+                pricing: {
+                    badge: 'Pricing', title: 'Simple and transparent pricing', infoTitle: 'Pay only on sales', infoDescription: 'The API is free. You only pay when you sell tickets.', highlights: ['Free and unlimited API', 'No setup fees', 'Automatic monthly payouts', 'Technical support included'], cardBadge: 'Single rate', perTicket: 'ticket sold', period: '+ payment fees (Mobile Money / Card)', cta: 'Start now'
+                },
+                cta: { title: 'Ready to integrate TicketMada?', description: 'Get your API key and start selling in minutes.', cta1: 'Get my API key', cta2: 'Back to organizers' },
+                footer: { description: 'The #1 ticketing platform in Madagascar.', product: 'Product', developers: 'Developers', support: 'Support', docs: 'Documentation', changelog: 'Changelog', apiRef: 'API Reference', examples: 'Examples', helpCenter: 'Help Center', contact: 'Contact', status: 'System status', rights: 'All rights reserved.', terms: 'Terms', privacy: 'Privacy' }
+            }
+        };
+        
+        const { createApp } = Vue;
+        const app = createApp({
+            data() {
+                return {
+                    lang: localStorage.getItem('ticketmada-lang') || 'fr',
+                    optionIcons: ['⚡', '🛠️'],
+                    featureIcons: ['🔔', '📅', '🎨', '🔒', '📊', '💬'],
+                    showAuth: false,
+                    authMode: 'login',
+                    authForm: { name: '', email: '', password: '' },
+                    isLoggedIn: false, showProfileMenu: false
+                };
+            },
+            computed: {
+                t() { return translations[this.lang]; },
+                profileName() { const u = window.api?.getUser(); return u ? u.name : ''; },
+                profileEmail() { const u = window.api?.getUser(); return u ? u.email : ''; },
+                profileRole() { return window.api?.getUserRole() || 'buyer'; },
+                profileRoleLabel() { return { superadmin: 'Super Admin', admin: 'Admin', organizer: 'Organisateur', buyer: 'Membre' }[this.profileRole] || 'Membre'; },
+                profileAvatar() { const g = window.ProfileMenu?.detectGender(this.profileName) || 'neutral'; return window.ProfileMenu?.getAvatarSVG(this.profileName, g) || ''; },
+                dashboardUrl() { return (this.profileRole === 'superadmin' || this.profileRole === 'admin') ? '/Admin/ticketmada-superadmin.html' : '/Admin/ticketmada-dashboard.html'; }
+            },
+            methods: {
+                toggleLang() { this.lang = this.lang === 'fr' ? 'en' : 'fr'; localStorage.setItem('ticketmada-lang', this.lang); document.documentElement.lang = this.lang; },
+                openAuth(mode) { this.authMode = mode; this.showAuth = true; },
+                async handleLogout() { await window.api.logout(); this.isLoggedIn = false; this.showProfileMenu = false; },
+                async handleAuth() {
+                    try {
+                        let result;
+                        if (this.authMode === 'login') { result = await window.api.login(this.authForm.email, this.authForm.password); }
+                        else { result = await window.api.register(this.authForm.name, this.authForm.email, this.authForm.password, 'organizer'); }
+                        if (result.error) {
+                            if (result.status === 0) {
+                                const name = this.authForm.name || this.authForm.email.split('@')[0];
+                                window.api.setAuth('sim-' + Date.now(), { name: name, email: this.authForm.email, role: 'buyer' });
+                                this.isLoggedIn = true; this.showAuth = false;
+                            }
+                        } else { this.isLoggedIn = true; this.showAuth = false; }
+                    } catch(e) { console.error('Auth error:', e); }
+                },
+                loginWith(provider) {
+                    const vm = this;
+                    vm.showAuth = false;
+                    window.OAuthSim.show(provider, async (name, email) => {
+                        try {
+                            const result = await window.api.oauthLogin(provider, name, email);
+                            if (!result.error) { vm.isLoggedIn = true; }
+                            else {
+                                window.api.setAuth('sim-' + Date.now(), { name: name, email: email, role: 'buyer' });
+                                vm.isLoggedIn = true;
+                            }
+                        } catch(e) {
+                            console.warn('OAuth API failed, using local fallback:', e);
+                            window.api.setAuth('sim-' + Date.now(), { name: name, email: email, role: 'buyer' });
+                            vm.isLoggedIn = true;
+                        }
+                    });
+                }
+            },
+            mounted() {
+                document.documentElement.lang = this.lang;
+                // Check login state
+                if (window.api && window.api.isLoggedIn()) { this.isLoggedIn = true; }
+                // Inject profile menu styles
+                if (window.ProfileMenu) window.ProfileMenu.injectStyles();
+                // Close profile dropdown on outside click
+                document.addEventListener('click', e => { if (!e.target.closest('.profile-wrapper')) this.showProfileMenu = false; });
+                document.addEventListener('keydown', e => { if (e.key === 'Escape') { this.showAuth = false; this.showProfileMenu = false; } });
+            }
+        });
+        app.use(Vuetify.createVuetify());
+        app.mount('#app');
+    </script>
+</body>
+</html>

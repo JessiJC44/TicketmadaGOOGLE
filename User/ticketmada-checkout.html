@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicketMada - Paiement</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-cream: #FAF7F2; --bg-dark: #1a1a1a; --accent-coral: #FF6B4A;
+            --accent-yellow: #FECA57; --accent-mint: #00D9A5; --accent-blue: #4A90FF;
+            --accent-purple: #9B59B6; --text-dark: #1a1a1a; --text-light: #666;
+            --border-dark: #1a1a1a; --shadow-brutal: 6px 6px 0px #1a1a1a;
+            --shadow-brutal-sm: 4px 4px 0px #1a1a1a; --shadow-brutal-lg: 10px 10px 0px #1a1a1a;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg-cream); color: var(--text-dark); }
+
+        /* ── Timer Bar ── */
+        .timer-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 1100; background: var(--bg-dark); color: white; padding: 10px 40px; display: flex; align-items: center; justify-content: center; gap: 16px; border-bottom: 3px solid var(--accent-coral); }
+        .timer-icon { font-size: 1.3rem; }
+        .timer-text { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem; }
+        .timer-countdown { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; color: var(--accent-coral); min-width: 60px; text-align: center; }
+        .timer-progress { position: absolute; bottom: 0; left: 0; height: 3px; background: var(--accent-coral); transition: width 1s linear; }
+        .timer-bar.warning { background: #7f1d1d; }
+        .timer-bar.warning .timer-countdown { color: var(--accent-yellow); animation: pulse-timer 1s infinite; }
+        @keyframes pulse-timer { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        /* ── Navbar ── */
+        .navbar { position: fixed; top: 46px; left: 0; right: 0; z-index: 1000; padding: 14px 40px; background: var(--bg-cream); border-bottom: 3px solid var(--border-dark); }
+        .navbar-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+        .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-dark); }
+        .logo-box { width: 40px; height: 40px; background: var(--accent-coral); border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transform: rotate(-3deg); }
+        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; }
+        .logo-text span { color: var(--accent-coral); }
+        .checkout-steps { display: flex; align-items: center; gap: 0; }
+        .step { display: flex; align-items: center; gap: 8px; padding: 8px 18px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); position: relative; }
+        .step.active { color: var(--text-dark); }
+        .step.completed { color: var(--accent-mint); }
+        .step-num { width: 28px; height: 28px; border: 2px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800; }
+        .step.active .step-num { background: var(--accent-coral); color: white; border-color: var(--border-dark); }
+        .step.completed .step-num { background: var(--accent-mint); color: white; border-color: var(--accent-mint); }
+        .step-arrow { color: #ccc; margin: 0 4px; }
+        .secure-badge { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--accent-mint); font-weight: 600; }
+
+        /* ── Main Layout ── */
+        .main-content { max-width: 1100px; margin: 0 auto; padding: 130px 40px 60px; display: grid; grid-template-columns: 1fr 380px; gap: 30px; }
+
+        /* ── Left: Payment Form ── */
+        .form-panel { display: flex; flex-direction: column; gap: 24px; }
+        .form-section { background: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal); }
+        .form-section-header { display: flex; align-items: center; gap: 12px; padding: 20px 24px; border-bottom: 3px solid var(--border-dark); background: var(--bg-cream); }
+        .form-section-header h3 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.05rem; }
+        .form-section-header .v-icon { color: var(--accent-coral); }
+        .form-body { padding: 24px; }
+
+        /* Social proof banner */
+        .social-proof { background: #fff8f0; border: 3px solid var(--accent-yellow); padding: 14px 20px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-brutal-sm); }
+        .social-proof-icon { font-size: 1.5rem; }
+        .social-proof-text { font-size: 0.85rem; line-height: 1.4; }
+        .social-proof-text strong { font-family: 'Syne', sans-serif; }
+        .social-proof-live { display: inline-block; width: 8px; height: 8px; background: #e74c3c; border-radius: 50%; margin-right: 6px; animation: pulse-live 2s infinite; }
+        @keyframes pulse-live { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
+
+        /* Payment method selector */
+        .payment-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+        .payment-method { padding: 20px; border: 3px solid #ddd; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+        .payment-method:hover { border-color: var(--border-dark); background: #fef9f0; }
+        .payment-method.selected { border-color: var(--accent-coral); background: #fff5f0; box-shadow: var(--shadow-brutal-sm); }
+        .payment-method-icon { font-size: 2rem; }
+        .payment-method-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem; }
+        .payment-method-desc { font-size: 0.75rem; color: var(--text-light); }
+
+        /* Form fields */
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .form-row.full { grid-template-columns: 1fr; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-input { padding: 14px 16px; border: 3px solid var(--border-dark); font-family: 'DM Sans', sans-serif; font-size: 1rem; background: white; transition: box-shadow 0.15s; }
+        .form-input:focus { outline: none; box-shadow: 4px 4px 0px var(--accent-coral); }
+        .form-input::placeholder { color: #bbb; }
+        .form-input.error { border-color: #e74c3c; box-shadow: 4px 4px 0px #e74c3c; }
+        .form-error { color: #e74c3c; font-size: 0.75rem; font-weight: 600; }
+        select.form-input { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%231a1a1a'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+
+        /* Mobile Money fields */
+        .mm-providers { display: flex; gap: 10px; margin-bottom: 16px; }
+        .mm-provider { padding: 12px 18px; border: 3px solid #ddd; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.85rem; }
+        .mm-provider:hover { border-color: var(--border-dark); }
+        .mm-provider.selected { border-color: var(--accent-coral); background: #fff5f0; box-shadow: 3px 3px 0px #1a1a1a; }
+        .mm-provider-dot { width: 12px; height: 12px; border: 2px solid var(--border-dark); border-radius: 50%; }
+        .mm-provider.selected .mm-provider-dot { background: var(--accent-coral); }
+
+        
+        /* Delivery methods */
+        .delivery-methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .delivery-option { padding: 18px 14px; border: 3px solid #ddd; cursor: pointer; transition: all 0.15s; text-align: center; }
+        .delivery-option:hover { border-color: var(--border-dark); background: #fef9f0; }
+        .delivery-option.selected { border-color: var(--accent-coral); background: #fff5f0; box-shadow: var(--shadow-brutal-sm); }
+        .delivery-option-icon { font-size: 1.8rem; margin-bottom: 8px; }
+        .delivery-option-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; margin-bottom: 4px; }
+        .delivery-option-desc { font-size: 0.7rem; color: var(--text-light); line-height: 1.4; }
+        .delivery-option-free { display: inline-block; background: var(--accent-mint); color: white; padding: 2px 8px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; margin-top: 6px; }
+
+        /* Guarantee badge */
+        .guarantee { display: flex; align-items: center; gap: 14px; padding: 16px 20px; background: #f0fff8; border: 2px solid var(--accent-mint); margin-top: 8px; }
+        .guarantee-icon { font-size: 1.8rem; }
+        .guarantee-text h4 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem; color: var(--accent-mint); }
+        .guarantee-text p { font-size: 0.8rem; color: var(--text-light); }
+
+        /* ── Right: Order Summary ── */
+        .summary-panel { position: sticky; top: 130px; display: flex; flex-direction: column; gap: 16px; }
+        .summary-card { background: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal); }
+        .summary-header { padding: 20px; border-bottom: 3px solid var(--border-dark); display: flex; gap: 16px; align-items: center; }
+        .summary-poster { width: 60px; height: 60px; border-radius: 8px; border: 2px solid var(--border-dark); object-fit: cover; }
+        .summary-event-info h3 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
+        .summary-event-info p { font-size: 0.8rem; color: var(--text-light); }
+        .summary-body { padding: 20px; }
+        .summary-line { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; font-size: 0.9rem; }
+        .summary-line.border { border-bottom: 2px dashed #eee; }
+        .summary-line .zone-dot { width: 12px; height: 12px; border: 2px solid var(--border-dark); display: inline-block; margin-right: 8px; }
+        .summary-total { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: var(--bg-dark); color: white; }
+        .summary-total-label { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem; }
+        .summary-total-price { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.5rem; }
+        .summary-total-price small { font-size: 0.7rem; font-weight: 400; opacity: 0.7; }
+
+        /* Scarcity indicator */
+        .scarcity-banner { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #fff0f0; border: 2px solid #e74c3c; }
+        .scarcity-icon { font-size: 1.2rem; }
+        .scarcity-text { font-size: 0.8rem; font-weight: 600; color: #c0392b; }
+
+        /* Trust badges */
+        .trust-badges { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .trust-badge { display: flex; align-items: center; gap: 8px; padding: 12px; border: 2px solid #eee; font-size: 0.75rem; font-weight: 600; color: var(--text-light); }
+        .trust-badge .v-icon { color: var(--accent-mint); }
+
+        /* Pay button */
+        .pay-btn { width: 100%; padding: 20px; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.15rem; text-transform: uppercase; letter-spacing: 1px; background: var(--accent-coral); color: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .pay-btn:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
+        .pay-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: var(--shadow-brutal); }
+
+        /* Expired overlay */
+        .expired-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26,26,26,0.92); z-index: 3000; display: flex; align-items: center; justify-content: center; }
+        .expired-card { background: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal-lg); padding: 50px; max-width: 500px; text-align: center; }
+        .expired-card h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.8rem; margin: 20px 0 12px; }
+        .expired-card p { color: var(--text-light); margin-bottom: 30px; line-height: 1.6; }
+        .expired-icon { font-size: 3.5rem; }
+        .expired-btn { display: inline-flex; align-items: center; gap: 10px; padding: 16px 32px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; background: var(--accent-coral); color: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal); cursor: pointer; text-decoration: none; transition: all 0.15s; }
+        .expired-btn:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
+
+        /* Success overlay */
+        .success-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26,26,26,0.92); z-index: 3000; display: flex; align-items: center; justify-content: center; }
+        .success-card { background: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal-lg); padding: 50px; max-width: 520px; text-align: center; }
+        .success-card h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.8rem; margin: 20px 0 12px; }
+        .success-card p { color: var(--text-light); margin-bottom: 10px; line-height: 1.6; }
+        .success-icon { font-size: 3.5rem; }
+        .success-ticket-code { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; background: var(--bg-cream); border: 3px solid var(--border-dark); padding: 16px 24px; margin: 20px auto; display: inline-block; letter-spacing: 2px; }
+        .success-actions { display: flex; gap: 12px; justify-content: center; margin-top: 24px; }
+        .success-btn { padding: 14px 28px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; border: 3px solid var(--border-dark); cursor: pointer; text-decoration: none; transition: all 0.15s; }
+        .success-btn-primary { background: var(--accent-coral); color: white; box-shadow: var(--shadow-brutal-sm); }
+        .success-btn-secondary { background: white; color: var(--text-dark); box-shadow: var(--shadow-brutal-sm); }
+        .success-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .main-content { grid-template-columns: 1fr; padding: 130px 20px 40px; }
+            .summary-panel { position: static; }
+            .checkout-steps { display: none; }
+            .form-row { grid-template-columns: 1fr; }
+            .payment-methods { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<script src="../js/site-config.js"></script>
+
+<div id="app">
+    <!-- Countdown Timer Bar -->
+    <div class="timer-bar" :class="{ warning: timerWarning }">
+        <span class="timer-icon">⏱️</span>
+        <span class="timer-text">{{ lang === 'fr' ? 'Temps restant pour finaliser votre commande' : 'Time remaining to complete your order' }}</span>
+        <span class="timer-countdown">{{ timerDisplay }}</span>
+        <div class="timer-progress" :style="{ width: timerProgress + '%' }"></div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="ticketmada-landing.html" class="logo">
+                <div class="logo-box">🎫</div>
+                <span class="logo-text">Ticket<span>Mada</span></span>
+            </a>
+            <div class="checkout-steps">
+                <div class="step completed"><div class="step-num"><v-icon size="x-small">mdi-check</v-icon></div> {{ lang === 'fr' ? 'Billets' : 'Tickets' }}</div>
+                <span class="step-arrow">›</span>
+                <div class="step active"><div class="step-num">2</div> {{ lang === 'fr' ? 'Paiement' : 'Payment' }}</div>
+                <span class="step-arrow">›</span>
+                <div class="step"><div class="step-num">3</div> {{ lang === 'fr' ? 'Confirmation' : 'Confirm' }}</div>
+            </div>
+            <div class="secure-badge">
+                <v-icon size="small">mdi-lock</v-icon>
+                {{ lang === 'fr' ? 'Paiement sécurisé' : 'Secure checkout' }}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main -->
+    <div class="main-content">
+        <!-- Left: Form -->
+        <div class="form-panel">
+            <!-- Social proof -->
+            <div class="social-proof">
+                <span class="social-proof-icon">👥</span>
+                <div class="social-proof-text">
+                    <span class="social-proof-live"></span>
+                    <strong>{{ viewersCount }} {{ lang === 'fr' ? 'personnes' : 'people' }}</strong>
+                    {{ lang === 'fr' ? 'consultent cet événement en ce moment' : 'are viewing this event right now' }}
+                    <span v-if="recentSales > 0"> · <strong>{{ recentSales }}</strong> {{ lang === 'fr' ? 'achat(s) cette heure' : 'purchase(s) this hour' }}</span>
+                </div>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="form-section">
+                <div class="form-section-header">
+                    <v-icon>mdi-account</v-icon>
+                    <h3>{{ lang === 'fr' ? 'Informations de contact' : 'Contact Information' }}</h3>
+                </div>
+                <div class="form-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>{{ lang === 'fr' ? 'Prénom' : 'First name' }} *</label>
+                            <input class="form-input" :class="{ error: errors.firstName }" v-model="form.firstName" :placeholder="lang === 'fr' ? 'Votre prénom' : 'Your first name'">
+                            <span class="form-error" v-if="errors.firstName">{{ errors.firstName }}</span>
+                        </div>
+                        <div class="form-group">
+                            <label>{{ lang === 'fr' ? 'Nom' : 'Last name' }} *</label>
+                            <input class="form-input" :class="{ error: errors.lastName }" v-model="form.lastName" :placeholder="lang === 'fr' ? 'Votre nom' : 'Your last name'">
+                            <span class="form-error" v-if="errors.lastName">{{ errors.lastName }}</span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Email *</label>
+                            <input class="form-input" :class="{ error: errors.email }" type="email" v-model="form.email" placeholder="votre@email.com">
+                            <span class="form-error" v-if="errors.email">{{ errors.email }}</span>
+                        </div>
+                        <div class="form-group">
+                            <label>{{ lang === 'fr' ? 'Téléphone' : 'Phone' }} *</label>
+                            <input class="form-input" :class="{ error: errors.phone }" v-model="form.phone" placeholder="+261 34 00 000 00">
+                            <span class="form-error" v-if="errors.phone">{{ errors.phone }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delivery Method -->
+            <div class="form-section">
+                <div class="form-section-header">
+                    <v-icon>mdi-truck-delivery</v-icon>
+                    <h3>{{ lang === 'fr' ? 'Mode de livraison' : 'Delivery Method' }}</h3>
+                </div>
+                <div class="form-body">
+                    <div class="delivery-methods">
+                        <div class="delivery-option" :class="{ selected: deliveryMethod === 'eticket' }" @click="deliveryMethod = 'eticket'">
+                            <div class="delivery-option-icon">📱</div>
+                            <div class="delivery-option-name">E-Ticket</div>
+                            <div class="delivery-option-desc">{{ lang === 'fr' ? 'Billet numérique avec QR code envoyé par email' : 'Digital ticket with QR code sent by email' }}</div>
+                            <div class="delivery-option-free">{{ lang === 'fr' ? 'Gratuit' : 'Free' }}</div>
+                        </div>
+                        <div class="delivery-option" :class="{ selected: deliveryMethod === 'mobile' }" @click="deliveryMethod = 'mobile'">
+                            <div class="delivery-option-icon">📲</div>
+                            <div class="delivery-option-name">Mobile</div>
+                            <div class="delivery-option-desc">{{ lang === 'fr' ? 'Transféré sur l\'app TicketMada Scanner' : 'Transferred to TicketMada Scanner app' }}</div>
+                            <div class="delivery-option-free">{{ lang === 'fr' ? 'Gratuit' : 'Free' }}</div>
+                        </div>
+                        <div class="delivery-option" :class="{ selected: deliveryMethod === 'print' }" @click="deliveryMethod = 'print'">
+                            <div class="delivery-option-icon">🖨️</div>
+                            <div class="delivery-option-name">{{ lang === 'fr' ? 'Imprimer' : 'Print' }}</div>
+                            <div class="delivery-option-desc">{{ lang === 'fr' ? 'PDF à imprimer chez vous avec code-barres' : 'PDF to print at home with barcode' }}</div>
+                            <div class="delivery-option-free">{{ lang === 'fr' ? 'Gratuit' : 'Free' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Method -->
+            <div class="form-section">
+                <div class="form-section-header">
+                    <v-icon>mdi-credit-card</v-icon>
+                    <h3>{{ lang === 'fr' ? 'Mode de paiement' : 'Payment Method' }}</h3>
+                </div>
+                <div class="form-body">
+                    <div class="payment-methods">
+                        <div class="payment-method" :class="{ selected: payMethod === 'mobile' }" @click="payMethod = 'mobile'">
+                            <div class="payment-method-icon">📱</div>
+                            <div class="payment-method-name">Mobile Money</div>
+                            <div class="payment-method-desc">MVola, Orange Money, Airtel Money</div>
+                        </div>
+                        <div class="payment-method" :class="{ selected: payMethod === 'card' }" @click="payMethod = 'card'">
+                            <div class="payment-method-icon">💳</div>
+                            <div class="payment-method-name">{{ lang === 'fr' ? 'Carte bancaire' : 'Credit Card' }}</div>
+                            <div class="payment-method-desc">Visa, Mastercard</div>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Money -->
+                    <div v-if="payMethod === 'mobile'">
+                        <div class="mm-providers">
+                            <div class="mm-provider" :class="{ selected: mmProvider === 'mvola' }" @click="mmProvider = 'mvola'">
+                                <div class="mm-provider-dot"></div> MVola
+                            </div>
+                            <div class="mm-provider" :class="{ selected: mmProvider === 'orange' }" @click="mmProvider = 'orange'">
+                                <div class="mm-provider-dot"></div> Orange Money
+                            </div>
+                            <div class="mm-provider" :class="{ selected: mmProvider === 'airtel' }" @click="mmProvider = 'airtel'">
+                                <div class="mm-provider-dot"></div> Airtel Money
+                            </div>
+                        </div>
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label>{{ lang === 'fr' ? 'Numéro Mobile Money' : 'Mobile Money Number' }} *</label>
+                                <input class="form-input" :class="{ error: errors.mmNumber }" v-model="form.mmNumber" :placeholder="mmProvider === 'mvola' ? '034 XX XXX XX' : mmProvider === 'orange' ? '032 XX XXX XX' : '033 XX XXX XX'">
+                                <span class="form-error" v-if="errors.mmNumber">{{ errors.mmNumber }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card -->
+                    <div v-if="payMethod === 'card'">
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label>{{ lang === 'fr' ? 'Numéro de carte' : 'Card number' }} *</label>
+                                <input class="form-input" :class="{ error: errors.cardNumber }" v-model="form.cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" @input="formatCardNumber">
+                                <span class="form-error" v-if="errors.cardNumber">{{ errors.cardNumber }}</span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>{{ lang === 'fr' ? 'Expiration' : 'Expiry' }} *</label>
+                                <input class="form-input" :class="{ error: errors.cardExpiry }" v-model="form.cardExpiry" placeholder="MM/AA" maxlength="5" @input="formatExpiry">
+                                <span class="form-error" v-if="errors.cardExpiry">{{ errors.cardExpiry }}</span>
+                            </div>
+                            <div class="form-group">
+                                <label>CVC *</label>
+                                <input class="form-input" :class="{ error: errors.cardCvc }" v-model="form.cardCvc" placeholder="123" maxlength="4">
+                                <span class="form-error" v-if="errors.cardCvc">{{ errors.cardCvc }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="guarantee">
+                        <div class="guarantee-icon">🛡️</div>
+                        <div class="guarantee-text">
+                            <h4>{{ lang === 'fr' ? 'Garantie TicketMada' : 'TicketMada Guarantee' }}</h4>
+                            <p>{{ lang === 'fr' ? 'Billets authentiques garantis ou remboursement intégral.' : 'Authentic tickets guaranteed or full refund.' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Order Summary -->
+        <div class="summary-panel">
+            <div class="summary-card">
+                <div class="summary-header">
+                    <img :src="order.image || 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=100'" class="summary-poster">
+                    <div class="summary-event-info">
+                        <h3>{{ order.eventName }}</h3>
+                        <p><v-icon size="x-small">mdi-calendar</v-icon> {{ order.date }} · <v-icon size="x-small">mdi-map-marker</v-icon> {{ order.venue }}</p>
+                    </div>
+                </div>
+                <div class="summary-body">
+                    <div class="summary-line border">
+                        <span><span class="zone-dot" :style="{ background: order.zoneColor }"></span>{{ order.zoneName }} × {{ order.qty }}</span>
+                        <strong>{{ formatPrice(order.subtotal) }} Ar</strong>
+                    </div>
+                    <div class="summary-line border">
+                        <span>{{ lang === 'fr' ? 'Frais de service (3%)' : 'Service fee (3%)' }}</span>
+                        <span>{{ formatPrice(order.serviceFee) }} Ar</span>
+                    </div>
+                    <div class="summary-line border">
+                        <span><v-icon size="x-small">mdi-truck-delivery</v-icon> {{ deliveryMethod === 'eticket' ? 'E-Ticket' : deliveryMethod === 'mobile' ? 'Mobile' : (lang === 'fr' ? 'Imprimer' : 'Print') }}</span>
+                        <span style="color:var(--accent-mint);font-weight:600;">{{ lang === 'fr' ? 'Gratuit' : 'Free' }}</span>
+                    </div>
+                    <div class="summary-line" v-if="payMethod === 'card'">
+                        <span>{{ lang === 'fr' ? 'Frais de carte' : 'Card fee' }}</span>
+                        <span>{{ formatPrice(order.cardFee) }} Ar</span>
+                    </div>
+                </div>
+                <div class="summary-total">
+                    <span class="summary-total-label">TOTAL</span>
+                    <span class="summary-total-price">{{ formatPrice(totalPrice) }} <small>Ar</small></span>
+                </div>
+            </div>
+
+            <!-- Scarcity -->
+            <div class="scarcity-banner" v-if="order.scarcity">
+                <span class="scarcity-icon">🔥</span>
+                <span class="scarcity-text">{{ order.scarcity }}</span>
+            </div>
+
+            <!-- Pay Button -->
+            <button class="pay-btn" @click="submitPayment" :disabled="processing">
+                <v-icon v-if="!processing">mdi-lock</v-icon>
+                <v-icon v-else class="spin">mdi-loading</v-icon>
+                {{ processing ? (lang === 'fr' ? 'Traitement...' : 'Processing...') : (lang === 'fr' ? 'Payer' : 'Pay now') }} {{ !processing ? formatPrice(totalPrice) + ' Ar' : '' }}
+            </button>
+
+            <!-- Trust badges -->
+            <div class="trust-badges">
+                <div class="trust-badge"><v-icon size="small">mdi-shield-check</v-icon> {{ lang === 'fr' ? 'Paiement sécurisé' : 'Secure payment' }}</div>
+                <div class="trust-badge"><v-icon size="small">mdi-ticket-confirmation</v-icon> {{ lang === 'fr' ? 'Billets garantis' : 'Guaranteed tickets' }}</div>
+                <div class="trust-badge"><v-icon size="small">mdi-cash-refund</v-icon> {{ lang === 'fr' ? 'Remboursement facile' : 'Easy refund' }}</div>
+                <div class="trust-badge"><v-icon size="small">mdi-headset</v-icon> {{ lang === 'fr' ? 'Support 24/7' : '24/7 support' }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expired Overlay -->
+    <div class="expired-overlay" v-if="timerExpired">
+        <div class="expired-card">
+            <div class="expired-icon">⏰</div>
+            <h2>{{ lang === 'fr' ? 'Temps écoulé' : 'Time\'s up' }}</h2>
+            <p>{{ lang === 'fr' ? 'Votre session de réservation a expiré. Vos billets ont été relâchés. Vous pouvez recommencer la sélection.' : 'Your booking session has expired. Your tickets have been released. You can start the selection again.' }}</p>
+            <a :href="backUrl" class="expired-btn"><v-icon>mdi-arrow-left</v-icon> {{ lang === 'fr' ? 'Retour aux billets' : 'Back to tickets' }}</a>
+        </div>
+    </div>
+
+    <!-- Success Overlay -->
+    <div class="success-overlay" v-if="showSuccess">
+        <div class="success-card">
+            <div class="success-icon">🎉</div>
+            <h2>{{ lang === 'fr' ? 'Réservation confirmée !' : 'Booking confirmed!' }}</h2>
+            <p>{{ lang === 'fr' ? 'Vos billets ont été réservés avec succès.' : 'Your tickets have been successfully booked.' }}</p>
+            <div class="success-ticket-code">{{ ticketCode }}</div>
+            <p style="font-size:0.85rem;">{{ lang === 'fr' ? 'Un email de confirmation a été envoyé à' : 'A confirmation email was sent to' }} <strong>{{ form.email }}</strong></p>
+            <div class="success-actions">
+                <a href="ticketmada-landing.html" class="success-btn success-btn-secondary">{{ lang === 'fr' ? 'Accueil' : 'Home' }}</a>
+                <button class="success-btn success-btn-primary" @click="window.print()">{{ lang === 'fr' ? 'Imprimer' : 'Print' }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../js/api-client.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
+<script>
+const { createApp } = Vue;
+const app = createApp({
+    data() {
+        return {
+            lang: localStorage.getItem('ticketmada-lang') || 'fr',
+            // Timer
+            timerSeconds: 600, // 10 minutes
+            timerInterval: null,
+            timerExpired: false,
+            // Social proof
+            viewersCount: 0,
+            recentSales: 0,
+            // Payment
+            deliveryMethod: 'eticket',
+            payMethod: 'mobile',
+            mmProvider: 'mvola',
+            processing: false,
+            showSuccess: false,
+            ticketCode: '',
+            // Order from URL params
+            order: { eventId: 1, eventName: '', zoneName: '', zoneColor: '#FF6B4A', qty: 2, price: 0, subtotal: 0, serviceFee: 0, cardFee: 0, date: '', venue: '', image: '', scarcity: '' },
+            // Form
+            form: { firstName: '', lastName: '', email: '', phone: '', mmNumber: '', cardNumber: '', cardExpiry: '', cardCvc: '' },
+            errors: {}
+        };
+    },
+    computed: {
+        timerDisplay() {
+            const m = Math.floor(this.timerSeconds / 60);
+            const s = this.timerSeconds % 60;
+            return `${m}:${String(s).padStart(2, '0')}`;
+        },
+        timerProgress() { return (this.timerSeconds / 600) * 100; },
+        timerWarning() { return this.timerSeconds <= 120; },
+        totalPrice() {
+            const base = this.order.subtotal + this.order.serviceFee;
+            return this.payMethod === 'card' ? base + this.order.cardFee : base;
+        },
+        backUrl() { return `ticketmada-event.html?id=${this.order.eventId}`; }
+    },
+    methods: {
+        formatPrice(p) { return p ? p.toLocaleString('fr-FR') : '0'; },
+        startTimer() {
+            this.timerInterval = setInterval(() => {
+                this.timerSeconds--;
+                if (this.timerSeconds <= 0) {
+                    clearInterval(this.timerInterval);
+                    this.timerExpired = true;
+                }
+            }, 1000);
+        },
+        simulateSocialProof() {
+            // Randomize viewers and sales
+            this.viewersCount = Math.floor(Math.random() * 30) + 15;
+            this.recentSales = Math.floor(Math.random() * 8) + 2;
+            // Update periodically
+            setInterval(() => {
+                this.viewersCount += Math.floor(Math.random() * 5) - 2;
+                this.viewersCount = Math.max(8, this.viewersCount);
+                if (Math.random() > 0.7) this.recentSales = Math.min(this.recentSales + 1, 25);
+            }, 8000);
+        },
+        formatCardNumber(e) {
+            let v = this.form.cardNumber.replace(/\D/g, '').substring(0, 16);
+            this.form.cardNumber = v.replace(/(\d{4})(?=\d)/g, '$1 ');
+        },
+        formatExpiry(e) {
+            let v = this.form.cardExpiry.replace(/\D/g, '').substring(0, 4);
+            if (v.length >= 2) v = v.substring(0, 2) + '/' + v.substring(2);
+            this.form.cardExpiry = v;
+        },
+        validate() {
+            this.errors = {};
+            if (!this.form.firstName.trim()) this.errors.firstName = this.lang === 'fr' ? 'Requis' : 'Required';
+            if (!this.form.lastName.trim()) this.errors.lastName = this.lang === 'fr' ? 'Requis' : 'Required';
+            if (!this.form.email.trim() || !this.form.email.includes('@')) this.errors.email = this.lang === 'fr' ? 'Email invalide' : 'Invalid email';
+            if (!this.form.phone.trim()) this.errors.phone = this.lang === 'fr' ? 'Requis' : 'Required';
+            if (this.payMethod === 'mobile') {
+                if (!this.form.mmNumber.trim()) this.errors.mmNumber = this.lang === 'fr' ? 'Numéro requis' : 'Number required';
+            } else {
+                if (this.form.cardNumber.replace(/\s/g, '').length < 16) this.errors.cardNumber = this.lang === 'fr' ? 'Numéro invalide' : 'Invalid number';
+                if (this.form.cardExpiry.length < 5) this.errors.cardExpiry = this.lang === 'fr' ? 'Invalide' : 'Invalid';
+                if (this.form.cardCvc.length < 3) this.errors.cardCvc = this.lang === 'fr' ? 'Invalide' : 'Invalid';
+            }
+            return Object.keys(this.errors).length === 0;
+        },
+        async submitPayment() {
+            if (!this.validate()) return;
+            this.processing = true;
+
+            // Simulate payment processing (2-3 seconds)
+            await new Promise(r => setTimeout(r, 2000 + Math.random() * 1000));
+
+            // Try API
+            try {
+                const result = await window.api.post('/tickets', {
+                    event_id: this.order.eventId,
+                    type: this.order.zoneName,
+                    price: this.order.price,
+                    quantity: this.order.qty
+                });
+                if (result.ticket) {
+                    this.ticketCode = result.ticket.id_code;
+                } else {
+                    this.ticketCode = 'TKT-' + String(Math.floor(Math.random() * 999999)).padStart(6, '0');
+                }
+            } catch (e) {
+                // Fallback ticket code
+                this.ticketCode = 'TKT-' + String(Math.floor(Math.random() * 999999)).padStart(6, '0');
+            }
+
+            clearInterval(this.timerInterval);
+            this.processing = false;
+            this.showSuccess = true;
+        },
+        loadOrderFromParams() {
+            const p = new URLSearchParams(window.location.search);
+            this.order.eventId = parseInt(p.get('event_id') || '1');
+            this.order.eventName = p.get('event_name') || 'Événement';
+            this.order.zoneName = p.get('zone_name') || 'Standard';
+            this.order.zoneColor = p.get('zone_color') || '#4A90FF';
+            this.order.qty = parseInt(p.get('qty') || '2');
+            this.order.price = parseInt(p.get('price') || '40000');
+            this.order.date = p.get('date') || '';
+            this.order.venue = p.get('venue') || '';
+            this.order.image = p.get('image') || '';
+            this.order.subtotal = this.order.price * this.order.qty;
+            this.order.serviceFee = Math.round(this.order.subtotal * 0.03);
+            this.order.cardFee = Math.round(this.order.subtotal * 0.015);
+
+            // Scarcity message
+            const avail = parseInt(p.get('available') || '0');
+            if (avail > 0 && avail <= 15) {
+                this.order.scarcity = this.lang === 'fr'
+                    ? `🔥 Seulement ${avail} billets restants dans cette zone !`
+                    : `🔥 Only ${avail} tickets remaining in this zone!`;
+            }
+
+            // Pre-fill user info if logged in
+            const user = window.api?.getUser();
+            if (user) {
+                const names = (user.name || '').split(' ');
+                this.form.firstName = names[0] || '';
+                this.form.lastName = names.slice(1).join(' ') || '';
+                this.form.email = user.email || '';
+            }
+        }
+    },
+    mounted() {
+        document.documentElement.lang = this.lang;
+        this.loadOrderFromParams();
+        document.title = `TicketMada - ${this.lang === 'fr' ? 'Paiement' : 'Checkout'} · ${this.order.eventName}`;
+        this.startTimer();
+        this.simulateSocialProof();
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && this.timerExpired) window.location.href = this.backUrl; });
+    },
+    beforeUnmount() { clearInterval(this.timerInterval); }
+});
+app.use(Vuetify.createVuetify());
+app.mount('#app');
+</script>
+</body>
+</html>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicketMada - Artiste</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <style>
+        :root { --bg-cream:#FAF7F2;--bg-dark:#1a1a1a;--accent-coral:#FF6B4A;--accent-yellow:#FECA57;--accent-mint:#00D9A5;--accent-blue:#4A90FF;--accent-purple:#9B59B6;--text-dark:#1a1a1a;--text-light:#666;--border-dark:#1a1a1a;--shadow-brutal:6px 6px 0px #1a1a1a;--shadow-brutal-sm:4px 4px 0px #1a1a1a;--shadow-brutal-lg:10px 10px 0px #1a1a1a; }
+        * { margin:0;padding:0;box-sizing:border-box; }
+        body { font-family:'DM Sans',sans-serif;background:var(--bg-cream);color:var(--text-dark); }
+        .navbar { position:fixed;top:0;left:0;right:0;z-index:1000;padding:16px 40px;background:var(--bg-cream);border-bottom:3px solid var(--border-dark); }
+        .navbar-inner { max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between; }
+        .logo { display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text-dark); }
+        .logo-box { width:42px;height:42px;background:var(--accent-coral);border:3px solid var(--border-dark);display:flex;align-items:center;justify-content:center;font-size:1.2rem;transform:rotate(-3deg); }
+        .logo-text { font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem; }
+        .logo-text span { color:var(--accent-coral); }
+        .nav-back { display:flex;align-items:center;gap:6px;font-family:'Syne',sans-serif;font-weight:600;font-size:0.85rem;color:var(--text-dark);text-decoration:none;padding:10px 16px;border:3px solid var(--border-dark);background:white;box-shadow:var(--shadow-brutal-sm);transition:all 0.15s; }
+        .nav-back:hover { transform:translate(-2px,-2px);box-shadow:6px 6px 0px #1a1a1a; }
+        .lang-toggle { width:42px;height:42px;background:white;border:3px solid var(--border-dark);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.3rem;box-shadow:3px 3px 0px #1a1a1a; }
+
+        /* Hero banner */
+        .artist-hero { margin-top:77px;padding:60px 40px 50px;background:var(--bg-dark);color:white;border-bottom:3px solid var(--border-dark);position:relative;overflow:hidden; }
+        .artist-hero::before { content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,rgba(255,107,74,0.15),rgba(74,144,255,0.1));pointer-events:none; }
+        .artist-hero-inner { max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:40px;position:relative;z-index:1; }
+        .artist-avatar { width:140px;height:140px;border:4px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:4rem;background:rgba(255,255,255,0.1);flex-shrink:0;box-shadow:0 0 40px rgba(255,107,74,0.3); }
+        .artist-info h1 { font-family:'Syne',sans-serif;font-weight:800;font-size:2.5rem;margin-bottom:8px; }
+        .artist-info .category-badge { display:inline-block;background:var(--accent-coral);border:2px solid white;padding:5px 16px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px; }
+        .artist-bio { font-size:1rem;opacity:0.8;line-height:1.7;max-width:700px; }
+        .artist-stats { display:flex;gap:30px;margin-top:20px; }
+        .artist-stat { text-align:center; }
+        .artist-stat-value { font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem; }
+        .artist-stat-label { font-size:0.75rem;opacity:0.6;text-transform:uppercase;letter-spacing:0.5px; }
+        .artist-alert-btn { margin-top:20px;padding:12px 24px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;background:transparent;color:white;border:2px solid rgba(255,255,255,0.4);cursor:pointer;transition:all 0.15s;display:inline-flex;align-items:center;gap:8px; }
+        .artist-alert-btn:hover { background:var(--accent-coral);border-color:var(--accent-coral); }
+
+        /* Shows section */
+        .shows-section { max-width:1400px;margin:0 auto;padding:40px 40px 60px; }
+        .shows-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:24px; }
+        .shows-header h2 { font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem; }
+        .shows-count { font-size:0.85rem;color:var(--text-light); }
+
+        .show-card { background:white;border:3px solid var(--border-dark);box-shadow:var(--shadow-brutal);display:grid;grid-template-columns:100px 1fr auto;margin-bottom:16px;cursor:pointer;transition:all 0.15s; }
+        .show-card:hover { transform:translate(-3px,-3px);box-shadow:9px 9px 0px #1a1a1a; }
+        .show-date-col { background:var(--bg-cream);border-right:3px solid var(--border-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 16px; }
+        .show-date-month { font-family:'Syne',sans-serif;font-weight:800;font-size:0.8rem;text-transform:uppercase;color:var(--accent-coral); }
+        .show-date-day { font-family:'Syne',sans-serif;font-weight:800;font-size:2rem;line-height:1; }
+        .show-date-weekday { font-size:0.7rem;color:var(--text-light);text-transform:uppercase; }
+        .show-info { padding:20px 24px;display:flex;flex-direction:column;justify-content:center; }
+        .show-name { font-family:'Syne',sans-serif;font-weight:700;font-size:1.15rem;margin-bottom:6px; }
+        .show-details { display:flex;gap:16px;font-size:0.85rem;color:var(--text-light); }
+        .show-details span { display:flex;align-items:center;gap:4px; }
+        .show-badges { display:flex;gap:6px;margin-top:8px; }
+        .show-badge { font-size:0.6rem;font-weight:700;padding:3px 10px;border:2px solid;text-transform:uppercase;letter-spacing:0.5px; }
+        .badge-hot { background:#fff0f0;border-color:#e74c3c;color:#e74c3c; }
+        .badge-few { background:#fef9f0;border-color:#f39c12;color:#f39c12; }
+        .badge-new { background:#f0fff8;border-color:var(--accent-mint);color:var(--accent-mint); }
+        .show-action { display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 28px;border-left:3px solid var(--border-dark);background:var(--bg-cream);min-width:170px; }
+        .show-price-from { font-size:0.7rem;color:var(--text-light);text-transform:uppercase;margin-bottom:2px; }
+        .show-price { font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;margin-bottom:10px; }
+        .show-price small { font-size:0.65rem;font-weight:400;color:var(--text-light); }
+        .show-btn { padding:10px 20px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;background:var(--accent-coral);color:white;border:3px solid var(--border-dark);box-shadow:var(--shadow-brutal-sm);cursor:pointer;transition:all 0.15s;text-decoration:none; }
+        .show-btn:hover { transform:translate(-2px,-2px);box-shadow:6px 6px 0px #1a1a1a; }
+        .show-soldout { opacity:0.5; }
+        .show-soldout .show-btn { background:#ccc;cursor:default; }
+
+        .no-shows { text-align:center;padding:60px 20px;color:var(--text-light); }
+        .no-shows h3 { font-family:'Syne',sans-serif;margin-bottom:8px; }
+
+        @media (max-width:900px) {
+            .artist-hero-inner { flex-direction:column;text-align:center; }
+            .artist-stats { justify-content:center; }
+            .show-card { grid-template-columns:1fr; }
+            .show-date-col { border-right:none;border-bottom:3px solid var(--border-dark);flex-direction:row;gap:10px;padding:12px; }
+            .show-action { border-left:none;border-top:3px solid var(--border-dark);flex-direction:row;justify-content:space-between;min-width:auto; }
+        }
+    </style>
+</head>
+<body>
+<script src="../js/site-config.js"></script>
+
+<div id="app">
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
+            <a href="ticketmada-search.html" class="nav-back"><v-icon size="small">mdi-arrow-left</v-icon> {{ lang === 'fr' ? 'Recherche' : 'Search' }}</a>
+            <div style="display:flex;gap:12px;align-items:center;">
+                <button class="lang-toggle" @click="toggleLang">{{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Artist Hero -->
+    <div class="artist-hero">
+        <div class="artist-hero-inner">
+            <div class="artist-avatar">{{ artist.emoji }}</div>
+            <div class="artist-info">
+                <div class="category-badge">{{ capitalize(artist.category) }}</div>
+                <h1>{{ artist.name }}</h1>
+                <p class="artist-bio">{{ artist.bio }}</p>
+                <div class="artist-stats">
+                    <div class="artist-stat">
+                        <div class="artist-stat-value">{{ artistEvents.length }}</div>
+                        <div class="artist-stat-label">{{ lang === 'fr' ? 'Événements' : 'Events' }}</div>
+                    </div>
+                    <div class="artist-stat">
+                        <div class="artist-stat-value">{{ totalTicketsSold }}</div>
+                        <div class="artist-stat-label">{{ lang === 'fr' ? 'Billets vendus' : 'Tickets sold' }}</div>
+                    </div>
+                    <div class="artist-stat">
+                        <div class="artist-stat-value">{{ artist.venues || '—' }}</div>
+                        <div class="artist-stat-label">{{ lang === 'fr' ? 'Villes' : 'Cities' }}</div>
+                    </div>
+                </div>
+                <button class="artist-alert-btn" @click="showAlertPopup = true">
+                    <v-icon size="small">mdi-bell-outline</v-icon>
+                    {{ lang === 'fr' ? 'Alertes prix' : 'Price alerts' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shows List -->
+    <div class="shows-section">
+        <div class="shows-header">
+            <h2>{{ lang === 'fr' ? '📅 Dates et billets' : '📅 Dates & Tickets' }}</h2>
+            <span class="shows-count">{{ artistEvents.length }} {{ lang === 'fr' ? 'événement(s)' : 'event(s)' }}</span>
+        </div>
+
+        <div v-if="artistEvents.length">
+            <div class="show-card" v-for="ev in artistEvents" :key="ev.id"
+                 :class="{ 'show-soldout': isSoldOut(ev) }"
+                 @click="goToEvent(ev.id)">
+                <div class="show-date-col">
+                    <div class="show-date-month">{{ getMonth(ev.date_start) }}</div>
+                    <div class="show-date-day">{{ getDay(ev.date_start) }}</div>
+                    <div class="show-date-weekday">{{ getWeekday(ev.date_start) }}</div>
+                </div>
+                <div class="show-info">
+                    <div class="show-name">{{ ev.name }}</div>
+                    <div class="show-details">
+                        <span><v-icon size="x-small">mdi-map-marker</v-icon> {{ ev.venue }}</span>
+                        <span><v-icon size="x-small">mdi-account-group</v-icon> {{ ev.capacity ? ev.capacity.toLocaleString() : '—' }}</span>
+                        <span v-if="ev.date_end"><v-icon size="x-small">mdi-calendar-range</v-icon> {{ formatDate(ev.date_end) }}</span>
+                    </div>
+                    <div class="show-badges">
+                        <span class="show-badge badge-hot" v-if="getAvailPct(ev) < 20 && !isSoldOut(ev)">🔥 {{ lang === 'fr' ? 'Dernières places' : 'Selling fast' }}</span>
+                        <span class="show-badge badge-few" v-if="getAvailPct(ev) >= 20 && getAvailPct(ev) < 50">{{ lang === 'fr' ? 'Places limitées' : 'Limited' }}</span>
+                        <span class="show-badge badge-new" v-if="isNew(ev)">{{ lang === 'fr' ? 'Nouveau' : 'New' }}</span>
+                    </div>
+                </div>
+                <div class="show-action">
+                    <div class="show-price-from">{{ lang === 'fr' ? 'À partir de' : 'From' }}</div>
+                    <div class="show-price">{{ formatPrice(getMinPrice(ev)) }} <small>Ar</small></div>
+                    <a :href="'ticketmada-event.html?id=' + ev.id" class="show-btn" @click.stop>
+                        {{ isSoldOut(ev) ? (lang === 'fr' ? 'Complet' : 'Sold out') : (lang === 'fr' ? 'Billets' : 'Tickets') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="no-shows" v-else>
+            <h3>{{ lang === 'fr' ? 'Aucun événement à venir' : 'No upcoming events' }}</h3>
+            <p>{{ lang === 'fr' ? 'Activez les alertes pour être notifié des prochaines dates.' : 'Enable alerts to be notified of future dates.' }}</p>
+        </div>
+    </div>
+</div>
+
+<script src="../js/api-client.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
+<script>
+const { createApp } = Vue;
+
+// Artist database (maps organizer/artist names to bios)
+const artistDB = {
+    'dama': { name: 'Dama', emoji: '🎤', category: 'concerts', bio: 'Légende vivante de la musique malagasy, Dama (Zafimahaleo Rasolofondraosolo) est le leader du groupe mythique Mahaleo. Ses mélodies envoûtantes et ses textes poétiques ont marqué des générations.', bioEn: 'Living legend of Malagasy music, Dama (Zafimahaleo Rasolofondraosolo) is the leader of the legendary Mahaleo band. His enchanting melodies and poetic lyrics have marked generations.' },
+    'jaojoby': { name: 'Jaojoby', emoji: '🎵', category: 'concerts', bio: 'Surnommé "Le Roi du Salegy", Eusèbe Jaojoby est l\'ambassadeur de la musique malgache à l\'international. Son énergie sur scène est légendaire.', bioEn: 'Nicknamed "The King of Salegy", Eusèbe Jaojoby is the ambassador of Malagasy music internationally. His energy on stage is legendary.' },
+    'erick manana': { name: 'Erick Manana', emoji: '🎸', category: 'concerts', bio: 'Maître de la guitare acoustique malgache, Erick Manana mélange traditions ancestrales et sonorités contemporaines avec une virtuosité rare.', bioEn: 'Master of Malagasy acoustic guitar, Erick Manana blends ancestral traditions and contemporary sounds with rare virtuosity.' },
+    'festival donia': { name: 'Festival Donia', emoji: '🎉', category: 'festivals', bio: 'Le plus grand festival de musique de l\'Océan Indien, le Donia se tient chaque année à Nosy Be. Artistes locaux et internationaux s\'y retrouvent pour célébrer la musique.', bioEn: 'The largest music festival in the Indian Ocean, Donia takes place annually in Nosy Be. Local and international artists gather to celebrate music.' },
+    'cnaps sport': { name: 'CNaPS Sport', emoji: '⚽', category: 'sports', bio: 'Club de football professionnel d\'Antananarivo, le CNaPS Sport est l\'un des clubs les plus titrés de Madagascar, évoluant en première division.', bioEn: 'Professional football club from Antananarivo, CNaPS Sport is one of Madagascar\'s most decorated clubs, competing in the first division.' },
+    'madajazzcar': { name: 'Madajazzcar', emoji: '🎷', category: 'festivals', bio: 'Festival de jazz international fondé en 1992, Madajazzcar est le plus ancien festival de jazz d\'Afrique. Il réunit chaque année des artistes du monde entier à Antananarivo.', bioEn: 'International jazz festival founded in 1992, Madajazzcar is Africa\'s oldest jazz festival, bringing together artists from around the world in Antananarivo each year.' }
+};
+
+const app = createApp({
+    data() {
+        return {
+            lang: localStorage.getItem('ticketmada-lang') || 'fr',
+            artist: { name: '', emoji: '🎫', category: '', bio: '', venues: 0 },
+            artistEvents: [],
+            showAlertPopup: false
+        };
+    },
+    computed: {
+        totalTicketsSold() {
+            return this.artistEvents.reduce((s, e) => s + (e.tickets_sold || 0), 0).toLocaleString();
+        }
+    },
+    methods: {
+        toggleLang() { this.lang = this.lang === 'fr' ? 'en' : 'fr'; localStorage.setItem('ticketmada-lang', this.lang); },
+        capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; },
+        formatDate(d) { if (!d) return ''; return new Date(d).toLocaleDateString(this.lang === 'fr' ? 'fr-FR' : 'en-US', { day:'numeric',month:'short',year:'numeric' }); },
+        formatPrice(p) { return p ? p.toLocaleString('fr-FR') : '0'; },
+        getMonth(d) { return new Date(d).toLocaleDateString(this.lang === 'fr' ? 'fr-FR' : 'en-US', { month:'short' }).toUpperCase(); },
+        getDay(d) { return new Date(d).getDate(); },
+        getWeekday(d) { return new Date(d).toLocaleDateString(this.lang === 'fr' ? 'fr-FR' : 'en-US', { weekday:'short' }); },
+        getMinPrice(ev) { return (ev.revenue && ev.tickets_sold) ? Math.round(ev.revenue / ev.tickets_sold * 0.5) : 20000; },
+        getAvailPct(ev) { return ev.capacity ? Math.round(((ev.capacity - (ev.tickets_sold||0)) / ev.capacity) * 100) : 100; },
+        isSoldOut(ev) { return ev.capacity && (ev.tickets_sold || 0) >= ev.capacity; },
+        isNew(ev) { const diff = new Date(ev.date_start) - new Date(); return diff > 0 && diff < 30*24*60*60*1000; },
+        goToEvent(id) { window.location.href = 'ticketmada-event.html?id=' + id; },
+        async loadArtist() {
+            const params = new URLSearchParams(window.location.search);
+            const query = params.get('name') || params.get('q') || '';
+            const qLower = query.toLowerCase();
+
+            // Match artist from DB
+            let matched = artistDB[qLower];
+            if (!matched) {
+                for (const [key, val] of Object.entries(artistDB)) {
+                    if (qLower.includes(key) || key.includes(qLower)) { matched = val; break; }
+                }
+            }
+
+            if (matched) {
+                this.artist = {
+                    ...matched,
+                    bio: this.lang === 'en' && matched.bioEn ? matched.bioEn : matched.bio,
+                    venues: 0
+                };
+            } else {
+                this.artist = { name: query || 'Artiste', emoji: '🎤', category: 'concerts', bio: '', venues: 0 };
+            }
+
+            // Load events matching this artist
+            try {
+                const result = await window.api.get('/events?search=' + encodeURIComponent(query));
+                if (result.events) this.artistEvents = result.events.filter(e => e.status !== 'completed');
+            } catch (e) {}
+
+            // Fallback demo
+            if (!this.artistEvents.length) {
+                const allDemo = [
+                    { id:1, name:'Dama Live - Tournée Nationale 2026', category:'concerts', emoji:'🎤', date_start:'2026-04-15', venue:'Antananarivo', capacity:15000, tickets_sold:12500, revenue:625000000, badge:'popular', status:'active' },
+                    { id:4, name:'Erick Manana Unplugged', category:'concerts', emoji:'🎸', date_start:'2026-04-05', venue:'IFM Analakely', capacity:800, tickets_sold:650, revenue:22750000, badge:'soon', status:'active' },
+                    { id:2, name:'Festival Donia 2026', category:'festivals', emoji:'🎉', date_start:'2026-05-20', date_end:'2026-05-22', venue:'Nosy Be', capacity:10000, tickets_sold:8500, revenue:1020000000, badge:'festival', status:'active' },
+                    { id:7, name:'Jaojoby en Concert', category:'concerts', emoji:'🎵', date_start:'2026-05-18', venue:'Toamasina', capacity:5000, tickets_sold:3800, revenue:152000000, badge:'vip', status:'active' },
+                    { id:9, name:'Donia Beach Party', category:'concerts', emoji:'🏖️', date_start:'2026-05-23', venue:'Ambatoloaka', capacity:1000, tickets_sold:800, revenue:40000000, status:'active' }
+                ];
+                this.artistEvents = allDemo.filter(e => e.name.toLowerCase().includes(qLower) || (matched && e.category === matched.category));
+                if (!this.artistEvents.length) this.artistEvents = allDemo.slice(0, 3);
+            }
+
+            // Count unique venues
+            this.artist.venues = new Set(this.artistEvents.map(e => e.venue)).size;
+            document.title = 'TicketMada - ' + this.artist.name;
+        }
+    },
+    mounted() {
+        document.documentElement.lang = this.lang;
+        this.loadArtist();
+    }
+});
+app.use(Vuetify.createVuetify());
+app.mount('#app');
+</script>
+</body>
+</html>

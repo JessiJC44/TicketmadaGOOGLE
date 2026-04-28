@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicketMada - Dashboard Organisateur</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
+    
+    <style>
+        :root { --bg-cream: #FAF7F2; --bg-dark: #1a1a1a; --bg-sidebar: #0f0f0f; --accent-coral: #FF6B4A; --accent-yellow: #FECA57; --accent-mint: #00D9A5; --accent-blue: #4A90FF; --accent-purple: #9B59B6; --accent-red: #E74C3C; --text-dark: #1a1a1a; --text-light: #666; --border-dark: #1a1a1a; --shadow-brutal: 4px 4px 0px #1a1a1a; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: #f5f5f5; color: var(--text-dark); }
+        .dashboard-layout { display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 240px; background: var(--bg-sidebar); color: white; position: fixed; height: 100vh; overflow-y: auto; z-index: 100; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; }
+        .logo-box { width: 38px; height: 38px; background: var(--accent-coral); border: 2px solid white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transform: rotate(-3deg); }
+        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; }
+        .logo-text span { color: var(--accent-coral); }
+        
+        .sidebar-nav { padding: 15px 0; }
+        .nav-section { padding: 0 12px; margin-bottom: 20px; }
+        .nav-section-title { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,0.4); margin-bottom: 10px; padding: 0 10px; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 6px; margin-bottom: 3px; transition: all 0.2s ease; cursor: pointer; font-size: 0.9rem; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: var(--accent-coral); color: white; }
+        .nav-item-icon { font-size: 1.1rem; width: 22px; }
+        .nav-item-badge { margin-left: auto; background: var(--accent-mint); padding: 2px 7px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; color: var(--bg-dark); }
+        
+        .sidebar-footer { padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); position: absolute; bottom: 0; left: 0; right: 0; background: var(--bg-sidebar); }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; overflow: hidden; }
+        .user-avatar svg { width: 36px; height: 36px; }
+        .user-details { flex: 1; }
+        .user-name { font-weight: 600; font-size: 0.85rem; }
+        .user-role { font-size: 0.7rem; color: rgba(255,255,255,0.5); }
+        .plan-badge { display: inline-block; background: var(--accent-purple); padding: 2px 8px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; border-radius: 3px; margin-top: 3px; }
+        
+        .main-content { flex: 1; margin-left: 240px; min-height: 100vh; }
+        
+        .topbar { background: white; padding: 15px 25px; display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid var(--border-dark); position: sticky; top: 0; z-index: 50; }
+        .topbar-left h1 { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; }
+        .topbar-left p { color: var(--text-light); font-size: 0.8rem; }
+        .topbar-right { display: flex; align-items: center; gap: 12px; }
+        .topbar-btn { width: 38px; height: 38px; background: white; border: 2px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; position: relative; }
+        .topbar-btn:hover { background: var(--accent-yellow); transform: translate(-2px, -2px); box-shadow: 4px 4px 0px #1a1a1a; }
+        .notification-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; background: var(--accent-red); border-radius: 50%; }
+        
+        .dashboard-content { padding: 25px; }
+        
+        .welcome-banner { background: linear-gradient(135deg, var(--accent-coral) 0%, #ff8a6b 100%); border: 3px solid var(--border-dark); padding: 30px; margin-bottom: 25px; box-shadow: var(--shadow-brutal); color: white; display: flex; justify-content: space-between; align-items: center; }
+        .welcome-text h2 { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; }
+        .welcome-text p { opacity: 0.9; }
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.85rem; border: 2px solid var(--border-dark); cursor: pointer; transition: all 0.2s ease; text-decoration: none; }
+        .btn-white { background: white; color: var(--text-dark); }
+        .btn-primary { background: var(--accent-coral); color: white; }
+        .btn-secondary { background: white; color: var(--text-dark); }
+        .btn:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0px rgba(0,0,0,0.3); }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 25px; }
+        .stat-card { background: white; border: 3px solid var(--border-dark); padding: 20px; box-shadow: var(--shadow-brutal); transition: all 0.2s ease; }
+        .stat-card:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
+        .stat-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .stat-icon { width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border: 2px solid var(--border-dark); }
+        .stat-card:nth-child(1) .stat-icon { background: var(--accent-coral); }
+        .stat-card:nth-child(2) .stat-icon { background: var(--accent-mint); }
+        .stat-card:nth-child(3) .stat-icon { background: var(--accent-yellow); }
+        .stat-card:nth-child(4) .stat-icon { background: var(--accent-blue); }
+        .stat-change { font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; font-weight: 600; }
+        .stat-change.positive { background: rgba(0, 217, 165, 0.15); color: var(--accent-mint); }
+        .stat-value { font-family: 'Syne', sans-serif; font-size: 1.7rem; font-weight: 800; margin-bottom: 3px; }
+        .stat-label { color: var(--text-light); font-size: 0.8rem; }
+        
+        .section { background: white; border: 3px solid var(--border-dark); margin-bottom: 20px; box-shadow: var(--shadow-brutal); }
+        .section-header { padding: 15px 20px; border-bottom: 2px solid var(--border-dark); display: flex; justify-content: space-between; align-items: center; }
+        .section-title { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .section-actions { display: flex; gap: 8px; }
+        
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+        th { background: #f9f9f9; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); }
+        tr:hover { background: #fafafa; }
+        .status-badge { display: inline-block; padding: 3px 10px; border-radius: 15px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+        .status-active { background: rgba(0, 217, 165, 0.15); color: #00a878; }
+        .status-pending { background: rgba(254, 202, 87, 0.3); color: #c9940a; }
+        .status-completed { background: rgba(74, 144, 255, 0.15); color: var(--accent-blue); }
+        .status-cancelled { background: rgba(231, 76, 60, 0.15); color: var(--accent-red); }
+        .action-btn { width: 28px; height: 28px; border: 1px solid #ddd; background: white; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; margin-right: 4px; }
+        .action-btn:hover { background: var(--accent-coral); color: white; border-color: var(--accent-coral); }
+        
+        .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .chart-placeholder { height: 220px; background: linear-gradient(135deg, #f5f5f5 0%, #fff 100%); display: flex; align-items: flex-end; padding: 15px; gap: 6px; }
+        .chart-bar { flex: 1; background: var(--accent-coral); border: 2px solid var(--border-dark); transition: all 0.3s ease; }
+        .chart-bar:hover { background: var(--accent-yellow); }
+        
+        .quick-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .quick-action { background: white; border: 3px solid var(--border-dark); padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s ease; box-shadow: var(--shadow-brutal); }
+        .quick-action:hover { transform: translate(-3px, -3px); box-shadow: 7px 7px 0px #1a1a1a; background: var(--accent-yellow); }
+        .quick-action-icon { font-size: 2rem; margin-bottom: 10px; }
+        .quick-action-text { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; }
+        
+        .event-card { display: flex; gap: 20px; padding: 20px; border-bottom: 2px dashed #eee; }
+        .event-card:last-child { border-bottom: none; }
+        .event-image { width: 100px; height: 100px; background: linear-gradient(135deg, var(--accent-coral), var(--accent-yellow)); border: 2px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 2rem; flex-shrink: 0; }
+        .event-info { flex: 1; }
+        .event-info h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 5px; }
+        .event-meta { display: flex; gap: 20px; color: var(--text-light); font-size: 0.85rem; margin-bottom: 10px; }
+        .event-meta span { display: flex; align-items: center; gap: 5px; }
+        .event-stats { display: flex; gap: 25px; }
+        .event-stat { text-align: center; }
+        .event-stat-value { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--accent-coral); }
+        .event-stat-label { font-size: 0.75rem; color: var(--text-light); }
+        .event-actions { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
+        
+        .balance-card { background: linear-gradient(135deg, var(--bg-dark) 0%, #333 100%); color: white; padding: 25px; }
+        .balance-card .section-title { color: white; }
+        .balance-amount { font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; margin: 20px 0; }
+        .balance-details { display: flex; gap: 30px; margin-bottom: 20px; }
+        .balance-item { }
+        .balance-item-label { font-size: 0.8rem; opacity: 0.7; margin-bottom: 3px; }
+        .balance-item-value { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; }
+        .balance-item-value.positive { color: var(--accent-mint); }
+        
+        .filters-bar { display: flex; gap: 12px; padding: 15px 20px; background: #f9f9f9; border-bottom: 2px solid var(--border-dark); flex-wrap: wrap; }
+        .filter-group { display: flex; align-items: center; gap: 6px; }
+        .filter-label { font-size: 0.8rem; font-weight: 600; color: var(--text-light); }
+        .filter-select { padding: 6px 12px; border: 2px solid var(--border-dark); background: white; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: none; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: white; border: 3px solid var(--border-dark); width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 10px 10px 0px #1a1a1a; }
+        .modal-header { padding: 20px; border-bottom: 2px solid var(--border-dark); display: flex; justify-content: space-between; align-items: center; }
+        .modal-title { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; }
+        .modal-close { width: 32px; height: 32px; border: 2px solid var(--border-dark); background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+        .modal-close:hover { background: var(--accent-coral); color: white; }
+        .modal-body { padding: 20px; }
+        .modal-footer { padding: 15px 20px; border-top: 2px solid var(--border-dark); display: flex; justify-content: flex-end; gap: 8px; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; font-family: 'Syne', sans-serif; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem; }
+        .form-input { width: 100%; padding: 10px 12px; border: 2px solid var(--border-dark); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; }
+        .form-input:focus { outline: none; box-shadow: 4px 4px 0px var(--accent-coral); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
+        .upgrade-banner { background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)); border: 3px solid var(--border-dark); padding: 20px; color: white; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; box-shadow: var(--shadow-brutal); }
+        .upgrade-banner h3 { font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 5px; }
+        .upgrade-banner p { opacity: 0.9; font-size: 0.9rem; }
+        
+        @media (max-width: 1200px) { .stats-grid, .quick-actions { grid-template-columns: repeat(2, 1fr); } .charts-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 1024px) { .sidebar { transform: translateX(-100%); } .main-content { margin-left: 0; } }
+        @media (max-width: 768px) { .stats-grid, .quick-actions { grid-template-columns: 1fr; } .welcome-banner { flex-direction: column; text-align: center; gap: 15px; } .event-card { flex-direction: column; } .form-row { grid-template-columns: 1fr; } }
+
+        .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26, 26, 26, 0.95); z-index: 2000; display: flex; align-items: center; justify-content: center; }
+        .auth-card { width: 100%; max-width: 480px; padding: 50px; position: relative; background: white; border: 3px solid var(--border-dark); box-shadow: 10px 10px 0px #1a1a1a; }
+        .auth-header { text-align: center; margin-bottom: 40px; }
+        .auth-header h2 { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; margin-bottom: 10px; }
+        .auth-header p { color: var(--text-light); }
+        .social-auth { display: flex; flex-direction: column; gap: 14px; margin-bottom: 30px; }
+        .social-auth-btn { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 16px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s ease; border: 3px solid var(--border-dark); }
+        .google-btn { background: white; color: var(--text-dark); box-shadow: 4px 4px 0px #1a1a1a; }
+        .google-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
+        .facebook-btn { background: #1877F2; color: white; box-shadow: 4px 4px 0px #1a1a1a; }
+        .facebook-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
+        .divider { text-align: center; position: relative; margin: 20px 0; color: var(--text-light); }
+        .divider::before, .divider::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: #ddd; }
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+        .auth-form { display: flex; flex-direction: column; gap: 20px; }
+        .auth-form .form-group { margin-bottom: 0; }
+        .auth-form label { display: block; font-family: 'Syne', sans-serif; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; }
+        .auth-form input { width: 100%; padding: 14px 16px; border: 3px solid var(--border-dark); font-family: 'DM Sans', sans-serif; font-size: 1rem; }
+        .auth-form input:focus { outline: none; box-shadow: 4px 4px 0px var(--accent-coral); }
+        .auth-submit { display: inline-flex; align-items: center; gap: 6px; padding: 16px 32px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; border: 3px solid var(--border-dark); cursor: pointer; transition: all 0.15s ease; background: var(--accent-coral); color: white; box-shadow: 4px 4px 0px #1a1a1a; margin-top: 10px; width: 100%; justify-content: center; }
+        .auth-submit:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
+        .auth-footer { text-align: center; margin-top: 24px; color: var(--text-light); }
+        .auth-footer a { color: var(--accent-coral); text-decoration: none; font-weight: 600; }
+        .auth-back { display: block; text-align: center; margin-top: 20px; color: var(--text-light); text-decoration: none; font-size: 0.9rem; }
+        .auth-back:hover { color: var(--accent-coral); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    </style>
+</head>
+<body>
+<script src="../js/site-config.js"></script>
+
+    <div id="app">
+        <div class="auth-overlay" v-if="!isLoggedIn">
+            <div class="auth-card">
+                <div class="auth-header"><h2>{{ authMode === 'login' ? 'Connexion Organisateur' : 'Créer un compte' }}</h2><p>{{ authMode === 'login' ? 'Accédez à votre tableau de bord' : 'Rejoignez TicketMada' }}</p></div>
+                <div class="social-auth">
+                    <button class="social-auth-btn google-btn" @click="loginWith('google')"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continuer avec Google</button>
+                    <button class="social-auth-btn facebook-btn" @click="loginWith('facebook')"><v-icon>mdi-facebook</v-icon>Continuer avec Facebook</button>
+                </div>
+                <div class="divider">ou</div>
+                <form class="auth-form" @submit.prevent="handleAuth">
+                    <div class="form-group" v-if="authMode === 'register'"><label>Nom complet</label><input type="text" placeholder="Votre nom" v-model="authForm.name"></div>
+                    <div class="form-group"><label>Email</label><input type="email" placeholder="votre@email.com" v-model="authForm.email"></div>
+                    <div class="form-group"><label>Mot de passe</label><input type="password" placeholder="••••••••" v-model="authForm.password"></div>
+                    <button type="submit" class="auth-submit">{{ authMode === 'login' ? 'Se connecter' : 'Créer mon compte' }}</button>
+                </form>
+                <p class="auth-footer"><template v-if="authMode === 'login'">Pas de compte ? <a href="#" @click.prevent="authMode = 'register'">S'inscrire</a></template><template v-else>Déjà un compte ? <a href="#" @click.prevent="authMode = 'login'">Se connecter</a></template></p>
+                <a href="../User/ticketmada-landing.html" class="auth-back">← Retour à l'accueil</a>
+            </div>
+        </div>
+        <div class="dashboard-layout">
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <a href="../User/ticketmada-landing.html" class="sidebar-logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
+                </div>
+                <nav class="sidebar-nav">
+                    <div class="nav-section">
+                        <div class="nav-section-title">Principal</div>
+                        <div class="nav-item" :class="{ active: currentPage === 'dashboard' }" @click="currentPage = 'dashboard'"><v-icon class="nav-item-icon">mdi-view-dashboard</v-icon><span>Dashboard</span></div>
+                        <div class="nav-item" :class="{ active: currentPage === 'events' }" @click="currentPage = 'events'"><v-icon class="nav-item-icon">mdi-calendar-star</v-icon><span>Mes événements</span><span class="nav-item-badge">{{ myEvents.length }}</span></div>
+                        <div class="nav-item" :class="{ active: currentPage === 'create' }" @click="showCreateModal = true"><v-icon class="nav-item-icon">mdi-plus-circle</v-icon><span>Créer événement</span></div>
+                        <div class="nav-item" :class="{ active: currentPage === 'seatmap' }" @click="currentPage = 'seatmap'"><v-icon class="nav-item-icon">mdi-seat</v-icon><span>Plan de salle</span></div>
+                    </div>
+                    <div class="nav-section">
+                        <div class="nav-section-title">Ventes</div>
+                        <div class="nav-item" :class="{ active: currentPage === 'tickets' }" @click="currentPage = 'tickets'"><v-icon class="nav-item-icon">mdi-ticket</v-icon><span>Billets vendus</span></div>
+                        <div class="nav-item" :class="{ active: currentPage === 'scan' }" @click="currentPage = 'scan'"><v-icon class="nav-item-icon">mdi-qrcode-scan</v-icon><span>Contrôle accès</span></div>
+                    </div>
+                    <div class="nav-section">
+                        <div class="nav-section-title">Finance</div>
+                        <div class="nav-item" :class="{ active: currentPage === 'finance' }" @click="currentPage = 'finance'"><v-icon class="nav-item-icon">mdi-cash-multiple</v-icon><span>Mes revenus</span></div>
+                        <div class="nav-item" :class="{ active: currentPage === 'payouts' }" @click="currentPage = 'payouts'"><v-icon class="nav-item-icon">mdi-bank-transfer</v-icon><span>Versements</span></div>
+                    </div>
+                    <div class="nav-section">
+                        <div class="nav-section-title">Compte</div>
+                        <div class="nav-item" :class="{ active: currentPage === 'team' }" @click="currentPage = 'team'"><v-icon class="nav-item-icon">mdi-account-group</v-icon><span>Mon équipe</span></div>
+                        <div class="nav-item" :class="{ active: currentPage === 'settings' }" @click="currentPage = 'settings'"><v-icon class="nav-item-icon">mdi-cog</v-icon><span>Paramètres</span></div>
+                        <div class="nav-item" @click="currentPage = 'help'"><v-icon class="nav-item-icon">mdi-help-circle</v-icon><span>Aide</span></div>
+                    </div>
+                </nav>
+                <div class="sidebar-footer">
+                    <div class="user-info">
+                        <div class="user-avatar" v-html="userAvatar"></div>
+                        <div class="user-details">
+                            <div class="user-name">{{ userName }}</div>
+                            <div class="plan-badge">{{ userPlan }}</div>
+                        </div>
+                        <v-icon style="cursor: pointer; opacity: 0.5;" @click="handleLogout">mdi-logout</v-icon>
+                    </div>
+                </div>
+            </aside>
+            
+            <main class="main-content">
+                <header class="topbar">
+                    <div class="topbar-left"><h1>{{ pageTitle }}</h1><p>{{ currentDate }}</p></div>
+                    <div class="topbar-right">
+                        <button class="topbar-btn"><v-icon size="small">mdi-bell-outline</v-icon><span class="notification-dot"></span></button>
+                        <button class="topbar-btn"><v-icon size="small">mdi-cog-outline</v-icon></button>
+                    </div>
+                </header>
+                
+                <div class="dashboard-content">
+                    <!-- Dashboard -->
+                    <template v-if="currentPage === 'dashboard'">
+                        <div class="welcome-banner">
+                            <div class="welcome-text"><h2>Bienvenue, Festival Donia 👋</h2><p>Vous avez 3 événements actifs et 156 billets vendus aujourd'hui.</p></div>
+                            <button class="btn btn-white" @click="showCreateModal = true"><v-icon size="small">mdi-plus</v-icon> Créer un événement</button>
+                        </div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">💰</div><span class="stat-change positive">+15%</span></div><div class="stat-value">{{ formatCurrency(myRevenue) }}</div><div class="stat-label">Revenus ce mois</div></div>
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">🎫</div><span class="stat-change positive">+12%</span></div><div class="stat-value">{{ myTicketsSold.toLocaleString() }}</div><div class="stat-label">Billets vendus</div></div>
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">📅</div></div><div class="stat-value">{{ myEvents.length }}</div><div class="stat-label">Événements actifs</div></div>
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">📱</div></div><div class="stat-value">{{ scanRate }}%</div><div class="stat-label">Taux de scan</div></div>
+                        </div>
+                        
+                        <div class="quick-actions">
+                            <div class="quick-action" @click="showCreateModal = true"><div class="quick-action-icon">➕</div><div class="quick-action-text">Créer événement</div></div>
+                            <div class="quick-action" @click="currentPage = 'tickets'"><div class="quick-action-icon">🎫</div><div class="quick-action-text">Voir les ventes</div></div>
+                            <div class="quick-action" @click="currentPage = 'scan'"><div class="quick-action-icon">📱</div><div class="quick-action-text">Contrôle accès</div></div>
+                            <div class="quick-action" @click="currentPage = 'finance'"><div class="quick-action-icon">💳</div><div class="quick-action-text">Demander versement</div></div>
+                        </div>
+                        
+                        <div class="charts-grid">
+                            <div class="section">
+                                <div class="section-header"><div class="section-title"><v-icon size="small">mdi-chart-bar</v-icon> Ventes des 7 derniers jours</div></div>
+                                <div class="chart-placeholder"><div class="chart-bar" style="height: 55%;"></div><div class="chart-bar" style="height: 72%;"></div><div class="chart-bar" style="height: 48%;"></div><div class="chart-bar" style="height: 85%;"></div><div class="chart-bar" style="height: 63%;"></div><div class="chart-bar" style="height: 95%;"></div><div class="chart-bar" style="height: 78%;"></div></div>
+                            </div>
+                            <div class="section balance-card">
+                                <div class="section-title"><v-icon size="small" color="white">mdi-wallet</v-icon> Solde disponible</div>
+                                <div class="balance-amount">{{ formatCurrency(availableBalance) }}</div>
+                                <div class="balance-details">
+                                    <div class="balance-item"><div class="balance-item-label">En attente</div><div class="balance-item-value">{{ formatCurrency(pendingBalance) }}</div></div>
+                                    <div class="balance-item"><div class="balance-item-label">Ce mois</div><div class="balance-item-value positive">+{{ formatCurrency(monthRevenue) }}</div></div>
+                                </div>
+                                <button class="btn btn-white" style="width: 100%; justify-content: center;">Demander un versement</button>
+                            </div>
+                        </div>
+                        
+                        <div class="section">
+                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-calendar-star</v-icon> Mes événements</div><button class="btn btn-secondary btn-sm" @click="currentPage = 'events'">Voir tout</button></div>
+                            <div v-for="event in myEvents.slice(0, 2)" :key="event.id" class="event-card">
+                                <div class="event-image">{{ event.emoji }}</div>
+                                <div class="event-info">
+                                    <h3>{{ event.name }}</h3>
+                                    <div class="event-meta"><span><v-icon size="x-small">mdi-calendar</v-icon> {{ event.date }}</span><span><v-icon size="x-small">mdi-map-marker</v-icon> {{ event.venue }}</span></div>
+                                    <div class="event-stats">
+                                        <div class="event-stat"><div class="event-stat-value">{{ event.ticketsSold }}</div><div class="event-stat-label">Vendus</div></div>
+                                        <div class="event-stat"><div class="event-stat-value">{{ event.capacity }}</div><div class="event-stat-label">Capacité</div></div>
+                                        <div class="event-stat"><div class="event-stat-value">{{ formatCurrency(event.revenue) }}</div><div class="event-stat-label">Revenus</div></div>
+                                    </div>
+                                </div>
+                                <div class="event-actions">
+                                    <button class="btn btn-primary btn-sm"><v-icon size="x-small">mdi-eye</v-icon> Voir</button>
+                                    <button class="btn btn-secondary btn-sm"><v-icon size="x-small">mdi-pencil</v-icon> Modifier</button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <!-- Events -->
+                    <template v-if="currentPage === 'events'">
+                        <div class="section">
+                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-calendar-star</v-icon> Mes événements</div><button class="btn btn-primary btn-sm" @click="showCreateModal = true"><v-icon size="x-small">mdi-plus</v-icon> Nouveau</button></div>
+                            <div v-for="event in myEvents" :key="event.id" class="event-card">
+                                <div class="event-image">{{ event.emoji }}</div>
+                                <div class="event-info">
+                                    <h3>{{ event.name }} <span class="status-badge" :class="'status-' + event.status">{{ event.statusLabel }}</span></h3>
+                                    <div class="event-meta"><span><v-icon size="x-small">mdi-calendar</v-icon> {{ event.date }}</span><span><v-icon size="x-small">mdi-map-marker</v-icon> {{ event.venue }}</span></div>
+                                    <div class="event-stats">
+                                        <div class="event-stat"><div class="event-stat-value">{{ event.ticketsSold }}</div><div class="event-stat-label">Vendus</div></div>
+                                        <div class="event-stat"><div class="event-stat-value">{{ event.capacity }}</div><div class="event-stat-label">Capacité</div></div>
+                                        <div class="event-stat"><div class="event-stat-value">{{ Math.round(event.ticketsSold / event.capacity * 100) }}%</div><div class="event-stat-label">Rempli</div></div>
+                                        <div class="event-stat"><div class="event-stat-value">{{ formatCurrency(event.revenue) }}</div><div class="event-stat-label">Revenus</div></div>
+                                    </div>
+                                </div>
+                                <div class="event-actions">
+                                    <button class="btn btn-primary btn-sm"><v-icon size="x-small">mdi-eye</v-icon> Détails</button>
+                                    <button class="btn btn-secondary btn-sm"><v-icon size="x-small">mdi-pencil</v-icon> Modifier</button>
+                                    <button class="btn btn-secondary btn-sm"><v-icon size="x-small">mdi-chart-line</v-icon> Stats</button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <!-- Tickets -->
+                    <template v-if="currentPage === 'tickets'">
+                        <div class="stats-grid">
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">🎫</div></div><div class="stat-value">{{ myTicketsSold.toLocaleString() }}</div><div class="stat-label">Total vendus</div></div>
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">📱</div></div><div class="stat-value">{{ scannedTickets.toLocaleString() }}</div><div class="stat-label">Scannés</div></div>
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">⏳</div></div><div class="stat-value">{{ pendingTickets.toLocaleString() }}</div><div class="stat-label">En attente</div></div>
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">↩️</div></div><div class="stat-value">{{ refundedTickets }}</div><div class="stat-label">Remboursés</div></div>
+                        </div>
+                        <div class="section">
+                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-ticket</v-icon> Dernières ventes</div><button class="btn btn-secondary btn-sm"><v-icon size="x-small">mdi-download</v-icon> Exporter</button></div>
+                            <div class="filters-bar"><div class="filter-group"><span class="filter-label">Événement:</span><select class="filter-select"><option>Tous</option><option v-for="e in myEvents" :key="e.id">{{ e.name }}</option></select></div><div class="filter-group"><span class="filter-label">Statut:</span><select class="filter-select"><option>Tous</option><option>Validé</option><option>Scanné</option></select></div></div>
+                            <div class="table-container"><table><thead><tr><th>ID</th><th>Événement</th><th>Acheteur</th><th>Type</th><th>Prix</th><th>Statut</th><th>Date</th></tr></thead><tbody><tr v-for="t in myTickets" :key="t.id"><td><code style="background: #f5f5f5; padding: 2px 6px; font-size: 0.75rem;">{{ t.id }}</code></td><td>{{ t.event }}</td><td>{{ t.buyer }}</td><td>{{ t.type }}</td><td>{{ formatCurrency(t.price) }}</td><td><span class="status-badge" :class="'status-' + t.status">{{ t.statusLabel }}</span></td><td>{{ t.date }}</td></tr></tbody></table></div>
+                        </div>
+                    </template>
+                    
+                    <!-- Finance -->
+                    <template v-if="currentPage === 'finance'">
+                        <div class="stats-grid">
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">💰</div></div><div class="stat-value">{{ formatCurrency(totalRevenue) }}</div><div class="stat-label">Revenus totaux</div></div>
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">✅</div></div><div class="stat-value">{{ formatCurrency(paidOut) }}</div><div class="stat-label">Déjà versé</div></div>
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">💳</div></div><div class="stat-value">{{ formatCurrency(availableBalance) }}</div><div class="stat-label">Disponible</div></div>
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">⏳</div></div><div class="stat-value">{{ formatCurrency(pendingBalance) }}</div><div class="stat-label">En attente</div></div>
+                        </div>
+                        
+                        <div class="section balance-card" style="margin-bottom: 20px;">
+                            <div class="section-title"><v-icon size="small" color="white">mdi-wallet</v-icon> Solde disponible pour versement</div>
+                            <div class="balance-amount">{{ formatCurrency(availableBalance) }}</div>
+                            <p style="opacity: 0.8; margin-bottom: 20px;">Vous pouvez demander un versement à tout moment. Le transfert est effectué sous 48h.</p>
+                            <button class="btn btn-white" style="justify-content: center;"><v-icon size="small">mdi-bank-transfer</v-icon> Demander un versement</button>
+                        </div>
+                        
+                        <div class="section">
+                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-history</v-icon> Historique des versements</div></div>
+                            <div class="table-container"><table><thead><tr><th>ID</th><th>Montant</th><th>Commission</th><th>Net reçu</th><th>Méthode</th><th>Statut</th><th>Date</th></tr></thead><tbody><tr v-for="p in myPayouts" :key="p.id"><td><code style="background: #f5f5f5; padding: 2px 6px; font-size: 0.75rem;">{{ p.id }}</code></td><td>{{ formatCurrency(p.amount) }}</td><td style="color: var(--accent-coral);">-{{ formatCurrency(p.commission) }}</td><td><strong>{{ formatCurrency(p.net) }}</strong></td><td>{{ p.method }}</td><td><span class="status-badge" :class="'status-' + p.status">{{ p.statusLabel }}</span></td><td>{{ p.date }}</td></tr></tbody></table></div>
+                        </div>
+                    </template>
+                    
+                    <!-- Scan / Access Control -->
+                    <template v-if="currentPage === 'scan'">
+                        <!-- Sub-tabs -->
+                        <div style="display:flex;gap:0;margin-bottom:20px;border:3px solid #1a1a1a;box-shadow:4px 4px 0 #1a1a1a;overflow:hidden;">
+                            <button v-for="tab in [{id:'links',icon:'mdi-link-variant',label:'Liens de scan'},{id:'live',icon:'mdi-chart-line',label:'Arrivées en direct'},{id:'devices',icon:'mdi-cellphone',label:'Appareils connectés'}]" :key="tab.id" @click="scanTab = tab.id" :style="scanTab === tab.id ? 'background:var(--accent-coral);color:white;' : 'background:white;'" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;border:none;border-right:2px solid #1a1a1a;cursor:pointer;transition:all 0.15s;">
+                                <v-icon size="small">{{ tab.icon }}</v-icon> {{ tab.label }}
+                            </button>
+                        </div>
+
+                        <!-- Tab: Scan Links -->
+                        <template v-if="scanTab === 'links'">
+                            <div class="section" style="border-color:#4A90FF;">
+                                <div style="padding:20px;display:flex;gap:20px;align-items:flex-start;">
+                                    <div style="font-size:2.5rem;">🔗</div>
+                                    <div style="flex:1;">
+                                        <h3 style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:6px;">Liens sécurisés de scan</h3>
+                                        <p style="color:var(--text-light);font-size:0.85rem;margin-bottom:12px;">Chaque événement génère un lien unique. Le lien ouvre la caméra du smartphone pour scanner les QR codes des billets. Seuls les QR de cet événement seront reconnus.</p>
+                                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                            <span style="display:inline-flex;align-items:center;gap:4px;background:#e8f5e9;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;color:#2e7d32;"><v-icon size="x-small" color="#2e7d32">mdi-check-circle</v-icon> Caméra mobile</span>
+                                            <span style="display:inline-flex;align-items:center;gap:4px;background:#e3f2fd;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;color:#1565c0;"><v-icon size="x-small" color="#1565c0">mdi-shield-check</v-icon> QR unique par billet</span>
+                                            <span style="display:inline-flex;align-items:center;gap:4px;background:#fff3e0;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;color:#e65100;"><v-icon size="x-small" color="#e65100">mdi-lock</v-icon> Lien sécurisé</span>
+                                            <span style="display:inline-flex;align-items:center;gap:4px;background:#fce4ec;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;color:#c62828;"><v-icon size="x-small" color="#c62828">mdi-alert-circle</v-icon> Anti-fraude</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="section">
+                                <div class="section-header"><div class="section-title"><v-icon size="small">mdi-qrcode</v-icon> Liens par événement</div></div>
+                                <div v-for="e in scanEvents" :key="e.id" style="padding:16px 20px;border-bottom:2px dashed #eee;">
+                                    <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px;">
+                                        <div style="width:44px;height:44px;background:linear-gradient(135deg,var(--accent-coral),var(--accent-yellow));border:2px solid #1a1a1a;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">{{ e.emoji || '🎫' }}</div>
+                                        <div style="flex:1;"><div style="font-family:'Syne',sans-serif;font-weight:700;">{{ e.name }}</div><div style="font-size:0.75rem;color:var(--text-light);">{{ e.date }} · {{ e.venue }}</div></div>
+                                        <div style="display:flex;gap:6px;">
+                                            <button class="btn btn-sm btn-secondary" @click="copyScanLink(e)"><v-icon size="x-small">mdi-content-copy</v-icon> Copier</button>
+                                            <button class="btn btn-sm btn-primary" @click="showQRCode(e)"><v-icon size="x-small">mdi-qrcode</v-icon> QR</button>
+                                        </div>
+                                    </div>
+                                    <div style="background:#f5f5f5;border:2px solid #ddd;padding:10px 14px;border-radius:6px;font-family:monospace;font-size:0.75rem;word-break:break-all;cursor:pointer;position:relative;" @click="copyScanLink(e)">
+                                        {{ e.scanLink }}
+                                        <span v-if="e.linkCopied" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:#00D9A5;color:white;padding:2px 8px;border-radius:4px;font-size:0.7rem;font-family:'DM Sans',sans-serif;">Copié !</span>
+                                    </div>
+                                    <div style="display:flex;gap:16px;margin-top:8px;font-size:0.75rem;color:var(--text-light);">
+                                        <span><v-icon size="x-small">mdi-ticket</v-icon> {{ e.ticketsSold || 0 }} billets vendus</span>
+                                        <span><v-icon size="x-small">mdi-cellphone</v-icon> {{ (scanDevices.filter(d => d.eventId === e.id) || []).length }} appareil(s) connecté(s)</span>
+                                    </div>
+                                </div>
+                                <div v-if="!scanEvents.length" style="padding:40px;text-align:center;color:var(--text-light);">Aucun événement actif.</div>
+                            </div>
+                            <!-- Scan result info -->
+                            <div class="section" style="border-color:var(--accent-mint);">
+                                <div class="section-header"><div class="section-title"><v-icon size="small">mdi-information</v-icon> Résultats du scan sur smartphone</div></div>
+                                <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                                    <div style="background:#e8f5e9;border:2px solid #4caf50;border-radius:8px;padding:16px;text-align:center;">
+                                        <div style="font-size:2rem;margin-bottom:6px;">✅</div>
+                                        <div style="font-weight:700;color:#2e7d32;font-size:0.85rem;">QR Valide</div>
+                                        <div style="font-size:0.7rem;color:#555;margin-top:4px;">Pop-up vert avec nom du client, zone, siège et tarif</div>
+                                    </div>
+                                    <div style="background:#fff3e0;border:2px solid #ff9800;border-radius:8px;padding:16px;text-align:center;">
+                                        <div style="font-size:2rem;margin-bottom:6px;">⚠️</div>
+                                        <div style="font-weight:700;color:#e65100;font-size:0.85rem;">QR Déjà scanné</div>
+                                        <div style="font-size:0.7rem;color:#555;margin-top:4px;">Alerte orange: "Utilisé à 14h32 par Staff Jean"</div>
+                                    </div>
+                                    <div style="background:#ffebee;border:2px solid #f44336;border-radius:8px;padding:16px;text-align:center;">
+                                        <div style="font-size:2rem;margin-bottom:6px;">❌</div>
+                                        <div style="font-weight:700;color:#c62828;font-size:0.85rem;">QR Invalide</div>
+                                        <div style="font-size:0.7rem;color:#555;margin-top:4px;">Erreur rouge: autre événement, faux QR, ou expiré</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Tab: Live Arrivals -->
+                        <template v-if="scanTab === 'live'">
+                            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0;border:3px solid #1a1a1a;box-shadow:4px 4px 0 #1a1a1a;margin-bottom:20px;">
+                                <div style="padding:16px;text-align:center;border-right:2px solid #1a1a1a;">
+                                    <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--accent-coral);">{{ scanStats.total }}</div>
+                                    <div style="font-size:0.7rem;color:var(--text-light);font-weight:600;">BILLETS VENDUS</div>
+                                </div>
+                                <div style="padding:16px;text-align:center;border-right:2px solid #1a1a1a;background:#f0fff4;">
+                                    <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--accent-mint);">{{ scanStats.arrived }}</div>
+                                    <div style="font-size:0.7rem;color:var(--text-light);font-weight:600;">ARRIVÉS</div>
+                                </div>
+                                <div style="padding:16px;text-align:center;border-right:2px solid #1a1a1a;">
+                                    <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--accent-yellow);">{{ scanStats.pending }}</div>
+                                    <div style="font-size:0.7rem;color:var(--text-light);font-weight:600;">EN ATTENTE</div>
+                                </div>
+                                <div style="padding:16px;text-align:center;border-right:2px solid #1a1a1a;">
+                                    <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--accent-blue);">{{ scanStats.rate }}%</div>
+                                    <div style="font-size:0.7rem;color:var(--text-light);font-weight:600;">TAUX</div>
+                                </div>
+                                <div style="padding:16px;text-align:center;background:#fff5f5;">
+                                    <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--accent-red);">{{ scanStats.rejected || 0 }}</div>
+                                    <div style="font-size:0.7rem;color:var(--text-light);font-weight:600;">REJETÉS</div>
+                                </div>
+                            </div>
+                            <div class="section">
+                                <div class="section-header">
+                                    <div class="section-title"><span style="width:8px;height:8px;background:var(--accent-mint);border-radius:50%;display:inline-block;animation:pulse 2s infinite;"></span> Arrivées en temps réel</div>
+                                    <select class="filter-select" v-model="scanFilterEvent" style="font-size:0.8rem;"><option value="">Tous</option><option v-for="e in scanEvents" :key="e.id" :value="e.id">{{ e.name }}</option></select>
+                                </div>
+                                <div class="table-container"><table><thead><tr><th>Heure</th><th>Client</th><th>Événement</th><th>Zone</th><th>Siège</th><th>Tarif</th><th>Scanné par</th><th>Status</th></tr></thead><tbody>
+                                    <tr v-for="a in scanArrivals" :key="a.id" :style="a.rejected ? 'background:#fff5f5;' : ''">
+                                        <td style="font-weight:600;font-size:0.8rem;"><v-icon size="x-small" :color="a.rejected ? '#e74c3c' : '#00D9A5'">{{ a.rejected ? 'mdi-close-circle' : 'mdi-clock-check' }}</v-icon> {{ a.time }}</td>
+                                        <td><strong>{{ a.name }}</strong></td>
+                                        <td>{{ a.event }}</td>
+                                        <td><span :style="'display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.7rem;font-weight:600;background:' + a.zoneColor + '22;color:' + a.zoneColor + ';'">{{ a.zone }}</span></td>
+                                        <td style="font-family:monospace;font-weight:600;">{{ a.seat }}</td>
+                                        <td>{{ formatCurrency(a.price) }}</td>
+                                        <td style="font-size:0.75rem;">{{ a.scannedBy || 'Staff 1' }}</td>
+                                        <td><span class="status-badge" :class="a.rejected ? 'status-cancelled' : 'status-active'">{{ a.rejected ? a.rejectReason || 'Rejeté' : 'Scanné' }}</span></td>
+                                    </tr>
+                                </tbody></table></div>
+                            </div>
+                        </template>
+
+                        <!-- Tab: Connected Devices -->
+                        <template v-if="scanTab === 'devices'">
+                            <div class="section">
+                                <div class="section-header">
+                                    <div class="section-title"><v-icon size="small">mdi-cellphone-link</v-icon> Appareils connectés</div>
+                                    <div style="display:flex;gap:8px;">
+                                        <select class="filter-select" v-model="deviceFilterEvent" style="font-size:0.8rem;"><option value="">Tous les événements</option><option v-for="e in scanEvents" :key="e.id" :value="e.id">{{ e.name }}</option></select>
+                                    </div>
+                                </div>
+                                <div class="table-container"><table><thead><tr><th>Appareil</th><th>IP</th><th>Événement</th><th>Dernière activité</th><th>Scans effectués</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+                                    <tr v-for="d in filteredDevices" :key="d.id" :style="d.blocked ? 'background:#fff5f5;opacity:0.7;' : ''">
+                                        <td>
+                                            <div style="display:flex;align-items:center;gap:8px;">
+                                                <v-icon size="small" :color="d.blocked ? '#e74c3c' : '#00D9A5'">{{ d.blocked ? 'mdi-cellphone-off' : 'mdi-cellphone-check' }}</v-icon>
+                                                <div>
+                                                    <div style="font-weight:600;">{{ d.name }}</div>
+                                                    <div style="font-size:0.7rem;color:var(--text-light);">{{ d.browser }} · {{ d.os }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td style="font-family:monospace;font-size:0.8rem;">{{ d.ip }}</td>
+                                        <td>{{ d.eventName }}</td>
+                                        <td style="font-size:0.8rem;">{{ d.lastActivity }}</td>
+                                        <td style="font-weight:600;">{{ d.scanCount }}</td>
+                                        <td><span class="status-badge" :class="d.blocked ? 'status-cancelled' : 'status-active'">{{ d.blocked ? 'Bloqué' : 'Actif' }}</span></td>
+                                        <td>
+                                            <div style="display:flex;gap:4px;">
+                                                <button class="action-btn" @click="renameDevice(d)" title="Renommer"><v-icon size="x-small">mdi-pencil</v-icon></button>
+                                                <button class="action-btn" @click="toggleBlockDevice(d)" :title="d.blocked ? 'Débloquer' : 'Bloquer'" :style="d.blocked ? 'background:#e8f5e9;' : 'background:#ffebee;'">
+                                                    <v-icon size="x-small" :color="d.blocked ? '#2e7d32' : '#c62828'">{{ d.blocked ? 'mdi-lock-open' : 'mdi-block-helper' }}</v-icon>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody></table></div>
+                                <div v-if="!filteredDevices.length" style="padding:30px;text-align:center;color:var(--text-light);">Aucun appareil connecté pour le moment.</div>
+                            </div>
+                            <!-- Blacklist -->
+                            <div class="section" v-if="blockedDevices.length">
+                                <div class="section-header"><div class="section-title" style="color:var(--accent-red);"><v-icon size="small" color="#e74c3c">mdi-shield-off</v-icon> Liste noire</div></div>
+                                <div class="table-container"><table><thead><tr><th>Appareil</th><th>IP</th><th>Raison</th><th>Bloqué le</th><th>Actions</th></tr></thead><tbody>
+                                    <tr v-for="d in blockedDevices" :key="d.id">
+                                        <td><strong>{{ d.name }}</strong></td>
+                                        <td style="font-family:monospace;">{{ d.ip }}</td>
+                                        <td style="font-size:0.8rem;">{{ d.blockReason || 'Bloqué manuellement' }}</td>
+                                        <td>{{ d.blockedAt || 'Aujourd\'hui' }}</td>
+                                        <td><button class="btn btn-sm btn-secondary" @click="toggleBlockDevice(d)"><v-icon size="x-small">mdi-lock-open</v-icon> Restaurer</button></td>
+                                    </tr>
+                                </tbody></table></div>
+                            </div>
+                        </template>
+                    </template>
+                    
+                    <!-- Team -->
+                    <template v-if="currentPage === 'team'">
+                        <div class="upgrade-banner" v-if="currentPlan === 'starter'">
+                            <div><h3>Passez à Pro pour inviter votre équipe</h3><p>Le plan Starter ne permet pas d'ajouter des membres d'équipe.</p></div>
+                            <button class="btn btn-white">Passer à Pro</button>
+                        </div>
+                        <div class="section">
+                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-account-group</v-icon> Mon équipe</div><button class="btn btn-primary btn-sm"><v-icon size="x-small">mdi-plus</v-icon> Inviter</button></div>
+                            <div class="table-container"><table><thead><tr><th>Membre</th><th>Rôle</th><th>Événements</th><th>Dernier accès</th><th>Actions</th></tr></thead><tbody><tr v-for="m in teamMembers" :key="m.id"><td><div style="display: flex; align-items: center; gap: 10px;"><div class="user-avatar" style="width: 32px; height: 32px; font-size: 0.75rem;">{{ m.initials }}</div><div><div style="font-weight: 600;">{{ m.name }}</div><div style="font-size: 0.75rem; color: var(--text-light);">{{ m.email }}</div></div></div></td><td><span class="status-badge" :class="'status-' + m.role">{{ m.roleLabel }}</span></td><td>{{ m.events }}</td><td>{{ m.lastAccess }}</td><td><button class="action-btn"><v-icon size="x-small">mdi-pencil</v-icon></button><button class="action-btn"><v-icon size="x-small">mdi-delete</v-icon></button></td></tr></tbody></table></div>
+                        </div>
+                    </template>
+                    
+                    <!-- Seat Map Editor -->
+                    <template v-if="currentPage === 'seatmap'">
+                        <!-- Step 1: Template Gallery -->
+                        <div v-if="!seatmapEditing">
+                            <div class="section" style="margin-bottom:20px;">
+                                <div class="section-header"><div class="section-title"><v-icon size="small">mdi-view-grid</v-icon> Choisir un template</div></div>
+                                <div style="padding:12px 20px 0;"><p style="color:#666;font-size:0.85rem;margin-bottom:16px;">Sélectionnez un modèle de salle puis personnalisez-le selon votre événement.</p></div>
+                                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;padding:0 20px 20px;">
+                                    <div v-for="tpl in seatmapTemplates" :key="tpl.id" @click="loadTemplate(tpl.id)" style="border:3px solid #1a1a1a;border-radius:10px;overflow:hidden;cursor:pointer;transition:all 0.2s;background:white;box-shadow:4px 4px 0 #1a1a1a;" @mouseover="$event.currentTarget.style.transform='translate(-2px,-2px)';$event.currentTarget.style.boxShadow='6px 6px 0 #1a1a1a'" @mouseout="$event.currentTarget.style.transform='';$event.currentTarget.style.boxShadow='4px 4px 0 #1a1a1a'">
+                                        <div style="background:#f8f8f8;padding:16px;display:flex;align-items:center;justify-content:center;min-height:140px;">
+                                            <div v-html="tpl.preview" style="transform:scale(0.7);"></div>
+                                        </div>
+                                        <div style="padding:12px 14px;border-top:3px solid #1a1a1a;">
+                                            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;">{{ tpl.name }}</div>
+                                            <div style="font-size:0.75rem;color:#666;margin-top:2px;">{{ tpl.description }}</div>
+                                            <div style="display:flex;gap:8px;margin-top:8px;">
+                                                <span style="font-size:0.7rem;background:#f0f0f0;padding:2px 8px;border-radius:10px;">{{ tpl.capacity }} places</span>
+                                                <span style="font-size:0.7rem;background:#f0f0f0;padding:2px 8px;border-radius:10px;">{{ tpl.zones }} zones</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Saved plans -->
+                            <div class="section" v-if="seatmapSavedPlans.length">
+                                <div class="section-header"><div class="section-title"><v-icon size="small">mdi-folder</v-icon> Mes plans sauvegardés</div></div>
+                                <div class="table-container"><table><thead><tr><th>Nom</th><th>Type</th><th>Sièges</th><th>Zones</th><th>Date</th><th>Actions</th></tr></thead><tbody><tr v-for="plan in seatmapSavedPlans" :key="plan.id"><td><strong>{{ plan.name }}</strong></td><td>{{ plan.type }}</td><td>{{ plan.seats }}</td><td>{{ plan.zones }}</td><td>{{ plan.date }}</td><td><button class="action-btn" @click="editSavedPlan(plan)"><v-icon size="x-small">mdi-pencil</v-icon></button><button class="action-btn"><v-icon size="x-small">mdi-delete</v-icon></button></td></tr></tbody></table></div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Editor -->
+                        <div v-if="seatmapEditing">
+                            <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;">
+                                <button class="btn btn-secondary btn-sm" @click="seatmapEditing = false"><v-icon size="x-small">mdi-arrow-left</v-icon> Retour</button>
+                                <input v-model="seatmapPlanName" style="flex:1;padding:8px 14px;border:2px solid #1a1a1a;border-radius:6px;font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;" placeholder="Nom du plan...">
+                                <button class="btn btn-secondary btn-sm" @click="clearSeatmap"><v-icon size="x-small">mdi-eraser</v-icon> Reset</button>
+                                <button class="btn btn-primary btn-sm" @click="saveSeatmap"><v-icon size="x-small">mdi-content-save</v-icon> Sauvegarder</button>
+                            </div>
+
+                            <!-- Toolbar -->
+                            <div class="section" style="margin-bottom:16px;padding:14px 18px;">
+                                <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+                                    <div style="display:flex;gap:6px;align-items:center;">
+                                        <span style="font-size:0.8rem;font-weight:600;color:#666;">Outil:</span>
+                                        <button class="btn btn-sm" :class="seatmapTool === 'seat' ? 'btn-primary' : 'btn-secondary'" @click="seatmapTool = 'seat'"><v-icon size="x-small">mdi-seat</v-icon> Siège</button>
+                                        <button class="btn btn-sm" :class="seatmapTool === 'aisle' ? 'btn-primary' : 'btn-secondary'" @click="seatmapTool = 'aisle'"><v-icon size="x-small">mdi-arrow-expand-horizontal</v-icon> Allée</button>
+                                        <button class="btn btn-sm" :class="seatmapTool === 'remove' ? 'btn-primary' : 'btn-secondary'" @click="seatmapTool = 'remove'" style="color:#e74c3c;"><v-icon size="x-small">mdi-close</v-icon> Suppr.</button>
+                                    </div>
+                                    <div style="width:1px;height:28px;background:#ddd;"></div>
+                                    <div style="display:flex;gap:5px;align-items:center;">
+                                        <span style="font-size:0.8rem;font-weight:600;color:#666;">Zone:</span>
+                                        <button v-for="zone in seatmapZones" :key="zone.id" class="btn btn-sm" :class="seatmapZone === zone.id ? 'btn-primary' : 'btn-secondary'" @click="seatmapZone = zone.id" :style="seatmapZone === zone.id ? 'background:' + zone.color + ';border-color:#1a1a1a;color:#fff;' : ''">{{ zone.name }}</button>
+                                    </div>
+                                    <div style="width:1px;height:28px;background:#ddd;"></div>
+                                    <label style="display:flex;gap:6px;align-items:center;font-size:0.8rem;cursor:pointer;"><input type="checkbox" v-model="seatmapStage"> Scène</label>
+                                </div>
+                            </div>
+
+                            <!-- Canvas -->
+                            <div class="section" style="padding:0;overflow:hidden;">
+                                <div style="overflow:auto;background:linear-gradient(135deg,#f0f0f0 0%,#e8e8e8 100%);padding:24px;min-height:460px;position:relative;" @mouseup="seatmapDragging = false">
+                                    <!-- Stage -->
+                                    <div v-if="seatmapStage && seatmapCurrentTemplate !== 'center'" style="max-width:fit-content;margin:0 auto 24px;">
+                                        <div v-if="seatmapCurrentTemplate === 'coliseum'" style="width:200px;height:30px;border-radius:0 0 100px 100px;background:#1a1a1a;margin:0 auto;display:flex;align-items:center;justify-content:center;color:white;font-family:Syne,sans-serif;font-weight:700;font-size:0.75rem;letter-spacing:3px;">SCÈNE</div>
+                                        <div v-else-if="seatmapCurrentTemplate === 'cinema'" :style="'background:#1a1a1a;color:white;padding:8px ' + (seatmapCols > 16 ? '120px' : '80px') + ';border-radius:4px;text-align:center;font-family:Syne,sans-serif;font-weight:700;font-size:0.75rem;letter-spacing:3px;'">ÉCRAN</div>
+                                        <div v-else :style="'background:#1a1a1a;color:white;padding:12px ' + (seatmapCols > 16 ? '100px' : '60px') + ';border-radius:24px 24px 4px 4px;text-align:center;font-family:Syne,sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:3px;'">SCÈNE</div>
+                                    </div>
+                                    <div v-if="seatmapCurrentTemplate === 'center'" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;color:white;padding:20px 30px;border-radius:10px;text-align:center;font-family:Syne,sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:3px;z-index:2;pointer-events:none;">SCÈNE</div>
+                                    <!-- Rows -->
+                                    <div style="display:flex;flex-direction:column;align-items:center;gap:3px;" :style="seatmapCurvedRows ? 'perspective:800px;' : ''">
+                                        <div v-for="(row, ri) in seatmapRows" :key="'row-'+ri" style="display:flex;align-items:center;gap:3px;" :style="getRowStyle(ri)">
+                                            <span style="width:22px;text-align:center;font-size:0.65rem;font-weight:700;color:#aaa;flex-shrink:0;">{{ String.fromCharCode(65 + ri) }}</span>
+                                            <template v-for="(col, ci) in seatmapCols" :key="'s-'+ri+'-'+ci">
+                                                <div v-if="isSeatVisible(ri, ci)" :style="getSeatStyle(ri, ci)" @click="handleSeatClick(ri, ci)" @mousedown="seatmapDragging = true" @mouseenter="seatmapDragging && handleSeatClick(ri, ci)" style="width:26px;height:26px;border-radius:5px;cursor:pointer;transition:all 0.1s;display:flex;align-items:center;justify-content:center;font-size:0.5rem;font-weight:700;color:rgba(0,0,0,0.35);flex-shrink:0;">
+                                                    <template v-if="getSeatData(ri, ci).zone && getSeatData(ri, ci).zone !== 'aisle'">{{ ci + 1 }}</template>
+                                                </div>
+                                                <div v-else style="width:26px;height:26px;flex-shrink:0;"></div>
+                                            </template>
+                                            <span style="width:22px;text-align:center;font-size:0.65rem;font-weight:700;color:#aaa;flex-shrink:0;">{{ String.fromCharCode(65 + ri) }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Legend + Summary bar -->
+                                <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:14px 18px;border-top:2px solid #eee;background:white;">
+                                    <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;">
+                                        <div v-for="zone in seatmapZones" :key="zone.id" style="display:flex;align-items:center;gap:5px;">
+                                            <div :style="'width:14px;height:14px;border-radius:3px;background:' + zone.color + ';border:2px solid #1a1a1a;'"></div>
+                                            <span style="font-size:0.75rem;font-weight:600;">{{ zone.name }}</span>
+                                            <span style="font-size:0.7rem;color:#999;">({{ countSeatsInZone(zone.id) }})</span>
+                                        </div>
+                                        <div v-if="seatmapSeats.some(s => s.zone === 'pit')" style="display:flex;align-items:center;gap:5px;">
+                                            <div style="width:14px;height:14px;border-radius:3px;background:#9B59B6;border:2px solid #1a1a1a;"></div>
+                                            <span style="font-size:0.75rem;font-weight:600;">Fosse</span>
+                                            <span style="font-size:0.7rem;color:#999;">({{ seatmapSeats.filter(s => s.zone === 'pit').length }})</span>
+                                        </div>
+                                    </div>
+                                    <div style="display:flex;gap:20px;align-items:center;">
+                                        <div style="text-align:center;"><div style="font-size:1.1rem;font-weight:800;font-family:'Syne',sans-serif;">{{ seatmapSeats.filter(s => s.zone && s.zone !== 'aisle').length }}</div><div style="font-size:0.65rem;color:#666;">Sièges</div></div>
+                                        <div style="text-align:center;"><div style="font-size:1.1rem;font-weight:800;font-family:'Syne',sans-serif;color:#00D9A5;">{{ formatCurrency(seatmapTotalRevenue) }}</div><div style="font-size:0.65rem;color:#666;">Rev. potentiel</div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Settings & other pages -->
+                    <template v-if="['settings', 'payouts', 'help'].includes(currentPage)">
+                        <div class="section"><div class="section-header"><div class="section-title"><v-icon size="small">mdi-cog</v-icon> {{ pageTitle }}</div></div><div style="padding: 50px; text-align: center; color: var(--text-light);"><v-icon size="48" style="opacity: 0.3; margin-bottom: 15px;">mdi-hammer-wrench</v-icon><h3 style="font-family: 'Syne', sans-serif; margin-bottom: 8px;">En développement</h3><p>Cette fonctionnalité sera bientôt disponible.</p></div></div>
+                    </template>
+                </div>
+            </main>
+        </div>
+        
+        <!-- Create Event Modal -->
+        <div class="modal-overlay" :class="{ active: showCreateModal }">
+            <div class="modal">
+                <div class="modal-header"><div class="modal-title">Créer un événement</div><button class="modal-close" @click="showCreateModal = false">×</button></div>
+                <div class="modal-body">
+                    <div class="form-group"><label class="form-label">Nom de l'événement</label><input type="text" class="form-input" placeholder="Festival Donia 2026"></div>
+                    <div class="form-row"><div class="form-group"><label class="form-label">Date de début</label><input type="date" class="form-input"></div><div class="form-group"><label class="form-label">Date de fin</label><input type="date" class="form-input"></div></div>
+                    <div class="form-group"><label class="form-label">Lieu</label><input type="text" class="form-input" placeholder="Nosy Be, Madagascar"></div>
+                    <div class="form-row"><div class="form-group"><label class="form-label">Catégorie</label><select class="form-input"><option>Concert</option><option>Festival</option><option>Sport</option><option>Théâtre</option><option>Conférence</option></select></div><div class="form-group"><label class="form-label">Capacité</label><input type="number" class="form-input" placeholder="5000"></div></div>
+                    <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" rows="3" placeholder="Décrivez votre événement..."></textarea></div>
+                    <div class="form-group" style="border:3px solid #1a1a1a;padding:16px;background:#fafafa;">
+                        <label class="form-label" style="margin-bottom:10px;font-size:0.95rem;">🪑 Option placement des sièges</label>
+                        <div style="display:flex;gap:12px;">
+                            <label style="flex:1;display:block;padding:14px;border:3px solid #1a1a1a;cursor:pointer;transition:all 0.2s;text-align:center;" :style="newEvent.seatChoice === 'free' ? 'background:#FF6B4A;color:white;box-shadow:4px 4px 0 #1a1a1a;transform:translate(-2px,-2px);' : 'background:white;'" @click="newEvent.seatChoice = 'free'">
+                                <div style="font-size:1.5rem;margin-bottom:6px;">🎯</div>
+                                <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;">Choix libre</div>
+                                <div style="font-size:0.7rem;opacity:0.8;margin-top:4px;">Le client choisit son siège dans sa zone</div>
+                            </label>
+                            <label style="flex:1;display:block;padding:14px;border:3px solid #1a1a1a;cursor:pointer;transition:all 0.2s;text-align:center;" :style="newEvent.seatChoice === 'assigned' ? 'background:#4A90FF;color:white;box-shadow:4px 4px 0 #1a1a1a;transform:translate(-2px,-2px);' : 'background:white;'" @click="newEvent.seatChoice = 'assigned'">
+                                <div style="font-size:1.5rem;margin-bottom:6px;">✈️</div>
+                                <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;">Attribué</div>
+                                <div style="font-size:0.7rem;opacity:0.8;margin-top:4px;">Place attribuée automatiquement (comme avion)</div>
+                            </label>
+                            <label style="flex:1;display:block;padding:14px;border:3px solid #1a1a1a;cursor:pointer;transition:all 0.2s;text-align:center;" :style="newEvent.seatChoice === 'none' ? 'background:#00D9A5;color:white;box-shadow:4px 4px 0 #1a1a1a;transform:translate(-2px,-2px);' : 'background:white;'" @click="newEvent.seatChoice = 'none'">
+                                <div style="font-size:1.5rem;margin-bottom:6px;">🎫</div>
+                                <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;">Sans plan</div>
+                                <div style="font-size:0.7rem;opacity:0.8;margin-top:4px;">Pas de placement, billet simple</div>
+                            </label>
+                        </div>
+                        <div v-if="newEvent.seatChoice !== 'none'" style="margin-top:12px;">
+                            <label class="form-label" style="font-size:0.8rem;">Plan de salle associé</label>
+                            <select class="form-input" v-model="newEvent.seatmapPlan">
+                                <option value="">-- Sélectionner un plan --</option>
+                                <option v-for="plan in seatmapSavedPlans" :key="plan.id" :value="plan.id">{{ plan.name }} ({{ plan.seats }} places)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button class="btn btn-secondary" @click="showCreateModal = false">Annuler</button><button class="btn btn-primary" @click="createEvent">Créer l'événement</button></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../js/api-client.js"></script>
+    <script src="../js/oauth-simulation.js"></script>
+    <script src="../js/profile-menu.js"></script>
+    <script src="../js/seatmap-engine.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
+    <script>
+        const { createApp } = Vue;
+        const app = createApp({
+            data() {
+                return {
+                    isLoggedIn: false, authMode: 'login', authForm: { name: '', email: '', password: '' }, authError: '',
+                    currentPage: 'dashboard', showCreateModal: false, currentPlan: 'pro',
+                    myRevenue: 0, myTicketsSold: 0, scanRate: 0, scannedTickets: 0, pendingTickets: 0, refundedTickets: 0,
+                    availableBalance: 0, pendingBalance: 0, monthRevenue: 0, totalRevenue: 0, paidOut: 0,
+                    myEvents: [], myTickets: [], myPayouts: [], teamMembers: [],
+                    newEvent: { name: '', date_start: '', date_end: '', venue: '', category: 'concerts', capacity: '', description: '', seatChoice: 'free', seatmapPlan: '' },
+                    // Seat map editor
+                    seatmapEvent: '',
+                    seatmapTool: 'seat',
+                    seatmapZone: 'standard',
+                    seatmapSeats: [],
+                    seatmapSelectedSeats: [],
+                    seatmapRows: 8,
+                    seatmapCols: 12,
+                    seatmapStage: true,
+                    seatmapZones: [
+                        { id: 'vip', name: 'VIP', color: '#FF6B4A', price: 150000 },
+                        { id: 'premium', name: 'Premium', color: '#FECA57', price: 80000 },
+                        { id: 'standard', name: 'Standard', color: '#4A90FF', price: 40000 },
+                        { id: 'eco', name: 'Économique', color: '#00D9A5', price: 20000 }
+                    ],
+                    seatmapSavedPlans: [
+                        { id: 1, name: 'Salle Mogambo - Concert', type: 'theater', rows: 10, cols: 14, seats: 140, zones: 3, date: '2026-02-15' },
+                        { id: 2, name: 'Stade Mahamasina - Tribune', type: 'stadium', rows: 20, cols: 30, seats: 600, zones: 4, date: '2026-03-01' }
+                    ],
+                    seatmapDragging: false,
+                    seatmapShowZoneModal: false,
+                    // Scan / QR access control
+                    scanTab: 'links',
+                    scanFilterEvent: '',
+                    deviceFilterEvent: '',
+                    scanArrivals: [],
+                    scanDevices: [],
+                    // Seatmap
+                    seatmapEditing: false,
+                    seatmapPlanName: '',
+                    seatmapTemplates: [],
+                    seatmapCurvedRows: false,
+                    seatmapCurrentTemplate: null,
+                    seatmapGenerated: null
+                };
+            },
+            computed: {
+                currentDate() { return new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); },
+                pageTitle() { return { dashboard: 'Dashboard', events: 'Mes événements', tickets: 'Billets vendus', finance: 'Mes revenus', payouts: 'Versements', scan: 'Contrôle d\'accès', team: 'Mon équipe', seatmap: 'Plan de salle', settings: 'Paramètres', help: 'Aide' }[this.currentPage] || 'Dashboard'; },
+                seatmapTotalRevenue() {
+                    let total = 0;
+                    this.seatmapSeats.forEach(s => {
+                        if (s.zone && s.zone !== 'aisle') {
+                            const z = this.seatmapZones.find(z => z.id === s.zone);
+                            if (z) total += z.price;
+                        }
+                    });
+                    return total;
+                },
+                scanEvents() {
+                    return this.myEvents.filter(e => e.status === 'active' || e.status === 'pending').map(e => {
+                        const hash = btoa(e.id + '-' + (e.name || '').replace(/\s/g, '') + '-' + Date.now().toString(36)).replace(/=/g, '').slice(0, 24);
+                        return { ...e, scanLink: window.location.origin + '/scan/' + hash, linkCopied: false };
+                    });
+                },
+                scanStats() {
+                    const total = this.myEvents.reduce((s, e) => s + (e.ticketsSold || 0), 0);
+                    const valid = this.scanArrivals.filter(a => !a.rejected).length;
+                    const rejected = this.scanArrivals.filter(a => a.rejected).length;
+                    return { total, arrived: valid, pending: total - valid, rate: total ? Math.round(valid / total * 100) : 0, rejected };
+                },
+                filteredDevices() {
+                    let d = this.scanDevices;
+                    if (this.deviceFilterEvent) d = d.filter(x => x.eventId == this.deviceFilterEvent);
+                    return d.filter(x => !x.blocked);
+                },
+                blockedDevices() { return this.scanDevices.filter(d => d.blocked); },
+                userName() { const u = window.api?.getUser(); return u ? u.name : 'Organisateur'; },
+                userEmail() { const u = window.api?.getUser(); return u ? u.email : ''; },
+                userPlan() { const u = window.api?.getUser(); return u?.plan || 'Pro'; },
+                userAvatar() {
+                    const name = this.userName;
+                    if (window.ProfileMenu) {
+                        const gender = window.ProfileMenu.detectGender(name);
+                        return window.ProfileMenu.getAvatarSVG(name, gender, 36);
+                    }
+                    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                    return initials;
+                }
+            },
+            methods: {
+                formatCurrency(v) { if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M Ar'; if (v >= 1000) return (v / 1000).toFixed(0) + 'K Ar'; return v.toLocaleString() + ' Ar'; },
+                async handleLogout() { await window.api.logout(); this.isLoggedIn = false; },
+                loginWith(provider) {
+                    const vm = this;
+                    window.OAuthSim.show(provider, async (name, email) => {
+                        try {
+                            const result = await window.api.oauthLogin(provider, name, email);
+                            if (!result.error) { vm.isLoggedIn = true; vm.loadDashboard(); }
+                            else {
+                                window.api.setAuth('sim-' + Date.now(), { name: name, email: email, role: 'organizer' });
+                                vm.isLoggedIn = true;
+                            }
+                        } catch(e) {
+                            window.api.setAuth('sim-' + Date.now(), { name: name, email: email, role: 'organizer' });
+                            vm.isLoggedIn = true;
+                        }
+                    });
+                },
+                async handleAuth() {
+                    this.authError = '';
+                    try {
+                        let result;
+                        if (this.authMode === 'login') { result = await window.api.login(this.authForm.email, this.authForm.password); }
+                        else { result = await window.api.register(this.authForm.name, this.authForm.email, this.authForm.password, 'organizer'); }
+                        if (result.error) {
+                            if (result.status === 0) {
+                                const name = this.authForm.name || this.authForm.email.split('@')[0];
+                                window.api.setAuth('sim-' + Date.now(), { name: name, email: this.authForm.email, role: 'organizer' });
+                                this.isLoggedIn = true;
+                            } else { this.authError = result.error; }
+                        } else { this.isLoggedIn = true; this.loadDashboard(); }
+                    } catch(e) { this.authError = 'Erreur de connexion'; }
+                },
+                async loadDashboard() {
+                    try {
+                        const data = await window.api.get('/analytics/dashboard');
+                        if (data && !data.error) {
+                            this.myRevenue = data.myRevenue || 0; this.monthRevenue = data.monthRevenue || 0;
+                            this.myTicketsSold = data.myTicketsSold || 0; this.scannedTickets = data.scannedTickets || 0;
+                            this.pendingTickets = data.pendingTickets || 0; this.refundedTickets = data.refundedTickets || 0;
+                            this.scanRate = data.scanRate || 0; this.totalRevenue = data.totalRevenue || 0;
+                            this.paidOut = data.paidOut || 0; this.availableBalance = data.availableBalance || 0;
+                            this.pendingBalance = data.pendingBalance || 0;
+                            const sLabels = { active: 'En vente', pending: 'Bientôt', completed: 'Terminé', cancelled: 'Annulé' };
+                            this.myEvents = (data.myEvents || []).map(e => ({ id: e.id, name: e.name, emoji: '🎫', date: e.date_start, venue: e.venue, ticketsSold: e.tickets_sold, capacity: e.capacity, revenue: e.revenue, status: e.status, statusLabel: sLabels[e.status] || e.status }));
+                            const tLabels = { active: 'Validé', scanned: 'Scanné', refunded: 'Remboursé' };
+                            this.myTickets = (data.myTickets || []).map(t => ({ id: t.id_code || 'TKT-' + t.id, event: t.event_name, buyer: t.buyer_name || 'Client', type: t.type, price: t.price, status: t.status === 'scanned' ? 'completed' : t.status, statusLabel: tLabels[t.status] || t.status, date: new Date(t.created_at).toLocaleDateString('fr-FR') }));
+                            this.myPayouts = (data.myPayouts || []).map(p => ({ id: p.id_code || 'PAY-' + p.id, amount: p.amount, commission: p.commission, net: p.net, method: p.method, status: p.status, statusLabel: p.status === 'completed' ? 'Effectué' : 'En cours', date: new Date(p.created_at).toLocaleDateString('fr-FR') }));
+                        }
+                        const team = await window.api.get('/team');
+                        if (team && !team.error) {
+                            const members = team.members || team;
+                            this.teamMembers = (Array.isArray(members) ? members : []).map(m => ({ id: m.id, name: m.user_name || m.name, email: m.user_email || m.email, initials: (m.user_name || m.name || 'XX').split(' ').map(w=>w[0]).join('').toUpperCase(), role: m.role === 'admin' ? 'active' : 'pending', roleLabel: m.role_label || m.role, events: m.events_access || 'Tous', lastAccess: m.last_access || 'N/A' }));
+                        }
+                        this.generateScanArrivals();
+                    } catch(e) { console.log('API not available'); }
+                },
+                async createEvent() {
+                    const result = await window.api.post('/events', this.newEvent);
+                    if (!result.error) { this.showCreateModal = false; this.newEvent = { name: '', date_start: '', date_end: '', venue: '', category: 'concerts', capacity: '', description: '' }; this.loadDashboard(); }
+                },
+                // Scan methods
+                copyScanLink(event) {
+                    navigator.clipboard.writeText(event.scanLink).then(() => {
+                        event.linkCopied = true;
+                        setTimeout(() => { event.linkCopied = false; }, 2000);
+                    }).catch(() => {
+                        const ta = document.createElement('textarea');
+                        ta.value = event.scanLink; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+                        event.linkCopied = true;
+                        setTimeout(() => { event.linkCopied = false; }, 2000);
+                    });
+                },
+                showQRCode(event) {
+                    alert('📱 QR Code - ' + event.name + '\n\nLien sécurisé:\n' + event.scanLink + '\n\n✅ Ouvrez ce lien sur un smartphone\n📷 La caméra s\'ouvrira automatiquement\n🔒 Seuls les QR de cet événement seront reconnus\n\n⚠️ QR déjà scanné → alerte orange avec heure\n❌ QR invalide → erreur rouge\n✅ QR valide → pop-up vert avec infos client');
+                },
+                renameDevice(device) {
+                    const newName = prompt('Renommer l\'appareil:', device.name);
+                    if (newName && newName.trim()) { device.name = newName.trim(); }
+                },
+                toggleBlockDevice(device) {
+                    if (device.blocked) {
+                        device.blocked = false;
+                        device.blockReason = '';
+                        device.blockedAt = '';
+                    } else {
+                        const reason = prompt('Raison du blocage (optionnel):', '');
+                        device.blocked = true;
+                        device.blockReason = reason || 'Bloqué manuellement';
+                        device.blockedAt = new Date().toLocaleDateString('fr-FR') + ' ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+                    }
+                },
+                generateScanArrivals() {
+                    const names = ['Rakoto Jean', 'Rasoa Marie', 'Andry Nirina', 'Fanja Harisoa', 'Tahina Rado', 'Voahangy Rabe', 'Hery Lalaina', 'Nomena Fitia', 'Bema Tsiry', 'Lova Sahondra'];
+                    const zones = [
+                        { name: 'VIP', color: '#FF6B4A', price: 150000 },
+                        { name: 'Premium', color: '#FECA57', price: 80000 },
+                        { name: 'Standard', color: '#4A90FF', price: 40000 },
+                        { name: 'Économique', color: '#00D9A5', price: 20000 }
+                    ];
+                    const staffNames = ['Staff Entrée A', 'Staff Entrée B', 'Staff VIP'];
+                    const arrivals = [];
+                    const now = new Date();
+                    for (let i = 0; i < Math.min(this.myEvents.length * 4, 16); i++) {
+                        const ev = this.myEvents[i % this.myEvents.length];
+                        const z = zones[Math.floor(Math.random() * zones.length)];
+                        const t = new Date(now - Math.random() * 3600000);
+                        const isRejected = Math.random() < 0.12;
+                        arrivals.push({
+                            id: i, time: t.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                            name: names[i % names.length], event: ev.name,
+                            zone: z.name, zoneColor: z.color,
+                            seat: String.fromCharCode(65 + Math.floor(Math.random() * 10)) + (Math.floor(Math.random() * 20) + 1),
+                            price: z.price,
+                            scannedBy: staffNames[Math.floor(Math.random() * staffNames.length)],
+                            rejected: isRejected,
+                            rejectReason: isRejected ? ['QR déjà utilisé', 'Autre événement', 'QR invalide'][Math.floor(Math.random() * 3)] : ''
+                        });
+                    }
+                    this.scanArrivals = arrivals.sort((a, b) => b.time > a.time ? 1 : -1);
+                    // Generate sample devices
+                    const devices = [
+                        { id: 1, name: 'Staff Entrée A', browser: 'Chrome Mobile', os: 'Android 14', ip: '192.168.1.45', scanCount: 87, blocked: false },
+                        { id: 2, name: 'Staff Entrée B', browser: 'Safari', os: 'iOS 17.4', ip: '192.168.1.52', scanCount: 64, blocked: false },
+                        { id: 3, name: 'Staff VIP', browser: 'Chrome Mobile', os: 'Android 13', ip: '192.168.1.78', scanCount: 23, blocked: false },
+                        { id: 4, name: 'Appareil inconnu', browser: 'Firefox', os: 'Android 12', ip: '10.0.0.99', scanCount: 2, blocked: true, blockReason: 'Tentative non autorisée', blockedAt: '06/03/2026 15:42' }
+                    ];
+                    this.scanDevices = devices.map(d => ({
+                        ...d,
+                        eventId: this.myEvents[0]?.id || 1,
+                        eventName: this.myEvents[0]?.name || 'Événement',
+                        lastActivity: 'Il y a ' + (Math.floor(Math.random() * 30) + 1) + ' min'
+                    }));
+                },
+                // Seat map methods
+                loadSeatmapTemplates() {
+                    if (!window.SeatmapEngine) return;
+                    this.seatmapTemplates = window.SeatmapEngine.templates.map(tpl => ({
+                        id: tpl.id, name: tpl.icon + ' ' + tpl.name, description: tpl.description,
+                        capacity: tpl.capacity, zones: tpl.zones,
+                        preview: window.SeatmapEngine.getPreviewSVG(tpl.id)
+                    }));
+                },
+                loadTemplate(tplId) {
+                    if (!window.SeatmapEngine) return;
+                    const gen = window.SeatmapEngine.generate(tplId);
+                    if (!gen) return;
+                    const tpl = window.SeatmapEngine.templates.find(t => t.id === tplId);
+                    this.seatmapGenerated = gen;
+                    this.seatmapCurrentTemplate = tplId;
+                    this.seatmapRows = gen.rows;
+                    this.seatmapCols = gen.cols;
+                    this.seatmapSeats = gen.seats;
+                    this.seatmapCurvedRows = gen.curved || false;
+                    this.seatmapStage = gen.stageType !== 'center';
+                    this.seatmapPlanName = tpl ? tpl.name : 'Plan';
+                    this.seatmapEditing = true;
+                },
+                editSavedPlan(plan) {
+                    this.seatmapEditing = true;
+                    this.seatmapPlanName = plan.name;
+                    if (plan.type && window.SeatmapEngine) {
+                        this.loadTemplate(plan.type);
+                        this.seatmapPlanName = plan.name;
+                    }
+                },
+                getRowStyle(ri) {
+                    if (!this.seatmapCurvedRows || !this.seatmapGenerated) return '';
+                    return window.SeatmapEngine.getRowTransform(ri, this.seatmapRows, this.seatmapGenerated.curveStrength, this.seatmapCols);
+                },
+                isSeatVisible(ri, ci) {
+                    const seat = this.getSeatData(ri, ci);
+                    return seat.visible !== false;
+                },
+                initSeatmapGrid() {
+                    this.seatmapSeats = [];
+                    for (let r = 0; r < this.seatmapRows; r++) {
+                        for (let c = 0; c < this.seatmapCols; c++) {
+                            this.seatmapSeats.push({ row: r, col: c, zone: null, visible: true, label: String.fromCharCode(65 + r) + (c + 1) });
+                        }
+                    }
+                },
+                getSeatData(row, col) {
+                    return this.seatmapSeats.find(s => s.row === row && s.col === col) || { zone: null, visible: true };
+                },
+                getSeatStyle(row, col) {
+                    const seat = this.getSeatData(row, col);
+                    const base = 'border:2px solid;';
+                    if (seat.standing) return base + 'background:repeating-linear-gradient(135deg,#9B59B6 0px,#9B59B6 3px,#8E44AD 3px,#8E44AD 6px);border-color:#1a1a1a;border-radius:3px;box-shadow:2px 2px 0 #1a1a1a;';
+                    if (seat.isTable) {
+                        const z = this.seatmapZones.find(z => z.id === seat.zone);
+                        return base + 'background:' + (z ? z.color : '#ccc') + ';border-color:#1a1a1a;border-radius:50%;box-shadow:2px 2px 0 #1a1a1a;';
+                    }
+                    if (seat.zone === 'aisle') return base + 'background:repeating-linear-gradient(45deg,transparent,transparent 2px,#eee 2px,#eee 4px);border-color:#ddd;border-radius:5px;cursor:pointer;';
+                    if (seat.zone === 'pit') return base + 'background:#9B59B6;border-color:#1a1a1a;border-radius:3px;box-shadow:2px 2px 0 #1a1a1a;';
+                    if (seat.zone) {
+                        const z = this.seatmapZones.find(z => z.id === seat.zone);
+                        return base + 'background:' + (z ? z.color : '#ccc') + ';border-color:#1a1a1a;border-radius:5px;box-shadow:2px 2px 0 #1a1a1a;cursor:pointer;';
+                    }
+                    return base + 'background:#e8e8e8;border-color:#ccc;border-radius:5px;cursor:pointer;';
+                },
+                handleSeatClick(row, col) {
+                    const idx = this.seatmapSeats.findIndex(s => s.row === row && s.col === col);
+                    if (idx === -1) return;
+                    if (!this.seatmapSeats[idx].visible) return;
+                    if (this.seatmapSeats[idx].standing) return;
+                    if (this.seatmapTool === 'seat') {
+                        this.seatmapSeats[idx].zone = this.seatmapZone;
+                    } else if (this.seatmapTool === 'aisle') {
+                        this.seatmapSeats[idx].zone = 'aisle';
+                    } else if (this.seatmapTool === 'remove') {
+                        this.seatmapSeats[idx].zone = null;
+                    }
+                },
+                countSeatsInZone(zoneId) {
+                    return this.seatmapSeats.filter(s => s.zone === zoneId).length;
+                },
+                clearSeatmap() {
+                    if (this.seatmapCurrentTemplate) {
+                        this.loadTemplate(this.seatmapCurrentTemplate);
+                    } else {
+                        this.seatmapSeats.forEach(s => s.zone = null);
+                    }
+                },
+                saveSeatmap() {
+                    const totalSeats = this.seatmapSeats.filter(s => s.zone && s.zone !== 'aisle' && s.visible !== false).length;
+                    const zones = new Set(this.seatmapSeats.filter(s => s.zone && s.zone !== 'aisle' && s.visible !== false).map(s => s.zone)).size;
+                    const tpl = window.SeatmapEngine?.templates.find(t => t.id === this.seatmapCurrentTemplate);
+                    const plan = {
+                        id: Date.now(),
+                        name: this.seatmapPlanName || 'Plan ' + (this.seatmapSavedPlans.length + 1),
+                        type: tpl ? tpl.name : 'Personnalisé',
+                        rows: this.seatmapRows, cols: this.seatmapCols,
+                        seats: totalSeats, zones: zones,
+                        date: new Date().toISOString().split('T')[0],
+                        templateId: this.seatmapCurrentTemplate
+                    };
+                    this.seatmapSavedPlans.push(plan);
+                    alert('Plan de salle sauvegardé ! ' + totalSeats + ' sièges dans ' + zones + ' zones.');
+                }
+            },
+            mounted() {
+                if (window.api && window.api.isLoggedIn()) { this.isLoggedIn = true; this.loadDashboard(); }
+                if (window.ProfileMenu) window.ProfileMenu.injectStyles();
+                this.loadSeatmapTemplates();
+                this.initSeatmapGrid();
+                // Generate sample arrivals if we have events
+                if (this.myEvents.length) this.generateScanArrivals();
+                document.addEventListener('mouseup', () => { this.seatmapDragging = false; });
+            }
+        });
+        app.use(Vuetify.createVuetify());
+        app.mount('#app');
+    </script>
+</body>
+</html>

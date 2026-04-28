@@ -1,0 +1,13 @@
+# Render deployment config for TicketMada API
+services:
+  - type: web
+    name: ticketmada-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server-node.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+    autoDeploy: true

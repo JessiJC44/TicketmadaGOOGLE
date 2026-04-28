@@ -1,0 +1,36 @@
+{
+    "name": "TMscanner - TicketMada",
+    "short_name": "TMscanner",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#FAF7F2",
+    "theme_color": "#FF6B4A",
+    "description": "Scanner QR TicketMada - Contrôle d'accès événements",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "categories": ["business", "utilities"],
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

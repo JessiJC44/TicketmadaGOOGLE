@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicketMada - Recherche</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-cream: #FAF7F2; --bg-dark: #1a1a1a; --accent-coral: #FF6B4A;
+            --accent-yellow: #FECA57; --accent-mint: #00D9A5; --accent-blue: #4A90FF;
+            --accent-purple: #9B59B6; --text-dark: #1a1a1a; --text-light: #666;
+            --border-dark: #1a1a1a; --shadow-brutal: 6px 6px 0px #1a1a1a;
+            --shadow-brutal-sm: 4px 4px 0px #1a1a1a; --shadow-brutal-lg: 10px 10px 0px #1a1a1a;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg-cream); color: var(--text-dark); }
+
+        /* ── Navbar ── */
+        .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 16px 40px; background: var(--bg-cream); border-bottom: 3px solid var(--border-dark); }
+        .navbar-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; gap: 24px; }
+        .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-dark); flex-shrink: 0; }
+        .logo-box { width: 42px; height: 42px; background: var(--accent-coral); border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transform: rotate(-3deg); }
+        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; }
+        .logo-text span { color: var(--accent-coral); }
+
+        /* Inline search bar */
+        .nav-search-bar { flex: 1; max-width: 600px; position: relative; }
+        .nav-search-input { width: 100%; padding: 12px 20px 12px 44px; border: 3px solid var(--border-dark); font-family: 'DM Sans', sans-serif; font-size: 1rem; background: white; box-shadow: var(--shadow-brutal-sm); transition: box-shadow 0.15s; }
+        .nav-search-input:focus { outline: none; box-shadow: 6px 6px 0px var(--accent-coral); }
+        .nav-search-input::placeholder { color: #bbb; }
+        .nav-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+
+        /* Autocomplete dropdown */
+        .autocomplete { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 3px solid var(--border-dark); border-top: none; box-shadow: 0 8px 0px #1a1a1a; max-height: 400px; overflow-y: auto; z-index: 100; }
+        .ac-section { padding: 10px 16px 6px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light); border-top: 2px solid #eee; }
+        .ac-section:first-child { border-top: none; }
+        .ac-item { padding: 12px 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: background 0.1s; }
+        .ac-item:hover { background: #fef9f0; }
+        .ac-item-icon { width: 40px; height: 40px; border: 2px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+        .ac-item-info { flex: 1; min-width: 0; }
+        .ac-item-name { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ac-item-name mark { background: var(--accent-yellow); font-weight: 800; }
+        .ac-item-detail { font-size: 0.78rem; color: var(--text-light); display: flex; gap: 12px; }
+        .ac-item-price { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.9rem; flex-shrink: 0; }
+        .ac-view-all { padding: 14px 16px; text-align: center; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; color: var(--accent-coral); cursor: pointer; border-top: 2px solid #eee; }
+        .ac-view-all:hover { background: #fff5f0; }
+
+        .nav-cta { display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
+        .lang-toggle { width: 42px; height: 42px; background: white; border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.3rem; box-shadow: 3px 3px 0px #1a1a1a; transition: all 0.2s; }
+        .lang-toggle:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0px #1a1a1a; }
+        .nav-back { display: flex; align-items: center; gap: 6px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.85rem; color: var(--text-dark); text-decoration: none; padding: 10px 16px; border: 3px solid var(--border-dark); background: white; box-shadow: var(--shadow-brutal-sm); transition: all 0.15s; }
+        .nav-back:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
+
+        /* ── Page Header ── */
+        .page-header { margin-top: 80px; padding: 40px 40px 30px; border-bottom: 3px solid var(--border-dark); background: white; }
+        .page-header-inner { max-width: 1400px; margin: 0 auto; }
+        .page-header h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 2rem; margin-bottom: 8px; }
+        .page-header p { color: var(--text-light); font-size: 1rem; }
+        .header-badges { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+        .header-badge { padding: 6px 16px; border: 2px solid var(--border-dark); font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; transition: all 0.15s; }
+        .header-badge:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0px #1a1a1a; }
+        .header-badge.active { background: var(--accent-coral); color: white; box-shadow: var(--shadow-brutal-sm); }
+
+        /* ── Results ── */
+        .results-section { max-width: 1400px; margin: 0 auto; padding: 30px 40px 60px; }
+        .results-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .results-count { font-size: 0.9rem; color: var(--text-light); }
+        .results-count strong { color: var(--text-dark); font-family: 'Syne', sans-serif; }
+        .results-sort { display: flex; align-items: center; gap: 8px; }
+        .results-sort label { font-size: 0.8rem; color: var(--text-light); }
+        .sort-select { font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; border: 2px solid var(--border-dark); padding: 6px 12px; background: white; cursor: pointer; }
+
+        /* Event result cards */
+        .results-list { display: flex; flex-direction: column; gap: 16px; }
+        .result-card { background: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal); display: grid; grid-template-columns: 200px 1fr auto; overflow: hidden; cursor: pointer; transition: all 0.15s; }
+        .result-card:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
+        .result-image { width: 100%; height: 100%; min-height: 160px; object-fit: cover; border-right: 3px solid var(--border-dark); }
+        .result-info { padding: 24px; display: flex; flex-direction: column; justify-content: center; }
+        .result-category { display: inline-block; background: var(--accent-yellow); border: 2px solid var(--border-dark); padding: 3px 12px; font-family: 'Syne', sans-serif; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; transform: rotate(-1deg); width: fit-content; }
+        .result-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; margin-bottom: 8px; }
+        .result-details { display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.85rem; color: var(--text-light); margin-bottom: 10px; }
+        .result-details span { display: flex; align-items: center; gap: 4px; }
+        .result-description { font-size: 0.85rem; color: var(--text-light); line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .result-badges { display: flex; gap: 8px; margin-top: 8px; }
+        .result-badge { font-size: 0.65rem; font-weight: 700; padding: 3px 10px; border: 2px solid; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-popular { background: #fff0f0; border-color: var(--accent-coral); color: var(--accent-coral); }
+        .badge-soon { background: #f0f5ff; border-color: var(--accent-blue); color: var(--accent-blue); }
+        .badge-festival { background: #f5f0ff; border-color: var(--accent-purple); color: var(--accent-purple); }
+        .badge-vip { background: #fef9f0; border-color: var(--accent-yellow); color: #b8860b; }
+
+        .result-action { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 30px; border-left: 3px solid var(--border-dark); background: var(--bg-cream); min-width: 180px; }
+        .result-price-label { font-size: 0.7rem; color: var(--text-light); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .result-price { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; margin-bottom: 4px; }
+        .result-price small { font-size: 0.7rem; font-weight: 400; color: var(--text-light); }
+        .result-availability { font-size: 0.75rem; color: var(--accent-mint); font-weight: 600; margin-bottom: 14px; }
+        .result-availability.low { color: #e74c3c; }
+        .result-btn { padding: 12px 24px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; background: var(--accent-coral); color: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal-sm); cursor: pointer; transition: all 0.15s; text-decoration: none; display: inline-block; }
+        .result-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
+
+        /* No results */
+        .no-results { text-align: center; padding: 80px 20px; }
+        .no-results-icon { font-size: 4rem; margin-bottom: 20px; opacity: 0.3; }
+        .no-results h2 { font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 10px; }
+        .no-results p { color: var(--text-light); margin-bottom: 24px; }
+        .no-results-suggestions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .suggestion-chip { padding: 8px 18px; border: 3px solid var(--border-dark); font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.8rem; cursor: pointer; background: white; box-shadow: var(--shadow-brutal-sm); transition: all 0.15s; text-decoration: none; color: var(--text-dark); }
+        .suggestion-chip:hover { background: var(--accent-yellow); transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
+
+        /* Loading skeleton */
+        .skeleton-card { background: white; border: 3px solid #eee; height: 160px; display: grid; grid-template-columns: 200px 1fr 180px; overflow: hidden; }
+        .skeleton-image { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        .skeleton-body { padding: 24px; }
+        .skeleton-line { height: 14px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; margin-bottom: 12px; border-radius: 4px; }
+        .skeleton-line.short { width: 60%; }
+        .skeleton-line.medium { width: 80%; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .result-card { grid-template-columns: 1fr; }
+            .result-image { height: 180px; border-right: none; border-bottom: 3px solid var(--border-dark); }
+            .result-action { border-left: none; border-top: 3px solid var(--border-dark); flex-direction: row; gap: 16px; justify-content: space-between; min-width: auto; }
+            .navbar-inner { flex-wrap: wrap; }
+            .nav-search-bar { order: 3; max-width: 100%; flex-basis: 100%; }
+        }
+        @media (max-width: 600px) {
+            .page-header h1 { font-size: 1.4rem; }
+            .results-section { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+<script src="../js/site-config.js"></script>
+
+<div id="app">
+    <!-- Navbar with inline search -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="ticketmada-landing.html" class="logo">
+                <div class="logo-box">🎫</div>
+                <span class="logo-text">Ticket<span>Mada</span></span>
+            </a>
+            <div class="nav-search-bar">
+                <v-icon class="nav-search-icon" size="small">mdi-magnify</v-icon>
+                <input class="nav-search-input"
+                       :placeholder="lang === 'fr' ? 'Rechercher artiste, événement, lieu...' : 'Search artist, event, venue...'"
+                       v-model="searchQuery"
+                       @input="onSearchInput"
+                       @focus="showAutocomplete = true"
+                       @keydown.enter="doSearch"
+                       @keydown.esc="showAutocomplete = false"
+                       ref="searchInput">
+                <!-- Autocomplete -->
+                <div class="autocomplete" v-if="showAutocomplete && (acEvents.length || acCategories.length || searchQuery.length >= 2)">
+                    <template v-if="acEvents.length">
+                        <div class="ac-section">{{ lang === 'fr' ? '��vénements' : 'Events' }}</div>
+                        <div class="ac-item" v-for="ev in acEvents" :key="ev.id" @mousedown.prevent="goToEvent(ev.id)">
+                            <div class="ac-item-icon" :style="{ background: categoryColors[ev.category] || '#f0f0f0' }">{{ ev.emoji || '🎫' }}</div>
+                            <div class="ac-item-info">
+                                <div class="ac-item-name" v-html="highlightMatch(ev.name)"></div>
+                                <div class="ac-item-detail">
+                                    <span><v-icon size="x-small">mdi-calendar</v-icon> {{ formatDate(ev.date_start) }}</span>
+                                    <span><v-icon size="x-small">mdi-map-marker</v-icon> {{ ev.venue }}</span>
+                                </div>
+                            </div>
+                            <div class="ac-item-price" v-if="ev.price_from">{{ formatPrice(ev.price_from) }} Ar</div>
+                        </div>
+                    </template>
+                    <template v-if="acCategories.length">
+                        <div class="ac-section">{{ lang === 'fr' ? 'Catégories' : 'Categories' }}</div>
+                        <div class="ac-item" v-for="cat in acCategories" :key="cat.name" @mousedown.prevent="searchByCategory(cat.name)">
+                            <div class="ac-item-icon" :style="{ background: categoryColors[cat.name] || '#f0f0f0' }">{{ cat.icon }}</div>
+                            <div class="ac-item-info">
+                                <div class="ac-item-name">{{ capitalize(cat.name) }}</div>
+                                <div class="ac-item-detail"><span>{{ cat.count }} {{ lang === 'fr' ? 'événements' : 'events' }}</span></div>
+                            </div>
+                        </div>
+                    </template>
+                    <div class="ac-view-all" v-if="searchQuery.length >= 2" @mousedown.prevent="doSearch">
+                        {{ lang === 'fr' ? 'Voir tous les résultats pour' : 'View all results for' }} "{{ searchQuery }}" →
+                    </div>
+                    <div v-if="!acEvents.length && !acCategories.length && searchQuery.length >= 2" style="padding:20px;text-align:center;color:var(--text-light);font-size:0.85rem;">
+                        {{ lang === 'fr' ? 'Aucune suggestion' : 'No suggestions' }}
+                    </div>
+                </div>
+            </div>
+            <div class="nav-cta">
+                <button class="lang-toggle" @click="toggleLang">{{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}</button>
+                <a href="ticketmada-landing.html" class="nav-back"><v-icon size="small">mdi-arrow-left</v-icon> {{ lang === 'fr' ? 'Accueil' : 'Home' }}</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-inner">
+            <h1 v-if="activeCategory">{{ categoryEmoji(activeCategory) }} {{ capitalize(activeCategory) }}</h1>
+            <h1 v-else-if="searchQuery">{{ lang === 'fr' ? 'Résultats pour' : 'Results for' }} "{{ searchQuery }}"</h1>
+            <h1 v-else>{{ lang === 'fr' ? '🔍 Explorer les événements' : '🔍 Explore events' }}</h1>
+            <p v-if="!loading">{{ filteredResults.length }} {{ lang === 'fr' ? 'événements trouvés' : 'events found' }}</p>
+            <div class="header-badges">
+                <div class="header-badge" :class="{ active: !activeCategory }" @click="clearCategory">
+                    {{ lang === 'fr' ? 'Tous' : 'All' }}
+                </div>
+                <div class="header-badge" v-for="cat in categories" :key="cat.name"
+                     :class="{ active: activeCategory === cat.name }"
+                     @click="searchByCategory(cat.name)">
+                    {{ cat.icon }} {{ capitalize(cat.name) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div class="results-section">
+        <div class="results-toolbar" v-if="filteredResults.length > 0">
+            <div class="results-count">
+                <strong>{{ filteredResults.length }}</strong> {{ lang === 'fr' ? 'événements' : 'events' }}
+                <template v-if="activeCategory"> {{ lang === 'fr' ? 'dans' : 'in' }} {{ capitalize(activeCategory) }}</template>
+            </div>
+            <div class="results-sort">
+                <label>{{ lang === 'fr' ? 'Trier :' : 'Sort:' }}</label>
+                <select class="sort-select" v-model="sortBy" @change="sortResults">
+                    <option value="date">{{ lang === 'fr' ? 'Date ↑' : 'Date ��' }}</option>
+                    <option value="popularity">{{ lang === 'fr' ? 'Popularité' : 'Popularity' }}</option>
+                    <option value="price">{{ lang === 'fr' ? 'Prix ↑' : 'Price ↑' }}</option>
+                    <option value="name">{{ lang === 'fr' ? 'Nom A-Z' : 'Name A-Z' }}</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Loading skeletons -->
+        <div class="results-list" v-if="loading">
+            <div class="skeleton-card" v-for="n in 4" :key="n">
+                <div class="skeleton-image"></div>
+                <div class="skeleton-body">
+                    <div class="skeleton-line short"></div>
+                    <div class="skeleton-line medium"></div>
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-line short"></div>
+                </div>
+                <div></div>
+            </div>
+        </div>
+
+        <!-- Results list -->
+        <div class="results-list" v-else-if="filteredResults.length">
+            <div class="result-card" v-for="ev in filteredResults" :key="ev.id" @click="goToEvent(ev.id)">
+                <img :src="ev.image_url || 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400'" class="result-image" :alt="ev.name">
+                <div class="result-info">
+                    <div class="result-category">{{ ev.category }}</div>
+                    <div class="result-title">{{ ev.emoji }} {{ ev.name }} <a v-if="ev.organizer_name" :href="'ticketmada-artist.html?name=' + encodeURIComponent(ev.organizer_name || ev.name.split(' ')[0])" @click.stop style="font-size:0.75rem;color:var(--accent-coral);text-decoration:none;font-family:Syne;font-weight:600;margin-left:8px;">{{ lang === 'fr' ? 'Voir l\'artiste →' : 'View artist →' }}</a></div>
+                    <div class="result-details">
+                        <span><v-icon size="x-small">mdi-calendar</v-icon> {{ formatDate(ev.date_start) }}</span>
+                        <span v-if="ev.date_end"><v-icon size="x-small">mdi-calendar-end</v-icon> {{ formatDate(ev.date_end) }}</span>
+                        <span><v-icon size="x-small">mdi-map-marker</v-icon> {{ ev.venue }}</span>
+                        <span><v-icon size="x-small">mdi-account-group</v-icon> {{ ev.capacity ? ev.capacity.toLocaleString() : '—' }}</span>
+                    </div>
+                    <div class="result-description" v-if="ev.description">{{ ev.description }}</div>
+                    <div class="result-badges">
+                        <span class="result-badge badge-popular" v-if="ev.badge === 'popular'">{{ lang === 'fr' ? '🔥 Populaire' : '�� Popular' }}</span>
+                        <span class="result-badge badge-soon" v-if="ev.badge === 'soon'">{{ lang === 'fr' ? '⏳ Bientôt' : '⏳ Coming soon' }}</span>
+                        <span class="result-badge badge-festival" v-if="ev.badge === 'festival'">🎪 Festival</span>
+                        <span class="result-badge badge-vip" v-if="ev.badge === 'vip'">⭐ VIP</span>
+                    </div>
+                </div>
+                <div class="result-action">
+                    <div class="result-price-label">{{ lang === 'fr' ? 'À partir de' : 'From' }}</div>
+                    <div class="result-price">{{ formatPrice(getMinPrice(ev)) }} <small>Ar</small></div>
+                    <div class="result-availability" :class="{ low: getAvailPct(ev) < 20 }">
+                        {{ getAvailPct(ev) < 20 ? '🔥 ' : '' }}{{ getAvailText(ev) }}
+                    </div>
+                    <a :href="'ticketmada-event.html?id=' + ev.id" class="result-btn" @click.stop>
+                        {{ lang === 'fr' ? 'Voir les places' : 'View tickets' }}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- No results -->
+        <div class="no-results" v-else>
+            <div class="no-results-icon">🔍</div>
+            <h2>{{ lang === 'fr' ? 'Aucun résultat' : 'No results' }}</h2>
+            <p>{{ lang === 'fr' ? 'Essayez une autre recherche ou parcourez nos catégories' : 'Try another search or browse our categories' }}</p>
+            <div class="no-results-suggestions">
+                <a class="suggestion-chip" @click="searchQuery = 'concert'; doSearch()">🎤 Concerts</a>
+                <a class="suggestion-chip" @click="searchQuery = 'festival'; doSearch()">🎪 Festivals</a>
+                <a class="suggestion-chip" @click="searchQuery = 'sport'; doSearch()">⚽ Sports</a>
+                <a class="suggestion-chip" @click="searchQuery = ''; activeCategory = ''; loadAllEvents()">{{ lang === 'fr' ? '📋 Tous les événements' : '📋 All events' }}</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../js/api-client.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
+<script>
+const { createApp } = Vue;
+const app = createApp({
+    data() {
+        return {
+            lang: localStorage.getItem('ticketmada-lang') || 'fr',
+            searchQuery: '',
+            activeCategory: '',
+            sortBy: 'date',
+            loading: true,
+            allEvents: [],
+            categories: [],
+            showAutocomplete: false,
+            acEvents: [],
+            acCategories: [],
+            acDebounce: null,
+            categoryColors: {
+                concerts: '#FF6B4A20', festivals: '#9B59B620', sports: '#4A90FF20', theatre: '#FECA5720'
+            }
+        };
+    },
+    computed: {
+        filteredResults() {
+            let list = [...this.allEvents];
+            if (this.activeCategory) {
+                list = list.filter(e => e.category === this.activeCategory);
+            }
+            if (this.searchQuery && !this.activeCategory) {
+                const q = this.searchQuery.toLowerCase();
+                list = list.filter(e =>
+                    e.name.toLowerCase().includes(q) ||
+                    e.venue.toLowerCase().includes(q) ||
+                    (e.description || '').toLowerCase().includes(q) ||
+                    e.category.toLowerCase().includes(q)
+                );
+            }
+            return this.sortList(list);
+        }
+    },
+    methods: {
+        toggleLang() {
+            this.lang = this.lang === 'fr' ? 'en' : 'fr';
+            localStorage.setItem('ticketmada-lang', this.lang);
+        },
+        formatDate(d) {
+            if (!d) return '—';
+            return new Date(d).toLocaleDateString(this.lang === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+        },
+        formatPrice(p) { return p ? p.toLocaleString('fr-FR') : '0'; },
+        capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; },
+        categoryEmoji(cat) {
+            return { concerts: '🎤', festivals: '🎪', sports: '⚽', theatre: '🎭' }[cat] || '🎫';
+        },
+        getMinPrice(ev) {
+            // Estimate from revenue/tickets or use zone defaults
+            if (ev.revenue && ev.tickets_sold) return Math.round(ev.revenue / ev.tickets_sold * 0.5);
+            return 20000; // Eco default
+        },
+        getAvailPct(ev) {
+            if (!ev.capacity) return 100;
+            return Math.round(((ev.capacity - (ev.tickets_sold || 0)) / ev.capacity) * 100);
+        },
+        getAvailText(ev) {
+            const avail = (ev.capacity || 0) - (ev.tickets_sold || 0);
+            const pct = this.getAvailPct(ev);
+            if (avail <= 0) return this.lang === 'fr' ? 'Complet' : 'Sold out';
+            if (pct < 10) return this.lang === 'fr' ? `${avail} dernières places !` : `${avail} last tickets!`;
+            if (pct < 30) return this.lang === 'fr' ? `${avail.toLocaleString()} restants` : `${avail.toLocaleString()} remaining`;
+            return this.lang === 'fr' ? 'Disponible' : 'Available';
+        },
+        highlightMatch(text) {
+            if (!this.searchQuery || this.searchQuery.length < 2) return text;
+            const regex = new RegExp(`(${this.searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            return text.replace(regex, '<mark>$1</mark>');
+        },
+        sortList(list) {
+            switch (this.sortBy) {
+                case 'date': return list.sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
+                case 'popularity': return list.sort((a, b) => (b.tickets_sold || 0) - (a.tickets_sold || 0));
+                case 'price': return list.sort((a, b) => this.getMinPrice(a) - this.getMinPrice(b));
+                case 'name': return list.sort((a, b) => a.name.localeCompare(b.name));
+                default: return list;
+            }
+        },
+        sortResults() { /* computed handles it */ },
+        goToEvent(id) {
+            window.location.href = `ticketmada-event.html?id=${id}`;
+        },
+        searchByCategory(cat) {
+            this.activeCategory = cat;
+            this.searchQuery = '';
+            this.showAutocomplete = false;
+            this.updateURL();
+        },
+        clearCategory() {
+            this.activeCategory = '';
+            this.updateURL();
+        },
+        doSearch() {
+            this.activeCategory = '';
+            this.showAutocomplete = false;
+            this.updateURL();
+        },
+        onSearchInput() {
+            clearTimeout(this.acDebounce);
+            if (this.searchQuery.length < 2) {
+                this.acEvents = [];
+                this.acCategories = [];
+                return;
+            }
+            this.acDebounce = setTimeout(() => this.fetchAutocomplete(), 200);
+        },
+        async fetchAutocomplete() {
+            const q = this.searchQuery.toLowerCase();
+            // Filter from loaded events
+            this.acEvents = this.allEvents
+                .filter(e => e.name.toLowerCase().includes(q) || e.venue.toLowerCase().includes(q))
+                .slice(0, 5)
+                .map(e => ({ ...e, price_from: this.getMinPrice(e) }));
+            this.acCategories = this.categories.filter(c => c.name.toLowerCase().includes(q));
+        },
+        updateURL() {
+            const params = new URLSearchParams();
+            if (this.searchQuery) params.set('q', this.searchQuery);
+            if (this.activeCategory) params.set('category', this.activeCategory);
+            const qs = params.toString();
+            history.replaceState(null, '', qs ? '?' + qs : window.location.pathname);
+        },
+        async loadAllEvents() {
+            this.loading = true;
+            try {
+                const result = await window.api.get('/events');
+                if (result.events) this.allEvents = result.events;
+            } catch (e) {
+                console.warn('API not available, using demo data');
+            }
+            // Fallback demo data if API failed
+            if (!this.allEvents.length) {
+                this.allEvents = [
+                    { id: 1, name: 'Dama Live - Tournée Nationale 2026', category: 'concerts', description: 'Le plus grand concert de l\'année', emoji: '🎤', date_start: '2026-04-15', venue: 'Antananarivo', capacity: 15000, tickets_sold: 12500, image_url: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400', badge: 'popular', status: 'active', revenue: 625000000 },
+                    { id: 2, name: 'Festival Donia 2026', category: 'festivals', description: 'Le festival incontournable de Nosy Be', emoji: '🎉', date_start: '2026-05-20', date_end: '2026-05-22', venue: 'Nosy Be', capacity: 10000, tickets_sold: 8500, image_url: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400', badge: 'festival', status: 'active', revenue: 1020000000 },
+                    { id: 3, name: 'CNaPS vs Fosa Juniors', category: 'sports', description: 'Match de la saison', emoji: '⚽', date_start: '2026-03-28', venue: 'Mahamasina', capacity: 8000, tickets_sold: 5200, image_url: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400', badge: 'popular', status: 'active', revenue: 78000000 },
+                    { id: 4, name: 'Erick Manana Unplugged', category: 'concerts', description: 'Concert acoustique exceptionnel', emoji: '🎸', date_start: '2026-04-05', venue: 'IFM Analakely', capacity: 800, tickets_sold: 650, image_url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400', badge: 'soon', status: 'active', revenue: 22750000 },
+                    { id: 5, name: 'Madajazzcar 2026', category: 'festivals', description: 'Festival de jazz international', emoji: '🎷', date_start: '2026-10-10', date_end: '2026-10-15', venue: 'Antananarivo', capacity: 5000, tickets_sold: 0, image_url: 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=400', badge: 'soon', status: 'active', revenue: 0 },
+                    { id: 6, name: 'Course de Côte - Diego', category: 'sports', description: 'Compétition automobile', emoji: '🏎️', date_start: '2026-06-12', venue: 'Diego Suarez', capacity: 3000, tickets_sold: 1200, image_url: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=400', status: 'active', revenue: 30000000 },
+                    { id: 7, name: 'Jaojoby en Concert', category: 'concerts', description: 'Le roi du salegy en live', emoji: '🎵', date_start: '2026-05-18', venue: 'Toamasina', capacity: 5000, tickets_sold: 3800, image_url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400', badge: 'vip', status: 'active', revenue: 152000000 },
+                    { id: 8, name: 'Beach Festival Anakao', category: 'festivals', description: 'Festival sur la plage', emoji: '🏖️', date_start: '2026-07-01', date_end: '2026-07-03', venue: 'Anakao', capacity: 2000, tickets_sold: 500, image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400', badge: 'festival', status: 'active', revenue: 75000000 },
+                    { id: 9, name: 'Donia Beach Party', category: 'concerts', description: 'After party sur la plage', emoji: '🏖️', date_start: '2026-05-23', venue: 'Ambatoloaka', capacity: 1000, tickets_sold: 800, image_url: null, status: 'active', revenue: 40000000 }
+                ];
+            }
+            // Load categories
+            try {
+                const catResult = await window.api.get('/events/categories');
+                if (catResult.categories) this.categories = catResult.categories;
+            } catch (e) {}
+            if (!this.categories.length) {
+                this.categories = [
+                    { name: 'concerts', count: 4, icon: '🎤' },
+                    { name: 'festivals', count: 3, icon: '🎪' },
+                    { name: 'sports', count: 2, icon: '⚽' }
+                ];
+            }
+            this.loading = false;
+        }
+    },
+    async mounted() {
+        document.documentElement.lang = this.lang;
+        // Read URL params
+        const params = new URLSearchParams(window.location.search);
+        this.searchQuery = params.get('q') || '';
+        this.activeCategory = params.get('category') || '';
+        await this.loadAllEvents();
+        // Focus search if no preset filter
+        if (!this.searchQuery && !this.activeCategory) {
+            this.$nextTick(() => this.$refs.searchInput?.focus());
+        }
+        // Close autocomplete on outside click
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.nav-search-bar')) this.showAutocomplete = false;
+        });
+    }
+});
+app.use(Vuetify.createVuetify());
+app.mount('#app');
+</script>
+</body>
+</html>
