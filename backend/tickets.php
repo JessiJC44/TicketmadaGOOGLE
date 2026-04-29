@@ -82,7 +82,7 @@ function purchaseTicket() {
     $db = getDB();
 
     // Check event exists and is active
-    $event = $db->prepare('SELECT * FROM events WHERE id = ? AND status = "active"');
+    $event = $db->prepare("SELECT * FROM events WHERE id = ? AND status = 'active'");
     $event->execute([$eventId]);
     $event = $event->fetch();
     if (!$event) jsonError('Événement non trouvé ou non disponible');
@@ -104,7 +104,7 @@ function purchaseTicket() {
                 $code = generateTicketCode();
             }
 
-            $stmt = $db->prepare('INSERT INTO tickets (id_code, event_id, buyer_id, type, price, status) VALUES (?, ?, ?, ?, ?, "active")');
+            $stmt = $db->prepare("INSERT INTO tickets (id_code, event_id, buyer_id, type, price, status) VALUES (?, ?, ?, ?, ?, 'active')");
             $stmt->execute([$code, $eventId, $user['id'], $type, $price]);
             $tickets[] = ['id' => $db->lastInsertId(), 'id_code' => $code, 'type' => $type, 'price' => $price];
         }
@@ -114,7 +114,7 @@ function purchaseTicket() {
         $db->prepare('UPDATE events SET tickets_sold = tickets_sold + ?, revenue = revenue + ? WHERE id = ?')->execute([$quantity, $totalPrice, $eventId]);
 
         // Log activity
-        $db->prepare('INSERT INTO activity_log (type, icon, text, user_id) VALUES ("sale", "mdi-ticket", ?, ?)')->execute([
+        $db->prepare("INSERT INTO activity_log (type, icon, text, user_id) VALUES ('sale', 'mdi-ticket', ?, ?)")->execute([
             '<strong>+' . $quantity . ' billet' . ($quantity > 1 ? 's' : '') . '</strong> ' . $event['name'],
             $user['id']
         ]);
@@ -140,7 +140,7 @@ function scanTicket($id) {
     if ($ticket['status'] === 'scanned') jsonError('Billet déjà scanné');
     if ($ticket['status'] !== 'active') jsonError('Billet non valide (statut: ' . $ticket['status'] . ')');
 
-    $db->prepare('UPDATE tickets SET status = "scanned", scanned_at = datetime("now") WHERE id = ?')->execute([$ticket['id']]);
+    $db->prepare("UPDATE tickets SET status = 'scanned', scanned_at = datetime('now') WHERE id = ?")->execute([$ticket['id']]);
 
     jsonResponse(['message' => 'Billet scanné avec succès', 'ticket_code' => $ticket['id_code']]);
 }

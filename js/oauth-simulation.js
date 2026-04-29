@@ -1,13 +1,8 @@
-// TicketMada OAuth - Real Auth with Simulation Fallback
-// Uses Google Identity Services & Facebook SDK when configured
-// Falls back to simulated popups when no Client IDs are set
+// TicketMada OAuth Simulation
+// Simulates Google & Facebook login popups locally
 
 window.OAuthSim = {
-    // Config (populated from site-config.js)
-    _googleReady: false,
-    _facebookReady: false,
-
-    // Pre-filled accounts for simulation fallback
+    // Pre-filled accounts for simulation
     googleAccounts: [
         { name: 'Sedra Yiokoraz', email: 'sedrayiokoraz@gmail.com', avatar: 'SY', color: '#4285F4' },
         { name: 'Rakoto Jean', email: 'rakoto.jean@gmail.com', avatar: 'RJ', color: '#34A853' },
@@ -21,136 +16,7 @@ window.OAuthSim = {
 
     _overlay: null,
 
-    // Initialize real auth SDKs
-    init() {
-        const cfg = window.TICKETMADA_CONFIG || {};
-
-        // --- Google Identity Services ---
-        if (cfg.GOOGLE_CLIENT_ID) {
-            const script = document.createElement('script');
-            script.src = 'https://accounts.google.com/gsi/client';
-            script.async = true;
-            script.defer = true;
-            script.onload = () => {
-                try {
-                    google.accounts.id.initialize({
-                        client_id: cfg.GOOGLE_CLIENT_ID,
-                        callback: (response) => {
-                            // Decode JWT token to get user info
-                            const payload = JSON.parse(atob(response.credential.split('.')[1]));
-                            if (this._pendingCallback) {
-                                this._pendingCallback(payload.name, payload.email, payload.picture, 'google');
-                                this._pendingCallback = null;
-                            }
-                        },
-                        auto_select: false,
-                        ux_mode: 'popup'
-                    });
-                    this._googleReady = true;
-                    console.log('Google Sign-In ready');
-                } catch (e) {
-                    console.warn('Google Sign-In init failed:', e);
-                }
-            };
-            document.head.appendChild(script);
-        }
-
-        // --- Facebook SDK ---
-        if (cfg.FACEBOOK_APP_ID) {
-            window.fbAsyncInit = () => {
-                FB.init({
-                    appId: cfg.FACEBOOK_APP_ID,
-                    cookie: true,
-                    xfbml: false,
-                    version: 'v18.0'
-                });
-                this._facebookReady = true;
-                console.log('Facebook Login ready');
-            };
-            const script = document.createElement('script');
-            script.src = 'https://connect.facebook.net/fr_FR/sdk.js';
-            script.async = true;
-            script.defer = true;
-            document.head.appendChild(script);
-        }
-    },
-
-    _pendingCallback: null,
-
     show(provider, callback) {
-        const isGoogle = provider.toLowerCase() === 'google';
-
-        // Try real auth first
-        if (isGoogle && this._googleReady) {
-            this._pendingCallback = callback;
-            google.accounts.id.prompt((notification) => {
-                if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                    // Popup blocked or dismissed → fall back to manual button
-                    this._showGoogleButton(callback);
-                }
-            });
-            return;
-        }
-
-        if (!isGoogle && this._facebookReady) {
-            FB.login((response) => {
-                if (response.authResponse) {
-                    FB.api('/me', { fields: 'name,email,picture.width(96)' }, (user) => {
-                        const pic = user.picture?.data?.url || '';
-                        callback(user.name, user.email || (user.name.replace(/\s/g, '.').toLowerCase() + '@facebook.com'), pic, 'facebook');
-                    });
-                }
-            }, { scope: 'public_profile,email' });
-            return;
-        }
-
-        // Fallback: simulation mode
-        this._showSimulation(provider, callback);
-    },
-
-    // Show a Google Sign-In button in a modal (fallback when prompt is blocked)
-    _showGoogleButton(callback) {
-        if (this._overlay) this._overlay.remove();
-
-        const overlay = document.createElement('div');
-        overlay.id = 'oauth-sim-overlay';
-        overlay.innerHTML = `
-            <div class="oauth-sim-backdrop"></div>
-            <div class="oauth-sim-window google" style="text-align:center;">
-                <div class="oauth-sim-header" style="padding:32px 32px 16px;">
-                    <svg class="oauth-sim-logo" viewBox="0 0 74 24" width="74" height="24">
-                        <path fill="#4285F4" d="M9.24 8.19v2.46h5.88c-.18 1.38-.64 2.39-1.34 3.1-.86.86-2.2 1.8-4.54 1.8-3.62 0-6.45-2.92-6.45-6.54s2.83-6.54 6.45-6.54c1.95 0 3.38.77 4.43 1.76L15.4 2.5C13.94 1.08 11.98 0 9.24 0 4.28 0 .11 4.04.11 9s4.17 9 9.13 9c2.68 0 4.7-.88 6.28-2.52 1.62-1.62 2.13-3.91 2.13-5.75 0-.57-.04-1.1-.13-1.54H9.24z"/>
-                        <path fill="#EA4335" d="M25 6.19c-3.21 0-5.83 2.44-5.83 5.81 0 3.34 2.62 5.81 5.83 5.81s5.83-2.46 5.83-5.81c0-3.37-2.62-5.81-5.83-5.81zm0 9.33c-1.76 0-3.28-1.45-3.28-3.52 0-2.09 1.52-3.52 3.28-3.52s3.28 1.43 3.28 3.52c0 2.07-1.52 3.52-3.28 3.52z"/>
-                        <path fill="#FBBC05" d="M53.58 7.49h-.09c-.57-.68-1.67-1.3-3.06-1.3C47.53 6.19 45 8.72 45 12c0 3.26 2.53 5.81 5.43 5.81 1.39 0 2.49-.62 3.06-1.32h.09v.81c0 2.22-1.19 3.41-3.1 3.41-1.56 0-2.53-1.12-2.93-2.07l-2.22.92c.64 1.54 2.33 3.43 5.15 3.43 2.99 0 5.52-1.76 5.52-6.05V6.49h-2.42v1zm-2.93 8.03c-1.76 0-3.1-1.5-3.1-3.52 0-2.05 1.34-3.52 3.1-3.52 1.74 0 3.1 1.5 3.1 3.54 0 2.02-1.37 3.5-3.1 3.5z"/>
-                        <path fill="#4285F4" d="M58 .24h2.51v17.57H58z"/>
-                        <path fill="#34A853" d="M38.17 6.19c-3.21 0-5.83 2.44-5.83 5.81 0 3.34 2.62 5.81 5.83 5.81s5.83-2.46 5.83-5.81c0-3.37-2.62-5.81-5.83-5.81zm0 9.33c-1.76 0-3.28-1.45-3.28-3.52 0-2.09 1.52-3.52 3.28-3.52s3.28 1.43 3.28 3.52c0 2.07-1.52 3.52-3.28 3.52z"/>
-                        <path fill="#EA4335" d="M68.56 6.19c-2.93 0-5.4 2.35-5.4 5.79 0 3.46 2.45 5.82 5.68 5.82 1.73 0 2.65-.69 3.32-1.49v1.19h2.39V6.49h-2.39v1.19c-.67-.8-1.59-1.49-3.32-1.49h-.28zm.31 2.29c1.73 0 3.19 1.45 3.19 3.52 0 2.09-1.46 3.52-3.19 3.52-1.76 0-3.23-1.46-3.23-3.52 0-2.08 1.47-3.52 3.23-3.52z"/>
-                    </svg>
-                </div>
-                <div class="oauth-sim-body">
-                    <p class="oauth-sim-subtitle">Se connecter avec Google</p>
-                    <p class="oauth-sim-desc">Cliquez le bouton ci-dessous pour continuer</p>
-                    <div id="google-signin-btn" style="display:flex;justify-content:center;margin:20px 0;"></div>
-                </div>
-                <div class="oauth-sim-footer"><span></span><a href="#" onclick="OAuthSim.close();return false;">Annuler</a></div>
-            </div>
-        `;
-
-        this._injectStyles();
-        document.body.appendChild(overlay);
-        this._overlay = overlay;
-        overlay.querySelector('.oauth-sim-backdrop').addEventListener('click', () => this.close());
-
-        // Render the real Google button
-        this._pendingCallback = callback;
-        google.accounts.id.renderButton(
-            document.getElementById('google-signin-btn'),
-            { theme: 'outline', size: 'large', width: 300, text: 'signin_with', locale: 'fr' }
-        );
-    },
-
-    // Simulation fallback (used when no real auth is configured)
-    _showSimulation(provider, callback) {
         if (this._overlay) this._overlay.remove();
 
         const isGoogle = provider.toLowerCase() === 'google';
@@ -209,7 +75,41 @@ window.OAuthSim = {
             </div>
         `;
 
-        this._injectStyles();
+        // Styles
+        const style = document.createElement('style');
+        style.id = 'oauth-sim-styles';
+        style.textContent = `
+            .oauth-sim-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99998; animation: oauthFadeIn 0.2s; }
+            .oauth-sim-window { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 420px; max-width: 95vw; background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); z-index: 99999; overflow: hidden; animation: oauthSlideIn 0.3s ease; font-family: 'Google Sans', 'Segoe UI', Roboto, Arial, sans-serif; }
+            .oauth-sim-window.facebook { border-radius: 8px; }
+            .oauth-sim-header { padding: 32px 32px 8px; text-align: center; }
+            .oauth-sim-logo { margin: 0 auto; display: block; }
+            .oauth-sim-fb-title { font-size: 1.5rem; font-weight: 700; color: #1C1E21; margin-left: 8px; vertical-align: middle; }
+            .oauth-sim-body { padding: 8px 32px 16px; }
+            .oauth-sim-subtitle { font-size: 1.1rem; font-weight: 500; color: #202124; text-align: center; margin-bottom: 4px; }
+            .oauth-sim-desc { font-size: 0.85rem; color: #5f6368; text-align: center; margin-bottom: 20px; }
+            .oauth-sim-accounts { border: 1px solid #dadce0; border-radius: 8px; overflow: hidden; }
+            .oauth-sim-account { display: flex; align-items: center; gap: 16px; padding: 14px 20px; cursor: pointer; transition: background 0.15s; border-bottom: 1px solid #f0f0f0; }
+            .oauth-sim-account:last-child { border-bottom: none; }
+            .oauth-sim-account:hover { background: #f6f8fc; }
+            .oauth-sim-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 600; font-size: 0.9rem; flex-shrink: 0; }
+            .oauth-sim-avatar-add { background: #e8eaed !important; color: #5f6368 !important; font-size: 1.4rem; }
+            .oauth-sim-info { flex: 1; min-width: 0; }
+            .oauth-sim-name { font-size: 0.95rem; font-weight: 500; color: #202124; }
+            .oauth-sim-email { font-size: 0.8rem; color: #5f6368; }
+            .oauth-sim-footer { padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #5f6368; border-top: 1px solid #f0f0f0; }
+            .oauth-sim-footer a { color: #5f6368; text-decoration: none; margin-left: 16px; }
+            .oauth-sim-footer a:hover { color: #202124; }
+            .oauth-sim-loading { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 40px 32px; }
+            .oauth-sim-spinner { width: 36px; height: 36px; border: 3px solid #e0e0e0; border-top-color: #4285F4; border-radius: 50%; animation: oauthSpin 0.8s linear infinite; }
+            .facebook .oauth-sim-spinner { border-top-color: #1877F2; }
+            .oauth-sim-loading-text { font-size: 0.9rem; color: #5f6368; }
+            @keyframes oauthFadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes oauthSlideIn { from { opacity: 0; transform: translate(-50%, -48%); } to { opacity: 1; transform: translate(-50%, -50%); } }
+            @keyframes oauthSpin { to { transform: rotate(360deg); } }
+        `;
+
+        if (!document.getElementById('oauth-sim-styles')) document.head.appendChild(style);
         document.body.appendChild(overlay);
         this._overlay = overlay;
 
@@ -229,6 +129,7 @@ window.OAuthSim = {
         });
 
         overlay.querySelector('.oauth-sim-other')?.addEventListener('click', () => {
+            // Show a mini form to enter name & email (simulates adding a new account)
             const body = overlay.querySelector('.oauth-sim-body');
             body.innerHTML = `
                 <div style="padding: 8px 0;">
@@ -265,43 +166,6 @@ window.OAuthSim = {
         document.addEventListener('keydown', escHandler);
     },
 
-    _injectStyles() {
-        if (document.getElementById('oauth-sim-styles')) return;
-        const style = document.createElement('style');
-        style.id = 'oauth-sim-styles';
-        style.textContent = `
-            .oauth-sim-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99998; animation: oauthFadeIn 0.2s; }
-            .oauth-sim-window { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 420px; max-width: 95vw; background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); z-index: 99999; overflow: hidden; animation: oauthSlideIn 0.3s ease; font-family: 'Google Sans', 'Segoe UI', Roboto, Arial, sans-serif; }
-            .oauth-sim-window.facebook { border-radius: 8px; }
-            .oauth-sim-header { padding: 32px 32px 8px; text-align: center; }
-            .oauth-sim-logo { margin: 0 auto; display: block; }
-            .oauth-sim-fb-title { font-size: 1.5rem; font-weight: 700; color: #1C1E21; margin-left: 8px; vertical-align: middle; }
-            .oauth-sim-body { padding: 8px 32px 16px; }
-            .oauth-sim-subtitle { font-size: 1.1rem; font-weight: 500; color: #202124; text-align: center; margin-bottom: 4px; }
-            .oauth-sim-desc { font-size: 0.85rem; color: #5f6368; text-align: center; margin-bottom: 20px; }
-            .oauth-sim-accounts { border: 1px solid #dadce0; border-radius: 8px; overflow: hidden; }
-            .oauth-sim-account { display: flex; align-items: center; gap: 16px; padding: 14px 20px; cursor: pointer; transition: background 0.15s; border-bottom: 1px solid #f0f0f0; }
-            .oauth-sim-account:last-child { border-bottom: none; }
-            .oauth-sim-account:hover { background: #f6f8fc; }
-            .oauth-sim-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 600; font-size: 0.9rem; flex-shrink: 0; }
-            .oauth-sim-avatar-add { background: #e8eaed !important; color: #5f6368 !important; font-size: 1.4rem; }
-            .oauth-sim-info { flex: 1; min-width: 0; }
-            .oauth-sim-name { font-size: 0.95rem; font-weight: 500; color: #202124; }
-            .oauth-sim-email { font-size: 0.8rem; color: #5f6368; }
-            .oauth-sim-footer { padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #5f6368; border-top: 1px solid #f0f0f0; }
-            .oauth-sim-footer a { color: #5f6368; text-decoration: none; margin-left: 16px; }
-            .oauth-sim-footer a:hover { color: #202124; }
-            .oauth-sim-loading { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 40px 32px; }
-            .oauth-sim-spinner { width: 36px; height: 36px; border: 3px solid #e0e0e0; border-top-color: #4285F4; border-radius: 50%; animation: oauthSpin 0.8s linear infinite; }
-            .facebook .oauth-sim-spinner { border-top-color: #1877F2; }
-            .oauth-sim-loading-text { font-size: 0.9rem; color: #5f6368; }
-            @keyframes oauthFadeIn { from { opacity: 0; } to { opacity: 1; } }
-            @keyframes oauthSlideIn { from { opacity: 0; transform: translate(-50%, -48%); } to { opacity: 1; transform: translate(-50%, -50%); } }
-            @keyframes oauthSpin { to { transform: rotate(360deg); } }
-        `;
-        document.head.appendChild(style);
-    },
-
     _showLoading(provider, name) {
         const oauthWin = this._overlay?.querySelector('.oauth-sim-window');
         if (!oauthWin) return;
@@ -321,10 +185,3 @@ window.OAuthSim = {
         }
     }
 };
-
-// Auto-init when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => OAuthSim.init());
-} else {
-    OAuthSim.init();
-}

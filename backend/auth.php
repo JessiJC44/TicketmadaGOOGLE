@@ -51,7 +51,7 @@ function register() {
     $hash = password_hash($password, PASSWORD_DEFAULT);
     $initials = strtoupper(substr($name, 0, 1) . substr(strrchr($name, ' ') ?: $name, 1, 1));
 
-    $stmt = $db->prepare('INSERT INTO users (name, email, password_hash, role, avatar_initials, status) VALUES (?, ?, ?, ?, ?, "active")');
+    $stmt = $db->prepare("INSERT INTO users (name, email, password_hash, role, avatar_initials, status) VALUES (?, ?, ?, ?, ?, 'active')");
     $stmt->execute([$name, $email, $hash, $role, $initials]);
     $userId = $db->lastInsertId();
 
@@ -80,7 +80,7 @@ function login() {
     }
 
     // Update last login
-    $db->prepare('UPDATE users SET last_login = datetime("now") WHERE id = ?')->execute([$user['id']]);
+    $db->prepare("UPDATE users SET last_login = datetime('now') WHERE id = ?")->execute([$user['id']]);
 
     $token = createSession($db, $user['id']);
     unset($user['password_hash']);
@@ -112,12 +112,12 @@ function oauthLogin() {
         $hash = password_hash(generateToken(), PASSWORD_DEFAULT);
         $initials = strtoupper(substr($name, 0, 1) . substr(strrchr($name, ' ') ?: $name, 1, 1));
 
-        $stmt = $db->prepare('INSERT INTO users (name, email, password_hash, role, avatar_initials, status) VALUES (?, ?, ?, "buyer", ?, "active")');
+        $stmt = $db->prepare("INSERT INTO users (name, email, password_hash, role, avatar_initials, status) VALUES (?, ?, ?, 'buyer', ?, 'active')");
         $stmt->execute([$name, $email, $hash, $initials]);
         $userId = $db->lastInsertId();
         $user = getUserById($db, $userId);
     } else {
-        $db->prepare('UPDATE users SET last_login = datetime("now") WHERE id = ?')->execute([$user['id']]);
+        $db->prepare("UPDATE users SET last_login = datetime('now') WHERE id = ?")->execute([$user['id']]);
         unset($user['password_hash']);
     }
 

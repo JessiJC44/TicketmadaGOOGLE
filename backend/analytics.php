@@ -95,8 +95,8 @@ function getSuperAdminDashboard() {
     // Platform-wide stats
     $totalRevenue = (int)$db->query('SELECT COALESCE(SUM(revenue), 0) FROM events')->fetchColumn();
     $totalTickets = (int)$db->query('SELECT COUNT(*) FROM tickets')->fetchColumn();
-    $activeEvents = (int)$db->query('SELECT COUNT(*) FROM events WHERE status = "active"')->fetchColumn();
-    $totalClients = (int)$db->query('SELECT COUNT(*) FROM users WHERE role = "organizer"')->fetchColumn();
+    $activeEvents = (int)$db->query("SELECT COUNT(*) FROM events WHERE status = 'active'")->fetchColumn();
+    $totalClients = (int)$db->query("SELECT COUNT(*) FROM users WHERE role = 'organizer'")->fetchColumn();
 
     $ticketStats = $db->query("SELECT
         SUM(CASE WHEN status = 'scanned' THEN 1 ELSE 0 END) as scanned,
@@ -104,7 +104,7 @@ function getSuperAdminDashboard() {
         SUM(CASE WHEN status = 'refunded' THEN 1 ELSE 0 END) as refunded
     FROM tickets")->fetch();
 
-    $pendingRefunds = (int)$db->query('SELECT COUNT(*) FROM refunds WHERE status = "pending"')->fetchColumn();
+    $pendingRefunds = (int)$db->query("SELECT COUNT(*) FROM refunds WHERE status = 'pending'")->fetchColumn();
 
     $payoutStats = $db->query("SELECT
         COALESCE(SUM(CASE WHEN status = 'completed' THEN net ELSE 0 END), 0) as total_payouts,

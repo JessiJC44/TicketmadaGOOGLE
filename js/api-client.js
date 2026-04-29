@@ -45,6 +45,10 @@ class TicketMadaAPI {
     delete(endpoint) { return this.request('DELETE', endpoint); }
 
     // Auth methods
+    async getAuthURL(provider) {
+        return await this.get(`/auth/url?provider=${provider}`);
+    }
+
     async register(name, email, password, role = 'buyer') {
         const result = await this.post('/auth/register', { name, email, password, role });
         if (result.token) this.setAuth(result.token, result.user);

@@ -44,7 +44,7 @@ function listRefunds() {
     $refunds = $stmt->fetchAll();
 
     // Count pending
-    $pending = $db->query('SELECT COUNT(*) FROM refunds WHERE status = "pending"')->fetchColumn();
+    $pending = $db->query("SELECT COUNT(*) FROM refunds WHERE status = 'pending'")->fetchColumn();
 
     jsonResponse(['refunds' => $refunds, 'pending_count' => (int)$pending]);
 }
@@ -66,11 +66,11 @@ function createRefund() {
     if ($ticket['status'] !== 'active') jsonError('Ce billet ne peut pas être remboursé');
 
     $code = 'REF-' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
-    $stmt = $db->prepare('INSERT INTO refunds (id_code, ticket_id, event_id, client_name, amount, reason, status) VALUES (?, ?, ?, ?, ?, ?, "pending")');
+    $stmt = $db->prepare("INSERT INTO refunds (id_code, ticket_id, event_id, client_name, amount, reason, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')");
     $stmt->execute([$code, $ticketId, $ticket['event_id'], $user['name'], $ticket['price'], $reason]);
 
     // Log
-    $db->prepare('INSERT INTO activity_log (type, icon, text, user_id) VALUES ("refund", "mdi-cash-refund", ?, ?)')->execute([
+    $db->prepare("INSERT INTO activity_log (type, icon, text, user_id) VALUES ('refund', 'mdi-cash-refund', ?, ?)")->execute([
         'Demande remboursement <strong>' . $user['name'] . '</strong>',
         $user['id']
     ]);
@@ -91,8 +91,8 @@ function approveRefund($id) {
 
     $db->beginTransaction();
     try {
-        $db->prepare('UPDATE refunds SET status = "approved", updated_at = datetime("now") WHERE id = ?')->execute([$id]);
-        $db->prepare('UPDATE tickets SET status = "refunded" WHERE id = ?')->execute([$refund['ticket_id']]);
+        $db->prepare("UPDATE refunds SET status = 'approved', updated_at = datetime('now') WHERE id = ?")->execute([$id]);
+        $db->prepare("UPDATE tickets SET status = 'refunded' WHERE id = ?")->execute([$refund['ticket_id']]);
 
         // Update event stats
         $ticket = $db->prepare('SELECT * FROM tickets WHERE id = ?');
@@ -122,7 +122,7 @@ function rejectRefund($id) {
     if (!$refund) jsonError('Remboursement non trouvé', 404);
     if ($refund['status'] !== 'pending') jsonError('Ce remboursement a déjà été traité');
 
-    $db->prepare('UPDATE refunds SET status = "rejected", updated_at = datetime("now") WHERE id = ?')->execute([$id]);
+    $db->prepare("UPDATE refunds SET status = 'rejected', updated_at = datetime('now') WHERE id = ?")->execute([$id]);
 
     jsonResponse(['message' => 'Remboursement refusé']);
 }

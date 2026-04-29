@@ -13,14 +13,6 @@ window.TICKETMADA_CONFIG = {
     // Backend API URL (update when Render is deployed)
     API_BASE: '',  // empty = same origin, set to 'https://ticketmada-api.onrender.com' for production
     
-    // ====== REAL AUTH CONFIG ======
-    // Get your Google Client ID at: https://console.cloud.google.com/apis/credentials
-    // Add your domain to Authorized JavaScript origins
-    GOOGLE_CLIENT_ID: "",  // e.g. "123456789.apps.googleusercontent.com"
-    
-    // Get your Facebook App ID at: https://developers.facebook.com/apps
-    FACEBOOK_APP_ID: "",   // e.g. "1234567890123456"
-    
     // Pages config
     pages: {
         // Dev-only pages (hidden in production)

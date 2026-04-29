@@ -55,7 +55,7 @@ function createPayout() {
     $code = 'PAY-' . str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
 
     $db = getDB();
-    $stmt = $db->prepare('INSERT INTO payouts (id_code, organizer_id, amount, commission, net, method, status) VALUES (?, ?, ?, ?, ?, ?, "pending")');
+    $stmt = $db->prepare("INSERT INTO payouts (id_code, organizer_id, amount, commission, net, method, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')");
     $stmt->execute([$code, $organizerId, $amount, $commission, $net, $method]);
 
     jsonResponse(['payout' => [

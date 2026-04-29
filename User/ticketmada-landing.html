@@ -13,6 +13,15 @@
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
     
     <style>
+        .search-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal); margin-top: 10px; max-height: 400px; overflow-y: auto; z-index: 10; }
+        .suggestion-item { padding: 15px 20px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: 0.2s; border-bottom: 2px solid #eee; }
+        .suggestion-item:last-child { border-bottom: none; }
+        .suggestion-item:hover { background: #fef9f0; }
+        .suggestion-emoji { font-size: 1.5rem; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #f5f5f5; border: 2px solid var(--border-dark); }
+        .suggestion-info { flex: 1; }
+        .suggestion-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; }
+        .suggestion-meta { font-size: 0.75rem; color: var(--text-light); }
+        
         :root {
             --bg-cream: #FAF7F2;
             --bg-dark: #1a1a1a;
@@ -524,23 +533,49 @@
                 openAuth(mode) { this.authMode = mode; this.showAuth = true; },
                 loginWith(provider) {
                     const vm = this;
-                    window.OAuthSim.show(provider, async (name, email, picture, authProvider) => {
-                        try {
-                            const result = await window.api.oauthLogin(provider, name, email);
-                            if (!result.error) { vm.isLoggedIn = true; vm.showAuth = false; }
-                            else { window.api.setAuth('sim-' + Date.now(), { name, email, role: 'buyer' }); vm.isLoggedIn = true; vm.showAuth = false; }
-                        } catch(e) { window.api.setAuth('sim-' + Date.now(), { name, email, role: 'buyer' }); vm.isLoggedIn = true; vm.showAuth = false; }
-                    });
+                    window.api.get('/auth/url?provider=' + provider).then(res => {
+                        if (res.url) {
+                            const authWindow = window.open(res.url, 'oauth_popup', 'width=600,height=700');
+                            if (!authWindow) {
+                                alert('Veuillez autoriser les fenêtres surgissantes pour vous connecter.');
+                            }
+                        }
+                    }).catch(e => console.error('OAuth error', e));
+
+                    // Listen for message from popup
+                    const handleMessage = (event) => {
+                        if (event.data?.type === 'TICKETMADA_AUTH_SUCCESS') {
+                            window.api.setAuth(event.data.token, event.data.user);
+                            vm.isLoggedIn = true;
+                            vm.showAuth = false;
+                            window.removeEventListener('message', handleMessage);
+                        }
+                    };
+                    window.addEventListener('message', handleMessage);
                 },
                 async handleAuth() {
                     try {
                         let result;
-                        if (this.authMode === 'login') { result = await window.api.login(this.authForm.email, this.authForm.password); }
-                        else { result = await window.api.register(this.authForm.name, this.authForm.email, this.authForm.password, 'buyer'); }
+                        if (this.authMode === 'login') { 
+                            result = await window.api.login(this.authForm.email, this.authForm.password); 
+                        } else { 
+                            result = await window.api.register(this.authForm.name, this.authForm.email, this.authForm.password, 'organizer'); 
+                        }
+                        
                         if (result.error) {
-                            if (result.status === 0) { const name = this.authForm.name || this.authForm.email.split('@')[0]; window.api.setAuth('sim-' + Date.now(), { name, email: this.authForm.email, role: 'buyer' }); this.isLoggedIn = true; this.showAuth = false; }
-                        } else { this.isLoggedIn = true; this.showAuth = false; }
-                    } catch(e) { console.log('Auth error'); }
+                            alert(result.error);
+                        } else { 
+                            this.isLoggedIn = true; 
+                            this.showAuth = false; 
+                            if (result.user.role === 'organizer') window.location.href = 'ticketmada-organisateur.html';
+                        }
+                    } catch(e) { 
+                        alert('Une erreur est survenue lors de l\'authentification.');
+                    }
+                },
+                formatDate(d) {
+                    if (!d) return '';
+                    return new Date(d).toLocaleDateString(this.lang === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' });
                 },
                 async handleLogout() { if (window.api) await window.api.logout(); this.isLoggedIn = false; }
             },

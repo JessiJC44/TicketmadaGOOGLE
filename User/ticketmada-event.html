@@ -98,15 +98,18 @@
         .legend-avail { color: var(--text-light); font-weight: 400; font-size: 0.8rem; }
 
         /* ── Listings Sidebar ── */
-        .listings-panel { display: flex; flex-direction: column; max-height: calc(100vh - 200px); position: sticky; top: 110px; overflow: hidden; min-width: 0; }
+        .listings-panel { display: flex; flex-direction: column; max-height: calc(100vh - 200px); position: sticky; top: 110px; }
         .listings-header { background: var(--bg-dark); color: white; padding: 20px 24px; border: 3px solid var(--border-dark); border-bottom: none; }
         .listings-header h3 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; margin-bottom: 4px; }
         .listings-header p { font-size: 0.85rem; opacity: 0.7; }
-        .listings-filter { display: flex; gap: 8px; padding: 14px 20px; background: white; border: 3px solid var(--border-dark); border-top: none; border-bottom: none; overflow-x: auto; white-space: nowrap; -ms-overflow-style: none; scrollbar-width: thin; scrollbar-color: #ccc transparent; max-width: 100%; }
-        .listings-filter::-webkit-scrollbar { height: 4px; } .listings-filter::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; } .listings-filter::-webkit-scrollbar-track { background: transparent; }
-        .filter-chip { padding: 6px 14px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; border: 2px solid var(--border-dark); background: white; cursor: pointer; transition: all 0.15s; flex-shrink: 0; }
-        .filter-chip:hover { background: var(--accent-yellow); }
-        .filter-chip.active { background: var(--accent-coral); color: white; box-shadow: 3px 3px 0px #1a1a1a; }
+        .listings-filter { display: flex; gap: 8px; padding: 14px 20px; background: white; border: 3px solid var(--border-dark); border-top: none; border-bottom: none; overflow-x: auto; white-space: nowrap; -ms-overflow-style: none; scrollbar-width: none; width: 100%; box-sizing: border-box; }
+        .listings-filter::-webkit-scrollbar { display: none; }
+        .filter-chip { padding: 8px 16px; border-radius: 20px; border: 2px solid var(--border-dark); font-weight: 600; cursor: pointer; transition: 0.2s; white-space: nowrap; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
+        .filter-chip.active { background: var(--ticket-coral); color: white; border-color: var(--ticket-coral); }
+        .filter-chip:hover:not(.active) { background: #f5f5f5; }
+        .alert-btn-inline { background: var(--bg-dark); border: 2px solid var(--border-dark); color: white; padding: 6px 12px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; margin-left: auto; flex-shrink: 0; box-shadow: 2px 2px 0px var(--accent-coral); margin-top: 0; }
+        .alert-btn-inline:hover { background: var(--accent-coral); transform: translate(-1px, -1px); box-shadow: 3px 3px 0px #1a1a1a; }
+        .alert-btn-inline:active { transform: translate(0px, 0px); box-shadow: none; }
         .listings-sort { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; background: var(--bg-cream); border: 3px solid var(--border-dark); border-top: none; font-size: 0.8rem; color: var(--text-light); }
         .sort-select { font-family: 'DM Sans', sans-serif; font-size: 0.8rem; font-weight: 600; border: 2px solid var(--border-dark); padding: 4px 8px; background: white; cursor: pointer; }
 
@@ -188,10 +191,16 @@
         .alert-submit:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
         .alert-success { text-align: center; padding: 20px 0; }
         .alert-success-icon { font-size: 2.5rem; margin-bottom: 10px; }
-        .alert-btn-inline { padding: 8px 16px; font-family: 'Syne'; font-weight: 600; font-size: 0.75rem; background: var(--accent-yellow); border: 2px solid var(--border-dark); color: #1a1a1a; cursor: pointer; transition: all 0.15s; margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 3px 3px 0px rgba(0,0,0,0.3); }
-        .alert-btn-inline:hover { background: var(--accent-yellow); transform: translate(-1px, -1px); box-shadow: 3px 3px 0px #1a1a1a; }
 
-        /* ── Responsive ── */
+        .selection-bar { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: white; border: 4px solid var(--border-dark); box-shadow: 12px 12px 0px var(--accent-coral); padding: 20px 40px; display: flex; align-items: center; gap: 40px; z-index: 1000; animation: slideUp 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
+        @keyframes slideUp { from { bottom: -100px; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        .selection-info { display: flex; flex-direction: column; }
+        .selection-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; }
+        .selection-seats { font-size: 0.9rem; color: var(--text-light); }
+        .selection-total { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; color: var(--accent-coral); }
+        .selection-buy { background: var(--accent-coral); color: white; padding: 14px 28px; border: 3px solid var(--border-dark); font-family: 'Syne', sans-serif; font-weight: 700; text-transform: uppercase; cursor: pointer; box-shadow: 4px 4px 0px #1a1a1a; transition: 0.1s; display: flex; align-items: center; gap: 10px; }
+        .selection-buy:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
+        .selection-clear { font-size: 0.85rem; color: #e74c3c; cursor: pointer; text-decoration: underline; font-weight: 600; }
         @media (max-width: 1100px) {
             .main-content { grid-template-columns: 1fr; }
             .listings-panel { position: static; max-height: none; }
@@ -422,11 +431,16 @@
 
         <!-- Right: Ticket Listings Sidebar -->
         <div class="listings-panel">
-            <div class="listings-header">
-                <h3>{{ lang === 'fr' ? '🎫 Billets disponibles' : '🎫 Available Tickets' }}</h3>
-                <p>{{ totalAvailable }} {{ lang === 'fr' ? 'billets restants' : 'tickets remaining' }}</p>
-                <button class="alert-btn-inline" @click="showPriceAlert = true"><v-icon size="x-small">mdi-bell-outline</v-icon> {{ lang === 'fr' ? 'Alerte prix' : 'Price alert' }}</button>
-            </div>
+                <div class="listings-header">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <h3>{{ lang === 'fr' ? '🎫 Billets disponibles' : '🎫 Available Tickets' }}</h3>
+                            <p>{{ totalAvailable }} {{ lang === 'fr' ? 'billets restants' : 'tickets remaining' }}</p>
+                        </div>
+                        <button class="btn-icon" @click="scrollToMap" title="Voir le plan"><v-icon>mdi-map-marker-radius</v-icon></button>
+                    </div>
+                    <button class="alert-btn-inline" @click="showPriceAlert = true"><v-icon size="x-small">mdi-bell-outline</v-icon> {{ lang === 'fr' ? 'Alerte prix' : 'Price alert' }}</button>
+                </div>
 
             <div class="listings-filter">
                 <button class="filter-chip" :class="{ active: selectedZone === null }" @click="selectedZone = null">
@@ -480,6 +494,26 @@
             </div>
         </div>
     </div>
+
+    <!-- Floating Seat Selection Bar -->
+    <transition name="up">
+        <div class="selection-bar" v-if="canvasSelected.length > 0">
+            <div class="selection-info">
+                <div class="selection-title">{{ lang === 'fr' ? 'Sièges sélectionnés' : 'Seats selected' }}</div>
+                <div class="selection-seats">{{ canvasSelected.map(s => s.name).join(', ') }}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap: 25px;">
+                <div class="selection-info" style="align-items: flex-end">
+                    <div class="selection-total">{{ formatPrice(selectionTotal) }} Ar</div>
+                    <div class="selection-clear" @click="canvasReset">{{ lang === 'fr' ? 'Effacer la sélection' : 'Clear selection' }}</div>
+                </div>
+                <button class="selection-buy" @click="confirmPurchase">
+                    {{ lang === 'fr' ? 'Acheter' : 'Buy Now' }}
+                    <v-icon size="small">mdi-arrow-right</v-icon>
+                </button>
+            </div>
+        </div>
+    </transition>
 
     <!-- Quantity Selector Popup -->
     <div class="qty-overlay" :class="{ active: showQty }" @click.self="showQty = false">
@@ -546,6 +580,24 @@
             </div>
         </div>
     </div>
+
+    <!-- Socials and Footer -->
+    <footer class="footer" style="background:var(--bg-dark);color:white;padding:40px 24px;border-top:3px solid #1a1a1a;">
+        <div style="max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;">
+            <div class="logo" style="color:white;text-decoration:none;">
+                <div class="logo-box">TM</div>
+                <div class="logo-text">Ticket<span>Mada</span></div>
+            </div>
+            <div class="footer-socials" style="display:flex;gap:15px;align-items:center;">
+                <a href="#" class="footer-social-link" style="color:white;"><v-icon>mdi-facebook</v-icon></a>
+                <a href="#" class="footer-social-link" style="color:white;display:flex;align-items:center;">
+                    <svg style="width:20px;height:20px;fill:currentColor;" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                </a>
+                <a href="#" class="footer-social-link" style="color:white;"><v-icon>mdi-instagram</v-icon></a>
+            </div>
+            <div style="font-size:0.85rem;opacity:0.6;">© 2026 TicketMada. All rights reserved.</div>
+        </div>
+    </footer>
 
     <!-- Related Events / You May Also Like -->
     <div v-if="relatedEvents.length" class="related-section">
@@ -662,6 +714,14 @@ const app = createApp({
         stageW() { return 300; },
         stageH() { return 50; },
         totalAvailable() { return this.mapZones.reduce((s, z) => s + z.available, 0); },
+        selectionTotal() {
+            if (!this.canvasSelected.length) return 0;
+            return this.canvasSelected.reduce((sum, seat) => {
+                const zoneId = seat.id.split('-')[0];
+                const zone = this.getZone(zoneId);
+                return sum + (zone ? zone.price : 0);
+            }, 0);
+        },
         filteredListings() {
             let list = this.selectedZone ? this.listings.filter(l => l.zoneId === this.selectedZone) : [...this.listings];
             if (this.sortBy === 'price-asc') list.sort((a, b) => a.price - b.price);
@@ -687,6 +747,10 @@ const app = createApp({
         },
         formatPrice(p) {
             return p ? p.toLocaleString('fr-FR') : '0';
+        },
+        scrollToMap() {
+            const el = document.getElementById('venue-canvas-container');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
         },
         selectZone(id) {
             this.selectedZone = this.selectedZone === id ? null : id;
@@ -727,24 +791,63 @@ const app = createApp({
             this.qtyListing = listing;
             this.qty = 2;
             this.showQty = true;
+            this.selectedZone = listing.zoneId;
+            this.focusedZone = listing.zoneId;
+            if (this.venueCanvas) {
+                this.venueCanvas.zoomToBlock(listing.zoneId);
+            }
         },
         confirmPurchase() {
             // If user selected seats on canvas, build info from those
-            let zoneName = this.qtyListing.zoneName;
-            let zoneColor = this.qtyListing.color;
-            let price = this.qtyListing.price;
+            let zoneName = '';
+            let zoneColor = '';
+            let price = 0;
+            let qty = this.qty;
+            let seatNumbers = '';
+            let zoneId = '';
+            
+            if (this.canvasSelected.length > 0) {
+                // Determine zone from the first selected seat
+                const firstSeat = this.canvasSelected[0];
+                zoneId = firstSeat.id.split('-')[0];
+                const zone = this.getZone(zoneId);
+                
+                zoneName = zone?.name || '';
+                zoneColor = zone?.color || '';
+                price = zone?.price || 0;
+                qty = this.canvasSelected.length;
+                seatNumbers = this.canvasSelected.map(s => {
+                    const parts = s.id.split('-');
+                    return parts[1] + (parts[2] || '');
+                }).join(', ');
+            } else if (this.qtyListing) {
+                zoneName = this.qtyListing.zoneName;
+                zoneColor = this.qtyListing.color;
+                price = this.qtyListing.price;
+                zoneId = this.qtyListing.zoneId;
+                qty = this.qty;
+                // Generate random seats for listing purchase
+                const row = this.qtyListing.seatInfo.includes('Rang. ') ? this.qtyListing.seatInfo.split('Rang. ')[1].split(',')[0] : 'A';
+                const start = Math.floor(Math.random() * 20) + 1;
+                const seatsArr = [];
+                for(let i=0; i<qty; i++) seatsArr.push(row + (start + i));
+                seatNumbers = seatsArr.join(', ');
+            } else {
+                return;
+            }
             
             const params = new URLSearchParams({
                 event_id: this.event.id || this.eventId,
                 event_name: this.event.name || 'Événement',
+                zone_id: zoneId,
                 zone_name: zoneName,
                 zone_color: zoneColor,
-                qty: this.qty,
+                qty: qty,
                 price: price,
                 date: this.formatDate(this.event.date_start),
                 venue: this.event.venue || '',
                 image: this.event.image_url || '',
-                available: this.qtyListing.available
+                seats: seatNumbers
             });
             window.location.href = 'ticketmada-checkout.html?' + params.toString();
         },

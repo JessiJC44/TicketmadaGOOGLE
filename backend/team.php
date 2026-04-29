@@ -58,7 +58,7 @@ function addTeamMember() {
     } else {
         $hash = password_hash('password123', PASSWORD_DEFAULT);
         $initials = strtoupper(substr($name, 0, 1) . substr(strrchr($name, ' ') ?: $name, 1, 1));
-        $db->prepare('INSERT INTO users (name, email, password_hash, role, avatar_initials, status) VALUES (?, ?, ?, "organizer", ?, "active")')->execute([$name, $email, $hash, $initials]);
+        $db->prepare("INSERT INTO users (name, email, password_hash, role, avatar_initials, status) VALUES (?, ?, ?, 'organizer', ?, 'active')")->execute([$name, $email, $hash, $initials]);
         $memberId = $db->lastInsertId();
     }
 
@@ -67,7 +67,7 @@ function addTeamMember() {
     $check->execute([$user['id'], $memberId]);
     if ($check->fetch()) jsonError('Ce membre fait déjà partie de l\'équipe');
 
-    $db->prepare('INSERT INTO team_members (organizer_id, user_id, role, role_label, events_access, last_access) VALUES (?, ?, ?, ?, ?, datetime("now"))')->execute([$user['id'], $memberId, $role, $roleLabel, $eventsAccess]);
+    $db->prepare("INSERT INTO team_members (organizer_id, user_id, role, role_label, events_access, last_access) VALUES (?, ?, ?, ?, ?, datetime('now'))")->execute([$user['id'], $memberId, $role, $roleLabel, $eventsAccess]);
 
     jsonResponse(['member' => ['id' => $db->lastInsertId(), 'name' => $name, 'email' => $email, 'role' => $role]], 201);
 }

@@ -94,14 +94,14 @@ function getEvent($id) {
 function getFeaturedEvents() {
     $db = getDB();
     $limit = (int)($_GET['limit'] ?? 8);
-    $stmt = $db->prepare('SELECT e.*, u.name as organizer_name FROM events e LEFT JOIN users u ON e.organizer_id = u.id WHERE e.status IN ("active", "pending") ORDER BY e.tickets_sold DESC LIMIT ?');
+    $stmt = $db->prepare("SELECT e.*, u.name as organizer_name FROM events e LEFT JOIN users u ON e.organizer_id = u.id WHERE e.status IN ('active', 'pending') ORDER BY e.tickets_sold DESC LIMIT ?");
     $stmt->execute([$limit]);
     jsonResponse(['events' => $stmt->fetchAll()]);
 }
 
 function getCategories() {
     $db = getDB();
-    $stmt = $db->query('SELECT category, COUNT(*) as count FROM events WHERE status IN ("active", "pending") GROUP BY category ORDER BY count DESC');
+    $stmt = $db->query("SELECT category, COUNT(*) as count FROM events WHERE status IN ('active', 'pending') GROUP BY category ORDER BY count DESC");
     $categories = $stmt->fetchAll();
 
     $icons = ['concerts' => '🎵', 'festivals' => '🎪', 'sports' => '⚽', 'theatre' => '🎭'];
@@ -141,7 +141,7 @@ function createEvent() {
     $eventId = $db->lastInsertId();
 
     // Log activity
-    $db->prepare('INSERT INTO activity_log (type, icon, text, user_id) VALUES ("event", "mdi-calendar-plus", ?, ?)')->execute([
+    $db->prepare("INSERT INTO activity_log (type, icon, text, user_id) VALUES ('event', 'mdi-calendar-plus', ?, ?)")->execute([
         'Événement: <strong>' . $body['name'] . '</strong>',
         $user['id']
     ]);
@@ -197,7 +197,7 @@ function deleteEvent($id) {
     if (!$event) jsonError('Événement non trouvé', 404);
 
     // Soft delete by setting status to cancelled
-    $db->prepare('UPDATE events SET status = "cancelled" WHERE id = ?')->execute([$id]);
+    $db->prepare("UPDATE events SET status = 'cancelled' WHERE id = ?")->execute([$id]);
 
     jsonResponse(['message' => 'Événement supprimé']);
 }

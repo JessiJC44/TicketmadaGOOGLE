@@ -727,32 +727,39 @@
                         let result;
                         if (this.authMode === 'login') { result = await window.api.login(this.authForm.email, this.authForm.password); }
                         else { result = await window.api.register(this.authForm.name, this.authForm.email, this.authForm.password, 'organizer'); }
+                        
                         if (result.error) {
-                            if (result.status === 0) {
-                                const name = this.authForm.name || this.authForm.email.split('@')[0];
-                                window.api.setAuth('sim-' + Date.now(), { name: name, email: this.authForm.email, role: 'organizer' });
-                                this.isLoggedIn = true; this.showAuth = false;
-                            }
-                        } else { this.isLoggedIn = true; this.showAuth = false; }
-                    } catch(e) { console.error('Auth error:', e); }
+                            alert(result.error);
+                        } else { 
+                            this.isLoggedIn = true; 
+                            this.showAuth = false; 
+                        }
+                    } catch(e) { 
+                        alert('Une erreur est survenue lors de l\'authentification.');
+                    }
                 },
                 loginWith(provider) {
                     const vm = this;
                     vm.showAuth = false;
-                    window.OAuthSim.show(provider, async (name, email, picture, authProvider) => {
-                        try {
-                            const result = await window.api.oauthLogin(provider, name, email);
-                            if (!result.error) { vm.isLoggedIn = true; }
-                            else {
-                                window.api.setAuth('sim-' + Date.now(), { name: name, email: email, role: 'organizer' });
-                                vm.isLoggedIn = true;
+                    
+                    window.api.getAuthURL(provider).then(res => {
+                        if (res.url) {
+                            const authWindow = window.open(res.url, 'oauth_popup', 'width=600,height=700');
+                            if (!authWindow) {
+                                alert('Veuillez autoriser les fenêtres surgissantes pour vous connecter.');
                             }
-                        } catch(e) {
-                            console.warn('OAuth API failed, using local fallback:', e);
-                            window.api.setAuth('sim-' + Date.now(), { name: name, email: email, role: 'organizer' });
-                            vm.isLoggedIn = true;
                         }
-                    });
+                    }).catch(e => console.error('OAuth URL error', e));
+
+                    const handleMessage = (event) => {
+                        if (event.data?.type === 'TICKETMADA_AUTH_SUCCESS') {
+                            window.api.setAuth(event.data.token, event.data.user);
+                            vm.isLoggedIn = true;
+                            vm.showAuth = false;
+                            window.removeEventListener('message', handleMessage);
+                        }
+                    };
+                    window.addEventListener('message', handleMessage);
                 }
             },
             mounted() {

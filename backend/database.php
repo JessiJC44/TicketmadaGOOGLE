@@ -14,12 +14,12 @@ function initDatabase() {
             name TEXT NOT NULL,
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
-            role TEXT NOT NULL DEFAULT "buyer",
+            role TEXT NOT NULL DEFAULT 'buyer',
             plan TEXT DEFAULT NULL,
             avatar_initials TEXT,
             phone TEXT,
-            status TEXT NOT NULL DEFAULT "active",
-            created_at DATETIME DEFAULT (datetime("now")),
+            status TEXT NOT NULL DEFAULT 'active',
+            created_at DATETIME DEFAULT (datetime('now')),
             last_login DATETIME
         );
 
@@ -29,7 +29,7 @@ function initDatabase() {
             name TEXT NOT NULL,
             category TEXT NOT NULL,
             description TEXT,
-            emoji TEXT DEFAULT "🎫",
+            emoji TEXT DEFAULT '🎫',
             date_start DATETIME NOT NULL,
             date_end DATETIME,
             venue TEXT NOT NULL,
@@ -38,8 +38,8 @@ function initDatabase() {
             revenue INTEGER NOT NULL DEFAULT 0,
             image_url TEXT,
             badge TEXT,
-            status TEXT NOT NULL DEFAULT "pending",
-            created_at DATETIME DEFAULT (datetime("now")),
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at DATETIME DEFAULT (datetime('now')),
             FOREIGN KEY (organizer_id) REFERENCES users(id)
         );
 
@@ -48,11 +48,11 @@ function initDatabase() {
             id_code TEXT UNIQUE NOT NULL,
             event_id INTEGER NOT NULL,
             buyer_id INTEGER NOT NULL,
-            type TEXT NOT NULL DEFAULT "Standard",
+            type TEXT NOT NULL DEFAULT 'Standard',
             price INTEGER NOT NULL DEFAULT 0,
-            status TEXT NOT NULL DEFAULT "active",
+            status TEXT NOT NULL DEFAULT 'active',
             scanned_at DATETIME,
-            created_at DATETIME DEFAULT (datetime("now")),
+            created_at DATETIME DEFAULT (datetime('now')),
             FOREIGN KEY (event_id) REFERENCES events(id),
             FOREIGN KEY (buyer_id) REFERENCES users(id)
         );
@@ -65,8 +65,8 @@ function initDatabase() {
             client_name TEXT NOT NULL,
             amount INTEGER NOT NULL DEFAULT 0,
             reason TEXT,
-            status TEXT NOT NULL DEFAULT "pending",
-            created_at DATETIME DEFAULT (datetime("now")),
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at DATETIME DEFAULT (datetime('now')),
             updated_at DATETIME,
             FOREIGN KEY (ticket_id) REFERENCES tickets(id),
             FOREIGN KEY (event_id) REFERENCES events(id)
@@ -79,9 +79,9 @@ function initDatabase() {
             amount INTEGER NOT NULL DEFAULT 0,
             commission INTEGER NOT NULL DEFAULT 0,
             net INTEGER NOT NULL DEFAULT 0,
-            method TEXT NOT NULL DEFAULT "Virement",
-            status TEXT NOT NULL DEFAULT "pending",
-            created_at DATETIME DEFAULT (datetime("now")),
+            method TEXT NOT NULL DEFAULT 'Virement',
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at DATETIME DEFAULT (datetime('now')),
             paid_at DATETIME,
             FOREIGN KEY (organizer_id) REFERENCES users(id)
         );
@@ -90,11 +90,11 @@ function initDatabase() {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             organizer_id INTEGER NOT NULL,
             user_id INTEGER NOT NULL,
-            role TEXT NOT NULL DEFAULT "guichetier",
+            role TEXT NOT NULL DEFAULT 'guichetier',
             role_label TEXT,
-            events_access TEXT DEFAULT "Tous",
+            events_access TEXT DEFAULT 'Tous',
             last_access DATETIME,
-            created_at DATETIME DEFAULT (datetime("now")),
+            created_at DATETIME DEFAULT (datetime('now')),
             FOREIGN KEY (organizer_id) REFERENCES users(id),
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
@@ -105,7 +105,7 @@ function initDatabase() {
             icon TEXT,
             text TEXT NOT NULL,
             user_id INTEGER,
-            created_at DATETIME DEFAULT (datetime("now")),
+            created_at DATETIME DEFAULT (datetime('now')),
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
 
@@ -114,7 +114,7 @@ function initDatabase() {
             user_id INTEGER NOT NULL,
             token TEXT UNIQUE NOT NULL,
             expires_at DATETIME NOT NULL,
-            created_at DATETIME DEFAULT (datetime("now")),
+            created_at DATETIME DEFAULT (datetime('now')),
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
     ');
