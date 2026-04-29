@@ -739,7 +739,7 @@
                 loginWith(provider) {
                     const vm = this;
                     vm.showAuth = false;
-                    window.OAuthSim.show(provider, async (name, email) => {
+                    window.OAuthSim.show(provider, async (name, email, picture, authProvider) => {
                         try {
                             const result = await window.api.oauthLogin(provider, name, email);
                             if (!result.error) { vm.isLoggedIn = true; }
