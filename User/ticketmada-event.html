@@ -877,39 +877,43 @@ const app = createApp({
         },
         
         initVenueCanvas() {
+            // Use zones from the event data (from API or mock), with hardcoded fallback
+            const zoneConfigs = (this.event.zones && this.event.zones.length > 0)
+                ? this.event.zones
+                : [
+                    { id: 'pit', name: this.lang === 'fr' ? 'Fosse' : 'Pit', color: '#9B59B6', price: 60000, rows: 4, seatsPerRow: 15 },
+                    { id: 'vip', name: 'VIP', color: '#FF6B4A', price: 150000, rows: 5, seatsPerRow: 20 },
+                    { id: 'premium', name: 'Premium', color: '#FECA57', price: 80000, rows: 8, seatsPerRow: 25 },
+                    { id: 'standard', name: 'Standard', color: '#4A90FF', price: 40000, rows: 10, seatsPerRow: 30 },
+                    { id: 'eco', name: this.lang === 'fr' ? 'Économique' : 'Economy', color: '#00D9A5', price: 20000, rows: 10, seatsPerRow: 35 }
+                ];
+
             const capacity = this.event.capacity || 5000;
             const ticketsSold = this.event.tickets_sold || 0;
             const remaining = Math.max(0, capacity - ticketsSold);
-            const dist = { pit: 0.07, vip: 0.08, premium: 0.20, standard: 0.35, eco: 0.30 };
-            
-            // Define the 5 zones with seat grid sizing
-            const zoneConfigs = [
-                { id: 'pit', name: this.lang === 'fr' ? 'Fosse' : 'Pit', color: '#9B59B6', price: 60000, rows: 3, seatsPerRow: 12 },
-                { id: 'vip', name: 'VIP', color: '#FF6B4A', price: 150000, rows: 3, seatsPerRow: 16 },
-                { id: 'premium', name: 'Premium', color: '#FECA57', price: 80000, rows: 5, seatsPerRow: 20 },
-                { id: 'standard', name: 'Standard', color: '#4A90FF', price: 40000, rows: 6, seatsPerRow: 24 },
-                { id: 'eco', name: this.lang === 'fr' ? 'Économique' : 'Economy', color: '#00D9A5', price: 20000, rows: 5, seatsPerRow: 22 }
-            ];
-            
-            // Calculate available and capacity per zone
-            const zones = zoneConfigs.map(z => {
-                const cap = z.rows * z.seatsPerRow;
-                const avail = Math.round(remaining * (dist[z.id] || 0.2));
-                return { ...z, capacity: cap, available: Math.min(avail, cap) };
-            });
-            
-            // Populate mapZones for legend and sidebar
+
+            // Calculate proportional capacity
+            const totalConfigured = zoneConfigs.reduce((s, z) => s + (z.rows || 5) * (z.seatsPerRow || 20), 0);
+            const zones = zoneConfigs.map(z => ({
+                ...z,
+                rows: z.rows || 5,
+                seatsPerRow: z.seatsPerRow || 20,
+                capacity: Math.round(((z.rows || 5) * (z.seatsPerRow || 20) / totalConfigured) * capacity)
+            }));
+
+            // Populate mapZones for the filter chips and listings sidebar
             this.mapZones = zones.map(z => ({
                 id: z.id,
                 name: z.name,
                 color: z.color,
                 price: z.price,
-                available: z.available,
+                capacity: z.capacity,
+                available: Math.round(z.capacity * (remaining / capacity)),
                 shortName: z.id === 'pit' ? (this.lang === 'fr' ? 'Fosse' : 'Pit') : z.name
             }));
             this.venueZones = this.mapZones;
-            
-            // Generate listings from zones
+
+            // Generate ticket listings for the sidebar
             this.listings = [];
             const viewQualities = {
                 vip: { fr: 'Vue parfaite', en: 'Perfect view' },
@@ -919,105 +923,132 @@ const app = createApp({
                 pit: { fr: 'Vue immersive', en: 'Immersive view' }
             };
             const qualityBadges = { vip: 'VIP', premium: 'Premium', pit: 'Fosse' };
-            
+
             zones.forEach((zone, idx) => {
-                const groupCount = Math.min(4, Math.max(1, Math.ceil(zone.available / 50)));
-                for (let g = 0; g < groupCount; g++) {
-                    const rowLetter = String.fromCharCode(65 + g * 3 + Math.floor(Math.random() * 3));
-                    const seatStart = Math.floor(Math.random() * 20) + 1;
-                    const groupAvail = g === groupCount - 1
-                        ? zone.available - Math.floor(zone.available / groupCount) * (groupCount - 1)
-                        : Math.floor(zone.available / groupCount);
-                    
-                    this.listings.push({
-                        id: zone.id + '-' + g,
-                        zoneId: zone.id,
-                        zoneName: zone.name,
-                        color: zone.color,
-                        seatInfo: zone.id === 'pit'
-                            ? (this.lang === 'fr' ? 'Accès fosse' : 'Pit access')
-                            : (this.lang === 'fr' ? 'Rang. ' + rowLetter + ', Places ' + seatStart + '-' + (seatStart + 8) : 'Row ' + rowLetter + ', Seats ' + seatStart + '-' + (seatStart + 8)),
-                        viewQuality: viewQualities[zone.id]?.[this.lang] || viewQualities.standard[this.lang],
-                        price: zone.price,
-                        available: groupAvail,
-                        standing: zone.id === 'pit',
-                        qualityBadge: qualityBadges[zone.id] || null,
-                        zoneOrder: idx
-                    });
+                const available = Math.round(zone.capacity * (remaining / capacity));
+                if (available > 0) {
+                    // Generate several listing cards per zone (simulating different sellers)
+                    const numListings = Math.min(5, Math.ceil(available / 10));
+                    for (let i = 0; i < numListings; i++) {
+                        const row = String.fromCharCode(65 + Math.floor(Math.random() * (zone.rows || 5)));
+                        const seatStart = Math.floor(Math.random() * (zone.seatsPerRow || 20)) + 1;
+                        const qty = Math.floor(Math.random() * 3) + 1;
+                        this.listings.push({
+                            id: `${zone.id}-listing-${i}`,
+                            zoneId: zone.id,
+                            zoneName: zone.name,
+                            color: zone.color,
+                            seatInfo: zone.id === 'pit'
+                                ? (this.lang === 'fr' ? 'Accès fosse' : 'Pit access')
+                                : (this.lang === 'fr' ? 'Rang. ' + row + ', Places ' + seatStart + '-' + (seatStart + qty - 1) : 'Row ' + row + ', Seats ' + seatStart + '-' + (seatStart + qty - 1)),
+                            viewQuality: viewQualities[zone.id]?.[this.lang] || viewQualities.standard[this.lang],
+                            price: zone.price,
+                            available: Math.floor(available / numListings),
+                            standing: zone.id === 'pit',
+                            qualityBadge: qualityBadges[zone.id] || null,
+                            zoneOrder: idx
+                        });
+                    }
                 }
             });
-            
-            // Destroy old canvas if exists
+
+            // Sort listings by price
+            this.listings.sort((a, b) => a.price - b.price);
+
+            // Create VenueCanvas instance
+            const container = document.getElementById('venue-canvas-container');
+            if (!container) {
+                console.error('venue-canvas-container not found in DOM');
+                return;
+            }
+
+            // Destroy previous instance if exists
             if (this.venueCanvas) {
                 this.venueCanvas.destroy();
             }
-            
-            // Create VenueCanvas instance
+
             const self = this;
             this.venueCanvas = new VenueCanvas('venue-canvas-container', {
                 seatRadius: 8,
                 seatGap: 4,
                 blockGap: 35,
                 maxSelect: 10,
-                lang: this.lang,
+                lang: this.lang || 'fr',
                 onChange(selected) {
                     self.canvasSelected = selected;
-                    // Auto-select the zone of the last selected seat
                     if (selected.length > 0) {
-                        const lastSeat = selected[selected.length - 1];
-                        const blockId = lastSeat.id.split('-')[0];
+                        const blockId = selected[selected.length - 1].id.split('-')[0];
                         self.selectedZone = blockId;
                         self.focusedZone = blockId;
                     }
+                    // Update total price via selectionTotal computed prop automatically
                 }
             });
-            
-            // Generate venue from zones
+
             this.venueCanvas.generateFromZones(zones, 'concert');
+            console.log('[TicketMada] VenueCanvas initialized with', zones.length, 'zones');
         }
     },
     async mounted() {
+        // Load settings
+        this.lang = localStorage.getItem('ticketmada-lang') || 'fr';
         document.documentElement.lang = this.lang;
+
         // Get event ID from URL params
         const params = new URLSearchParams(window.location.search);
-        this.eventId = params.get('id') || 1;
+        this.eventId = params.get('id') || '1';
 
-        // Try to load event from API
+        // Load profile from localStorage if any
+        if (window.api && window.api.getUser()) {
+            this.alertEmail = window.api.getUser().email || '';
+        }
+
+        // Get event data — api.get() now uses SmartAPI with mock fallback
         try {
             const result = await window.api.get('/events/' + this.eventId);
-            if (result.event) {
+            if (result && result.event) {
                 this.event = result.event;
             }
         } catch (e) {
-            console.warn('API not available, using demo event');
+            console.warn('Event API failed, using fallback:', e);
         }
 
-        // Fallback demo event if API failed
-        if (!this.event.name) {
+        // Ensure event has data (should always work now with mock layer)
+        if (!this.event || !this.event.name) {
             this.event = {
-                id: 1,
-                name: 'Dama Live - Tournée Nationale 2026',
+                id: parseInt(this.eventId),
+                name: 'Dama Live — Tournée Nationale 2026',
+                artist: 'Dama (Mahaleo)',
                 emoji: '🎤',
-                date_start: '2026-04-15',
-                venue: 'Antananarivo',
+                date_start: '2026-06-15',
+                time: '19:00',
+                venue: 'Stade Barea Mahamasina',
+                city: 'Antananarivo',
                 capacity: 15000,
                 tickets_sold: 12500,
-                image_url: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400',
+                image_url: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800',
                 status: 'active',
-                category: 'concerts'
+                category: 'concerts',
+                zones: [
+                    { id: 'pit', name: 'Fosse', color: '#9B59B6', price: 60000, rows: 4, seatsPerRow: 15 },
+                    { id: 'vip', name: 'VIP', color: '#FF6B4A', price: 150000, rows: 5, seatsPerRow: 20 },
+                    { id: 'premium', name: 'Premium', color: '#FECA57', price: 80000, rows: 8, seatsPerRow: 25 },
+                    { id: 'standard', name: 'Standard', color: '#4A90FF', price: 40000, rows: 10, seatsPerRow: 30 },
+                    { id: 'eco', name: 'Économique', color: '#00D9A5', price: 20000, rows: 10, seatsPerRow: 35 }
+                ]
             };
         }
 
         document.title = 'TicketMada - ' + this.event.name;
-        // Try to load zone availability from API
-        try {
-            const seatsResult = await window.api.get('/events/' + this.eventId + '/seats');
-            if (seatsResult.zones) { this.apiZones = seatsResult.zones; }
-        } catch(e) { console.warn('Seats API not available, using calculated zones'); }
-        this.alertEmail = window.api?.getUser()?.email || '';
-        this.initVenueCanvas();
 
-        
+        // Initialize the seat map — MUST always run
+        this.$nextTick(() => {
+            this.initVenueCanvas();
+        });
+
+        // Load related events
+        this.loadRelatedEvents();
+
         // Social proof simulation
         this.viewersCount = Math.floor(Math.random() * 25) + 12;
         this.recentSales = Math.floor(Math.random() * 6) + 3;
@@ -1026,10 +1057,6 @@ const app = createApp({
             this.viewersCount = Math.max(6, this.viewersCount);
             if (Math.random() > 0.6) this.recentSales = Math.min(this.recentSales + 1, 20);
         }, 10000);
-
-        
-        // Load related events
-        this.loadRelatedEvents();
 
         // Keyboard: Escape closes popup
         document.addEventListener('keydown', e => { if (e.key === 'Escape') this.showQty = false; });

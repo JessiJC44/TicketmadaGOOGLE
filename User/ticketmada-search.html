@@ -449,37 +449,37 @@ const app = createApp({
         async loadAllEvents() {
             this.loading = true;
             try {
-                const result = await window.api.get('/events');
-                if (result.events) this.allEvents = result.events;
+                // Fetch all events using the new getEvents method
+                const result = await window.api.getEvents();
+                if (result && result.events) {
+                    this.allEvents = result.events;
+                    
+                    // Derive categories from event data
+                    const catMap = {};
+                    const icons = { concerts: '🎤', festivals: '🎪', sports: '⚽', theatre: '🎭', humour: '😂', conference: '💡' };
+                    
+                    this.allEvents.forEach(e => {
+                        if (!catMap[e.category]) {
+                            catMap[e.category] = { name: e.category, count: 0, icon: icons[e.category] || '🎫' };
+                        }
+                        catMap[e.category].count++;
+                    });
+                    this.categories = Object.values(catMap);
+                }
             } catch (e) {
-                console.warn('API not available, using demo data');
+                console.warn('API error in search page:', e);
             }
-            // Fallback demo data if API failed
+            
+            // Final fallback if needed
             if (!this.allEvents.length) {
                 this.allEvents = [
-                    { id: 1, name: 'Dama Live - Tournée Nationale 2026', category: 'concerts', description: 'Le plus grand concert de l\'année', emoji: '🎤', date_start: '2026-04-15', venue: 'Antananarivo', capacity: 15000, tickets_sold: 12500, image_url: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400', badge: 'popular', status: 'active', revenue: 625000000 },
-                    { id: 2, name: 'Festival Donia 2026', category: 'festivals', description: 'Le festival incontournable de Nosy Be', emoji: '🎉', date_start: '2026-05-20', date_end: '2026-05-22', venue: 'Nosy Be', capacity: 10000, tickets_sold: 8500, image_url: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400', badge: 'festival', status: 'active', revenue: 1020000000 },
-                    { id: 3, name: 'CNaPS vs Fosa Juniors', category: 'sports', description: 'Match de la saison', emoji: '⚽', date_start: '2026-03-28', venue: 'Mahamasina', capacity: 8000, tickets_sold: 5200, image_url: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400', badge: 'popular', status: 'active', revenue: 78000000 },
-                    { id: 4, name: 'Erick Manana Unplugged', category: 'concerts', description: 'Concert acoustique exceptionnel', emoji: '🎸', date_start: '2026-04-05', venue: 'IFM Analakely', capacity: 800, tickets_sold: 650, image_url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400', badge: 'soon', status: 'active', revenue: 22750000 },
-                    { id: 5, name: 'Madajazzcar 2026', category: 'festivals', description: 'Festival de jazz international', emoji: '🎷', date_start: '2026-10-10', date_end: '2026-10-15', venue: 'Antananarivo', capacity: 5000, tickets_sold: 0, image_url: 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=400', badge: 'soon', status: 'active', revenue: 0 },
-                    { id: 6, name: 'Course de Côte - Diego', category: 'sports', description: 'Compétition automobile', emoji: '🏎️', date_start: '2026-06-12', venue: 'Diego Suarez', capacity: 3000, tickets_sold: 1200, image_url: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=400', status: 'active', revenue: 30000000 },
-                    { id: 7, name: 'Jaojoby en Concert', category: 'concerts', description: 'Le roi du salegy en live', emoji: '🎵', date_start: '2026-05-18', venue: 'Toamasina', capacity: 5000, tickets_sold: 3800, image_url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400', badge: 'vip', status: 'active', revenue: 152000000 },
-                    { id: 8, name: 'Beach Festival Anakao', category: 'festivals', description: 'Festival sur la plage', emoji: '🏖️', date_start: '2026-07-01', date_end: '2026-07-03', venue: 'Anakao', capacity: 2000, tickets_sold: 500, image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400', badge: 'festival', status: 'active', revenue: 75000000 },
-                    { id: 9, name: 'Donia Beach Party', category: 'concerts', description: 'After party sur la plage', emoji: '🏖️', date_start: '2026-05-23', venue: 'Ambatoloaka', capacity: 1000, tickets_sold: 800, image_url: null, status: 'active', revenue: 40000000 }
+                    { id: 1, name: 'Dama Live — Tournée Nationale 2026', category: 'concerts', description: 'Le plus grand concert de l\'année', emoji: '🎤', date_start: '2026-06-15', venue: 'Stade Barea Mahamasina', capacity: 15000, tickets_sold: 12500, image_url: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400', badge: 'popular', status: 'active' }
                 ];
             }
-            // Load categories
-            try {
-                const catResult = await window.api.get('/events/categories');
-                if (catResult.categories) this.categories = catResult.categories;
-            } catch (e) {}
             if (!this.categories.length) {
-                this.categories = [
-                    { name: 'concerts', count: 4, icon: '🎤' },
-                    { name: 'festivals', count: 3, icon: '🎪' },
-                    { name: 'sports', count: 2, icon: '⚽' }
-                ];
+                this.categories = [{ name: 'concerts', count: 1, icon: '🎤' }];
             }
+            
             this.loading = false;
         }
     },

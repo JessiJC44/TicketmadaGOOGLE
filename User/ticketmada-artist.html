@@ -234,26 +234,33 @@ const app = createApp({
                     venues: 0
                 };
             } else {
-                this.artist = { name: query || 'Artiste', emoji: '🎤', category: 'concerts', bio: '', venues: 0 };
+                this.artist = { name: query || (this.lang === 'fr' ? 'Artiste' : 'Artist'), emoji: '🎤', category: 'concerts', bio: '', venues: 0 };
             }
 
-            // Load events matching this artist
+            // Load events matching this artist using the new Search capability
             try {
-                const result = await window.api.get('/events?search=' + encodeURIComponent(query));
-                if (result.events) this.artistEvents = result.events.filter(e => e.status !== 'completed');
-            } catch (e) {}
+                // Search for events by artist/name
+                const result = await window.api.searchEvents(query);
+                if (result && result.events) {
+                    this.artistEvents = result.events.filter(e => e.status !== 'completed');
+                }
+            } catch (e) {
+                console.warn('API error in artist page:', e);
+            }
 
-            // Fallback demo
+            // Fallback demo if no events found
             if (!this.artistEvents.length) {
-                const allDemo = [
-                    { id:1, name:'Dama Live - Tournée Nationale 2026', category:'concerts', emoji:'🎤', date_start:'2026-04-15', venue:'Antananarivo', capacity:15000, tickets_sold:12500, revenue:625000000, badge:'popular', status:'active' },
-                    { id:4, name:'Erick Manana Unplugged', category:'concerts', emoji:'🎸', date_start:'2026-04-05', venue:'IFM Analakely', capacity:800, tickets_sold:650, revenue:22750000, badge:'soon', status:'active' },
-                    { id:2, name:'Festival Donia 2026', category:'festivals', emoji:'🎉', date_start:'2026-05-20', date_end:'2026-05-22', venue:'Nosy Be', capacity:10000, tickets_sold:8500, revenue:1020000000, badge:'festival', status:'active' },
-                    { id:7, name:'Jaojoby en Concert', category:'concerts', emoji:'🎵', date_start:'2026-05-18', venue:'Toamasina', capacity:5000, tickets_sold:3800, revenue:152000000, badge:'vip', status:'active' },
-                    { id:9, name:'Donia Beach Party', category:'concerts', emoji:'🏖️', date_start:'2026-05-23', venue:'Ambatoloaka', capacity:1000, tickets_sold:800, revenue:40000000, status:'active' }
-                ];
-                this.artistEvents = allDemo.filter(e => e.name.toLowerCase().includes(qLower) || (matched && e.category === matched.category));
-                if (!this.artistEvents.length) this.artistEvents = allDemo.slice(0, 3);
+                // Use a smart fallback from Mock data if possible, or use hardcoded demo
+                const allDemo = (await window.api.getEvents()).events || [];
+                this.artistEvents = allDemo.filter(e => 
+                    e.name.toLowerCase().includes(qLower) || 
+                    (e.organizer_name && e.organizer_name.toLowerCase().includes(qLower))
+                );
+                
+                // If still empty, just show some matching category events
+                if (!this.artistEvents.length && matched) {
+                    this.artistEvents = allDemo.filter(e => e.category === matched.category).slice(0, 3);
+                }
             }
 
             // Count unique venues
