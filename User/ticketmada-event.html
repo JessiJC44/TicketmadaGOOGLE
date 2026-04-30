@@ -371,7 +371,7 @@
                      :class="{ active: focusedZone === zone.id }"
                      @click="zoomToZone(zone.id)">
                     <div class="legend-dot" :style="{ background: zone.color }"></div>
-                    {{ zone.name }} — {{ formatPrice(zone.price) }} Ar
+                    {{ zone.name }} — {{ formatPrice(zone.price) }}
                     <span class="legend-avail">({{ zone.available }})</span>
                 </div>
             </div>
@@ -382,7 +382,7 @@
             <div class="view-seat-panel" :class="{ active: selectedZone }">
                 <div class="view-seat-header">
                     <h4>👁️ {{ lang === 'fr' ? 'Vue depuis' : 'View from' }} {{ getZone(selectedZone)?.name || '' }}</h4>
-                    <span>{{ getZone(selectedZone)?.name }} · {{ formatPrice(getZone(selectedZone)?.price || 0) }} Ar</span>
+                    <span>{{ getZone(selectedZone)?.name }} · {{ formatPrice(getZone(selectedZone)?.price || 0) }}</span>
                 </div>
                 <div class="view-seat-preview">
                     <svg class="view-seat-svg" viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg">
@@ -487,7 +487,6 @@
                     </div>
                     <div class="listing-price-col">
                         <div class="listing-price">{{ formatPrice(listing.price) }}</div>
-                        <div class="listing-price-unit">Ar</div>
                         <div class="listing-per">/ {{ lang === 'fr' ? 'place' : 'ticket' }}</div>
                     </div>
                 </div>
@@ -504,7 +503,7 @@
             </div>
             <div style="display:flex; align-items:center; gap: 25px;">
                 <div class="selection-info" style="align-items: flex-end">
-                    <div class="selection-total">{{ formatPrice(selectionTotal) }} Ar</div>
+                    <div class="selection-total">{{ formatPrice(selectionTotal) }}</div>
                     <div class="selection-clear" @click="canvasReset">{{ lang === 'fr' ? 'Effacer la sélection' : 'Clear selection' }}</div>
                 </div>
                 <button class="selection-buy" @click="confirmPurchase">
@@ -533,20 +532,20 @@
             <div class="qty-summary">
                 <div class="qty-line">
                     <span>{{ qty }}× {{ qtyListing.zoneName }}</span>
-                    <span>{{ formatPrice(qtyListing.price * qty) }} Ar</span>
+                    <span>{{ formatPrice(qtyListing.price * qty) }}</span>
                 </div>
                 <div class="qty-line">
                     <span>{{ lang === 'fr' ? 'Frais de service' : 'Service fee' }}</span>
-                    <span>{{ formatPrice(Math.round(qtyListing.price * qty * 0.03)) }} Ar</span>
+                    <span>{{ formatPrice(Math.round(qtyListing.price * qty * 0.03)) }}</span>
                 </div>
                 <div class="qty-line">
                     <span>{{ lang === 'fr' ? 'Total' : 'Total' }}</span>
-                    <span>{{ formatPrice(Math.round(qtyListing.price * qty * 1.03)) }} Ar</span>
+                    <span>{{ formatPrice(Math.round(qtyListing.price * qty * 1.03)) }}</span>
                 </div>
             </div>
             <button class="qty-confirm" @click="confirmPurchase">
                 <v-icon>mdi-cart</v-icon>
-                {{ lang === 'fr' ? 'Continuer' : 'Continue' }} — {{ formatPrice(Math.round(qtyListing.price * qty * 1.03)) }} Ar
+                {{ lang === 'fr' ? 'Continuer' : 'Continue' }} — {{ formatPrice(Math.round(qtyListing.price * qty * 1.03)) }}
             </button>
         </div>
     </div>
@@ -746,7 +745,7 @@ const app = createApp({
             return dt.toLocaleDateString(this.lang === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
         },
         formatPrice(p) {
-            return p ? p.toLocaleString('fr-FR') : '0';
+            return window.TICKETMADA_CONFIG.formatPrice(p);
         },
         scrollToMap() {
             const el = document.getElementById('venue-canvas-container');

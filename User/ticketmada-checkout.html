@@ -377,7 +377,7 @@
                 <div class="summary-body">
                     <div class="summary-line border">
                         <span><span class="zone-dot" :style="{ background: order.zoneColor }"></span>{{ order.zoneName }} × {{ order.qty }}</span>
-                        <strong>{{ formatPrice(order.subtotal) }} Ar</strong>
+                        <strong>{{ formatPrice(order.subtotal) }}</strong>
                     </div>
                     <!-- Seat details -->
                     <div v-if="order.seats" style="font-size:0.75rem; color:#666; padding: 5px 0 10px 18px; margin-top:-10px;">
@@ -386,7 +386,7 @@
                     </div>
                     <div class="summary-line border">
                         <span>{{ lang === 'fr' ? 'Frais de service (3%)' : 'Service fee (3%)' }}</span>
-                        <span>{{ formatPrice(order.serviceFee) }} Ar</span>
+                        <span>{{ formatPrice(order.serviceFee) }}</span>
                     </div>
                     <div class="summary-line border">
                         <span><v-icon size="x-small">mdi-truck-delivery</v-icon> {{ deliveryMethod === 'eticket' ? 'E-Ticket' : deliveryMethod === 'mobile' ? 'Mobile' : (lang === 'fr' ? 'Imprimer' : 'Print') }}</span>
@@ -394,12 +394,12 @@
                     </div>
                     <div class="summary-line" v-if="payMethod === 'card'">
                         <span>{{ lang === 'fr' ? 'Frais de carte' : 'Card fee' }}</span>
-                        <span>{{ formatPrice(order.cardFee) }} Ar</span>
+                        <span>{{ formatPrice(order.cardFee) }}</span>
                     </div>
                 </div>
                 <div class="summary-total">
                     <span class="summary-total-label">TOTAL</span>
-                    <span class="summary-total-price">{{ formatPrice(totalPrice) }} <small>Ar</small></span>
+                    <span class="summary-total-price">{{ formatPrice(totalPrice) }}</span>
                 </div>
             </div>
 
@@ -413,7 +413,7 @@
             <button class="pay-btn" @click="submitPayment" :disabled="processing">
                 <v-icon v-if="!processing">mdi-lock</v-icon>
                 <v-icon v-else class="spin">mdi-loading</v-icon>
-                {{ processing ? (lang === 'fr' ? 'Traitement...' : 'Processing...') : (lang === 'fr' ? 'Payer' : 'Pay now') }} {{ !processing ? formatPrice(totalPrice) + ' Ar' : '' }}
+                {{ processing ? (lang === 'fr' ? 'Traitement...' : 'Processing...') : (lang === 'fr' ? 'Payer' : 'Pay now') }} {{ !processing ? formatPrice(totalPrice) : '' }}
             </button>
 
             <!-- Trust badges -->
@@ -541,7 +541,7 @@ const app = createApp({
         backUrl() { return `ticketmada-event.html?id=${this.order.eventId}`; }
     },
     methods: {
-        formatPrice(p) { return p ? p.toLocaleString('fr-FR') : '0'; },
+        formatPrice(p) { return window.TICKETMADA_CONFIG.formatPrice(p); },
         startTimer() {
             this.timerInterval = setInterval(() => {
                 this.timerSeconds--;

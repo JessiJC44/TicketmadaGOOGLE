@@ -13,6 +13,18 @@ window.TICKETMADA_CONFIG = {
     // Backend API URL (update when Render is deployed)
     API_BASE: '',  // empty = same origin, set to 'https://ticketmada-api.onrender.com' for production
     
+    // Platform config
+    PLATFORM_NAME: 'TicketMada',
+    COMMISSION_RATE: 0.03, // 3%
+    CURRENCY: 'Ar',
+    DEFAULT_LANG: 'fr',
+    
+    // Format price helper
+    formatPrice(amount) {
+        if (amount === undefined || amount === null) return '0 Ar';
+        return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' Ar';
+    },
+
     // Pages config
     pages: {
         // Dev-only pages (hidden in production)

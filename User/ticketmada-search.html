@@ -169,7 +169,7 @@
                                     <span><v-icon size="x-small">mdi-map-marker</v-icon> {{ ev.venue }}</span>
                                 </div>
                             </div>
-                            <div class="ac-item-price" v-if="ev.price_from">{{ formatPrice(ev.price_from) }} Ar</div>
+                            <div class="ac-item-price" v-if="ev.price_from">{{ formatPrice(ev.price_from) }}</div>
                         </div>
                     </template>
                     <template v-if="acCategories.length">
@@ -272,7 +272,7 @@
                 </div>
                 <div class="result-action">
                     <div class="result-price-label">{{ lang === 'fr' ? 'À partir de' : 'From' }}</div>
-                    <div class="result-price">{{ formatPrice(getMinPrice(ev)) }} <small>Ar</small></div>
+                    <div class="result-price">{{ formatPrice(getMinPrice(ev)) }}</div>
                     <div class="result-availability" :class="{ low: getAvailPct(ev) < 20 }">
                         {{ getAvailPct(ev) < 20 ? '🔥 ' : '' }}{{ getAvailText(ev) }}
                     </div>
@@ -366,7 +366,7 @@ const app = createApp({
             if (!d) return '—';
             return new Date(d).toLocaleDateString(this.lang === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' });
         },
-        formatPrice(p) { return p ? p.toLocaleString('fr-FR') : '0'; },
+        formatPrice(p) { return window.TICKETMADA_CONFIG.formatPrice(p); },
         capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; },
         categoryEmoji(cat) {
             return { concerts: '🎤', festivals: '🎪', sports: '⚽', theatre: '🎭' }[cat] || '🎫';
