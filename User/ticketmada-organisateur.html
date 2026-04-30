@@ -431,13 +431,45 @@
                         <div class="feature-text">
                             <h3>{{ tab.title }}</h3>
                             <p>{{ tab.description }}</p>
-                            <ul class="feature-list"><li v-for="feat in tab.features" :key="feat">{{ feat }}</li></ul>
+                            <ul class="feature-list">
+                                <li v-for="feat in tab.features" :key="feat">{{ feat }}</li>
+                            </ul>
                             <a href="#fonctionnalites" class="brutal-btn brutal-btn-primary">{{ t.features.learnMore }}</a>
                         </div>
                         <div class="feature-visual">
-                            <div class="feature-image">
-                                <!-- Seat map illustration for tab index 1 (Plan de salle) -->
-                                <div v-if="index === 1" class="seatmap-illustration">
+                            <!-- Billetterie Visual -->
+                            <div v-if="index === 0" class="feature-image">
+                                    <div style="padding: 25px; flex: 1;">
+                                        <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                            <v-icon size="small" color="#666">mdi-map-marker</v-icon>
+                                            <span style="font-size: 0.7rem; font-weight: 700; color: #666;">Antananarivo, MG</span>
+                                        </div>
+                                        <h4 style="font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; line-height: 1.1; margin-bottom: 15px;">
+                                            Gérez votre billetterie<br><span style="color: var(--accent-coral);">sans limites.</span>
+                                        </h4>
+                                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                                            <div style="background: #f8f8f8; border: 2px solid #eee; padding: 8px; display: flex; align-items: center; gap: 8px;">
+                                                <v-icon size="small" color="#999">mdi-magnify</v-icon>
+                                                <span style="font-size: 0.8rem; color: #999;">Rechercher...</span>
+                                            </div>
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                                <div style="background: #f8f8f8; border: 2px solid #eee; padding: 8px; display: flex; align-items: center; gap: 6px;">
+                                                    <v-icon size="small" color="#999">mdi-calendar</v-icon>
+                                                    <span style="font-size: 0.75rem; color: #999;">Aujourd'hui</span>
+                                                </div>
+                                                <div style="background: #f8f8f8; border: 2px solid #eee; padding: 8px; display: flex; align-items: center; gap: 6px;">
+                                                    <v-icon size="small" color="#999">mdi-clock-outline</v-icon>
+                                                    <span style="font-size: 0.75rem; color: #999;">Now</span>
+                                                </div>
+                                            </div>
+                                            <button class="brutal-btn brutal-btn-primary" style="padding: 10px; font-size: 0.75rem; margin-top: 5px;">VOIR LES VENTES</button>
+                                        </div>
+                                    </div>
+                                    <div style="height: 110px; background-image: url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1470&auto=format&fit=crop'); background-size: cover; background-position: center; border-top: 3px solid var(--border-dark);"></div>
+                                </div>
+                                
+                                <!-- Seat map illustration (Plan de salle) -->
+                                <div v-else-if="index === 1" class="seatmap-illustration" style="height: 320px;">
                                     <svg viewBox="0 0 440 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:440px;">
                                         <!-- Stage -->
                                         <rect x="100" y="10" width="240" height="36" rx="18" fill="#1a1a1a"/>
@@ -476,14 +508,33 @@
                                         <text x="230" y="290" fill="#333" font-size="10" font-family="DM Sans,sans-serif">Sélectionné</text>
                                         <rect x="310" y="278" width="14" height="14" rx="3" fill="#e0e0e0" stroke="#1a1a1a" stroke-width="1"/>
                                         <text x="330" y="290" fill="#333" font-size="10" font-family="DM Sans,sans-serif">Libre</text>
-                                        <!-- Cursor animation -->
-                                        <g class="seatmap-cursor">
-                                            <circle cx="198" cy="200" r="8" fill="rgba(255,107,74,0.3)" stroke="#FF6B4A" stroke-width="2"/>
-                                            <circle cx="198" cy="200" r="3" fill="#FF6B4A"/>
-                                        </g>
                                     </svg>
                                 </div>
-                                <div v-else style="height: 300px; display: flex; align-items: center; justify-content: center; font-size: 5rem;">{{ tab.icon }}</div>
+
+                            <!-- Analytics Visual -->
+                            <div v-else-if="index === 4" class="feature-image">
+                                <div class="brutal-card p-8" style="background: white; height: 320px; display: flex; flex-direction: column; justify-content: center;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <span style="font-size: 0.65rem; font-weight: 700; color: #666; letter-spacing: 1px;">ANALYST STATS</span>
+                                        <v-icon size="x-small" color="#666">mdi-chevron-right</v-icon>
+                                    </div>
+                                    <div style="font-family: 'Syne', sans-serif; font-size: 2.2rem; font-weight: 800; margin-bottom: 5px;">2.4M <span style="font-size: 0.9rem; color: #aaa;">Ar</span></div>
+                                    <p style="font-size: 0.75rem; color: #666; margin-bottom: 20px;">Revenus : <span style="color: var(--accent-mint); font-weight: 700;">+24.8%</span></p>
+                                    <div style="display: flex; height: 70px; align-items: flex-end; gap: 5px;">
+                                        <div class="chart-bar animated" style="height: 40%; flex: 1; --bar-index: 0;"></div>
+                                        <div class="chart-bar animated" style="height: 65%; flex: 1; --bar-index: 1;"></div>
+                                        <div class="chart-bar animated" style="height: 45%; flex: 1; --bar-index: 2;"></div>
+                                        <div class="chart-bar animated" style="height: 85%; flex: 1; --bar-index: 3;"></div>
+                                        <div class="chart-bar animated" style="height: 60%; flex: 1; --bar-index: 4;"></div>
+                                        <div class="chart-bar animated" style="height: 95%; flex: 1; --bar-index: 5;"></div>
+                                        <div class="chart-bar animated" style="height: 80%; flex: 1; --bar-index: 6;"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Default Visual -->
+                            <div v-else class="feature-image" style="height: 320px; display: flex; align-items: center; justify-content: center; font-size: 8rem; background: var(--bg-cream);">
+                                <div class="float-animation">{{ tab.icon }}</div>
                             </div>
                         </div>
                     </div>

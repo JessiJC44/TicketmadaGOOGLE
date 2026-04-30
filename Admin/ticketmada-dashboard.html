@@ -66,8 +66,25 @@
         .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
         
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 25px; }
-        .stat-card { background: white; border: 3px solid var(--border-dark); padding: 20px; box-shadow: var(--shadow-brutal); transition: all 0.2s ease; }
-        .stat-card:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
+        .stat-card { background: white; border: 3px solid var(--border-dark); padding: 20px; box-shadow: var(--shadow-brutal); transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .stat-card:hover { transform: scale(1.03) translateY(-5px); box-shadow: 8px 8px 0px #1a1a1a; }
+        .stats-chart-container { display: flex; height: 60px; align-items: flex-end; gap: 4px; margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px; }
+        .stats-chart-bar { flex: 1; background: var(--accent-coral); opacity: 0.3; border-radius: 4px 4px 0 0; transition: all 0.3s ease; }
+        .stats-chart-bar:last-child { opacity: 1; background: var(--accent-coral); }
+        .stat-card:hover .stats-chart-bar { opacity: 0.5; }
+        .stat-card:hover .stats-chart-bar:last-child { opacity: 1; transform: scaleY(1.1); }
+
+        .ride-style-card { display: grid; grid-template-columns: 1fr 1fr; background: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal); overflow: hidden; margin-top: 25px; min-height: 450px; }
+        .ride-style-content { padding: 40px; display: flex; flex-direction: column; justify-content: center; }
+        .ride-style-image { background-size: cover; background-position: center; border-left: 3px solid var(--border-dark); transition: all 0.5s ease; }
+        .ride-style-card:hover .ride-style-image { transform: scale(1.02); }
+        .ride-style-form { display: flex; flex-direction: column; gap: 12px; }
+        .ride-style-input-group { position: relative; background: #f8f8f8; border: 2px solid #eee; padding: 12px 15px; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
+        .ride-style-input-group:focus-within { border-color: var(--accent-coral); background: white; box-shadow: 4px 4px 0px rgba(0,0,0,0.05); }
+        .ride-style-icon { color: var(--text-light); }
+        .ride-style-input { border: none; background: transparent; flex: 1; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; outline: none; }
+        .ride-style-btn { background: var(--accent-coral); color: white; border: 3px solid var(--border-dark); padding: 15px; font-family: 'Syne', sans-serif; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 4px 4px 0px #1a1a1a; margin-top: 10px; }
+        .ride-style-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; background: var(--accent-yellow); color: var(--text-dark); }
         .stat-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
         .stat-icon { width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border: 2px solid var(--border-dark); }
         .stat-card:nth-child(1) .stat-icon { background: var(--accent-coral); }
@@ -270,12 +287,114 @@
                         </div>
                         
                         <div class="stats-grid">
-                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">💰</div><span class="stat-change positive">+15%</span></div><div class="stat-value">{{ formatCurrency(myRevenue) }}</div><div class="stat-label">Revenus ce mois</div></div>
-                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">🎫</div><span class="stat-change positive">+12%</span></div><div class="stat-value">{{ myTicketsSold.toLocaleString() }}</div><div class="stat-label">Billets vendus</div></div>
-                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">📅</div></div><div class="stat-value">{{ myEvents.length }}</div><div class="stat-label">Événements actifs</div></div>
-                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">📱</div></div><div class="stat-value">{{ scanRate }}%</div><div class="stat-label">Taux de scan</div></div>
+                            <div class="stat-card">
+                                <div class="stat-card-header"><div class="stat-icon">💰</div><span class="stat-change positive">+15%</span></div>
+                                <div class="stat-value">{{ formatCurrency(myRevenue) }}</div>
+                                <div class="stat-label">Revenus ce mois</div>
+                                <div class="stats-chart-container">
+                                    <div class="stats-chart-bar" style="height: 40%"></div>
+                                    <div class="stats-chart-bar" style="height: 65%"></div>
+                                    <div class="stats-chart-bar" style="height: 45%"></div>
+                                    <div class="stats-chart-bar" style="height: 80%"></div>
+                                    <div class="stats-chart-bar" style="height: 60%"></div>
+                                    <div class="stats-chart-bar" style="height: 90%"></div>
+                                    <div class="stats-chart-bar" style="height: 75%"></div>
+                                    <div class="stats-chart-bar" style="height: 85%"></div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-header"><div class="stat-icon">🎫</div><span class="stat-change positive">+12%</span></div>
+                                <div class="stat-value">{{ myTicketsSold.toLocaleString() }}</div>
+                                <div class="stat-label">Billets vendus</div>
+                                <div class="stats-chart-container">
+                                    <div class="stats-chart-bar" style="height: 30%"></div>
+                                    <div class="stats-chart-bar" style="height: 45%"></div>
+                                    <div class="stats-chart-bar" style="height: 70%"></div>
+                                    <div class="stats-chart-bar" style="height: 50%"></div>
+                                    <div class="stats-chart-bar" style="height: 65%"></div>
+                                    <div class="stats-chart-bar" style="height: 80%"></div>
+                                    <div class="stats-chart-bar" style="height: 55%"></div>
+                                    <div class="stats-chart-bar" style="height: 90%"></div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-header"><div class="stat-icon">📅</div></div>
+                                <div class="stat-value">{{ myEvents.length }}</div>
+                                <div class="stat-label">Événements actifs</div>
+                                <div class="stats-chart-container">
+                                    <div class="stats-chart-bar" style="height: 20%"></div>
+                                    <div class="stats-chart-bar" style="height: 40%"></div>
+                                    <div class="stats-chart-bar" style="height: 30%"></div>
+                                    <div class="stats-chart-bar" style="height: 50%"></div>
+                                    <div class="stats-chart-bar" style="height: 40%"></div>
+                                    <div class="stats-chart-bar" style="height: 60%"></div>
+                                    <div class="stats-chart-bar" style="height: 50%"></div>
+                                    <div class="stats-chart-bar" style="height: 70%"></div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-header"><div class="stat-icon">📱</div></div>
+                                <div class="stat-value">{{ scanRate }}%</div>
+                                <div class="stat-label">Taux de scan</div>
+                                <div class="stats-chart-container">
+                                    <div class="stats-chart-bar" style="height: 60%"></div>
+                                    <div class="stats-chart-bar" style="height: 70%"></div>
+                                    <div class="stats-chart-bar" style="height: 65%"></div>
+                                    <div class="stats-chart-bar" style="height: 75%"></div>
+                                    <div class="stats-chart-bar" style="height: 80%"></div>
+                                    <div class="stats-chart-bar" style="height: 85%"></div>
+                                    <div class="stats-chart-bar" style="height: 78%"></div>
+                                    <div class="stats-chart-bar" style="height: 95%"></div>
+                                </div>
+                            </div>
                         </div>
                         
+                        <!-- Billetterie Styled Section -->
+                        <div class="ride-style-card">
+                            <div class="ride-style-content">
+                                <div style="margin-bottom: 20px;">
+                                    <span style="font-size: 0.8rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
+                                        <v-icon size="small" class="mr-1">mdi-map-marker</v-icon> Antananarivo, MG
+                                    </span>
+                                </div>
+                                <h1 style="font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; line-height: 1.1; margin-bottom: 30px;">
+                                    Gérez votre billetterie<br><span style="color: var(--accent-coral);">sans limites.</span>
+                                </h1>
+                                
+                                <div class="ride-style-form">
+                                    <div class="ride-style-input-group">
+                                        <v-icon class="ride-style-icon">mdi-magnify</v-icon>
+                                        <input type="text" class="ride-style-input" placeholder="Rechercher un événement...">
+                                    </div>
+                                    <div class="ride-style-input-group">
+                                        <v-icon class="ride-style-icon">mdi-ticket-percent</v-icon>
+                                        <select class="ride-style-input">
+                                            <option value="">Toutes les catégories</option>
+                                            <option>VIP</option>
+                                            <option>Premium</option>
+                                            <option>Standard</option>
+                                        </select>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                        <div class="ride-style-input-group">
+                                            <v-icon class="ride-style-icon">mdi-calendar</v-icon>
+                                            <span style="font-size: 0.9rem;">Aujourd'hui</span>
+                                        </div>
+                                        <div class="ride-style-input-group">
+                                            <v-icon class="ride-style-icon">mdi-clock-outline</v-icon>
+                                            <span style="font-size: 0.9rem;">Maintenant</span>
+                                        </div>
+                                    </div>
+                                    <button class="ride-style-btn" @click="currentPage = 'tickets'">VOIR LES VENTES</button>
+                                </div>
+                                <div style="margin-top: 25px; font-size: 0.85rem; color: var(--text-light);">
+                                    Accédez à l'historique complet de vos transactions
+                                    <a href="#" @click.prevent="currentPage = 'finance'" style="color: var(--accent-coral); font-weight: 700; text-decoration: none; margin-left: 5px;">Voir les revenus <v-icon size="small">mdi-arrow-right</v-icon></a>
+                                </div>
+                            </div>
+                            <div class="ride-style-image" style="background-image: url('https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=1470&auto=format&fit=crop');"></div>
+                        </div>
+
                         <div class="quick-actions">
                             <div class="quick-action" @click="showCreateModal = true"><div class="quick-action-icon">➕</div><div class="quick-action-text">Créer événement</div></div>
                             <div class="quick-action" @click="currentPage = 'tickets'"><div class="quick-action-icon">🎫</div><div class="quick-action-text">Voir les ventes</div></div>
