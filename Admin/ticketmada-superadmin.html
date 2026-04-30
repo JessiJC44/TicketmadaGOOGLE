@@ -234,6 +234,7 @@
                         <div class="nav-section-title">Principal</div>
                         <div class="nav-item" :class="{ active: currentPage === 'dashboard' }" @click="currentPage = 'dashboard'"><v-icon class="nav-item-icon">mdi-view-dashboard</v-icon><span>Dashboard</span></div>
                         <div class="nav-item" :class="{ active: currentPage === 'clients' }" @click="currentPage = 'clients'"><v-icon class="nav-item-icon">mdi-account-group</v-icon><span>Clients</span><span class="nav-item-badge">{{ clients.length }}</span></div>
+                        <div class="nav-item" :class="{ active: currentPage === 'applications' }" @click="currentPage = 'applications'"><v-icon class="nav-item-icon">mdi-briefcase-account</v-icon><span>Demandes Org.</span><span class="nav-item-badge" v-if="pendingApplicationsCount">{{ pendingApplicationsCount }}</span></div>
                         <div class="nav-item" :class="{ active: currentPage === 'events' }" @click="currentPage = 'events'"><v-icon class="nav-item-icon">mdi-calendar-star</v-icon><span>Événements</span></div>
                     </div>
                     <div class="nav-section">
@@ -500,6 +501,67 @@
                         </template>
                     </template>
 
+                    <!-- Organizer Applications -->
+                    <template v-if="currentPage === 'applications'">
+                        <div class="section">
+                            <div class="section-header">
+                                <div class="section-title"><v-icon size="small">mdi-briefcase-account</v-icon> Demandes d'organisateurs</div>
+                                <div style="display:flex;gap:10px;">
+                                    <div class="filter-group">
+                                        <select class="filter-select" v-model="appFilterStatus">
+                                            <option value="all">Tous les statuts</option>
+                                            <option value="pending">En attente</option>
+                                            <option value="approved">Approuvées</option>
+                                            <option value="rejected">Rejetées</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Candidat</th>
+                                            <th>Organisation</th>
+                                            <th>Date demande</th>
+                                            <th>Statut</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="app in filteredApplications" :key="app.id">
+                                            <td>#{{ app.id }}</td>
+                                            <td>
+                                                <div class="table-user">
+                                                    <div class="table-avatar">{{ app.full_name[0] }}</div>
+                                                    <div>
+                                                        <div class="table-user-name">{{ app.full_name }}</div>
+                                                        <div class="table-user-email">{{ app.email }}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div style="font-weight: 600;">{{ app.organization_name || 'Individuel' }}</div>
+                                                <div style="font-size: 0.75rem; color: var(--text-light);">{{ app.organization_type }}</div>
+                                            </td>
+                                            <td>{{ formatDateShort(app.created_at) }}</td>
+                                            <td><span class="status-badge" :class="'status-' + app.status">{{ app.status }}</span></td>
+                                            <td>
+                                                <button class="action-btn" title="Voir détails" @click="viewApp(app)"><v-icon size="16">mdi-eye</v-icon></button>
+                                                <button v-if="app.status === 'pending'" class="action-btn" title="Approuver" @click="confirmApprove(app)" style="border-color: #00d9a5; color: #00d9a5;"><v-icon size="16">mdi-check-bold</v-icon></button>
+                                                <button v-if="app.status === 'pending'" class="action-btn" title="Rejeter" @click="confirmReject(app)" style="border-color: #ff6b4a; color: #ff6b4a;"><v-icon size="16">mdi-close-thick</v-icon></button>
+                                            </td>
+                                        </tr>
+                                        <tr v-if="filteredApplications.length === 0">
+                                            <td colspan="6" style="text-align: center; padding: 40px; color: #999;">Aucune demande trouvée</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
                     <!-- Payments Configuration -->
                     <template v-if="currentPage === 'payments'">
                         <div class="section" style="border-color:var(--accent-mint);">
@@ -601,6 +663,75 @@
                 <div class="modal-footer"><button class="btn btn-secondary" @click="showModal = false">Annuler</button><button class="btn btn-primary">Créer</button></div>
             </div>
         </div>
+
+        <!-- Application Detail Modal -->
+        <div class="modal-overlay" :class="{ active: showAppModal }">
+            <div class="modal" style="max-width: 800px;">
+                <div class="modal-header">
+                    <div class="modal-title">Demande Organisateur #{{ selectedApp?.id }}</div>
+                    <button class="modal-close" @click="showAppModal = false">×</button>
+                </div>
+                <div class="modal-body" v-if="selectedApp">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                        <div>
+                            <h3 style="font-family:'Syne',sans-serif;font-size:0.8rem;text-transform:uppercase;color:var(--accent-coral);margin-bottom:15px;border-bottom:1px solid #eee;padding-bottom:5px;">👤 Candidat</h3>
+                            <div class="form-group"><label class="form-label">Nom complet</label><div style="font-weight:700;">{{ selectedApp.full_name }}</div></div>
+                            <div class="form-group"><label class="form-label">Email</label><div>{{ selectedApp.email }}</div></div>
+                            <div class="form-group"><label class="form-label">Téléphone / Ville</label><div>{{ selectedApp.phone }} / {{ selectedApp.city }}</div></div>
+                            
+                            <h3 style="font-family:'Syne',sans-serif;font-size:0.8rem;text-transform:uppercase;color:var(--accent-coral);margin-bottom:15px;border-bottom:1px solid #eee;padding-bottom:5px;margin-top:25px;">🏢 Organisation</h3>
+                            <div class="form-group"><label class="form-label">Type / Nom</label><div>{{ selectedApp.organization_type }} - <strong>{{ selectedApp.organization_name || 'N/A' }}</strong></div></div>
+                            <div class="form-group"><label class="form-label">Description</label><div style="font-size:0.85rem;line-height:1.4;">{{ selectedApp.organization_description }}</div></div>
+                            <div class="form-group"><label class="form-label">Motivation</label><div style="font-size:0.85rem;line-height:1.4;background:#f9f9f9;padding:10px;border-left:4px solid var(--accent-coral);">"{{ selectedApp.motivation }}"</div></div>
+                        </div>
+                        <div>
+                            <h3 style="font-family:'Syne',sans-serif;font-size:0.8rem;text-transform:uppercase;color:var(--accent-coral);margin-bottom:15px;border-bottom:1px solid #eee;padding-bottom:5px;">🎫 Événements & ID</h3>
+                            <div class="form-group"><label class="form-label">Types d'événements</label><div>{{ formatJsonList(selectedApp.event_types) }}</div></div>
+                            <div class="form-group"><label class="form-label">ID Document</label><div>{{ (selectedApp.id_document_type||'').toUpperCase() }}: {{ selectedApp.id_document_number }}</div></div>
+                            
+                            <div style="background:#fff3e0;padding:15px;border:2px dashed var(--border-dark);margin-top:20px;">
+                                <h4 style="font-size:0.8rem;margin-bottom:10px;">Prochain événement</h4>
+                                <div style="font-weight:700;">{{ selectedApp.first_event_name || 'Non renseigné' }}</div>
+                                <div style="font-size:0.85rem;">Date: {{ selectedApp.first_event_date || '?' }} | Capacité: {{ selectedApp.first_event_capacity || '?' }}</div>
+                            </div>
+
+                            <h3 style="font-family:'Syne',sans-serif;font-size:0.8rem;text-transform:uppercase;color:var(--accent-coral);margin-bottom:15px;border-bottom:1px solid #eee;padding-bottom:5px;margin-top:25px;">💰 Paiements</h3>
+                            <div class="form-group"><label class="form-label">Méthode préférée</label><div>{{ selectedApp.preferred_payment }}</div></div>
+                            <div v-if="selectedApp.mobile_money_number" class="form-group"><label class="form-label">N° Mobile Money</label><div style="font-weight:700;">{{ selectedApp.mobile_money_number }}</div></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" v-if="selectedApp && selectedApp.status === 'pending'">
+                    <button class="btn btn-secondary" @click="confirmReject(selectedApp)" style="border-color:#ff6b4a;color:#ff6b4a;">Rejeter la demande</button>
+                    <v-spacer></v-spacer>
+                    <button class="btn btn-primary" @click="handleApprove(selectedApp)" style="background:#00d9a5;border-color:#00d9a5;">Approuver & Activer</button>
+                </div>
+                <div class="modal-footer" v-else>
+                    <div v-if="selectedApp?.status === 'rejected'" style="color:#ff6b4a;font-weight:700;font-size:0.9rem;">Rejeté: {{ selectedApp.reject_reason }}</div>
+                    <div v-else-if="selectedApp?.status === 'approved'" style="color:#00d9a5;font-weight:700;font-size:0.9rem;">Demande approuvée le {{ formatDateShort(selectedApp.reviewed_at) }}</div>
+                    <v-spacer></v-spacer>
+                    <button class="btn btn-secondary" @click="showAppModal = false">Fermer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rejection Reason Modal -->
+        <div class="modal-overlay" :class="{ active: showRejectModal }">
+            <div class="modal">
+                <div class="modal-header"><div class="modal-title">Motif du refus</div><button class="modal-close" @click="showRejectModal = false">×</button></div>
+                <div class="modal-body">
+                    <p style="font-size:0.85rem;margin-bottom:15px;">Veuillez préciser pourquoi cette demande est rejetée. Un email sera envoyé au candidat.</p>
+                    <div class="form-group">
+                        <label class="form-label">Raison du rejet</label>
+                        <textarea class="form-input" rows="4" v-model="rejectReason" placeholder="Ex: Informations incomplètes ou document d'identité invalide."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @click="showRejectModal = false">Annuler</button>
+                    <button class="btn btn-primary" style="background:#ff6b4a;border-color:#ff6b4a;" @click="handleReject">Confirmer le rejet</button>
+                </div>
+            </div>
+        </div>
     </div>
     
     <script src="../js/api-client.js"></script>
@@ -616,6 +747,12 @@
                     isLoggedIn: false, authMode: 'login', authForm: { name: '', email: '', password: '' }, authError: '',
                     currentPage: 'dashboard', searchQuery: '', showModal: false, eventTab: 'all', refundTab: 'pending',
                     filters: { status: '', plan: '', search: '' },
+                    appFilterStatus: 'pending',
+                    applications: [],
+                    selectedApp: null,
+                    showAppModal: false,
+                    showRejectModal: false,
+                    rejectReason: '',
                     totalRevenue: 0, totalTickets: 0, activeEvents: 0, scannedTickets: 0, pendingTickets: 0, refundedTickets: 0, pendingRefunds: 0,
                     totalPayouts: 0, pendingPayoutsAmount: 0, commissionTotal: 0, payoutCount: 0, conversionRate: 0, avgTicketPrice: 0, avgScanRate: 0,
                     clients: [], allEvents: [], tickets: [], refunds: [], payouts: [],
@@ -658,7 +795,7 @@
             },
             computed: {
                 currentDate() { return new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); },
-                pageTitle() { return { dashboard: 'Dashboard', clients: 'Clients', events: 'Événements', tickets: 'Billets', refunds: 'Remboursements', payouts: 'Versements', analytics: 'Statistiques', reports: 'Rapports', admins: 'Administrateurs', content: 'Contenu site', payments: 'Paiements', settings: 'Paramètres', logs: 'Logs' }[this.currentPage] || 'Dashboard'; },
+                pageTitle() { return { dashboard: 'Dashboard', clients: 'Clients', applications: 'Demandes Org.', events: 'Événements', tickets: 'Billets', refunds: 'Remboursements', payouts: 'Versements', analytics: 'Statistiques', reports: 'Rapports', admins: 'Administrateurs', content: 'Contenu site', payments: 'Paiements', settings: 'Paramètres', logs: 'Logs' }[this.currentPage] || 'Dashboard'; },
                 userName() { const u = window.api?.getUser(); return u ? u.name : 'Super Admin'; },
                 userEmail() { const u = window.api?.getUser(); return u ? u.email : ''; },
                 userRole() { const r = window.api?.getUserRole(); return r === 'superadmin' ? 'Super Administrateur' : r === 'admin' ? 'Administrateur' : 'Organisateur'; },
@@ -671,6 +808,8 @@
                     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
                 },
                 filteredClients() { return this.clients.filter(c => { if (this.filters.status && c.status !== this.filters.status) return false; if (this.filters.plan && c.plan !== this.filters.plan) return false; if (this.filters.search && !c.name.toLowerCase().includes(this.filters.search.toLowerCase())) return false; return true; }); },
+                filteredApplications() { return this.applications.filter(a => { if (this.appFilterStatus !== 'all' && a.status !== this.appFilterStatus) return false; return true; }); },
+                pendingApplicationsCount() { return this.applications.filter(a => a.status === 'pending').length; },
                 displayedEvents() { if (this.eventTab === 'active') return this.allEvents.filter(e => e.status === 'active'); if (this.eventTab === 'upcoming') return this.allEvents.filter(e => e.status === 'pending'); if (this.eventTab === 'past') return this.allEvents.filter(e => e.status === 'completed'); return this.allEvents; },
                 globalSearchResults() {
                     if (!this.searchQuery || this.searchQuery.length === 0) return [];
@@ -783,12 +922,45 @@
                     const idx = this.contentPublishedEvents.findIndex(e => e.id === evt.id);
                     if (idx > -1) this.contentPublishedEvents.splice(idx, 1);
                 },
+                formatDateShort(d) { return new Date(d).toLocaleDateString('fr-FR'); },
+                formatJsonList(json) { try { return JSON.parse(json).join(', '); } catch(e) { return json; } },
+                viewApp(app) { this.selectedApp = app; this.showAppModal = true; },
+                async handleApprove(app) {
+                    if (!confirm(`Confirmer l'approbation de ${app.full_name} ?`)) return;
+                    try {
+                        const res = await window.api.put(`/organizer-applications/${app.id}/approve`);
+                        if (!res.error) {
+                            app.status = 'approved';
+                            this.showAppModal = false;
+                            this.loadAll(); // Refresh to move to clients
+                        }
+                    } catch(e) { alert('Erreur lors de l\'approbation'); }
+                },
+                confirmReject(app) {
+                    this.selectedApp = app;
+                    this.rejectReason = '';
+                    this.showRejectModal = true;
+                    this.showAppModal = false;
+                },
+                async handleReject() {
+                    if (!this.rejectReason) return alert('Veuillez saisir un motif');
+                    try {
+                        const res = await window.api.put(`/organizer-applications/${this.selectedApp.id}/reject`, { reason: this.rejectReason });
+                        if (!res.error) {
+                            this.selectedApp.status = 'rejected';
+                            this.showRejectModal = false;
+                            this.loadAll();
+                        }
+                    } catch(e) { alert('Erreur lors du rejet'); }
+                },
                 async loadAll() {
                     try {
-                        const [analytics, clients, events, tickets, refunds, payouts, activity] = await Promise.all([
+                        const [analytics, clients, events, tickets, refunds, payouts, activity, applications] = await Promise.all([
                             window.api.get('/analytics/superadmin'), window.api.get('/clients'), window.api.get('/events'),
-                            window.api.get('/tickets'), window.api.get('/refunds'), window.api.get('/payouts'), window.api.get('/activity')
+                            window.api.get('/tickets'), window.api.get('/refunds'), window.api.get('/payouts'), window.api.get('/activity'),
+                            window.api.get('/organizer-applications')
                         ]);
+                        if (applications && !applications.error) this.applications = applications;
                         if (analytics && !analytics.error) {
                             Object.assign(this, { totalRevenue: analytics.totalRevenue||0, totalTickets: analytics.totalTickets||0, activeEvents: analytics.activeEvents||0, scannedTickets: analytics.scannedTickets||0, pendingTickets: analytics.pendingTickets||0, refundedTickets: analytics.refundedTickets||0, pendingRefunds: analytics.pendingRefunds||0, totalPayouts: analytics.totalPayouts||0, pendingPayoutsAmount: analytics.pendingPayoutsAmount||0, commissionTotal: analytics.commissionTotal||0, payoutCount: analytics.payoutCount||0, conversionRate: analytics.conversionRate||0, avgTicketPrice: analytics.avgTicketPrice||0, avgScanRate: analytics.avgScanRate||0 });
                             this.topEvents = (analytics.topEvents||[]).map(e => ({ id: e.id, name: e.name, organizer: e.organizer_name||'N/A', tickets: (e.tickets_sold||0).toLocaleString(), revenue: e.revenue||0 }));

@@ -337,7 +337,7 @@
                 <div class="events-filter">
                     <button class="filter-btn" :class="{ active: activeCategory === 'all' }" @click="activeCategory = 'all'">{{ t.filters.all }}</button>
                     <button class="filter-btn" :class="{ active: activeCategory === 'concerts' }" @click="activeCategory = 'concerts'">{{ t.filters.concerts }}</button>
-                    <button class="filter-btn" :class="{ active: activeCategory === 'festivals' }" @click="activeCategory = 'festivals'">{{ t.filters.festivals }}</button>
+                    <button class="filter-btn" :class="{ active: activeCategory === 'festival' }" @click="activeCategory = 'festival'">{{ t.filters.festivals }}</button>
                     <button class="filter-btn" :class="{ active: activeCategory === 'sports' }" @click="activeCategory = 'sports'">{{ t.filters.sports }}</button>
                 </div>
                 <div class="events-grid">
@@ -434,7 +434,7 @@
                         <p>{{ t.footer.description }}</p>
                         <div class="social-links"><a href="#" class="social-link"><v-icon>mdi-facebook</v-icon></a><a href="#" class="social-link"><v-icon>mdi-instagram</v-icon></a><a href="#" class="social-link"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.045 4.126H5.078z"/></svg></a><a href="#" class="social-link"><v-icon>mdi-youtube</v-icon></a></div>
                     </div>
-                    <div class="footer-column"><h4>{{ t.footer.events }}</h4><ul><li><a href="#events" @click="activeCategory = 'concerts'">{{ t.nav.concerts }}</a></li><li><a href="#events" @click="activeCategory = 'festivals'">{{ t.nav.festivals }}</a></li><li><a href="#events" @click="activeCategory = 'sports'">{{ t.nav.sports }}</a></li></ul></div>
+                    <div class="footer-column"><h4>{{ t.footer.events }}</h4><ul><li><a href="#events" @click="activeCategory = 'concerts'">{{ t.nav.concerts }}</a></li><li><a href="#events" @click="activeCategory = 'festival'">{{ t.nav.festivals }}</a></li><li><a href="#events" @click="activeCategory = 'sports'">{{ t.nav.sports }}</a></li></ul></div>
                     <div class="footer-column"><h4>{{ t.nav.organizers }}</h4><ul><li><a href="ticketmada-organisateur.html">{{ t.footer.createEvent }}</a></li><li><a href="ticketmada-organisateur.html#tarifs">{{ t.footer.pricing }}</a></li></ul></div>
                     <div class="footer-column"><h4>{{ t.footer.support }}</h4><ul><li><a href="#">{{ t.footer.helpCenter }}</a></li><li><a href="#">FAQ</a></li></ul></div>
                     <div class="footer-column"><h4>{{ t.footer.company }}</h4><ul><li><a href="#">{{ t.footer.about }}</a></li><li><a href="#">{{ t.footer.careers }}</a></li></ul></div>
@@ -657,7 +657,7 @@
                         if (this.authMode === 'login') { 
                             result = await window.api.login(this.authForm.email, this.authForm.password); 
                         } else { 
-                            result = await window.api.register(this.authForm.name, this.authForm.email, this.authForm.password, 'organizer'); 
+                            result = await window.api.register(this.authForm.name, this.authForm.email, this.authForm.password); 
                         }
                         
                         if (result.error) {
@@ -665,7 +665,6 @@
                         } else { 
                             this.isLoggedIn = true; 
                             this.showAuth = false; 
-                            if (result.user.role === 'organizer') window.location.href = 'ticketmada-organisateur.html';
                         }
                     } catch(e) { 
                         alert('Une erreur est survenue lors de l\'authentification.');
@@ -691,6 +690,15 @@
                 try {
                     const eventsData = await window.api.getEvents();
                     if (eventsData && eventsData.events) {
+                        const CATEGORY_IMAGES = {
+                            concerts: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800',
+                            festival: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
+                            sports: 'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800',
+                            theatre: 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=800',
+                            humour: 'https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=800',
+                            exhibition: 'https://images.unsplash.com/photo-1531058020387-3be344556be6?w=800'
+                        };
+
                         this.events = eventsData.events.map(e => ({
                             id: e.id,
                             title: e.name,
@@ -698,8 +706,8 @@
                             location: e.venue,
                             price: e.capacity > 0 ? (e.zones ? e.zones[e.zones.length-1].price : 15000) : 0,
                             category: e.category,
-                            badgeKey: e.tickets_sold / e.capacity > 0.7 ? 'popular' : null,
-                            image: e.image_url || 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop'
+                            badgeKey: (e.tickets_sold / e.capacity) > 0.7 ? 'popular' : (e.hot ? 'popular' : null),
+                            image: e.image_url || CATEGORY_IMAGES[e.category] || 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800'
                         }));
                         
                         // Pick featured events (e.g. popular ones)

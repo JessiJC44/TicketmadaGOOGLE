@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scanner — TicketMada</title>
+    
+    <!-- CSS & Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3/dist/vuetify.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-cream: #FFF8F0;
+            --accent-coral: #FF6B4A;
+            --accent-mint: #00D9A5;
+            --accent-yellow: #FECA57;
+            --accent-blue: #4A90FF;
+            --border-dark: #1a1a1a;
+            --text-dark: #1a1a1a;
+            --shadow-brutal: 6px 6px 0px #1a1a1a;
+        }
+
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg-cream); color: var(--text-dark); margin: 0; overflow: hidden; }
+        
+        #app { display: flex; flex-direction: column; height: 100vh; }
+
+        /* header */
+        .top-bar { padding: 15px 20px; background: white; border-bottom: 3px solid var(--border-dark); display: flex; justify-content: space-between; align-items: center; z-index: 100; }
+        .event-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+        .scan-stats { font-family: 'Syne', sans-serif; font-weight: 700; background: var(--accent-coral); border: 2px solid var(--border-dark); padding: 4px 10px; font-size: 0.8rem; box-shadow: 3px 3px 0px var(--border-dark); }
+
+        /* camera */
+        .camera-container { flex: 1; position: relative; background: #000; display: flex; align-items: center; justify-content: center; }
+        #qr-reader { width: 100% !important; height: 100% !important; border: none !important; }
+        #qr-reader__scan_region { height: 100% !important; }
+        #qr-reader video { object-fit: cover !important; }
+        
+        .scan-overlay { position: absolute; inset: 0; pointer-events: none; border: 40px solid rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
+        .scan-frame { width: 260px; height: 260px; border: 4px solid var(--accent-coral); position: relative; box-shadow: 0 0 0 1000px rgba(0,0,0,0.4); animation: scanPulse 2s infinite; }
+        
+        @keyframes scanPulse {
+            0%, 100% { border-color: var(--accent-coral); box-shadow: 0 0 0 1000px rgba(0,0,0,0.4), 0 0 20px var(--accent-coral); }
+            50% { border-color: white; box-shadow: 0 0 0 1000px rgba(0,0,0,0.4), 0 0 50px rgba(255,107,74,0); }
+        }
+
+        .torch-btn { position: absolute; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background: white; border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; box-shadow: 4px 4px 0px var(--border-dark); pointer-events: auto; }
+
+        /* results overlay */
+        .result-overlay { position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; background: rgba(0,0,0,0.3); backdrop-filter: blur(2px); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform: translateY(100%); }
+        .result-overlay.active { transform: translateY(0); }
+
+        .result-card { background: white; border: 4px solid var(--border-dark); box-shadow: 8px 8px 0px var(--border-dark); display: flex; min-height: 200px; overflow: hidden; }
+        .result-left { width: 40%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; border-right: 3px solid var(--border-dark); }
+        .result-right { width: 60%; padding: 20px; display: flex; flex-direction: column; justify-content: center; }
+        
+        .status-valid { background: #e8f5e9; border-color: var(--accent-mint); }
+        .status-already { background: #fff3e0; border-color: var(--accent-yellow); }
+        .status-invalid { background: #ffebee; border-color: var(--accent-coral); }
+
+        .result-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.9rem; text-transform: uppercase; margin-top: 15px; text-align: center; }
+        
+        /* animations */
+        .checkmark-svg, .cross-svg, .warning-svg { width: 80px; height: 80px; }
+        .checkmark-circle { stroke: #00D9A5; stroke-width: 3; fill: none; stroke-dasharray: 166; stroke-dashoffset: 166; animation: drawCircle 0.6s ease-in-out forwards; }
+        .checkmark-check { stroke: #00D9A5; stroke-width: 4; fill: none; stroke-dasharray: 48; stroke-dashoffset: 48; animation: drawCheck 0.3s 0.4s ease-in-out forwards; }
+        
+        @keyframes drawCircle { 100% { stroke-dashoffset: 0; } }
+        @keyframes drawCheck { 100% { stroke-dashoffset: 0; } }
+
+        .info-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.9rem; }
+        .info-label { opacity: 0.6; width: 60px; font-size: 0.75rem; }
+        .info-value { font-weight: 700; }
+
+        /* bottom nav */
+        .bottom-nav { background: white; border-top: 3px solid var(--border-dark); display: flex; height: 70px; z-index: 100; }
+        .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 2px solid var(--border-dark); transition: all 0.2s; -webkit-tap-highlight-color: transparent; }
+        .nav-btn:last-child { border-right: none; }
+        .nav-btn.active { background: var(--accent-coral); color: white; }
+        .nav-btn .v-icon { margin-bottom: 4px; }
+        .nav-btn span { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; }
+
+        /* Auth/Error Screens */
+        .full-screen-msg { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 40px; text-align: center; }
+        .msg-icon { font-size: 4rem; margin-bottom: 20px; }
+        .msg-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.5rem; margin-bottom: 10px; line-height: 1.2; }
+        .msg-desc { opacity: 0.7; margin-bottom: 30px; }
+        .neo-btn { background: var(--accent-coral); border: 3px solid var(--border-dark); padding: 12px 30px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; box-shadow: var(--shadow-brutal); transition: all 0.2s; display: inline-flex; align-items: center; gap: 10px; }
+        .neo-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px var(--border-dark); }
+
+        /* Tabs */
+        .tab-content { position: absolute; inset: 0; background: var(--bg-cream); z-index: 150; padding: 20px; overflow-y: auto; padding-top: 80px; }
+        .list-card { background: white; border: 3px solid var(--border-dark); box-shadow: 4px 4px 0px var(--border-dark); padding: 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; }
+
+        @keyframes drawCross {
+            0% { stroke-dashoffset: 50; }
+            100% { stroke-dashoffset: 0; }
+        }
+        .cross-line { stroke: var(--accent-coral); stroke-width: 4; fill: none; stroke-dasharray: 50; stroke-dashoffset: 50; animation: drawCross 0.3s 0.4s ease-in-out forwards; }
+        .cross-circle { stroke: var(--accent-coral); stroke-width: 3; fill: none; stroke-dasharray: 166; stroke-dashoffset: 166; animation: drawCircle 0.6s ease-in-out forwards; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <v-app style="background: transparent;">
+        
+        <!-- Auth Screen -->
+        <div v-if="!isAuthenticated && !authError" class="full-screen-msg">
+            <div class="msg-icon">🎫</div>
+            <div class="msg-title">Validation en cours...</div>
+            <v-progress-circular indeterminate color="var(--accent-coral)"></v-progress-circular>
+        </div>
+
+        <!-- Error Screen -->
+        <div v-if="authError" class="full-screen-msg">
+            <div class="msg-icon">🚫</div>
+            <div class="msg-title">{{ authError }}</div>
+            <p class="msg-desc">Le lien que vous utilisez est peut-être expiré ou révoqué par l'organisatueur.</p>
+            <button @click="retryAuth" class="neo-btn">Réessayer</button>
+        </div>
+
+        <!-- Scanner Screen -->
+        <template v-if="isAuthenticated">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="event-title">{{ eventInfo?.name }}</div>
+                <div class="scan-stats">{{ validScans }} SCANS</div>
+            </div>
+
+            <!-- Viewport -->
+            <div class="camera-container">
+                <div id="qr-reader"></div>
+                <div class="scan-overlay">
+                    <div class="scan-frame"></div>
+                </div>
+                <button class="torch-btn" @click="toggleTorch">
+                    <v-icon>{{ torchEnabled ? 'mdi-flashlight' : 'mdi-flashlight-off' }}</v-icon>
+                </button>
+            </div>
+
+            <!-- Result Bottom Sheet -->
+            <div class="result-overlay" :class="{ active: showResult }" @click="dismissResult">
+                <div class="result-card" :class="'status-' + currentResult?.status" v-if="currentResult">
+                    <!-- Status Icon -->
+                    <div class="result-left">
+                        <template v-if="currentResult.status === 'valid'">
+                            <svg class="checkmark-svg" viewBox="0 0 52 52">
+                                <circle class="checkmark-circle" cx="26" cy="26" r="25"/>
+                                <path class="checkmark-check" d="M14.1 27.2l7.1 7.2 16.7-16.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <div class="result-text" style="color: #2e7d32;">Valide</div>
+                        </template>
+                        
+                        <template v-if="currentResult.status === 'already_scanned'">
+                            <svg class="warning-svg" viewBox="0 0 52 52">
+                                <path d="M26 6 L48 46 H4 Z" stroke="#ff9800" stroke-width="3" fill="none" stroke-linejoin="round"/>
+                                <line x1="26" y1="20" x2="26" y2="32" stroke="#ff9800" stroke-width="3.5" stroke-linecap="round"/>
+                                <circle cx="26" cy="38" r="2" fill="#ff9800"/>
+                            </svg>
+                            <div class="result-text" style="color: #e65100;">Déjà Scanné</div>
+                        </template>
+
+                        <template v-if="currentResult.status === 'invalid'">
+                            <svg class="cross-svg" viewBox="0 0 52 52">
+                                <circle class="cross-circle" cx="26" cy="26" r="25"/>
+                                <line class="cross-line" x1="16" y1="16" x2="36" y2="36" stroke-linecap="round"/>
+                                <line class="cross-line" x1="36" y1="16" x2="16" y2="36" stroke-linecap="round" style="animation-delay:0.3s;"/>
+                            </svg>
+                            <div class="result-text" style="color: #c62828;">Invalide</div>
+                        </template>
+                    </div>
+
+                    <!-- Details -->
+                    <div class="result-right">
+                        <template v-if="currentResult.status !== 'invalid'">
+                            <div class="info-row">
+                                <span class="info-label">Client</span>
+                                <span class="info-value">{{ currentResult.buyer_name }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Zone</span>
+                                <span class="info-value">{{ currentResult.zone }} / {{ currentResult.seat || 'LIBRE' }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Tarif</span>
+                                <span class="info-value">{{ currentResult.tariff }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Code</span>
+                                <span class="info-value" style="font-family: monospace; letter-spacing: 1px;">{{ currentResult.ticket_code }}</span>
+                            </div>
+                        </template>
+                        <template v-else>
+                            <div style="color: #c62828; font-weight: 800; font-size: 1.1rem; line-height: 1.2;">
+                                {{ currentResult.error }}
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div class="tab-content" v-if="currentTab === 'history'">
+                <div class="top-bar" style="position: fixed; top: 0; left: 0; right: 0;">
+                    <div class="event-title">Historique des scans</div>
+                </div>
+                <div v-if="scanHistory.length === 0" style="text-align: center; padding: 40px; opacity: 0.5;">
+                    Aucun scan enregistré pour le moment.
+                </div>
+                <div v-for="scan in scanHistory" :key="scan.id" class="list-card">
+                    <div style="font-size: 1.5rem;">{{ scan.status === 'valid' ? '✅' : (scan.status === 'already_scanned' ? '⚠️' : '❌') }}</div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700; font-size: 0.9rem;">{{ scan.buyer_name || 'Inconnu' }}</div>
+                        <div style="font-size: 0.75rem; opacity: 0.6;">{{ scan.zone || '—' }} · {{ scan.ticket_code }}</div>
+                    </div>
+                    <div style="font-family: 'Syne'; font-weight: 800; font-size: 0.7rem;">{{ scan.time }}</div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-content" v-if="currentTab === 'settings'">
+                <div class="top-bar" style="position: fixed; top: 0; left: 0; right: 0;">
+                    <div class="event-title">Paramètres</div>
+                </div>
+                
+                <v-list style="background: transparent;">
+                    <v-list-item>
+                        <template v-slot:prepend><v-icon>mdi-volume-high</v-icon></template>
+                        <v-list-item-title>Sons de scan</v-list-item-title>
+                        <template v-slot:append><v-switch v-model="settings.soundEnabled" color="var(--accent-coral)"></v-switch></template>
+                    </v-list-item>
+                    <v-list-item>
+                        <template v-slot:prepend><v-icon>mdi-vibrate</v-icon></template>
+                        <v-list-item-title>Vibrations</v-list-item-title>
+                        <template v-slot:append><v-switch v-model="settings.vibrationEnabled" color="var(--accent-coral)"></v-switch></template>
+                    </v-list-item>
+                    <v-divider class="my-4"></v-divider>
+                    <v-list-item-subtitle class="px-4 mb-2">INFOS SESSION</v-list-item-subtitle>
+                    <v-list-item>
+                        <v-list-item-title style="font-size: 0.8rem; opacity: 0.6;">ID Appareil</v-list-item-title>
+                        <template v-slot:append><span style="font-family: monospace;">{{ deviceId }}</span></template>
+                    </v-list-item>
+                    <v-list-item>
+                        <v-list-item-title style="font-size: 0.8rem; opacity: 0.6;">Dernière synchro</v-list-item-title>
+                        <template v-slot:append><span>À l'instant</span></template>
+                    </v-list-item>
+                    <v-btn block class="neo-btn mt-6" style="background: #ffebee; color: #c62828;" @click="logout">Se déconnecter</v-btn>
+                </v-list>
+            </div>
+
+            <!-- Bottom Nav -->
+            <div class="bottom-nav">
+                <div class="nav-btn" :class="{ active: currentTab === 'history' }" @click="currentTab = 'history'">
+                    <v-icon>mdi-history</v-icon>
+                    <span>Historique</span>
+                </div>
+                <div class="nav-btn" :class="{ active: currentTab === 'scanner' }" @click="currentTab = 'scanner'">
+                    <v-icon>mdi-qrcode-scan</v-icon>
+                    <span>Scanner</span>
+                </div>
+                <div class="nav-btn" :class="{ active: currentTab === 'settings' }" @click="currentTab = 'settings'">
+                    <v-icon>mdi-cog</v-icon>
+                    <span>Réglages</span>
+                </div>
+            </div>
+        </template>
+
+    </v-app>
+</div>
+
+<!-- JS -->
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@3/dist/vuetify.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="../js/api-client.js"></script>
+
+<script>
+    const { createApp } = Vue;
+    const { createVuetify } = Vuetify;
+
+    const vuetify = createVuetify();
+
+    createApp({
+        data() {
+            return {
+                scanToken: null,
+                isAuthenticated: false,
+                authError: '',
+                eventInfo: null,
+                
+                // Scanner
+                scanner: null,
+                torchEnabled: false,
+                
+                // Result
+                showResult: false,
+                currentResult: null,
+                resultTimeout: null,
+                
+                // History
+                scanHistory: [],
+                
+                // Navigation
+                currentTab: 'scanner',
+                
+                // Settings
+                settings: {
+                    soundEnabled: true,
+                    vibrationEnabled: true
+                },
+                deviceId: localStorage.getItem('ticketmada_device_id') || 'DEV-' + Math.random().toString(36).substr(2, 6).toUpperCase()
+            };
+        },
+        computed: {
+            validScans() {
+                return this.scanHistory.filter(s => s.status === 'valid').length;
+            }
+        },
+        async mounted() {
+            // Get token from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            this.scanToken = urlParams.get('token');
+            
+            if (!this.scanToken) {
+                this.authError = 'Lien de scan manquant';
+                return;
+            }
+
+            try {
+                // Validate token
+                const res = await window.api.get('/scan-links/' + this.scanToken + '/validate');
+                if (res.valid) {
+                    this.isAuthenticated = true;
+                    this.eventInfo = res.event;
+                    this.deviceId = res.device_id;
+                    window.api.setScanAuth(this.scanToken, res.device_id);
+                    this.$nextTick(() => {
+                        this.initScanner();
+                    });
+                } else {
+                    this.authError = res.error || 'Accès refusé';
+                }
+            } catch (e) {
+                console.error(e);
+                this.authError = e.error || 'Erreur de connexion';
+            }
+        },
+        methods: {
+            initScanner() {
+                this.scanner = new Html5Qrcode("qr-reader");
+                const config = { fps: 15, qrbox: { width: 260, height: 260 } };
+                this.scanner.start({ facingMode: "environment" }, config, this.onScanSuccess);
+            },
+            async onScanSuccess(decodedText) {
+                if (this.showResult) return;
+                
+                // Play fast feedback
+                this.playVibration();
+                
+                try {
+                    // Call API to scan
+                    const result = await window.api.put('/tickets/' + decodedText + '/scan', { event_id: this.eventInfo.id });
+                    
+                    this.currentResult = result;
+                    this.showResult = true;
+                    this.playResultSound(result.status);
+                    
+                    // Add to history
+                    this.scanHistory.unshift({
+                        id: Date.now(),
+                        time: new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}),
+                        ...result
+                    });
+
+                    // Auto dismiss
+                    if (this.resultTimeout) clearTimeout(this.resultTimeout);
+                    this.resultTimeout = setTimeout(() => {
+                        this.showResult = false;
+                    }, 4000);
+
+                } catch (e) {
+                    console.error(e);
+                }
+            },
+            playResultSound(status) {
+                if (!this.settings.soundEnabled) return;
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    
+                    if (status === 'valid') {
+                        osc.frequency.setValueAtTime(880, ctx.currentTime);
+                        osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
+                        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+                    } else {
+                        osc.frequency.setValueAtTime(220, ctx.currentTime);
+                        osc.type = 'square';
+                        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                    }
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.2);
+                } catch (e) {}
+            },
+            playVibration() {
+                if (this.settings.vibrationEnabled && navigator.vibrate) {
+                    navigator.vibrate(200);
+                }
+            },
+            toggleTorch() {
+                if (this.scanner) {
+                    this.torchEnabled = !this.torchEnabled;
+                    this.scanner.applyVideoConstraints({ focusMode: 'continuous', flash: this.torchEnabled });
+                }
+            },
+            dismissResult() {
+                this.showResult = false;
+            },
+            retryAuth() {
+                window.location.reload();
+            },
+            logout() {
+                window.location.href = 'ticketmada-landing.html';
+            }
+        }
+    }).use(vuetify).mount('#app');
+</script>
+
+</body>
+</html>

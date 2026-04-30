@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devenir Organisateur - TicketMada</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <style>
+        :root { --bg-cream: #FFF8F0; --accent-coral: #FF6B4A; --accent-mint: #00D9A5; --accent-yellow: #FECA57; --accent-blue: #4A90FF; --text-dark: #1a1a1a; --border-dark: #1a1a1a; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg-cream); color: var(--text-dark); margin: 0; }
+        .neobrutal-border { border: 3px solid var(--border-dark); }
+        .neobrutal-shadow { box-shadow: 6px 6px 0px var(--border-dark); }
+        .neobrutal-shadow-sm { box-shadow: 4px 4px 0px var(--border-dark); }
+        h1, h2, h3 { font-family: 'Syne', sans-serif; font-weight: 800; text-transform: uppercase; }
+        
+        .nav { background: white; padding: 15px 5%; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; border-bottom: 3px solid var(--border-dark); }
+        .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; font-size: 1.5rem; }
+        .logo-box { width: 44px; height: 44px; background: var(--accent-coral); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; transform: rotate(-3deg); border: 2px solid var(--border-dark); }
+        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; letter-spacing: -1px; }
+
+        .container { max-width: 800px; margin: 60px auto; padding: 0 20px; }
+        .form-card { background: white; padding: 40px; }
+        .steps-header { display: flex; justify-content: space-between; margin-bottom: 30px; position: relative; }
+        .steps-header::before { content: ''; position: absolute; top: 20px; left: 0; right: 0; height: 3px; background: var(--border-dark); z-index: 0; }
+        .step-indicator { width: 40px; height: 40px; background: white; border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; z-index: 1; font-weight: 800; font-family: 'Syne', sans-serif; transition: all 0.3s; }
+        .step-indicator.active { background: var(--accent-coral); color: white; transform: scale(1.2); }
+        .step-indicator.completed { background: var(--accent-mint); color: white; }
+
+        .form-group { margin-bottom: 24px; }
+        .label { display: block; font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 8px; font-size: 0.9rem; text-transform: uppercase; }
+        .input { width: 100%; padding: 14px 18px; border: 3px solid var(--border-dark); font-family: 'DM Sans', sans-serif; font-weight: 500; font-size: 1rem; transition: all 0.2s; background: #fff; }
+        .input:focus { outline: none; box-shadow: 4px 4px 0px var(--accent-coral); transform: translate(-2px, -2px); }
+        .input:disabled { background: #f0f0f0; cursor: not-allowed; }
+        select.input { cursor: pointer; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 16px 32px; font-family: 'Syne', sans-serif; font-weight: 800; text-transform: uppercase; border: 3px solid var(--border-dark); cursor: pointer; transition: all 0.15s; font-size: 1rem; color: white; border-radius: 0; width: 100%; }
+        .btn-coral { background: var(--accent-coral); box-shadow: 6px 6px 0px var(--border-dark); }
+        .btn-coral:hover:not(:disabled) { transform: translate(-2px, -2px); box-shadow: 8px 8px 0px var(--border-dark); }
+        .btn-coral:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 2px 2px 0px var(--border-dark); }
+        .btn-secondary { background: white; color: var(--text-dark); border: 3px solid var(--border-dark); box-shadow: 4px 4px 0px var(--border-dark); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .checkbox-group { display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 12px; }
+        .checkbox-custom { width: 24px; height: 24px; border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: white; }
+        .checkbox-group input:checked + .checkbox-custom { background: var(--accent-mint); }
+        .checkbox-group input { display: none; }
+
+        .radio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .radio-card { border: 3px solid var(--border-dark); padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; background: white; font-weight: 700; font-size: 0.85rem; }
+        .radio-card.active { background: var(--accent-yellow); box-shadow: 4px 4px 0px var(--border-dark); transform: translate(-2px, -2px); }
+        
+        .advantage-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem; }
+        .advantage-icon { color: var(--accent-mint); font-weight: bold; }
+
+        .error-msg { color: #E74C3C; font-weight: 700; font-size: 0.8rem; margin-top: 4px; display: block; }
+
+        @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } .form-card { padding: 25px; } }
+
+        .success-card { text-align: center; padding: 60px 40px; }
+        .success-icon { width: 80px; height: 80px; background: var(--accent-mint); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; margin: 0 auto 30px; border: 3px solid var(--border-dark); box-shadow: 6px 6px 0 var(--border-dark); }
+        
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body>
+    <div id="app" v-cloak>
+        <nav class="nav">
+            <a href="ticketmada-landing.html" class="logo">
+                <div class="logo-box">🎫</div>
+                <span class="logo-text">TicketMada</span>
+            </a>
+            <div v-if="isLoggedIn" class="profile-area">
+                <span style="font-weight: 600; font-size: 0.9rem;">{{ user.name }}</span>
+            </div>
+            <div v-else>
+                <a href="ticketmada-landing.html?login=1" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.8rem;">Se connecter</a>
+            </div>
+        </nav>
+
+        <div class="container">
+            <div v-if="!isSubmitted">
+                <div style="background: var(--accent-yellow); padding: 30px; margin-bottom: 40px; border: 3px solid var(--border-dark); box-shadow: 8px 8px 0 var(--border-dark);">
+                    <h2 style="margin-bottom: 10px;">🎪 Devenez organisateur</h2>
+                    <p style="font-weight: 600; line-height: 1.6; margin-bottom: 20px;">
+                        Créez et vendez des billets pour vos événements à Madagascar. Commisssion de seulement 3% par billet.
+                    </p>
+                    <div class="grid">
+                        <div>
+                            <div class="advantage-item"><span class="advantage-icon">✓</span> Billetterie en ligne 24/7</div>
+                            <div class="advantage-item"><span class="advantage-icon">✓</span> Plan de salle interactif</div>
+                        </div>
+                        <div>
+                            <div class="advantage-item"><span class="advantage-icon">✓</span> Contrôle d'accès QR Code</div>
+                            <div class="advantage-item"><span class="advantage-icon">✓</span> Paiement Mobile Money & Virement</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-card neobrutal-border neobrutal-shadow">
+                    <div class="steps-header">
+                        <div v-for="s in totalSteps" :key="s" class="step-indicator" :class="{ active: currentStep === s, completed: currentStep > s }">
+                            <span v-if="currentStep > s">✓</span>
+                            <span v-else>{{ s }}</span>
+                        </div>
+                    </div>
+
+                    <h2 style="margin-bottom: 30px; font-size: 1.2rem;">
+                        {{ stepTitles[currentStep-1] }}
+                    </h2>
+
+                    <!-- Step 1: Personal Info -->
+                    <div v-if="currentStep === 1">
+                        <div class="form-group">
+                            <label class="label">Nom complet*</label>
+                            <input type="text" v-model="form.full_name" class="input" placeholder="Ex: Jean Rakoto">
+                            <span v-if="errors.full_name" class="error-msg">{{ errors.full_name }}</span>
+                        </div>
+                        <div class="grid">
+                            <div class="form-group">
+                                <label class="label">Email*</label>
+                                <input type="email" v-model="form.email" class="input" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label class="label">Téléphone*</label>
+                                <input type="text" v-model="form.phone" class="input" placeholder="034 XX XXX XX">
+                                <span v-if="errors.phone" class="error-msg">{{ errors.phone }}</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Ville*</label>
+                            <select v-model="form.city" class="input">
+                                <option value="" disabled>Sélectionner une ville</option>
+                                <option v-for="c in cities" :key="c" :value="c">{{ c }}</option>
+                            </select>
+                            <span v-if="errors.city" class="error-msg">{{ errors.city }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Organization -->
+                    <div v-if="currentStep === 2">
+                        <label class="label">Type d'organisation*</label>
+                        <div class="radio-grid">
+                            <div v-for="t in orgTypes" :key="t.id" class="radio-card" :class="{ active: form.organization_type === t.id }" @click="form.organization_type = t.id">
+                                {{ t.label }}
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="label">Nom de l'organisation {{ form.organization_type === 'individual' ? '(optionnel)' : '*' }}</label>
+                            <input type="text" v-model="form.organization_name" class="input" placeholder="Ex: Gasik'Art Association">
+                            <span v-if="errors.organization_name" class="error-msg">{{ errors.organization_name }}</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="label">Description*</label>
+                            <textarea v-model="form.organization_description" class="input" rows="3" placeholder="Décrivez votre activité..."></textarea>
+                            <span v-if="errors.organization_description" class="error-msg">{{ errors.organization_description }}</span>
+                        </div>
+
+                        <div class="label" style="margin-bottom: 12px;">Réseaux sociaux</div>
+                        <div class="grid">
+                            <div class="form-group">
+                                <input type="text" v-model="form.social_facebook" class="input" placeholder="Facebook">
+                            </div>
+                            <div class="form-group">
+                                <input type="text" v-model="form.social_instagram" class="input" placeholder="Instagram">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Events -->
+                    <div v-if="currentStep === 3">
+                        <label class="label">Types d'événements*</label>
+                        <div class="grid" style="margin-bottom: 20px;">
+                            <div v-for="t in eventTypesList" :key="t.id">
+                                <label class="checkbox-group">
+                                    <input type="checkbox" v-model="form.event_types" :value="t.id">
+                                    <div class="checkbox-custom"><v-icon v-if="form.event_types.includes(t.id)" size="14" color="white">mdi-check</v-icon></div>
+                                    <span style="font-weight: 700; font-size: 0.9rem;">{{ t.label }}</span>
+                                </label>
+                            </div>
+                        </div>
+                        <span v-if="errors.event_types" class="error-msg" style="margin-bottom: 20px; display: block;">{{ errors.event_types }}</span>
+
+                        <div style="background: #f5f5f5; padding: 20px; border: 2px dashed #1a1a1a; margin-bottom: 20px;">
+                            <h3 style="font-size: 0.9rem; margin-bottom: 15px;">Premier événement prévu</h3>
+                            <div class="form-group">
+                                <label class="label">Nom de l'événement</label>
+                                <input type="text" v-model="form.first_event_name" class="input" placeholder="Ex: Concert Night">
+                            </div>
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label class="label">Date (approx.)</label>
+                                    <input type="text" v-model="form.first_event_date" class="input" placeholder="MM/AAAA">
+                                </div>
+                                <div class="form-group">
+                                    <label class="label">Capacité (est.)</label>
+                                    <input type="number" v-model.number="form.first_event_capacity" class="input" placeholder="500">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Finalize -->
+                    <div v-if="currentStep === 4">
+                        <label class="label">Mode de paiement préféré*</label>
+                        <div class="radio-grid">
+                            <div class="radio-card" :class="{ active: form.preferred_payment === 'mobile_money' }" @click="form.preferred_payment = 'mobile_money'">Mobile Money</div>
+                            <div class="radio-card" :class="{ active: form.preferred_payment === 'bank_transfer' }" @click="form.preferred_payment = 'bank_transfer'">Virement</div>
+                            <div class="radio-card" :class="{ active: form.preferred_payment === 'both' }" @click="form.preferred_payment = 'both'">Les deux</div>
+                        </div>
+
+                        <div class="form-group" v-if="form.preferred_payment !== 'bank_transfer'">
+                            <label class="label">Numéro Mobile Money*</label>
+                            <input type="text" v-model="form.mobile_money_number" class="input" placeholder="034 XX XXX XX">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="label">Pièce d'identité (CIN/Passport/NIF)*</label>
+                            <div class="grid">
+                                <select v-model="form.id_document_type" class="input">
+                                    <option value="cin">CIN</option>
+                                    <option value="passport">Passeport</option>
+                                    <option value="nif">NIF</option>
+                                </select>
+                                <input type="text" v-model="form.id_document_number" class="input" placeholder="Numéro du document">
+                            </div>
+                            <span v-if="errors.id_document_number" class="error-msg">{{ errors.id_document_number }}</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="label">Pourquoi voulez-vous utiliser TicketMada?*</label>
+                            <textarea v-model="form.motivation" class="input" rows="3" placeholder="Votre motivation..."></textarea>
+                            <span v-if="errors.motivation" class="error-msg">{{ errors.motivation }}</span>
+                        </div>
+
+                        <label class="checkbox-group" style="margin-top: 30px;">
+                            <input type="checkbox" v-model="form.accepts_terms">
+                            <div class="checkbox-custom"><v-icon v-if="form.accepts_terms" size="14" color="white">mdi-check</v-icon></div>
+                            <span style="font-weight: 700; font-size: 0.85rem;">J'accepte les conditions d'utilisation et la commission de 3%</span>
+                        </label>
+                        <span v-if="errors.accepts_terms" class="error-msg">{{ errors.accepts_terms }}</span>
+                    </div>
+
+                    <div style="display: flex; gap: 15px; margin-top: 40px;">
+                        <button v-if="currentStep > 1" @click="currentStep--" class="btn btn-secondary" style="flex: 1;">Précédent</button>
+                        <button v-if="currentStep < totalSteps" @click="nextStep" class="btn btn-coral" style="flex: 2;">Suivant</button>
+                        <button v-if="currentStep === totalSteps" @click="submitApplication" :disabled="isSubmitting" class="btn btn-coral" style="flex: 2;">
+                            <span v-if="isSubmitting">Envoi en cours...</span>
+                            <span v-else>Soumettre ma candidature</span>
+                        </button>
+                    </div>
+                    
+                    <div v-if="submitError" class="error-msg" style="text-align: center; margin-top: 15px;">{{ submitError }}</div>
+                </div>
+            </div>
+
+            <div v-else class="form-card neobrutal-border neobrutal-shadow success-card">
+                <div class="success-icon">✓</div>
+                <h2 style="font-size: 2rem; margin-bottom: 15px;">Candidature envoyée !</h2>
+                <p style="font-weight: 600; line-height: 1.7; margin-bottom: 30px; color: var(--text-light);">
+                    Votre demande a été transmise à l'équipe TicketMada.<br>
+                    Vous recevrez un email de confirmation sous 24 à 48h.
+                </p>
+                <div style="background: var(--bg-cream); border: 3px dashed var(--border-dark); padding: 20px; margin-bottom: 40px;">
+                    <div style="font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; color: var(--accent-coral);">DEMANDE #ORG-{{ applicationId }}</div>
+                </div>
+                <div class="grid">
+                    <a href="ticketmada-landing.html" class="btn btn-secondary">Accueil</a>
+                    <a href="ticketmada-ticketing.html" class="btn btn-coral">Explorer</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api-client.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    currentStep: 1,
+                    totalSteps: 4,
+                    isLoggedIn: false,
+                    user: null,
+                    isSubmitting: false,
+                    isSubmitted: false,
+                    applicationId: null,
+                    submitError: '',
+                    stepTitles: ['Informations personnelles', 'Votre organisation', 'Vos événements', 'Paiement & ID'],
+                    form: {
+                        full_name: '',
+                        email: '',
+                        phone: '',
+                        city: '',
+                        organization_type: 'individual',
+                        organization_name: '',
+                        organization_description: '',
+                        website: '',
+                        social_facebook: '',
+                        social_instagram: '',
+                        social_tiktok: '',
+                        event_types: [],
+                        first_event_name: '',
+                        first_event_date: '',
+                        first_event_venue: '',
+                        first_event_capacity: null,
+                        expected_events_per_year: '1-2',
+                        preferred_payment: 'mobile_money',
+                        mobile_money_number: '',
+                        bank_name: '',
+                        id_document_type: 'cin',
+                        id_document_number: '',
+                        motivation: '',
+                        how_found_us: '',
+                        accepts_terms: false
+                    },
+                    errors: {},
+                    cities: ['Antananarivo', 'Toamasina', 'Antsirabe', 'Mahajanga', 'Fianarantsoa', 'Toliara', 'Antsiranana', 'Autre'],
+                    orgTypes: [
+                        { id: 'individual', label: 'Individu' },
+                        { id: 'association', label: 'Association' },
+                        { id: 'company', label: 'Entreprise' },
+                        { id: 'government', label: 'Institution' },
+                        { id: 'other', label: 'Autre' }
+                    ],
+                    eventTypesList: [
+                        { id: 'concerts', label: 'Concerts' },
+                        { id: 'festivals', label: 'Festivals' },
+                        { id: 'sports', label: 'Sports' },
+                        { id: 'theatre', label: 'Théâtre' },
+                        { id: 'exhibitions', label: 'Expositions' },
+                        { id: 'conferences', label: 'Conférences' },
+                        { id: 'other', label: 'Autre' }
+                    ]
+                }
+            },
+            async mounted() {
+                this.user = window.api ? window.api.getUser() : null;
+                if (!this.user) {
+                    window.location.href = 'ticketmada-landing.html?login=1&redirect=' + encodeURIComponent(window.location.pathname);
+                    return;
+                }
+                this.isLoggedIn = true;
+                this.form.email = this.user.email;
+                this.form.full_name = this.user.name;
+                
+                // Check if already applied
+                try {
+                    const app = await window.api.get('/my-application');
+                    if (app && app.status === 'pending') {
+                        this.isSubmitted = true;
+                        this.applicationId = app.id;
+                    } else if (app && app.status === 'approved') {
+                        window.location.href = '../Admin/ticketmada-dashboard.html';
+                    }
+                } catch(e) {}
+            },
+            methods: {
+                validateStep(step) {
+                    this.errors = {};
+                    if (step === 1) {
+                        if (!this.form.full_name) this.errors.full_name = 'Nom complet requis';
+                        if (!this.form.phone) this.errors.phone = 'Téléphone requis';
+                        else if (!/^(0|\+261)3[2-48]/.test(this.form.phone)) this.errors.phone = 'Format téléphone invalide';
+                        if (!this.form.city) this.errors.city = 'Ville requise';
+                    }
+                    if (step === 2) {
+                        if (this.form.organization_type !== 'individual' && !this.form.organization_name) this.errors.organization_name = 'Nom d\'organisation requis';
+                        if (!this.form.organization_description || this.form.organization_description.length < 10) this.errors.organization_description = 'Description trop courte';
+                    }
+                    if (step === 3) {
+                        if (this.form.event_types.length === 0) this.errors.event_types = 'Sélectionnez au moins un type';
+                    }
+                    if (step === 4) {
+                        if (!this.form.id_document_number) this.errors.id_document_number = 'Numéro requis';
+                        if (!this.form.motivation || this.form.motivation.length < 20) this.errors.motivation = 'Expliquez davantage votre motivation';
+                    }
+                    return Object.keys(this.errors).length === 0;
+                },
+                nextStep() {
+                    if (this.validateStep(this.currentStep)) {
+                        this.currentStep++;
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                },
+                async submitApplication() {
+                    if (!this.validateStep(4)) return;
+                    if (!this.form.accepts_terms) {
+                        this.errors.accepts_terms = 'Vous devez accepter les conditions';
+                        return;
+                    }
+                    
+                    this.isSubmitting = true;
+                    this.submitError = '';
+                    try {
+                        const res = await window.api.post('/organizer-applications', this.form);
+                        if (res.error) {
+                            this.submitError = res.error;
+                        } else {
+                            this.isSubmitted = true;
+                            this.applicationId = res.application_id;
+                        }
+                    } catch (e) {
+                        this.submitError = 'Une erreur est survenue';
+                    } finally {
+                        this.isSubmitting = false;
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

@@ -410,22 +410,27 @@
                             </div>
                             <div class="section">
                                 <div class="section-header"><div class="section-title"><v-icon size="small">mdi-qrcode</v-icon> Liens par événement</div></div>
-                                <div v-for="e in scanEvents" :key="e.id" style="padding:16px 20px;border-bottom:2px dashed #eee;">
+                                <div v-for="e in myEvents" :key="e.id" style="padding:16px 20px;border-bottom:2px dashed #eee;">
                                     <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px;">
                                         <div style="width:44px;height:44px;background:linear-gradient(135deg,var(--accent-coral),var(--accent-yellow));border:2px solid #1a1a1a;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">{{ e.emoji || '🎫' }}</div>
                                         <div style="flex:1;"><div style="font-family:'Syne',sans-serif;font-weight:700;">{{ e.name }}</div><div style="font-size:0.75rem;color:var(--text-light);">{{ e.date }} · {{ e.venue }}</div></div>
                                         <div style="display:flex;gap:6px;">
-                                            <button class="btn btn-sm btn-secondary" @click="copyScanLink(e)"><v-icon size="x-small">mdi-content-copy</v-icon> Copier</button>
-                                            <button class="btn btn-sm btn-primary" @click="showQRCode(e)"><v-icon size="x-small">mdi-qrcode</v-icon> QR</button>
+                                            <button class="btn btn-sm btn-primary" @click="createScanLink(e.id)"><v-icon size="x-small">mdi-plus</v-icon> Générer lien</button>
                                         </div>
                                     </div>
-                                    <div style="background:#f5f5f5;border:2px solid #ddd;padding:10px 14px;border-radius:6px;font-family:monospace;font-size:0.75rem;word-break:break-all;cursor:pointer;position:relative;" @click="copyScanLink(e)">
-                                        {{ e.scanLink }}
-                                        <span v-if="e.linkCopied" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:#00D9A5;color:white;padding:2px 8px;border-radius:4px;font-size:0.7rem;font-family:'DM Sans',sans-serif;">Copié !</span>
+                                    <div v-for="link in scanLinksList.filter(l => l.event_id === e.id)" :key="link.token" style="margin-top:10px;padding-left:60px;">
+                                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;">
+                                            <span style="font-size:0.8rem;font-weight:700;color:var(--accent-coral);"># {{ link.label }}</span>
+                                            <button class="action-btn" @click="copyScanLink(link)" style="width:24px;height:24px;"><v-icon size="x-small">mdi-content-copy</v-icon></button>
+                                            <button class="action-btn" @click="showQRCode(link)" style="width:24px;height:24px;"><v-icon size="x-small">mdi-qrcode</v-icon></button>
+                                        </div>
+                                        <div style="background:#f5f5f5;border:1px solid #ddd;padding:6px 10px;border-radius:4px;font-family:monospace;font-size:0.7rem;word-break:break-all;position:relative;">
+                                            {{ link.scanLink }}
+                                            <span v-if="link.linkCopied" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:#00D9A5;color:white;padding:2px 8px;border-radius:4px;font-size:0.6rem;">Copié !</span>
+                                        </div>
                                     </div>
                                     <div style="display:flex;gap:16px;margin-top:8px;font-size:0.75rem;color:var(--text-light);">
                                         <span><v-icon size="x-small">mdi-ticket</v-icon> {{ e.ticketsSold || 0 }} billets vendus</span>
-                                        <span><v-icon size="x-small">mdi-cellphone</v-icon> {{ (scanDevices.filter(d => d.eventId === e.id) || []).length }} appareil(s) connecté(s)</span>
                                     </div>
                                 </div>
                                 <div v-if="!scanEvents.length" style="padding:40px;text-align:center;color:var(--text-light);">Aucun événement actif.</div>
@@ -734,6 +739,7 @@
                     myRevenue: 0, myTicketsSold: 0, scanRate: 0, scannedTickets: 0, pendingTickets: 0, refundedTickets: 0,
                     availableBalance: 0, pendingBalance: 0, monthRevenue: 0, totalRevenue: 0, paidOut: 0,
                     myEvents: [], myTickets: [], myPayouts: [], teamMembers: [],
+                    scanLinksList: [], scanArrivals: [], scanDevices: [],
                     newEvent: { name: '', date_start: '', date_end: '', venue: '', category: 'concerts', capacity: '', description: '', seatChoice: 'free', seatmapPlan: '' },
                     // Seat map editor
                     seatmapEvent: '',
@@ -760,8 +766,6 @@
                     scanTab: 'links',
                     scanFilterEvent: '',
                     deviceFilterEvent: '',
-                    scanArrivals: [],
-                    scanDevices: [],
                     // Seatmap
                     seatmapEditing: false,
                     seatmapPlanName: '',
@@ -785,10 +789,7 @@
                     return total;
                 },
                 scanEvents() {
-                    return this.myEvents.filter(e => e.status === 'active' || e.status === 'pending').map(e => {
-                        const hash = btoa(e.id + '-' + (e.name || '').replace(/\s/g, '') + '-' + Date.now().toString(36)).replace(/=/g, '').slice(0, 24);
-                        return { ...e, scanLink: window.location.origin + '/scan/' + hash, linkCopied: false };
-                    });
+                    return this.scanLinksList;
                 },
                 scanStats() {
                     const total = this.myEvents.reduce((s, e) => s + (e.ticketsSold || 0), 0);
@@ -870,8 +871,49 @@
                             const members = team.members || team;
                             this.teamMembers = (Array.isArray(members) ? members : []).map(m => ({ id: m.id, name: m.user_name || m.name, email: m.user_email || m.email, initials: (m.user_name || m.name || 'XX').split(' ').map(w=>w[0]).join('').toUpperCase(), role: m.role === 'admin' ? 'active' : 'pending', roleLabel: m.role_label || m.role, events: m.events_access || 'Tous', lastAccess: m.last_access || 'N/A' }));
                         }
-                        this.generateScanArrivals();
+                        this.refreshScannerData();
                     } catch(e) { console.log('API not available'); }
+                },
+                async refreshScannerData() {
+                    try {
+                        const links = await window.api.get('/scan-links');
+                        if (links && !links.error) {
+                            this.scanLinksList = links.map(l => ({
+                                ...l,
+                                name: l.event_name,
+                                date: new Date(l.created_at).toLocaleDateString(),
+                                venue: 'Multi-site',
+                                scanLink: `${window.location.origin}/User/ticketmada-scanner.html?token=${l.token}`,
+                                linkCopied: false
+                            }));
+                        }
+                        const devices = await window.api.get('/scan-devices');
+                        if (devices && !devices.error) {
+                            this.scanDevices = devices.map(d => ({
+                                id: d.id, name: d.device_name, browser: d.browser, os: d.os, ip: d.ip_address,
+                                scanCount: d.scan_count, blocked: d.is_blocked === 1, blockReason: d.block_reason,
+                                blockedAt: d.blocked_at, eventId: d.event_id, eventName: d.event_name,
+                                lastActivity: new Date(d.last_activity).toLocaleTimeString()
+                            }));
+                        }
+                        const logs = await window.api.get('/scan-logs');
+                        if (logs && !logs.error) {
+                            const zones = { VIP: '#FF6B4A', Premium: '#FECA57', Standard: '#4A90FF', 'Économique': '#00D9A5' };
+                            this.scanArrivals = logs.map(l => ({
+                                id: l.id,
+                                time: new Date(l.scanned_at).toLocaleTimeString(),
+                                name: l.buyer_name || 'Inconnu',
+                                event: l.event_name,
+                                zone: l.zone || 'Standard',
+                                zoneColor: zones[l.zone] || '#4A90FF',
+                                seat: l.seat || '-',
+                                price: l.price || 0,
+                                scannedBy: l.device_name || 'Système',
+                                rejected: l.status !== 'valid',
+                                rejectReason: l.reject_reason
+                            }));
+                        }
+                    } catch(e) { console.error('Error refreshing scanner data', e); }
                 },
                 async createEvent() {
                     const result = await window.api.post('/events', this.newEvent);
@@ -892,20 +934,36 @@
                 showQRCode(event) {
                     alert('📱 QR Code - ' + event.name + '\n\nLien sécurisé:\n' + event.scanLink + '\n\n✅ Ouvrez ce lien sur un smartphone\n📷 La caméra s\'ouvrira automatiquement\n🔒 Seuls les QR de cet événement seront reconnus\n\n⚠️ QR déjà scanné → alerte orange avec heure\n❌ QR invalide → erreur rouge\n✅ QR valide → pop-up vert avec infos client');
                 },
-                renameDevice(device) {
+                async renameDevice(device) {
                     const newName = prompt('Renommer l\'appareil:', device.name);
-                    if (newName && newName.trim()) { device.name = newName.trim(); }
+                    if (newName && newName.trim()) {
+                        const result = await window.api.put(`/scan-devices/${device.id}/rename`, { name: newName.trim() });
+                        if (!result.error) { device.name = newName.trim(); }
+                    }
                 },
-                toggleBlockDevice(device) {
+                async toggleBlockDevice(device) {
                     if (device.blocked) {
-                        device.blocked = false;
-                        device.blockReason = '';
-                        device.blockedAt = '';
+                        const result = await window.api.put(`/scan-devices/${device.id}/unblock`);
+                        if (!result.error) {
+                            device.blocked = false;
+                            device.blockReason = '';
+                            device.blockedAt = '';
+                        }
                     } else {
                         const reason = prompt('Raison du blocage (optionnel):', '');
-                        device.blocked = true;
-                        device.blockReason = reason || 'Bloqué manuellement';
-                        device.blockedAt = new Date().toLocaleDateString('fr-FR') + ' ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+                        const result = await window.api.put(`/scan-devices/${device.id}/block`, { reason: reason || 'Bloqué manuellement' });
+                        if (!result.error) {
+                            device.blocked = true;
+                            device.blockReason = reason || 'Bloqué manuellement';
+                            device.blockedAt = new Date().toLocaleString();
+                        }
+                    }
+                },
+                async createScanLink(eventId) {
+                    const label = prompt('Nom du lien (ex: Entrée Nord):', 'Lien de scan');
+                    if (label) {
+                        const result = await window.api.post('/scan-links', { event_id: eventId, label });
+                        if (!result.error) { this.refreshScannerData(); }
                     }
                 },
                 generateScanArrivals() {
@@ -1062,8 +1120,14 @@
                 if (window.ProfileMenu) window.ProfileMenu.injectStyles();
                 this.loadSeatmapTemplates();
                 this.initSeatmapGrid();
-                // Generate sample arrivals if we have events
-                if (this.myEvents.length) this.generateScanArrivals();
+                
+                // Real-time refresh of scan arrivals
+                setInterval(() => {
+                    if (this.currentPage === 'scan' && this.scanTab === 'live') {
+                        this.refreshScannerData();
+                    }
+                }, 10000);
+
                 document.addEventListener('mouseup', () => { this.seatmapDragging = false; });
             }
         });

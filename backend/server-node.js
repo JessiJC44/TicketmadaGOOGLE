@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const nodemailer = require('nodemailer');
 
 const PORT = process.env.PORT || 3000;
 const PROJECT_ROOT = path.join(__dirname, '..');
@@ -16,6 +17,131 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const FB_CLIENT_ID = process.env.FB_CLIENT_ID || '';
 const FB_CLIENT_SECRET = process.env.FB_CLIENT_SECRET || '';
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
+
+// Email transporter configuration
+const emailTransporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'sedrayiokoraz@gmail.com',
+        pass: process.env.GMAIL_APP_PASSWORD
+    }
+});
+
+async function sendOrganizerApplicationEmail(applicationId, formData, user) {
+    const eventTypes = JSON.parse(formData.event_types || '[]').join(', ');
+    const socialMedia = formData.social_facebook || formData.social_instagram || formData.social_tiktok || 'Non renseigné';
+    const reviewUrl = `${APP_URL}/Admin/ticketmada-superadmin.html?page=applications&id=${applicationId}`;
+    
+    const htmlContent = `
+    <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #FFF8F0; border: 3px solid #1a1a1a; box-shadow: 6px 6px 0 #1a1a1a;">
+        <div style="background: #FF6B4A; padding: 24px; border-bottom: 3px solid #1a1a1a;">
+            <h1 style="color: white; font-size: 22px; margin: 0;">🎫 TicketMada</h1>
+            <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 6px 0 0;">Nouvelle demande d'organisateur</p>
+        </div>
+        <div style="padding: 24px;">
+            <p style="font-size: 16px; color: #1a1a1a; margin-bottom: 20px;">
+                Bonjour Sedra,<br><br>
+                <strong>${formData.full_name}</strong> souhaite devenir organisateur sur TicketMada.
+            </p>
+            <div style="background: white; border: 2px solid #1a1a1a; padding: 16px; margin-bottom: 16px;">
+                <h3 style="margin: 0 0 12px; font-size: 14px; color: #FF6B4A; text-transform: uppercase; letter-spacing: 1px;">👤 Informations personnelles</h3>
+                <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
+                    <tr><td style="padding: 4px 0; color: #666; width: 140px;">Nom complet</td><td style="padding: 4px 0; font-weight: 600;">${formData.full_name}</td></tr>
+                    <tr><td style="padding: 4px 0; color: #666;">Email</td><td style="padding: 4px 0;">${user.email}</td></tr>
+                    <tr><td style="padding: 4px 0; color: #666;">Téléphone</td><td style="padding: 4px 0;">${formData.phone}</td></tr>
+                    <tr><td style="padding: 4px 0; color: #666;">Ville</td><td style="padding: 4px 0;">${formData.city}</td></tr>
+                </table>
+            </div>
+            <div style="background: white; border: 2px solid #1a1a1a; padding: 16px; margin-bottom: 16px;">
+                <h3 style="margin: 0 0 12px; font-size: 14px; color: #FF6B4A; text-transform: uppercase; letter-spacing: 1px;">🏢 Organisation</h3>
+                <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
+                    <tr><td style="padding: 4px 0; color: #666; width: 140px;">Type</td><td style="padding: 4px 0; font-weight: 600;">${formData.organization_type}</td></tr>
+                    ${formData.organization_name ? `<tr><td style="padding: 4px 0; color: #666;">Nom</td><td style="padding: 4px 0;">${formData.organization_name}</td></tr>` : ''}
+                    ${formData.website ? `<tr><td style="padding: 4px 0; color: #666;">Site web</td><td style="padding: 4px 0;">${formData.website}</td></tr>` : ''}
+                    <tr><td style="padding: 4px 0; color: #666;">Réseaux sociaux</td><td style="padding: 4px 0;">${socialMedia}</td></tr>
+                </table>
+            </div>
+            <div style="background: white; border: 2px solid #1a1a1a; padding: 16px; margin-bottom: 16px; border-left: 10px solid #2e7d32;">
+                <h3 style="margin: 0 0 12px; font-size: 14px; color: #2e7d32; text-transform: uppercase; letter-spacing: 1px;">🎫 Événements prévus</h3>
+                <p style="font-size: 14px; margin: 0 0 10px;"><strong>Types:</strong> ${eventTypes}</p>
+                ${formData.first_event_name ? `<p style="font-size: 14px; margin: 0;"><strong>Prochain:</strong> ${formData.first_event_name} (${formData.first_event_date || '?'})</p>` : ''}
+            </div>
+            <div style="background: white; border: 2px solid #1a1a1a; padding: 16px; margin-bottom: 24px;">
+                <h3 style="margin: 0 0 12px; font-size: 14px; color: #FF6B4A; text-transform: uppercase; letter-spacing: 1px;">💬 Motivation</h3>
+                <p style="font-size: 14px; line-height: 1.6; font-style: italic;">"${formData.motivation}"</p>
+            </div>
+            <div style="text-align: center;">
+                <a href="${reviewUrl}" style="display: inline-block; background: #FF6B4A; color: white; padding: 14px 32px; text-decoration: none; font-weight: 700; border: 3px solid #1a1a1a; box-shadow: 4px 4px 0 #1a1a1a;">
+                    👀 Voir la demande complète
+                </a>
+            </div>
+        </div>
+    </div>`;
+    
+    try {
+        await emailTransporter.sendMail({
+            from: '"TicketMada" <sedrayiokoraz@gmail.com>',
+            to: 'sedrayiokoraz@gmail.com',
+            subject: `🎫 [TicketMada] Nouvelle demande organisateur — ${formData.full_name}`,
+            html: htmlContent
+        });
+    } catch (err) { console.error('❌ Email error:', err.message); }
+}
+
+async function sendApprovalEmail(application) {
+    const dashboardUrl = `${APP_URL}/Admin/ticketmada-dashboard.html`;
+    const htmlContent = `
+    <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #FFF8F0; border: 3px solid #1a1a1a;">
+        <div style="background: #00D9A5; padding: 24px; border-bottom: 3px solid #1a1a1a;">
+            <h1 style="color: white; font-size: 22px; margin: 0;">🎫 TicketMada</h1>
+            <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 6px 0 0;">Demande approuvée !</p>
+        </div>
+        <div style="padding: 24px;">
+            <h2 style="color: #2e7d32; margin-bottom: 16px;">✅ Félicitations ${application.full_name} !</h2>
+            <p style="font-size: 15px; line-height: 1.7; color: #333;">
+                Votre demande pour devenir organisateur sur TicketMada a été <strong>approuvée</strong> !
+            </p>
+            <div style="text-align: center; margin-top: 24px;">
+                <a href="${dashboardUrl}" style="display: inline-block; background: #FF6B4A; color: white; padding: 14px 32px; text-decoration: none; font-weight: 700; border: 3px solid #1a1a1a; box-shadow: 4px 4px 0 #1a1a1a;">
+                    🎪 Accéder à mon dashboard
+                </a>
+            </div>
+        </div>
+    </div>`;
+    
+    try {
+        await emailTransporter.sendMail({
+            from: '"TicketMada" <sedrayiokoraz@gmail.com>',
+            to: application.email,
+            subject: `✅ [TicketMada] Votre demande d'organisateur a été approuvée !`,
+            html: htmlContent
+        });
+    } catch (err) { console.error('❌ Email error:', err.message); }
+}
+
+async function sendRejectionEmail(application, reason) {
+    const htmlContent = `
+    <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #FFF8F0; border: 3px solid #1a1a1a;">
+        <div style="background: #FF6B4A; padding: 24px; border-bottom: 3px solid #1a1a1a;">
+            <h1 style="color: white; font-size: 22px; margin: 0;">🎫 TicketMada</h1>
+        </div>
+        <div style="padding: 24px;">
+            <p style="font-size: 15px; line-height: 1.7; color: #333;">Bonjour ${application.full_name},</p>
+            <p style="font-size: 15px; line-height: 1.7; color: #333;">Après examen de votre demande, nous ne sommes pas en mesure de l'approuver pour le moment.</p>
+            ${reason ? `<div style="background: #fff3e0; border: 2px solid #ff9800; padding: 16px; margin: 20px 0;"><p style="margin: 0; font-size: 14px; color: #333;">Raison : ${reason}</p></div>` : ''}
+            <p style="font-size: 15px; line-height: 1.7; color: #333;">Vous pouvez soumettre une nouvelle demande plus tard.</p>
+        </div>
+    </div>`;
+    
+    try {
+        await emailTransporter.sendMail({
+            from: '"TicketMada" <sedrayiokoraz@gmail.com>',
+            to: application.email,
+            subject: `[TicketMada] Mise à jour de votre demande d'organisateur`,
+            html: htmlContent
+        });
+    } catch (err) { console.error('❌ Email error:', err.message); }
+}
 
 // Ensure data directory exists
 if (!fs.existsSync(path.join(PROJECT_ROOT, 'data'))) {
@@ -139,6 +265,86 @@ function initDB() {
             token TEXT UNIQUE NOT NULL,
             expires_at DATETIME NOT NULL,
             created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+        CREATE TABLE scan_links (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            token TEXT UNIQUE NOT NULL,
+            event_id INTEGER NOT NULL,
+            organizer_id INTEGER NOT NULL,
+            label TEXT DEFAULT 'Lien de scan',
+            is_active INTEGER DEFAULT 1,
+            expires_at DATETIME,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (event_id) REFERENCES events(id),
+            FOREIGN KEY (organizer_id) REFERENCES users(id)
+        );
+        CREATE TABLE scan_devices (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            scan_link_id INTEGER NOT NULL,
+            event_id INTEGER NOT NULL,
+            device_fingerprint TEXT NOT NULL,
+            device_name TEXT DEFAULT 'Appareil inconnu',
+            browser TEXT,
+            os TEXT,
+            device_model TEXT,
+            ip_address TEXT,
+            is_blocked INTEGER DEFAULT 0,
+            block_reason TEXT,
+            blocked_at DATETIME,
+            scan_count INTEGER DEFAULT 0,
+            last_activity DATETIME DEFAULT (datetime('now')),
+            first_connected DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (scan_link_id) REFERENCES scan_links(id),
+            FOREIGN KEY (event_id) REFERENCES events(id)
+        );
+        CREATE TABLE scan_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id INTEGER,
+            event_id INTEGER NOT NULL,
+            ticket_code TEXT,
+            status TEXT NOT NULL,
+            reject_reason TEXT,
+            buyer_name TEXT,
+            zone TEXT,
+            seat TEXT,
+            price REAL,
+            scanned_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (device_id) REFERENCES scan_devices(id),
+            FOREIGN KEY (event_id) REFERENCES events(id)
+        );
+        CREATE TABLE IF NOT EXISTS organizer_applications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            full_name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            city TEXT NOT NULL,
+            organization_name TEXT,
+            organization_type TEXT NOT NULL,
+            organization_description TEXT,
+            website TEXT,
+            social_media TEXT,
+            event_types TEXT NOT NULL,
+            first_event_name TEXT,
+            first_event_date TEXT,
+            first_event_venue TEXT,
+            first_event_capacity INTEGER,
+            expected_events_per_year INTEGER,
+            preferred_payment TEXT NOT NULL,
+            mobile_money_number TEXT,
+            bank_name TEXT,
+            id_document_type TEXT,
+            id_document_number TEXT,
+            motivation TEXT,
+            how_found_us TEXT,
+            status TEXT NOT NULL DEFAULT 'pending',
+            reject_reason TEXT,
+            reviewed_by INTEGER,
+            reviewed_at DATETIME,
+            created_at DATETIME DEFAULT (datetime('now')),
+            ip_address TEXT,
+            user_agent TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
     `);
@@ -270,6 +476,93 @@ function sendError(res, msg, code = 400) {
 
 // ============ ROUTE HANDLERS ============
 
+async function handleOrganizerApplications(req, res, parts) {
+    const id = parts[2] && !isNaN(parts[2]) ? parseInt(parts[2]) : null;
+    const action = parts[3];
+
+    if (req.method === 'POST' && parts[1] === 'organizer-applications') {
+        const user = requireAuth(req);
+        if (!user) return sendError(res, 'Vous devez être connecté', 401);
+        const existing = db.prepare('SELECT id FROM organizer_applications WHERE user_id = ? AND status = ?').get(user.id, 'pending');
+        if (existing) return sendError(res, 'Vous avez déjà une demande en cours');
+        if (user.role === 'organizer') return sendError(res, 'Vous êtes déjà organisateur');
+        
+        const body = await parseBody(req);
+        if (!body.full_name || !body.phone || !body.city || !body.organization_type || !body.event_types || !body.id_document_number || !body.motivation) {
+            return sendError(res, 'Champs requis manquants');
+        }
+        
+        const result = db.prepare(`
+            INSERT INTO organizer_applications (
+                user_id, full_name, email, phone, city,
+                organization_name, organization_type, organization_description, website, social_media,
+                event_types, first_event_name, first_event_date, first_event_venue, first_event_capacity, expected_events_per_year,
+                preferred_payment, mobile_money_number, bank_name,
+                id_document_type, id_document_number,
+                motivation, how_found_us, ip_address, user_agent
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        `).run(
+            user.id, body.full_name, user.email, body.phone, body.city,
+            body.organization_name || null, body.organization_type, body.organization_description || null, body.website || null,
+            JSON.stringify({ facebook: body.social_facebook, instagram: body.social_instagram, tiktok: body.social_tiktok }),
+            JSON.stringify(body.event_types), body.first_event_name || null, body.first_event_date || null, body.first_event_venue || null, body.first_event_capacity || null, body.expected_events_per_year || null,
+            body.preferred_payment, body.mobile_money_number || null, body.bank_name || null,
+            body.id_document_type || 'cin', body.id_document_number,
+            body.motivation, body.how_found_us || null,
+            req.socket.remoteAddress, req.headers['user-agent']
+        );
+        
+        await sendOrganizerApplicationEmail(result.lastInsertRowid, body, user);
+        return sendJSON(res, { success: true, application_id: result.lastInsertRowid }, 201);
+    }
+
+    if (req.method === 'GET' && parts[1] === 'organizer-applications' && !id) {
+        const user = requireAuth(req, ['superadmin']);
+        if (!user) return sendError(res, 'Accès réservé au SuperAdmin', 403);
+        const apps = db.prepare('SELECT * FROM organizer_applications ORDER BY created_at DESC').all();
+        return sendJSON(res, apps);
+    }
+
+    if (req.method === 'GET' && id && parts[1] === 'organizer-applications') {
+        const user = requireAuth(req, ['superadmin']);
+        if (!user) return sendError(res, 'Accès réservé au SuperAdmin', 403);
+        const app = db.prepare('SELECT * FROM organizer_applications WHERE id = ?').get(id);
+        if (!app) return sendError(res, 'Demande non trouvée', 404);
+        return sendJSON(res, app);
+    }
+
+    if (req.method === 'PUT' && id && action === 'approve') {
+        const user = requireAuth(req, ['superadmin']);
+        if (!user) return sendError(res, 'Accès réservé au SuperAdmin', 403);
+        const app = db.prepare('SELECT * FROM organizer_applications WHERE id = ?').get(id);
+        if (!app || app.status !== 'pending') return sendError(res, 'Demande invalide');
+        db.prepare(`UPDATE organizer_applications SET status = 'approved', reviewed_by = ?, reviewed_at = datetime('now') WHERE id = ?`).run(user.id, id);
+        db.prepare(`UPDATE users SET role = 'organizer', plan = 'starter' WHERE id = ?`).run(app.user_id);
+        await sendApprovalEmail(app);
+        return sendJSON(res, { success: true });
+    }
+
+    if (req.method === 'PUT' && id && action === 'reject') {
+        const user = requireAuth(req, ['superadmin']);
+        if (!user) return sendError(res, 'Accès réservé au SuperAdmin', 403);
+        const app = db.prepare('SELECT * FROM organizer_applications WHERE id = ?').get(id);
+        if (!app || app.status !== 'pending') return sendError(res, 'Demande invalide');
+        const body = await parseBody(req);
+        db.prepare(`UPDATE organizer_applications SET status = 'rejected', reject_reason = ?, reviewed_by = ?, reviewed_at = datetime('now') WHERE id = ?`).run(body.reason, user.id, id);
+        await sendRejectionEmail(app, body.reason);
+        return sendJSON(res, { success: true });
+    }
+
+    if (parts[1] === 'my-application' && req.method === 'GET') {
+        const user = requireAuth(req);
+        if (!user) return sendError(res, 'Non authentifié', 401);
+        const app = db.prepare('SELECT * FROM organizer_applications WHERE user_id = ? ORDER BY id DESC LIMIT 1').get(user.id);
+        return sendJSON(res, app || {});
+    }
+
+    sendError(res, 'Route application non trouvée', 404);
+}
+
 // AUTH
 async function handleAuth(req, res, parts) {
     const action = parts[2];
@@ -281,7 +574,7 @@ async function handleAuth(req, res, parts) {
         if (existing) return sendError(res, 'Cet email est déjà utilisé');
         const hash = hashPassword(body.password);
         const initials = (body.name[0] + (body.name.split(' ').pop()?.[0] || body.name[1] || '')).toUpperCase();
-        const result = db.prepare('INSERT INTO users (name, email, password_hash, role, avatar_initials, status) VALUES (?,?,?,?,?,?)').run(body.name, body.email, hash, body.role || 'buyer', initials, 'active');
+        const result = db.prepare('INSERT INTO users (name, email, password_hash, role, avatar_initials, status) VALUES (?,?,?,?,?,?)').run(body.name, body.email, hash, 'buyer', initials, 'active');
         const token = generateToken();
         const expires = new Date(Date.now() + TOKEN_EXPIRY_MS).toISOString().replace('T', ' ').split('.')[0];
         db.prepare('INSERT INTO sessions (user_id, token, expires_at) VALUES (?,?,?)').run(result.lastInsertRowid, token, expires);
@@ -600,14 +893,71 @@ async function handleTickets(req, res, parts) {
     }
 
     if (action === 'scan' && req.method === 'PUT' && id) {
-        const user = requireAuth(req, ['organizer', 'admin', 'superadmin']);
-        if (!user) return sendError(res, 'Non autorisé', 403);
-        const ticket = db.prepare('SELECT * FROM tickets WHERE id = ? OR id_code = ?').get(id, String(id));
-        if (!ticket) return sendError(res, 'Billet non trouvé', 404);
-        if (ticket.status === 'scanned') return sendError(res, 'Déjà scanné');
+        const auth = req.headers['authorization'] || '';
+        const token = auth.replace('Bearer ', '');
+        let user = getUser(token);
+        let device = null;
+        
+        // Allow scanner page auth via X-Scan-Token
+        const scanTokenHeader = req.headers['x-scan-token'];
+        const deviceIdHeader = req.headers['x-device-id'];
+        
+        if (!user && scanTokenHeader) {
+            const scanLink = db.prepare('SELECT * FROM scan_links WHERE token = ? AND is_active = 1').get(scanTokenHeader);
+            if (scanLink) {
+                // Verified via scan link. We need to check if device is registered.
+                device = db.prepare('SELECT * FROM scan_devices WHERE scan_link_id = ? AND id = ?').get(scanLink.id, deviceIdHeader);
+                if (device && device.is_blocked) return sendError(res, 'Appareil bloqué', 403);
+            }
+        }
+        
+        if (!user && !device) return sendError(res, 'Non autorisé', 403);
+
+        const ticket = db.prepare('SELECT t.*, e.name as event_name, u.name as buyer_name FROM tickets t LEFT JOIN events e ON t.event_id = e.id LEFT JOIN users u ON t.buyer_id = u.id WHERE t.id = ? OR t.id_code = ?').get(id, String(id));
+        if (!ticket) {
+            if (device) {
+                db.prepare('INSERT INTO scan_logs (device_id, event_id, status, reject_reason, ticket_code) VALUES (?,?,?,?,?)').run(device.id, device.event_id, 'invalid', 'Billet non trouvé', String(id));
+            }
+            return sendError(res, 'Billet non trouvé', 404);
+        }
+        
+        if (device && ticket.event_id !== device.event_id) {
+            db.prepare('INSERT INTO scan_logs (device_id, event_id, status, reject_reason, ticket_code) VALUES (?,?,?,?,?)').run(device.id, device.event_id, 'invalid', 'Mauvais événement', ticket.id_code);
+            return sendError(res, 'Ce billet appartient à un autre événement', 403);
+        }
+
+        if (ticket.status === 'scanned') {
+            const firstScan = db.prepare('SELECT sl.*, sd.device_name FROM scan_logs sl LEFT JOIN scan_devices sd ON sl.device_id = sd.id WHERE sl.ticket_code = ? AND sl.status = "valid" ORDER BY sl.scanned_at ASC').get(ticket.id_code);
+            if (device) {
+                db.prepare('INSERT INTO scan_logs (device_id, event_id, status, reject_reason, ticket_code, buyer_name) VALUES (?,?,?,?,?,?)').run(device.id, ticket.event_id, 'already_scanned', 'Déjà scanné', ticket.id_code, ticket.buyer_name);
+            }
+            return sendJSON(res, { 
+                status: 'already_scanned', 
+                ticket_code: ticket.id_code, 
+                buyer_name: ticket.buyer_name,
+                first_scanned_at: ticket.scanned_at,
+                scanned_by: firstScan ? firstScan.device_name : 'Staff'
+            }, 400);
+        }
+
         if (ticket.status !== 'active') return sendError(res, 'Billet non valide');
+        
         db.prepare(`UPDATE tickets SET status = 'scanned', scanned_at = datetime('now') WHERE id = ?`).run(ticket.id);
-        return sendJSON(res, { message: 'Billet scanné', ticket_code: ticket.id_code });
+        
+        if (device) {
+            db.prepare('INSERT INTO scan_logs (device_id, event_id, status, ticket_code, buyer_name, zone, price) VALUES (?,?,?,?,?,?,?)').run(device.id, ticket.event_id, 'valid', ticket.id_code, ticket.buyer_name, ticket.type, ticket.price);
+            db.prepare('UPDATE scan_devices SET scan_count = scan_count + 1, last_activity = datetime("now") WHERE id = ?').run(device.id);
+        }
+        
+        return sendJSON(res, { 
+            status: 'valid',
+            message: 'Billet scanné', 
+            ticket_code: ticket.id_code,
+            buyer_name: ticket.buyer_name,
+            zone: ticket.type,
+            price: ticket.price,
+            event_name: ticket.event_name
+        });
     }
 
     if ((action === 'stats' || parts[2] === 'stats') && req.method === 'GET') {
@@ -883,6 +1233,97 @@ async function handleAnalytics(req, res, parts) {
     sendError(res, 'Route analytics non trouvée', 404);
 }
 
+// SCANNER
+async function handleScanner(req, res, parts) {
+    const action = parts[2];
+
+    // GET /api/scan-links/:token/validate
+    if (parts[3] === 'validate' && req.method === 'GET') {
+        const token = parts[2];
+        const scanLink = db.prepare('SELECT sl.*, e.name as event_name, e.date_start, e.venue FROM scan_links sl JOIN events e ON sl.event_id = e.id WHERE sl.token = ? AND sl.is_active = 1').get(token);
+        if (!scanLink) return sendError(res, 'Lien invalide ou expiré', 404);
+        
+        // Register device if not exists
+        const fingerprint = req.headers['x-device-fingerprint'] || 'unknown';
+        const deviceInfo = JSON.parse(req.headers['x-device-info'] || '{}');
+        
+        let device = db.prepare('SELECT * FROM scan_devices WHERE scan_link_id = ? AND device_fingerprint = ?').get(scanLink.id, fingerprint);
+        if (!device) {
+            const r = db.prepare('INSERT INTO scan_devices (scan_link_id, event_id, device_fingerprint, device_name, browser, os, device_model, ip_address) VALUES (?,?,?,?,?,?,?,?)').run(
+                scanLink.id, scanLink.event_id, fingerprint, deviceInfo.deviceName || 'Appareil ' + Math.random().toString(36).substr(2,4).toUpperCase(),
+                deviceInfo.browser, deviceInfo.os, deviceInfo.deviceModel, req.socket.remoteAddress
+            );
+            device = db.prepare('SELECT * FROM scan_devices WHERE id = ?').get(r.lastInsertRowid);
+        } else {
+            db.prepare('UPDATE scan_devices SET last_activity = datetime("now"), ip_address = ? WHERE id = ?').run(req.socket.remoteAddress, device.id);
+        }
+
+        if (device.is_blocked) return sendJSON(res, { valid: false, blocked: true, error: 'Votre appareil a été bloqué par l\'organisateur' });
+
+        return sendJSON(res, {
+            valid: true,
+            event: { id: scanLink.event_id, name: scanLink.event_name, date: scanLink.date_start, venue: scanLink.venue },
+            device_id: device.id,
+            device_name: device.device_name
+        });
+    }
+
+    // AUTH REQUIRED BELOW
+    const user = requireAuth(req, ['organizer', 'admin', 'superadmin']);
+    if (!user) return sendError(res, 'Non autorisé', 403);
+
+    if (parts[1] === 'scan-links') {
+        if (req.method === 'GET') {
+            const links = db.prepare('SELECT sl.*, e.name as event_name, (SELECT COUNT(*) FROM scan_devices WHERE scan_link_id = sl.id) as devicesCount, (SELECT COUNT(*) FROM scan_logs WHERE event_id = sl.event_id) as totalScans FROM scan_links sl JOIN events e ON sl.event_id = e.id WHERE sl.organizer_id = ?').all(user.id);
+            return sendJSON(res, links);
+        }
+        if (req.method === 'POST') {
+            const body = await parseBody(req);
+            const token = 'sL_' + crypto.randomBytes(16).toString('hex');
+            const r = db.prepare('INSERT INTO scan_links (token, event_id, organizer_id, label, expires_at) VALUES (?,?,?,?,?)').run(token, body.event_id, user.id, body.label || 'Lien de scan', body.expires_at || null);
+            const link = db.prepare('SELECT * FROM scan_links WHERE id = ?').get(r.lastInsertRowid);
+            return sendJSON(res, { ...link, link: `${APP_URL}/User/ticketmada-scanner.html?token=${token}` }, 201);
+        }
+        if (req.method === 'DELETE' && parts[2]) {
+            db.prepare('UPDATE scan_links SET is_active = 0 WHERE token = ? AND organizer_id = ?').run(parts[2], user.id);
+            return sendJSON(res, { message: 'Lien révoqué' });
+        }
+    }
+
+    if (parts[1] === 'scan-devices') {
+        if (req.method === 'GET') {
+            const devices = db.prepare('SELECT sd.*, e.name as event_name FROM scan_devices sd JOIN events e ON sd.event_id = e.id WHERE e.organizer_id = ?').all(user.id);
+            return sendJSON(res, devices);
+        }
+        if (parts[2] && parts[3] === 'rename' && req.method === 'PUT') {
+            const body = await parseBody(req);
+            db.prepare('UPDATE scan_devices SET device_name = ? WHERE id = ?').run(body.name, parts[2]);
+            return sendJSON(res, { message: 'Appareil renommé' });
+        }
+        if (parts[2] && parts[3] === 'block' && req.method === 'PUT') {
+            const body = await parseBody(req);
+            db.prepare('UPDATE scan_devices SET is_blocked = 1, block_reason = ?, blocked_at = datetime("now") WHERE id = ?').run(body.reason || 'Bloqué manuellement', parts[2]);
+            return sendJSON(res, { message: 'Appareil bloqué' });
+        }
+        if (parts[2] && parts[3] === 'unblock' && req.method === 'PUT') {
+            db.prepare('UPDATE scan_devices SET is_blocked = 0, block_reason = NULL, blocked_at = NULL WHERE id = ?').run(parts[2]);
+            return sendJSON(res, { message: 'Appareil débloqué' });
+        }
+    }
+
+    if (parts[1] === 'scan-logs' && req.method === 'GET') {
+        const url = new URL(req.url, 'http://localhost');
+        const eventId = url.searchParams.get('event_id');
+        let where = 'e.organizer_id = ?', params = [user.id];
+        if (eventId) { where += ' AND sl.event_id = ?'; params.push(eventId); }
+        const limit = parseInt(url.searchParams.get('limit') || '100');
+        const logs = db.prepare(`SELECT sl.*, sd.device_name, e.name as event_name FROM scan_logs sl LEFT JOIN scan_devices sd ON sl.device_id = sd.id JOIN events e ON sl.event_id = e.id WHERE ${where} ORDER BY sl.scanned_at DESC LIMIT ?`).all(...params, limit);
+        return sendJSON(res, logs);
+    }
+
+    sendError(res, 'Route non trouvée', 404);
+}
+
 // ACTIVITY
 async function handleActivity(req, res, parts) {
     if (req.method !== 'GET') return sendError(res, 'Méthode non autorisée', 405);
@@ -962,6 +1403,11 @@ const server = http.createServer(async (req, res) => {
                 case 'team': return await handleTeam(req, res, parts);
                 case 'analytics': return await handleAnalytics(req, res, parts);
                 case 'activity': return await handleActivity(req, res, parts);
+                case 'organizer-applications':
+                case 'my-application': return await handleOrganizerApplications(req, res, parts);
+                case 'scan-links':
+                case 'scan-devices':
+                case 'scan-logs': return await handleScanner(req, res, parts);
                 default: return sendError(res, 'Route non trouvée', 404);
             }
         } catch (err) {
@@ -992,6 +1438,7 @@ server.listen(PORT, '0.0.0.0', () => {
     console.log(`   Organizer:  http://localhost:${PORT}/User/ticketmada-organisateur.html`);
     console.log(`   Ticketing:  http://localhost:${PORT}/User/ticketmada-ticketing.html`);
     console.log(`   Dashboard:  http://localhost:${PORT}/Admin/ticketmada-dashboard.html`);
+    console.log(`   Scanner:    http://localhost:${PORT}/User/ticketmada-scanner.html`);
     console.log(`   SuperAdmin: http://localhost:${PORT}/Admin/ticketmada-superadmin.html`);
     console.log(`\n   Default login: superadmin@ticketmada.mg / password123`);
     console.log(`   Organizer:    contact@donia.mg / password123\n`);
