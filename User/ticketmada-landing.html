@@ -379,6 +379,41 @@
                 </div>
             </div>
         </section>
+
+        <!-- Suggestions Carousel -->
+        <section class="suggestions" style="padding: 60px 24px; background: #f4f4f4; border-top: 3px solid #1a1a1a;">
+            <div style="max-width: 1200px; margin: 0 auto;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; gap: 20px;">
+                    <div>
+                        <h2 style="font-family: 'Syne'; font-weight: 800; font-size: 2rem; margin-bottom: 5px;">{{ lang === 'fr' ? 'Événements à découvrir' : 'Discover Events' }}</h2>
+                        <p style="color: #666;">{{ lang === 'fr' ? 'Le meilleur de Madagascar, rien que pour vous.' : 'The best of Madagascar, just for you.' }}</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="brutal-btn" @click="scrollCarousel(-1)" style="padding: 10px 15px; background: white;">←</button>
+                        <button class="brutal-btn" @click="scrollCarousel(1)" style="padding: 10px 15px; background: white;">→</button>
+                    </div>
+                </div>
+
+                <div id="landing-carousel" style="display: flex; gap: 20px; overflow-x: auto; scroll-behavior: smooth; padding: 10px 10px 30px 0; -ms-overflow-style: none; scrollbar-width: none;">
+                    <div v-for="event in events" :key="event.id" class="event-card brutal-card" style="min-width: 300px; flex-shrink: 0; cursor: pointer; background: white;" @click="goToEvent(event.id)">
+                        <div class="card-image" :style="'background-image: url(' + (event.image || event.image_url) + '); height: 180px; background-size: cover; background-position: center; position: relative; border-bottom: 3px solid #1a1a1a;'">
+                            <span v-if="event.badgeKey === 'popular' || event.hot" style="position: absolute; top: 12px; right: 12px; background: var(--ticket-coral); color: white; border: 2px solid #1a1a1a; padding: 4px 10px; font-weight: 800; font-size: 0.7rem; font-family: 'Syne';">🔥 POPULAIRE</span>
+                        </div>
+                        <div style="padding: 20px;">
+                            <h3 style="font-family: 'Syne'; font-weight: 700; font-size: 1.2rem; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ event.title || event.name }}</h3>
+                            <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; color: #666; margin-bottom: 15px;">
+                                <span>📅 {{ event.date || formatDate(event.date_start) }}</span>
+                                <span>📍 {{ event.location || event.venue }}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 800; color: #1a1a1a;">{{ formatPrice(event.price || 20000) }}</span>
+                                <span class="brutal-btn brutal-btn-small" style="font-size: 0.7rem;">RÉSERVER</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
         
         <footer class="footer">
             <div class="footer-inner">
@@ -522,6 +557,10 @@
                     }
                 },
                 goToEvent(id) { window.location.href = 'ticketmada-event.html?id=' + id; },
+                scrollCarousel(dir) {
+                    const el = document.getElementById('landing-carousel');
+                    if (el) el.scrollBy({ left: dir * 320, behavior: 'smooth' });
+                },
                 async fetchSuggestions() {
                     if (this.searchQuery.length < 2) { this.suggestions = []; return; }
                     try {
@@ -531,27 +570,32 @@
                 },
                 toggleLang() { this.lang = this.lang === 'fr' ? 'en' : 'fr'; localStorage.setItem('ticketmada-lang', this.lang); document.documentElement.lang = this.lang; },
                 openAuth(mode) { this.authMode = mode; this.showAuth = true; },
-                loginWith(provider) {
-                    const vm = this;
-                    window.api.get('/auth/url?provider=' + provider).then(res => {
-                        if (res.url) {
-                            const authWindow = window.open(res.url, 'oauth_popup', 'width=600,height=700');
-                            if (!authWindow) {
-                                alert('Veuillez autoriser les fenêtres surgissantes pour vous connecter.');
-                            }
+                async loginWith(provider) {
+                    if (provider !== 'google') {
+                        // Keep mock for others if not implemented
+                        if (window.api.useMock && window.OAuthSim) {
+                            window.OAuthSim.show(provider, (name, email) => {
+                                const user = { name, email, role: 'user' };
+                                window.api.setAuth('mock-token', user);
+                                this.isLoggedIn = true;
+                                this.showAuth = false;
+                            });
                         }
-                    }).catch(e => console.error('OAuth error', e));
-
-                    // Listen for message from popup
-                    const handleMessage = (event) => {
-                        if (event.data?.type === 'TICKETMADA_AUTH_SUCCESS') {
-                            window.api.setAuth(event.data.token, event.data.user);
-                            vm.isLoggedIn = true;
-                            vm.showAuth = false;
-                            window.removeEventListener('message', handleMessage);
+                        return;
+                    }
+                    
+                    // Real Google Auth
+                    try {
+                        const result = await window.api.loginWithGoogle();
+                        if (result.success) {
+                            this.isLoggedIn = true;
+                            this.showAuth = false;
+                        } else {
+                            alert('Erreur de connexion Google: ' + (result.error || 'Inconnue'));
                         }
-                    };
-                    window.addEventListener('message', handleMessage);
+                    } catch (e) {
+                        console.error('Google Auth error', e);
+                    }
                 },
                 async handleAuth() {
                     try {

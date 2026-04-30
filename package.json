@@ -8,12 +8,15 @@
     "start": "node backend/server-node.js",
     "dev": "node backend/server-node.js",
     "build": "echo 'No build step required'",
-    "lint": "echo 'No lint step required'"
+    "lint": "eslint ."
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^11.0.0"
   },
   "author": "TicketMada",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@firebase/eslint-plugin-security-rules": "^0.0.2"
+  }
 }

@@ -27,6 +27,7 @@ const TicketMadaAPI = (() => {
             tickets_sold: 12500,
             status: "active",
             organizer: "Live Nation Madagascar",
+            hot: true,
             zones: [
                 { id: "pit", name: "Fosse", code: "PIT", color: "#9B59B6", price: 60000, capacity: 500, rows: 4, seatsPerRow: 15 },
                 { id: "vip", name: "VIP", code: "VIP", color: "#FF6B4A", price: 150000, capacity: 1000, rows: 5, seatsPerRow: 20 },
@@ -39,7 +40,7 @@ const TicketMadaAPI = (() => {
             id: 2,
             name: "Festival Donia 2026",
             artist: "Artistes Multiples",
-            description: "Le plus grand festival de musique de l'Océan Indien revient à Nosy Be ! 3 jours de musique, danse et culture malgache.",
+            description: "Le plus grand festival de msuique de l'Océan Indien revient à Nosy Be ! 3 jours de musique, danse et culture malgache.",
             emoji: "🎪",
             category: "festival",
             date_start: "2026-07-20",
@@ -51,6 +52,7 @@ const TicketMadaAPI = (() => {
             tickets_sold: 14000,
             status: "active",
             organizer: "Donia Events",
+            hot: true,
             zones: [
                 { id: "pit", name: "Fosse", code: "PIT", color: "#9B59B6", price: 80000, capacity: 1000, rows: 5, seatsPerRow: 20 },
                 { id: "vip", name: "VIP", code: "VIP", color: "#FF6B4A", price: 200000, capacity: 2000, rows: 6, seatsPerRow: 22 },
@@ -98,6 +100,7 @@ const TicketMadaAPI = (() => {
             tickets_sold: 3800,
             status: "active",
             organizer: "MadaMusic Production",
+            hot: true,
             zones: [
                 { id: "pit", name: "Fosse", code: "PIT", color: "#9B59B6", price: 50000, capacity: 300, rows: 3, seatsPerRow: 12 },
                 { id: "vip", name: "VIP", code: "VIP", color: "#FF6B4A", price: 100000, capacity: 500, rows: 4, seatsPerRow: 18 },
@@ -107,142 +110,264 @@ const TicketMadaAPI = (() => {
             ]
         },
         {
-            id: 5,
-            name: "Stand-Up Comedy Night — Mahery",
-            artist: "Mahery",
-            description: "Le roi du stand-up malgache dans un one-man-show déjanté. Rires garantis pendant 2h !",
-            emoji: "😂",
-            category: "humour",
-            date_start: "2026-06-01",
-            time: "20:00",
-            venue: "Théâtre de Verdure",
-            city: "Antananarivo",
-            image_url: "https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=800",
-            capacity: 2000,
-            tickets_sold: 1700,
-            status: "active",
-            organizer: "Haha Production",
-            zones: [
-                { id: "vip", name: "VIP", code: "VIP", color: "#FF6B4A", price: 80000, capacity: 200, rows: 3, seatsPerRow: 14 },
-                { id: "premium", name: "Premium", code: "PREM", color: "#FECA57", price: 50000, capacity: 500, rows: 5, seatsPerRow: 18 },
-                { id: "standard", name: "Standard", code: "STD", color: "#4A90FF", price: 25000, capacity: 800, rows: 7, seatsPerRow: 22 },
-                { id: "eco", name: "Économique", code: "ECO", color: "#00D9A5", price: 10000, capacity: 500, rows: 5, seatsPerRow: 20 }
-            ]
-        },
-        {
-            id: 6,
-            name: "Tournoi Basketball — Coupe de Madagascar",
-            artist: "Équipes Nationales",
-            description: "La grande finale de la Coupe de Madagascar de basketball. Ambiance de folie au palais des sports !",
-            emoji: "🏀",
-            category: "sports",
-            date_start: "2026-09-12",
+            id: 11,
+            name: "Bodo — 35 Ans de Scène",
+            artist: "Bodo",
+            description: "La diva de Madagascar fête ses 35 ans de carrière avec un spectacle grandiose à Mahamasina. Une soirée inoubliable avec tous ses plus grands succès.",
+            emoji: "👗",
+            category: "concerts",
+            date_start: "2026-05-10",
             time: "15:00",
-            venue: "Palais des Sports Mahamasina",
+            venue: "Palais des Sports",
             city: "Antananarivo",
-            image_url: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800",
-            capacity: 8000,
-            tickets_sold: 5500,
+            image_url: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=800",
+            capacity: 6000,
+            tickets_sold: 4500,
             status: "active",
-            organizer: "Fédération Malgache de Basketball",
+            organizer: "Bodo Prods",
+            hot: true,
             zones: [
-                { id: "vip", name: "VIP Courtside", code: "VIP", color: "#FF6B4A", price: 100000, capacity: 500, rows: 3, seatsPerRow: 16 },
-                { id: "premium", name: "Tribune Premium", code: "PREM", color: "#FECA57", price: 50000, capacity: 1500, rows: 6, seatsPerRow: 22 },
-                { id: "standard", name: "Tribune Standard", code: "STD", color: "#4A90FF", price: 25000, capacity: 3000, rows: 10, seatsPerRow: 28 },
-                { id: "eco", name: "Tribune Populaire", code: "ECO", color: "#00D9A5", price: 10000, capacity: 3000, rows: 10, seatsPerRow: 30 }
+                { id: "vip", name: "VIP Platinum", code: "VIP", color: "#FF6B4A", price: 150000, capacity: 200, rows: 3, seatsPerRow: 15 },
+                { id: "premium", name: "Loge Premium", code: "PREM", color: "#FECA57", price: 80000, capacity: 800, rows: 6, seatsPerRow: 20 },
+                { id: "standard", name: "Tribune Standard", code: "STD", color: "#4A90FF", price: 40000, capacity: 2000, rows: 10, seatsPerRow: 25 },
+                { id: "eco", name: "Tribune Populaire", code: "ECO", color: "#00D9A5", price: 15000, capacity: 3000, rows: 12, seatsPerRow: 30 }
             ]
         },
         {
-            id: 7,
-            name: "Théâtre — Ny Ainga (Le Souffle)",
-            artist: "Compagnie Miangaly",
-            description: "Pièce de théâtre contemporain en malgache et français. Une œuvre poétique sur l'identité et la diaspora.",
+            id: 12,
+            name: "AmbondronA — Rock 2026",
+            artist: "AmbondronA",
+            description: "Le groupe de rock numéro 1 de Madagascar revient avec un nouveau show spectaculaire. Préparez-vous à vibrer !",
+            emoji: "🤘",
+            category: "concerts",
+            date_start: "2026-09-05",
+            time: "18:00",
+            venue: "Coliseum Antsonjombe",
+            city: "Antananarivo",
+            image_url: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800",
+            capacity: 50000,
+            tickets_sold: 35000,
+            status: "active",
+            organizer: "Rock Prod",
+            hot: true,
+            zones: [
+                { id: "pit", name: "Fosse Fan", code: "PIT", color: "#9B59B6", price: 50000, capacity: 5000, rows: 15, seatsPerRow: 50 },
+                { id: "standard", name: "Tribune", code: "STD", color: "#4A90FF", price: 20000, capacity: 25000, rows: 30, seatsPerRow: 100 },
+                { id: "eco", name: "Pelouse", code: "ECO", color: "#00D9A5", price: 10000, capacity: 20000, rows: 20, seatsPerRow: 120 }
+            ]
+        },
+        {
+            id: 13,
+            name: "Rim-Ka @ Palais des Sports",
+            artist: "Rim-Ka",
+            description: "La sensation du rap gasy en concert exceptionnel. Une énergie brute et des textes qui parlent à la jeunesse.",
+            emoji: "🧢",
+            category: "concerts",
+            date_start: "2026-06-25",
+            time: "19:00",
+            venue: "Palais des Sports",
+            city: "Antananarivo",
+            image_url: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800",
+            capacity: 6500,
+            tickets_sold: 5800,
+            status: "active",
+            organizer: "Gasy Pop",
+            hot: true,
+            zones: [
+                { id: "pit", name: "Mosh Pit", code: "PIT", color: "#9B59B6", price: 40000, capacity: 1000, rows: 10, seatsPerRow: 20 },
+                { id: "standard", name: "Gradins", code: "STD", color: "#4A90FF", price: 20000, capacity: 3500, rows: 15, seatsPerRow: 35 },
+                { id: "eco", name: "Populaire", code: "ECO", color: "#00D9A5", price: 10000, capacity: 2000, rows: 12, seatsPerRow: 30 }
+            ]
+        },
+        {
+            id: 14,
+            name: "Mage 4 — Metal Symphonique",
+            artist: "Mage 4",
+            description: "Les pionniers du metal malgache dans un spectacle fusionnant rock et orchestre symphonique. Une première à Madagascar.",
+            emoji: "🎻",
+            category: "concerts",
+            date_start: "2026-11-15",
+            time: "19:30",
+            venue: "Palais des Sports",
+            city: "Antananarivo",
+            image_url: "https://images.unsplash.com/photo-1514320298324-41d40810167d?w=800",
+            capacity: 6000,
+            tickets_sold: 3200,
+            status: "active",
+            organizer: "MetalMada",
+            zones: [
+                { id: "vip", name: "VIP Loge", code: "VIP", color: "#FF6B4A", price: 100000, capacity: 300, rows: 4, seatsPerRow: 12 },
+                { id: "premium", name: "Tribune Premium", code: "PREM", color: "#FECA57", price: 60000, capacity: 1200, rows: 8, seatsPerRow: 20 },
+                { id: "standard", name: "Tribune", code: "STD", color: "#4A90FF", price: 30000, capacity: 4500, rows: 15, seatsPerRow: 30 }
+            ]
+        },
+        {
+            id: 15,
+            name: "R’Abel & Marion — Love Session",
+            artist: "R’Abel & Marion",
+            description: "La soirée romantique de l'année. Les deux plus belles voix du RnB malgache partagent la scène.",
+            emoji: "❤️",
+            category: "concerts",
+            date_start: "2026-02-14",
+            time: "20:00",
+            venue: "Carlton",
+            city: "Antananarivo",
+            image_url: "https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=800",
+            capacity: 1200,
+            tickets_sold: 1150,
+            status: "active",
+            organizer: "Romantic Mada",
+            zones: [
+                { id: "vip", name: "Table Couple VIP", code: "VIP", color: "#FF6B4A", price: 250000, capacity: 200, rows: 5, seatsPerRow: 8 },
+                { id: "standard", name: "Chaise Individuelle", code: "STD", color: "#4A90FF", price: 100000, capacity: 1000, rows: 15, seatsPerRow: 15 }
+            ]
+        },
+        {
+            id: 16,
+            name: "Jazz@Toa — Festival 2026",
+            artist: "Multiples",
+            description: "Le jazz s'installe à Tamatave. 5 jours de concerts, workshops et jam sessions sous les palmiers.",
+            emoji: "🎷",
+            category: "festival",
+            date_start: "2026-04-12",
+            time: "17:00",
+            venue: "Place Bien Aimé",
+            city: "Toamasina",
+            image_url: "https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=800",
+            capacity: 5000,
+            tickets_sold: 2800,
+            status: "active",
+            organizer: "Jazz Mada",
+            zones: [
+                { id: "vip", name: "Pass 5 Jours VIP", code: "VIP", color: "#FF6B4A", price: 200000, capacity: 500, rows: 0, seatsPerRow: 0 },
+                { id: "standard", name: "Pass Journee", code: "STD", color: "#4A90FF", price: 50000, capacity: 4500, rows: 0, seatsPerRow: 0 }
+            ]
+        },
+        {
+            id: 17,
+            name: "Shyn & Denise — Kings of Reunion",
+            artist: "Shyn & Denise",
+            description: "Le couple royal de la musique malgache moderne revient pour un show explosif. Un mélange de roots, RnB et pop.",
+            emoji: "👑",
+            category: "concerts",
+            date_start: "2026-10-18",
+            time: "16:00",
+            venue: "Stade Mahamasina",
+            city: "Antananarivo",
+            image_url: "https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=800",
+            capacity: 25000,
+            tickets_sold: 18000,
+            status: "active",
+            organizer: "Makua",
+            hot: true,
+            zones: [
+                { id: "pit", name: "Fosse Or", code: "PIT", color: "#9B59B6", price: 70000, capacity: 2000, rows: 10, seatsPerRow: 40 },
+                { id: "standard", name: "Tribune", code: "STD", color: "#4A90FF", price: 30000, capacity: 15000, rows: 20, seatsPerRow: 80 },
+                { id: "eco", name: "Pelouse", code: "ECO", color: "#00D9A5", price: 15000, capacity: 8000, rows: 15, seatsPerRow: 100 }
+            ]
+        },
+        {
+            id: 18,
+            name: "Théâtre — Compagnie Akory",
+            artist: "Akory",
+            description: "Une pièce drôle et touchante sur la vie quotidienne à Madagascar. Succès critique garanti.",
             emoji: "🎭",
             category: "theatre",
-            date_start: "2026-05-20",
-            time: "19:30",
-            venue: "IFM Analakely",
+            date_start: "2026-03-22",
+            time: "15:00",
+            venue: "AFT",
             city: "Antananarivo",
-            image_url: "https://images.unsplash.com/photo-1503095396549-807759245b35?w=800",
+            image_url: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=800",
             capacity: 500,
-            tickets_sold: 380,
+            tickets_sold: 420,
             status: "active",
-            organizer: "Compagnie Miangaly",
+            organizer: "Akory Theatre",
             zones: [
-                { id: "vip", name: "Orchestre", code: "VIP", color: "#FF6B4A", price: 60000, capacity: 80, rows: 3, seatsPerRow: 10 },
-                { id: "premium", name: "Balcon", code: "PREM", color: "#FECA57", price: 40000, capacity: 150, rows: 4, seatsPerRow: 14 },
-                { id: "standard", name: "Mezzanine", code: "STD", color: "#4A90FF", price: 20000, capacity: 170, rows: 5, seatsPerRow: 16 },
-                { id: "eco", name: "Galerie", code: "ECO", color: "#00D9A5", price: 10000, capacity: 100, rows: 4, seatsPerRow: 12 }
+                { id: "standard", name: "Entrée Unique", code: "STD", color: "#4A90FF", price: 15000, capacity: 500, rows: 10, seatsPerRow: 50 }
             ]
         },
         {
-            id: 8,
-            name: "DJ Rolly — Beach Party Toamasina",
-            artist: "DJ Rolly",
-            description: "La plus grande beach party de la côte Est ! Electro, tropical house et hits malgaches au bord de l'océan.",
-            emoji: "🏖️",
-            category: "festival",
-            date_start: "2026-07-14",
-            time: "17:00",
-            venue: "Plage du Bord",
-            city: "Toamasina",
-            image_url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800",
-            capacity: 3000,
-            tickets_sold: 2100,
-            status: "active",
-            organizer: "East Coast Events",
-            zones: [
-                { id: "vip", name: "VIP Lounge", code: "VIP", color: "#FF6B4A", price: 120000, capacity: 200, rows: 3, seatsPerRow: 12 },
-                { id: "premium", name: "Front Stage", code: "PREM", color: "#FECA57", price: 60000, capacity: 600, rows: 5, seatsPerRow: 18 },
-                { id: "standard", name: "General", code: "STD", color: "#4A90FF", price: 30000, capacity: 1200, rows: 8, seatsPerRow: 24 },
-                { id: "eco", name: "Back Beach", code: "ECO", color: "#00D9A5", price: 15000, capacity: 1000, rows: 7, seatsPerRow: 22 }
-            ]
-        },
-        {
-            id: 9,
-            name: "Conférence TEDx Antananarivo",
-            artist: "Speakers Multiples",
-            description: "TEDx revient à Tana avec 12 speakers inspirants. Thème : 'Mitsangana — Se relever'. Innovation, culture et vision.",
-            emoji: "💡",
-            category: "conference",
-            date_start: "2026-10-05",
-            time: "09:00",
-            venue: "Carlton Madagascar",
-            city: "Antananarivo",
-            image_url: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
-            capacity: 1200,
-            tickets_sold: 900,
-            status: "active",
-            organizer: "TEDx Antananarivo",
-            zones: [
-                { id: "vip", name: "VIP", code: "VIP", color: "#FF6B4A", price: 200000, capacity: 100, rows: 3, seatsPerRow: 12 },
-                { id: "premium", name: "Premium", code: "PREM", color: "#FECA57", price: 100000, capacity: 300, rows: 5, seatsPerRow: 18 },
-                { id: "standard", name: "Standard", code: "STD", color: "#4A90FF", price: 50000, capacity: 500, rows: 7, seatsPerRow: 22 },
-                { id: "eco", name: "Étudiant", code: "ECO", color: "#00D9A5", price: 20000, capacity: 300, rows: 5, seatsPerRow: 18 }
-            ]
-        },
-        {
-            id: 10,
-            name: "Jaojoby & Régis Gizavo Tribute",
-            artist: "Jaojoby",
-            description: "Le roi du Salegy rend hommage à Régis Gizavo dans un concert mémorable. Musique traditionnelle et world music.",
-            emoji: "🪘",
+            id: 19,
+            name: "Rossy — Tapany lalan-kaleha",
+            artist: "Rossy",
+            description: "Le ministre du Salegy dans un concert fleuve reprenant 40 ans de carrière politique et musicale.",
+            emoji: "🎪",
             category: "concerts",
-            date_start: "2026-08-22",
-            time: "19:00",
-            venue: "Kianja Barea",
-            city: "Mahajanga",
-            image_url: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800",
-            capacity: 10000,
-            tickets_sold: 7800,
+            date_start: "2026-12-20",
+            time: "14:00",
+            venue: "Antsonjombe",
+            city: "Antananarivo",
+            image_url: "https://images.unsplash.com/photo-1549490349-8643362247b5?w=800",
+            capacity: 60000,
+            tickets_sold: 42000,
             status: "active",
-            organizer: "Salegy Production",
+            organizer: "ProRossy",
+            hot: true,
             zones: [
-                { id: "pit", name: "Fosse", code: "PIT", color: "#9B59B6", price: 50000, capacity: 600, rows: 4, seatsPerRow: 15 },
-                { id: "vip", name: "VIP", code: "VIP", color: "#FF6B4A", price: 120000, capacity: 800, rows: 4, seatsPerRow: 18 },
-                { id: "premium", name: "Premium", code: "PREM", color: "#FECA57", price: 70000, capacity: 2000, rows: 8, seatsPerRow: 24 },
-                { id: "standard", name: "Standard", code: "STD", color: "#4A90FF", price: 35000, capacity: 3000, rows: 10, seatsPerRow: 28 },
-                { id: "eco", name: "Économique", code: "ECO", color: "#00D9A5", price: 15000, capacity: 3600, rows: 10, seatsPerRow: 32 }
+                { id: "standard", name: "Tribune", code: "STD", color: "#4A90FF", price: 10000, capacity: 40000, rows: 30, seatsPerRow: 100 },
+                { id: "eco", name: "Pelouse", code: "ECO", color: "#00D9A5", price: 5000, capacity: 20000, rows: 20, seatsPerRow: 150 }
+            ]
+        },
+        {
+            id: 20,
+            name: "Haintso-haintso 2026",
+            artist: "Multiples",
+            description: "La grande foire de la culture malgache. Artisanat, gastronomie et concerts gratuits avec les billets d'entrée.",
+            emoji: "👜",
+            category: "exhibition",
+            date_start: "2026-08-10",
+            time: "09:00",
+            venue: "Forello Expo",
+            city: "Antananarivo",
+            image_url: "https://images.unsplash.com/photo-1531058020387-3be344556be6?w=800",
+            capacity: 10000,
+            tickets_sold: 3500,
+            status: "active",
+            organizer: "EventMada",
+            zones: [
+                { id: "standard", name: "Ticket Salon", code: "STD", color: "#4A90FF", price: 5000, capacity: 10000, rows: 0, seatsPerRow: 0 }
+            ]
+        },
+        {
+            id: 21,
+            name: "Roots Reggae Festival",
+            artist: "Multiples",
+            description: "Le rassemblement reggae de l'année à Antsirabe. Vibes positives et musique engagée.",
+            emoji: "🇯🇲",
+            category: "festival",
+            date_start: "2026-09-24",
+            time: "10:00",
+            venue: "Stade Velodrome",
+            city: "Antsirabe",
+            image_url: "https://images.unsplash.com/photo-1514320298324-41d40810167d?w=800",
+            capacity: 8000,
+            tickets_sold: 4000,
+            status: "active",
+            organizer: "Roots Mada",
+            zones: [
+                { id: "standard", name: "Entrée Unique", code: "STD", color: "#4A90FF", price: 15000, capacity: 8000, rows: 0, seatsPerRow: 0 }
+            ]
+        },
+        {
+            id: 22,
+            name: "Loko Beach Party",
+            artist: "DJ Mada",
+            description: "La fête des couleurs sur la plage. House music et poudres colorées toute la nuit.",
+            emoji: "🌈",
+            category: "festival",
+            date_start: "2026-07-28",
+            time: "22:00",
+            venue: "Libanona",
+            city: "Fort-Dauphin",
+            image_url: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800",
+            capacity: 3000,
+            tickets_sold: 2500,
+            status: "active",
+            organizer: "South Prod",
+            hot: true,
+            zones: [
+                { id: "vip", name: "VIP Beach", code: "VIP", color: "#FF6B4A", price: 100000, capacity: 500, rows: 0, seatsPerRow: 0 },
+                { id: "standard", name: "General", code: "STD", color: "#4A90FF", price: 30000, capacity: 2500, rows: 0, seatsPerRow: 0 }
             ]
         }
     ];
@@ -415,87 +540,34 @@ const TicketMadaAPI = (() => {
 
         async _checkBackend() {
             try {
-                const res = await fetch((window.TICKETMADA_CONFIG?.API_BASE || '') + '/api/health', {
-                    method: 'GET',
-                    signal: AbortSignal.timeout(3000)  // 3s timeout
-                });
+                const apiBase = window.TICKETMADA_CONFIG?.API_BASE || '';
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2000);
+                
+                const res = await fetch(apiBase + '/api/health', { signal: controller.signal });
+                clearTimeout(timeoutId);
+                
                 if (res.ok) {
                     this.useMock = false;
                     console.log('[TicketMada] Backend connected — using real API');
                 }
-            } catch {
+            } catch (e) {
                 this.useMock = true;
                 console.log('[TicketMada] No backend — using mock data');
             }
         }
 
-        // --- Events ---
-        async getEvents(filters) {
-            if (this.useMock) return MockAPI.getEvents(filters);
-            return this.real.get('/api/events?' + new URLSearchParams(filters));
-        }
-
-        async getEvent(id) {
-            if (this.useMock) return MockAPI.getEvent(id);
-            return this.real.get('/api/events/' + id);
-        }
-
-        async getEventSeats(eventId) {
-            if (this.useMock) return MockAPI.getEventSeats(eventId);
-            return this.real.get('/api/events/' + eventId + '/seats');
-        }
-
-        async searchEvents(query) {
-            if (this.useMock) return MockAPI.searchEvents(query);
-            return this.real.get('/api/search?q=' + encodeURIComponent(query));
-        }
-
-        async getArtist(name) {
-            if (this.useMock) return MockAPI.getArtist(name);
-            return this.real.get('/api/artists/' + encodeURIComponent(name));
-        }
-
-        async getRelatedEvents(eventId) {
-            if (this.useMock) return MockAPI.getRelatedEvents(eventId);
-            return this.real.get('/api/events/' + eventId + '/related');
-        }
-
-        // --- Orders ---
-        async createOrder(data) {
-            if (this.useMock) return MockAPI.createOrder(data);
-            return this.real.post('/api/orders', data);
-        }
-
-        async getMyTickets(userId) {
-            if (this.useMock) return MockAPI.getMyTickets();
-            return this.real.get('/api/orders/user/' + userId);
-        }
-
-        // --- Alerts ---
-        async setPriceAlert(data) {
-            if (this.useMock) return MockAPI.setPriceAlert(data);
-            return this.real.post('/api/price-alerts', data);
-        }
-
-        // --- Admin ---
-        async getPlatformStats() {
-            if (this.useMock) return MockAPI.getPlatformStats();
-            return this.real.get('/api/stats');
-        }
-
-        // --- Auth (always use real API for these) ---
-        async register(data) { return this.real.post('/api/auth/register', data); }
-        async login(data) { return this.real.post('/api/auth/login', data); }
-        async oauthLogin(data) { return this.real.post('/api/auth/oauth', data); }
-
-        setAuth(token) { this.real.setAuth(token); }
-        clearAuth() { this.real.clearAuth(); }
-        isLoggedIn() { return this.real.isLoggedIn(); }
-
-        // Legacy compatibility: direct get/post for pages that call window.api.get()
+        /**
+         * Generic GET method
+         */
         async get(path) {
+            console.log('[SmartAPI] GET', path);
             if (this.useMock) {
                 // Route mock responses based on path
+                if (path.includes('/auth/url')) {
+                    const provider = new URLSearchParams(path.split('?')[1]).get('provider');
+                    return { url: '#mock-auth-' + provider };
+                }
                 if (path.match(/\/events\/(\d+)\/seats/)) {
                     const id = path.match(/\/events\/(\d+)\/seats/)[1];
                     return MockAPI.getEventSeats(id);
@@ -518,19 +590,89 @@ const TicketMadaAPI = (() => {
                     return MockAPI.getArtist(decodeURIComponent(name));
                 }
                 if (path.includes('/stats')) return MockAPI.getPlatformStats();
+                if (path.includes('/auth/status')) return { loggedIn: this.isLoggedIn(), user: this.getUser() };
                 return {};
             }
             return this.real.get(path);
         }
 
+        /**
+         * Generic POST method
+         */
         async post(path, data) {
+            console.log('[SmartAPI] POST', path, data);
             if (this.useMock) {
                 if (path.includes('/orders')) return MockAPI.createOrder(data);
                 if (path.includes('/price-alerts')) return MockAPI.setPriceAlert(data);
+                if (path.includes('/auth/login')) return MockAPI.login(data.email, data.password);
                 return { success: true };
             }
             return this.real.post(path, data);
         }
+
+        // --- Shared state ---
+        getUser() {
+            const user = localStorage.getItem('ticketmada_user');
+            return user ? JSON.parse(user) : null;
+        }
+
+        async logout() {
+            try {
+                const { logout: firebaseLogout } = await import('./firebase-init.js');
+                await firebaseLogout();
+            } catch (e) {
+                console.warn('[SmartAPI] Firebase logout skipped or failed');
+            }
+            this.clearAuth();
+            return { success: true };
+        }
+
+        // --- Auth ---
+        async register(data) { return this.real.post('/api/auth/register', data); }
+        async login(data) { 
+            if (this.useMock) return MockAPI.login(data.email, data.password);
+            return this.real.post('/api/auth/login', data); 
+        }
+        
+        async loginWithGoogle() {
+            try {
+                const { loginWithGoogle: firebaseGoogleLogin } = await import('./firebase-init.js');
+                const result = await firebaseGoogleLogin();
+                if (result.success) {
+                    this.setAuth(result.token, result.user);
+                }
+                return result;
+            } catch (error) {
+                console.error('[SmartAPI] Google Login Failed:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        async oauthLogin(data) { return this.real.post('/api/auth/oauth', data); }
+
+        setAuth(token, user) {
+            localStorage.setItem('ticketmada_token', token);
+            if (user) localStorage.setItem('ticketmada_user', JSON.stringify(user));
+            this.real.token = token;
+        }
+
+        clearAuth() {
+            localStorage.removeItem('ticketmada_token');
+            localStorage.removeItem('ticketmada_user');
+            this.real.token = null;
+        }
+
+        isLoggedIn() { 
+            // Check if token exists and isn't expired (simplistic)
+            return !!localStorage.getItem('ticketmada_token');
+        }
+
+        // --- Specific Methods ---
+        async getEvents(filters) { return this.get('/events?' + new URLSearchParams(filters)); }
+        async getEvent(id) { return this.get('/events/' + id); }
+        async searchEvents(query) { return this.get('/search?q=' + encodeURIComponent(query)); }
+        async getMyTickets() { return this.get('/orders'); }
+
     }
 
     return SmartAPI;
