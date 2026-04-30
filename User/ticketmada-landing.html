@@ -341,7 +341,7 @@
                     <button class="filter-btn" :class="{ active: activeCategory === 'sports' }" @click="activeCategory = 'sports'">{{ t.filters.sports }}</button>
                 </div>
                 <div class="events-grid">
-                    <div class="event-item brutal-card" v-for="event in filteredEvents" :key="event.id">
+                    <div class="event-item brutal-card" v-for="event in paginatedEvents" :key="event.id">
                         <div class="event-image-container">
                             <img :src="event.image" :alt="event.title">
                             <span class="event-badge" v-if="event.badgeKey">{{ t.badges[event.badgeKey] }}</span>
@@ -353,6 +353,16 @@
                             <div class="event-footer"><span class="price">{{ formatPrice(event.price) }}</span><a :href="'ticketmada-event.html?id=' + event.id" class="brutal-btn brutal-btn-primary brutal-btn-small">{{ t.buttons.buy }}</a></div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Pagination UI -->
+                <div v-if="totalPages > 1" style="display: flex; justify-content: center; gap: 10px; margin-top: 40px;">
+                    <button v-for="p in totalPages" :key="p" 
+                            class="brutal-btn brutal-btn-small" 
+                            :style="currentPage === p ? 'background: #1a1a1a; color: white;' : 'background: white; color: #1a1a1a;'"
+                            @click="changePage(p)">
+                        {{ p }}
+                    </button>
                 </div>
             </div>
         </section>
@@ -395,9 +405,9 @@
                 </div>
 
                 <div id="landing-carousel" style="display: flex; gap: 20px; overflow-x: auto; scroll-behavior: smooth; padding: 10px 10px 30px 0; -ms-overflow-style: none; scrollbar-width: none;">
-                    <div v-for="event in events" :key="event.id" class="event-card brutal-card" style="min-width: 300px; flex-shrink: 0; cursor: pointer; background: white;" @click="goToEvent(event.id)">
+                    <div v-for="event in events.slice(0, 10)" :key="event.id" class="suggestion-card brutal-card" style="min-width: 300px; flex-shrink: 0; cursor: pointer; background: white; transition: all 0.2s ease;" @click="goToEvent(event.id)" onmouseover="this.style.transform='translate(-3px, -3px)'; this.style.boxShadow='9px 9px 0px #1a1a1a'" onmouseout="this.style.transform='none'; this.style.boxShadow='6px 6px 0px #1a1a1a'">
                         <div class="card-image" :style="'background-image: url(' + (event.image || event.image_url) + '); height: 180px; background-size: cover; background-position: center; position: relative; border-bottom: 3px solid #1a1a1a;'">
-                            <span v-if="event.badgeKey === 'popular' || event.hot" style="position: absolute; top: 12px; right: 12px; background: var(--ticket-coral); color: white; border: 2px solid #1a1a1a; padding: 4px 10px; font-weight: 800; font-size: 0.7rem; font-family: 'Syne';">🔥 POPULAIRE</span>
+                            <span v-if="event.badgeKey === 'popular' || event.hot" style="position: absolute; top: 12px; right: 12px; background: var(--accent-coral); color: white; border: 2px solid #1a1a1a; padding: 4px 10px; font-weight: 800; font-size: 0.7rem; font-family: 'Syne';">🔥 POPULAIRE</span>
                         </div>
                         <div style="padding: 20px;">
                             <h3 style="font-family: 'Syne'; font-weight: 700; font-size: 1.2rem; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ event.title || event.name }}</h3>
@@ -411,6 +421,7 @@
                             </div>
                         </div>
                     </div>
+                    <div style="flex: 0 0 20px;"></div>
                 </div>
             </div>
         </section>
@@ -532,16 +543,29 @@
                     isLoggedIn: false, showProfileMenu: false,
                     showSearch: false, showAuth: false, authMode: 'login', searchQuery: '', activeCategory: 'all',
                     suggestions: [],
+                    currentPage: 1,
+                    itemsPerPage: 20,
                     authForm: { name: '', email: '', password: '' },
                     featureIcons: ['🎫', '🔒', '📱', '💬', '🔄', '⭐'],
                     featuredEvents: [{ title: 'Dama & The Gang', date: '15 Avril 2026', venue: 'Stade Mahamasina', price: '50,000', image: 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=400&h=300&fit=crop' },{ title: 'Jazz Festival Tana', date: '22-24 Mai 2026', venue: 'Palais des Sports', price: '35,000', image: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&h=300&fit=crop' },{ title: 'Electronic Night', date: '8 Juin 2026', venue: 'Le Glacier', price: '25,000', image: 'https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=400&h=300&fit=crop' }],
                     categories: [{ icon: '🎸', countNum: 156 },{ icon: '🎪', countNum: 42 },{ icon: '⚽', countNum: 89 },{ icon: '🎭', countNum: 34 }],
-                    events: [{ id: 1, title: 'Dama Live - Tournée Nationale 2026', date: '15 Avr', location: 'Antananarivo', price: '50,000', category: 'concerts', badgeKey: 'popular', image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop' },{ id: 2, title: 'Festival Donia - Nosy Be', date: '20-22 Mai', location: 'Nosy Be', price: '120,000', category: 'festivals', badgeKey: 'festival', image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400&h=300&fit=crop' },{ id: 3, title: 'Match CNaPS vs Fosa Juniors', date: '28 Mar', location: 'Mahamasina', price: '15,000', category: 'sports', image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400&h=300&fit=crop' },{ id: 4, title: 'Erick Manana Unplugged', date: '5 Avr', location: 'IFM Tana', price: '35,000', category: 'concerts', image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=300&fit=crop' },{ id: 5, title: 'Madajazzcar 2026', date: '10-15 Oct', location: 'Antananarivo', price: '80,000', category: 'festivals', badgeKey: 'soon', image: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&h=300&fit=crop' },{ id: 6, title: 'Course de Côte - Diego', date: '12 Juin', location: 'Diego Suarez', price: '25,000', category: 'sports', image: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=400&h=300&fit=crop' },{ id: 7, title: 'Jaojoby en Concert', date: '18 Mai', location: 'Toamasina', price: '40,000', category: 'concerts', image: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=400&h=300&fit=crop' },{ id: 8, title: 'Beach Festival Anakao', date: '1-3 Juil', location: 'Anakao', price: '150,000', category: 'festivals', badgeKey: 'vip', image: 'https://images.unsplash.com/photo-1504680177321-2e6a879aac86?w=400&h=300&fit=crop' }]
+                    events: []
                 };
             },
             computed: {
                 t() { return translations[this.lang]; },
-                filteredEvents() { return this.activeCategory === 'all' ? this.events : this.events.filter(e => e.category === this.activeCategory); },
+                filteredEvents() { 
+                    const filtered = this.activeCategory === 'all' ? this.events : this.events.filter(e => e.category === this.activeCategory);
+                    return filtered;
+                },
+                paginatedEvents() {
+                    const start = (this.currentPage - 1) * this.itemsPerPage;
+                    const end = start + this.itemsPerPage;
+                    return this.filteredEvents.slice(start, end);
+                },
+                totalPages() {
+                    return Math.ceil(this.filteredEvents.length / this.itemsPerPage);
+                },
                 userName() { const u = window.api?.getUser(); return u ? u.name : ''; },
                 userAvatar() {
                     const name = this.userName;
@@ -550,13 +574,43 @@
                     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
                 }
             },
+            mounted() {
+                animateCounters();
+                this.loadEvents();
+            },
             methods: {
+                async loadEvents() {
+                    try {
+                        const result = await window.api.getEvents();
+                        this.events = result.events || result;
+                    } catch (e) {
+                        console.error('Failed to load events', e);
+                    }
+                },
+                changePage(page) {
+                    this.currentPage = page;
+                    const el = document.getElementById('events');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                },
                 goToSearch() {
                     if (this.searchQuery.trim()) {
                         window.location.href = 'ticketmada-search.html?q=' + encodeURIComponent(this.searchQuery.trim());
                     }
                 },
                 goToEvent(id) { window.location.href = 'ticketmada-event.html?id=' + id; },
+                formatDate(dateStr) {
+                    if (!dateStr) return '';
+                    const d = new Date(dateStr);
+                    const months = {
+                        'fr': ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'],
+                        'en': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                    };
+                    return `${d.getDate()} ${months[this.lang][d.getMonth()]}`;
+                },
+                formatPrice(price) {
+                    if (!price) return 'Gratuit';
+                    return new Intl.NumberFormat('fr-FR').format(price) + ' Ar';
+                },
                 scrollCarousel(dir) {
                     const el = document.getElementById('landing-carousel');
                     if (el) el.scrollBy({ left: dir * 320, behavior: 'smooth' });
@@ -624,7 +678,10 @@
                 formatPrice(p) { return window.TICKETMADA_CONFIG.formatPrice(p); },
                 async handleLogout() { if (window.api) await window.api.logout(); this.isLoggedIn = false; }
             },
-            watch: { showSearch(val) { if (val) this.$nextTick(() => this.$refs.searchInput?.focus()); } },
+            watch: { 
+                showSearch(val) { if (val) this.$nextTick(() => this.$refs.searchInput?.focus()); },
+                activeCategory() { this.currentPage = 1; }
+            },
             async mounted() {
                 document.documentElement.lang = this.lang; animateCounters();
                 if (window.api && window.api.isLoggedIn()) { this.isLoggedIn = true; }
@@ -666,6 +723,18 @@
 
                 document.addEventListener('click', (e) => { if (this.showProfileMenu && !e.target.closest('.nav-cta')) this.showProfileMenu = false; });
                 document.addEventListener('keydown', e => { if (e.key === 'Escape') { this.showSearch = false; this.showAuth = false; this.showProfileMenu = false; } if (e.key === 'k' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); this.showSearch = true; } });
+
+                // Auto-scroll Carousel
+                setInterval(() => {
+                    const el = document.getElementById('landing-carousel');
+                    if (el) {
+                        if (el.scrollLeft + el.offsetWidth >= el.scrollWidth - 10) {
+                            el.scrollTo({ left: 0, behavior: 'smooth' });
+                        } else {
+                            this.scrollCarousel(1);
+                        }
+                    }
+                }, 2000);
             }
         });
         app.use(Vuetify.createVuetify());

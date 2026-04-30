@@ -104,8 +104,9 @@
         .listings-header p { font-size: 0.85rem; opacity: 0.7; }
         .listings-filter { display: flex; gap: 8px; padding: 12px 16px; background: white; border: 3px solid var(--border-dark); border-top: none; border-bottom: none; overflow-x: auto; white-space: nowrap; -ms-overflow-style: none; scrollbar-width: none; width: 100%; box-sizing: border-box; }
         .listings-filter::-webkit-scrollbar { display: none; }
-        .filter-chip { padding: 6px 12px; border-radius: 20px; border: 2px solid var(--border-dark); font-weight: 700; font-size: 0.75rem; cursor: pointer; transition: 0.2s; white-space: nowrap; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; min-width: 80px; }
-        .filter-chip.active { background: var(--ticket-coral); color: white; border-color: var(--ticket-coral); }
+        .filter-spacer { flex: 0 0 20px; }
+        .filter-chip { padding: 6px 14px; border-radius: 20px; border: 2px solid var(--border-dark); font-weight: 700; font-size: 0.75rem; cursor: pointer; transition: 0.2s; white-space: nowrap; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
+        .filter-chip.active { background: var(--accent-coral); color: white; border-color: var(--accent-coral); }
         .filter-chip:hover:not(.active) { background: #f5f5f5; }
         .alert-btn-inline { background: var(--bg-dark); border: 2px solid var(--border-dark); color: white; padding: 6px 10px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; margin-left: auto; flex-shrink: 0; box-shadow: 2px 2px 0px var(--accent-coral); margin-top: 0; }
         .alert-btn-inline:hover { background: var(--accent-coral); transform: translate(-1px, -1px); box-shadow: 3px 3px 0px #1a1a1a; }
@@ -481,14 +482,14 @@
                 </div>
 
             <div class="listings-filter">
-                <button class="filter-chip" :class="{ active: selectedZone === null }" @click="selectedZone = null">
-                    {{ lang === 'fr' ? 'Tous' : 'All' }}
+                <button class="filter-chip" :class="{ active: selectedZone === null }" @click="selectedZone = null" v-text="lang === 'fr' ? 'Tous' : 'All'">
                 </button>
                 <button class="filter-chip" v-for="zone in venueZones" :key="'f-'+zone.id"
                         :class="{ active: selectedZone === zone.id }"
-                        @click="selectZone(zone.id)">
-                    {{ zone.shortName || zone.name }}
+                        @click="selectZone(zone.id)"
+                        v-text="zone.shortName || zone.name">
                 </button>
+                <div class="filter-spacer"></div>
             </div>
 
             <div class="listings-sort">
@@ -666,11 +667,13 @@
                             <span>📅 {{ formatDate(rel.date_start) }}</span>
                             <span>📍 {{ rel.venue }}</span>
                         </div>
-                        <div style="font-weight: 800; color: var(--ticket-coral); font-size: 0.95rem;">
+                        <div style="font-weight: 800; color: var(--accent-coral); font-size: 0.95rem;">
                             {{ lang === 'fr' ? 'Dès' : 'From' }} {{ (rel.min_price || 20000).toLocaleString() }} Ar
                         </div>
                     </div>
                 </a>
+                <!-- Spacer to prevent clipping -->
+                <div style="flex: 0 0 20px;"></div>
             </div>
         </div>
     </section>
@@ -981,7 +984,7 @@ const app = createApp({
                 available: Math.round(z.capacity * (remaining / capacity)),
                 shortName: z.id === 'pit' ? (this.lang === 'fr' ? 'Fosse' : 'Pit') : z.name
             }));
-            this.venueZones = this.mapZones;
+            this.venueZones = this.mapZones.filter(z => z.name && z.name.trim() !== "");
 
             // Generate ticket listings for the sidebar
             this.listings = [];
@@ -1147,6 +1150,18 @@ const app = createApp({
 
         // Keyboard: Escape closes popup
         document.addEventListener('keydown', e => { if (e.key === 'Escape') this.showQty = false; });
+
+        // Auto-scroll Carousel
+        setInterval(() => {
+            const el = document.getElementById('footer-carousel');
+            if (el) {
+                if (el.scrollLeft + el.offsetWidth >= el.scrollWidth - 10) {
+                    el.scrollTo({ left: 0, behavior: 'smooth' });
+                } else {
+                    this.scrollCarousel(1);
+                }
+            }
+        }, 2000);
     }
 });
 
