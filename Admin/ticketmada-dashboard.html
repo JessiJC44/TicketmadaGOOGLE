@@ -243,6 +243,7 @@
                     <div class="nav-section">
                         <div class="nav-section-title">Ventes</div>
                         <div class="nav-item" :class="{ active: currentPage === 'tickets' }" @click="currentPage = 'tickets'"><v-icon class="nav-item-icon">mdi-ticket</v-icon><span>Billets vendus</span></div>
+                        <div class="nav-item" :class="{ active: currentPage === 'analytics' }" @click="currentPage = 'analytics'"><v-icon class="nav-item-icon">mdi-chart-areaspline</v-icon><span>Analytics</span></div>
                         <div class="nav-item" :class="{ active: currentPage === 'scan' }" @click="currentPage = 'scan'"><v-icon class="nav-item-icon">mdi-qrcode-scan</v-icon><span>Contrôle accès</span></div>
                     </div>
                     <div class="nav-section">
@@ -333,9 +334,9 @@
                                 </div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-card-header"><div class="stat-icon">📱</div></div>
+                                <div class="stat-card-header"><div class="stat-icon">📈</div></div>
                                 <div class="stat-value">{{ scanRate }}%</div>
-                                <div class="stat-label">Taux de scan</div>
+                                <div class="stat-label">Performance</div>
                                 <div class="stats-chart-container">
                                     <div class="stats-chart-bar" style="height: 60%"></div>
                                     <div class="stats-chart-bar" style="height: 70%"></div>
@@ -348,73 +349,28 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Billetterie Styled Section -->
-                        <div class="ride-style-card">
-                            <div class="ride-style-content">
-                                <div style="margin-bottom: 20px;">
-                                    <span style="font-size: 0.8rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
-                                        <v-icon size="small" class="mr-1">mdi-map-marker</v-icon> Antananarivo, MG
-                                    </span>
-                                </div>
-                                <h1 style="font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; line-height: 1.1; margin-bottom: 30px;">
-                                    Gérez votre billetterie<br><span style="color: var(--accent-coral);">sans limites.</span>
-                                </h1>
-                                
-                                <div class="ride-style-form">
-                                    <div class="ride-style-input-group">
-                                        <v-icon class="ride-style-icon">mdi-magnify</v-icon>
-                                        <input type="text" class="ride-style-input" placeholder="Rechercher un événement...">
-                                    </div>
-                                    <div class="ride-style-input-group">
-                                        <v-icon class="ride-style-icon">mdi-ticket-percent</v-icon>
-                                        <select class="ride-style-input">
-                                            <option value="">Toutes les catégories</option>
-                                            <option>VIP</option>
-                                            <option>Premium</option>
-                                            <option>Standard</option>
-                                        </select>
-                                    </div>
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                                        <div class="ride-style-input-group">
-                                            <v-icon class="ride-style-icon">mdi-calendar</v-icon>
-                                            <span style="font-size: 0.9rem;">Aujourd'hui</span>
-                                        </div>
-                                        <div class="ride-style-input-group">
-                                            <v-icon class="ride-style-icon">mdi-clock-outline</v-icon>
-                                            <span style="font-size: 0.9rem;">Maintenant</span>
-                                        </div>
-                                    </div>
-                                    <button class="ride-style-btn" @click="currentPage = 'tickets'">VOIR LES VENTES</button>
-                                </div>
-                                <div style="margin-top: 25px; font-size: 0.85rem; color: var(--text-light);">
-                                    Accédez à l'historique complet de vos transactions
-                                    <a href="#" @click.prevent="currentPage = 'finance'" style="color: var(--accent-coral); font-weight: 700; text-decoration: none; margin-left: 5px;">Voir les revenus <v-icon size="small">mdi-arrow-right</v-icon></a>
-                                </div>
-                            </div>
-                            <div class="ride-style-image" style="background-image: url('https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=1470&auto=format&fit=crop');"></div>
-                        </div>
 
+                        <!-- Normalized Section for Events / Quick Actions -->
                         <div class="quick-actions">
                             <div class="quick-action" @click="showCreateModal = true"><div class="quick-action-icon">➕</div><div class="quick-action-text">Créer événement</div></div>
-                            <div class="quick-action" @click="currentPage = 'tickets'"><div class="quick-action-icon">🎫</div><div class="quick-action-text">Voir les ventes</div></div>
-                            <div class="quick-action" @click="currentPage = 'scan'"><div class="quick-action-icon">📱</div><div class="quick-action-text">Contrôle accès</div></div>
-                            <div class="quick-action" @click="currentPage = 'finance'"><div class="quick-action-icon">💳</div><div class="quick-action-text">Demander versement</div></div>
+                            <div class="quick-action" @click="currentPage = 'tickets'"><div class="quick-action-icon">🎫</div><div class="quick-action-text">Ventes</div></div>
+                            <div class="quick-action" @click="currentPage = 'analytics'"><div class="quick-action-icon">📊</div><div class="quick-action-text">Analytics</div></div>
+                            <div class="quick-action" @click="currentPage = 'scan'"><div class="quick-action-icon">📱</div><div class="quick-action-text">Scan</div></div>
                         </div>
-                        
+
                         <div class="charts-grid">
                             <div class="section">
-                                <div class="section-header"><div class="section-title"><v-icon size="small">mdi-chart-bar</v-icon> Ventes des 7 derniers jours</div></div>
-                                <div class="chart-placeholder"><div class="chart-bar" style="height: 55%;"></div><div class="chart-bar" style="height: 72%;"></div><div class="chart-bar" style="height: 48%;"></div><div class="chart-bar" style="height: 85%;"></div><div class="chart-bar" style="height: 63%;"></div><div class="chart-bar" style="height: 95%;"></div><div class="chart-bar" style="height: 78%;"></div></div>
+                                <div class="section-header"><div class="section-title"><v-icon size="small">mdi-chart-line</v-icon> Évolution des ventes</div></div>
+                                <div class="chart-placeholder"><div class="chart-bar" style="height: 45%;"></div><div class="chart-bar" style="height: 62%;"></div><div class="chart-bar" style="height: 38%;"></div><div class="chart-bar" style="height: 75%;"></div><div class="chart-bar" style="height: 53%;"></div><div class="chart-bar" style="height: 85%;"></div><div class="chart-bar" style="height: 68%;"></div></div>
                             </div>
                             <div class="section balance-card">
-                                <div class="section-title"><v-icon size="small" color="white">mdi-wallet</v-icon> Solde disponible</div>
+                                <div class="section-title"><v-icon size="small" color="white">mdi-wallet</v-icon> Solde</div>
                                 <div class="balance-amount">{{ formatCurrency(availableBalance) }}</div>
                                 <div class="balance-details">
-                                    <div class="balance-item"><div class="balance-item-label">En attente</div><div class="balance-item-value">{{ formatCurrency(pendingBalance) }}</div></div>
-                                    <div class="balance-item"><div class="balance-item-label">Ce mois</div><div class="balance-item-value positive">+{{ formatCurrency(monthRevenue) }}</div></div>
+                                    <div class="balance-item"><div class="balance-item-label">Attente</div><div class="balance-item-value">{{ formatCurrency(pendingBalance) }}</div></div>
+                                    <div class="balance-item"><div class="balance-item-label">Mois</div><div class="balance-item-value positive">+{{ formatCurrency(monthRevenue) }}</div></div>
                                 </div>
-                                <button class="btn btn-white" style="width: 100%; justify-content: center;">Demander un versement</button>
+                                <button class="btn btn-white" style="width: 100%; justify-content: center;">Verser</button>
                             </div>
                         </div>
                         
@@ -479,6 +435,39 @@
                         </div>
                     </template>
                     
+                    <!-- Analytics -->
+                    <template v-if="currentPage === 'analytics'">
+                        <div class="stats-grid">
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">📊</div></div><div class="stat-value">12.4k</div><div class="stat-label">Visites totales</div></div>
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">📈</div></div><div class="stat-value">8.2%</div><div class="stat-label">Taux de conversion</div></div>
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">⏱️</div></div><div class="stat-value">2m 45s</div><div class="stat-label">Temps sur page</div></div>
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">👥</div></div><div class="stat-value">4.5k</div><div class="stat-label">Visiteurs uniques</div></div>
+                        </div>
+                        <div class="charts-grid">
+                            <div class="section">
+                                <div class="section-header"><div class="section-title"><v-icon size="small">mdi-chart-bell-curve-cumulative</v-icon> Sources de trafic</div></div>
+                                <div style="padding:20px;">
+                                    <v-progress-linear model-value="65" color="var(--accent-coral)" height="20" rounded style="margin-bottom:15px;"><template v-slot:default="{ value }"><strong>Direct (65%)</strong></template></v-progress-linear>
+                                    <v-progress-linear model-value="20" color="var(--accent-blue)" height="20" rounded style="margin-bottom:15px;"><template v-slot:default="{ value }"><strong>Réseaux Sociaux (20%)</strong></template></v-progress-linear>
+                                    <v-progress-linear model-value="10" color="var(--accent-yellow)" height="20" rounded style="margin-bottom:15px;"><template v-slot:default="{ value }"><strong>Organique (10%)</strong></template></v-progress-linear>
+                                    <v-progress-linear model-value="5" color="var(--accent-mint)" height="20" rounded><template v-slot:default="{ value }"><strong>API (5%)</strong></template></v-progress-linear>
+                                </div>
+                            </div>
+                            <div class="section">
+                                <div class="section-header"><div class="section-title"><v-icon size="small">mdi-devices</v-icon> Appareils</div></div>
+                                <div style="display:flex;flex-direction:column;gap:15px;padding:20px;">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;"><span><v-icon size="small">mdi-cellphone</v-icon> Mobile</span><strong>82%</strong></div>
+                                    <div style="display:flex;justify-content:space-between;align-items:center;"><span><v-icon size="small">mdi-laptop</v-icon> Desktop</span><strong>15%</strong></div>
+                                    <div style="display:flex;justify-content:space-between;align-items:center;"><span><v-icon size="small">mdi-tablet</v-icon> Tablette</span><strong>3%</strong></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-map-marker-radius</v-icon> Géographie des acheteurs</div></div>
+                            <div class="table-container"><table><thead><tr><th>Ville</th><th>Visites</th><th>Ventes</th><th>Revenu</th></tr></thead><tbody><tr><td>Antananarivo</td><td>8,450</td><td>1,240</td><td>45,600,000 Ar</td></tr><tr><td>Toamasina</td><td>1,200</td><td>85</td><td>4,250,000 Ar</td></tr><tr><td>Antsirabe</td><td>850</td><td>42</td><td>1,840,000 Ar</td></tr><tr><td>Mahajanga</td><td>450</td><td>12</td><td>650,000 Ar</td></tr></tbody></table></div>
+                        </div>
+                    </template>
+                    
                     <!-- Finance -->
                     <template v-if="currentPage === 'finance'">
                         <div class="stats-grid">
@@ -488,11 +477,20 @@
                             <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">⏳</div></div><div class="stat-value">{{ formatCurrency(pendingBalance) }}</div><div class="stat-label">En attente</div></div>
                         </div>
                         
-                        <div class="section balance-card" style="margin-bottom: 20px;">
-                            <div class="section-title"><v-icon size="small" color="white">mdi-wallet</v-icon> Solde disponible pour versement</div>
-                            <div class="balance-amount">{{ formatCurrency(availableBalance) }}</div>
-                            <p style="opacity: 0.8; margin-bottom: 20px;">Vous pouvez demander un versement à tout moment. Le transfert est effectué sous 48h.</p>
-                            <button class="btn btn-white" style="justify-content: center;"><v-icon size="small">mdi-bank-transfer</v-icon> Demander un versement</button>
+                        <div class="section" style="margin-bottom: 20px;">
+                            <div class="section-header">
+                                <div class="section-title"><v-icon size="small">mdi-wallet</v-icon> Demander un versement</div>
+                            </div>
+                            <div style="padding: 20px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                    <div>
+                                        <div style="font-size: 0.8rem; color: var(--text-light); text-transform: uppercase; font-weight: 700;">Solde disponible</div>
+                                        <div style="font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800;">{{ formatCurrency(availableBalance) }}</div>
+                                    </div>
+                                    <button class="btn btn-primary" style="padding: 14px 24px;"><v-icon size="small" class="mr-2">mdi-bank-transfer</v-icon> Virer maintenant</button>
+                                </div>
+                                <p style="color: var(--text-light); font-size: 0.85rem;">Les fonds sont transférés vers votre compte Mobile Money ou Bancaire sous 48h ouvrées.</p>
+                            </div>
                         </div>
                         
                         <div class="section">
@@ -512,28 +510,14 @@
 
                         <!-- Tab: Scan Links -->
                         <template v-if="scanTab === 'links'">
-                            <div class="section" style="border-color:#4A90FF;">
-                                <div style="padding:20px;display:flex;gap:20px;align-items:flex-start;">
-                                    <div style="font-size:2.5rem;">🔗</div>
-                                    <div style="flex:1;">
-                                        <h3 style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:6px;">Liens sécurisés de scan</h3>
-                                        <p style="color:var(--text-light);font-size:0.85rem;margin-bottom:12px;">Chaque événement génère un lien unique. Le lien ouvre la caméra du smartphone pour scanner les QR codes des billets. Seuls les QR de cet événement seront reconnus.</p>
-                                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                                            <span style="display:inline-flex;align-items:center;gap:4px;background:#e8f5e9;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;color:#2e7d32;"><v-icon size="x-small" color="#2e7d32">mdi-check-circle</v-icon> Caméra mobile</span>
-                                            <span style="display:inline-flex;align-items:center;gap:4px;background:#e3f2fd;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;color:#1565c0;"><v-icon size="x-small" color="#1565c0">mdi-shield-check</v-icon> QR unique par billet</span>
-                                            <span style="display:inline-flex;align-items:center;gap:4px;background:#fff3e0;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;color:#e65100;"><v-icon size="x-small" color="#e65100">mdi-lock</v-icon> Lien sécurisé</span>
-                                            <span style="display:inline-flex;align-items:center;gap:4px;background:#fce4ec;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;color:#c62828;"><v-icon size="x-small" color="#c62828">mdi-alert-circle</v-icon> Anti-fraude</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                             <div class="section">
-                                <div class="section-header"><div class="section-title"><v-icon size="small">mdi-qrcode</v-icon> Liens par événement</div></div>
+                                <div class="section-header"><div class="section-title"><v-icon size="small">mdi-qrcode</v-icon> Liens de scan par événement</div></div>
                                 <div v-for="e in myEvents" :key="e.id" style="padding:16px 20px;border-bottom:2px dashed #eee;">
                                     <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px;">
                                         <div style="width:44px;height:44px;background:linear-gradient(135deg,var(--accent-coral),var(--accent-yellow));border:2px solid #1a1a1a;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">{{ e.emoji || '🎫' }}</div>
                                         <div style="flex:1;"><div style="font-family:'Syne',sans-serif;font-weight:700;">{{ e.name }}</div><div style="font-size:0.75rem;color:var(--text-light);">{{ e.date }} · {{ e.venue }}</div></div>
                                         <div style="display:flex;gap:6px;">
+                                            <button class="btn btn-sm btn-secondary" @click="showConnectQR(e)"><v-icon size="x-small">mdi-cellphone-link</v-icon> Connecter Staff</button>
                                             <button class="btn btn-sm btn-primary" @click="createScanLink(e.id)"><v-icon size="x-small">mdi-plus</v-icon> Générer lien</button>
                                         </div>
                                     </div>
@@ -840,6 +824,47 @@
                 <div class="modal-footer"><button class="btn btn-secondary" @click="showCreateModal = false">Annuler</button><button class="btn btn-primary" @click="createEvent">Créer l'événement</button></div>
             </div>
         </div>
+
+        <!-- Setup QR Modal -->
+        <div class="modal-overlay" :class="{ active: showSetupQR }">
+            <div class="modal" style="max-width: 400px; text-align: center;">
+                <div class="modal-header">
+                    <div class="modal-title">Connexion Staff</div>
+                    <button class="modal-close" @click="showSetupQR = false">×</button>
+                </div>
+                <div class="modal-body" style="padding: 30px;">
+                    <p style="margin-bottom: 20px; font-weight: 600;">Scannez ce QR avec le téléphone du staff pour l'autoriser sur :</p>
+                    <div style="font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 800; color: var(--accent-coral); margin-bottom: 20px;">{{ setupQREventName }}</div>
+                    <div style="border: 3px solid #1a1a1a; display: inline-block; padding: 10px; background: white; box-shadow: 6px 6px 0 #1a1a1a;">
+                        <img :src="setupQRUrl" alt="QR Access" style="display: block;">
+                    </div>
+                    <p style="margin-top: 25px; font-size: 0.85rem; color: #666;">Après le scan, une demande d'approbation apparaîtra ici.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @click="showSetupQR = false">Fermer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scan Access Requests Modal -->
+        <div v-if="pendingScanRequests.length > 0" style="position: fixed; bottom: 30px; right: 30px; z-index: 1000; width: 320px;">
+            <div v-for="req in pendingScanRequests" :key="req.id" class="section" style="margin-bottom: 10px; border-color: var(--accent-珊瑚珊瑚); background: white; box-shadow: 6px 6px 0 #1a1a1a;">
+                <div class="section-header" style="background: var(--accent-coral); color: white;">
+                    <div class="section-title" style="color:white;"><v-icon size="small" color="white">mdi-cellphone-link</v-icon> Demande de scan</div>
+                </div>
+                <div style="padding: 15px;">
+                    <div style="font-weight: 700; font-size: 0.9rem;">{{ req.deviceInfo.name }}</div>
+                    <div style="font-size: 0.75rem; color: #666; margin: 4px 0;">Demande l'accès pour :</div>
+                    <div style="font-weight: 600; color: var(--accent-coral); font-size: 0.85rem;">{{ req.event_name }}</div>
+                    <div style="font-size: 0.7rem; color: #999; margin-top: 6px;">{{ req.deviceInfo.browser }} · {{ req.deviceInfo.os }}</div>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button class="btn btn-sm btn-primary" style="flex:1;" @click="approveScanRequest(req)">APPROUVER</button>
+                        <button class="btn btn-sm btn-secondary" style="flex:1;" @click="rejectScanRequest(req)">REFUSER</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
     
     <script src="../js/api-client.js"></script>
@@ -885,6 +910,11 @@
                     scanTab: 'links',
                     scanFilterEvent: '',
                     deviceFilterEvent: '',
+                    // Scan access requests
+                    pendingScanRequests: [],
+                    showSetupQR: false,
+                    setupQRUrl: '',
+                    setupQREventName: '',
                     // Seatmap
                     seatmapEditing: false,
                     seatmapPlanName: '',
@@ -896,7 +926,7 @@
             },
             computed: {
                 currentDate() { return new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); },
-                pageTitle() { return { dashboard: 'Dashboard', events: 'Mes événements', tickets: 'Billets vendus', finance: 'Mes revenus', payouts: 'Versements', scan: 'Contrôle d\'accès', team: 'Mon équipe', seatmap: 'Plan de salle', settings: 'Paramètres', help: 'Aide' }[this.currentPage] || 'Dashboard'; },
+                pageTitle() { return { dashboard: 'Dashboard', events: 'Mes événements', tickets: 'Billets vendus', analytics: 'Analytics', finance: 'Mes revenus', payouts: 'Versements', scan: 'Contrôle d\'accès', team: 'Mon équipe', seatmap: 'Plan de salle', settings: 'Paramètres', help: 'Aide' }[this.currentPage] || 'Dashboard'; },
                 seatmapTotalRevenue() {
                     let total = 0;
                     this.seatmapSeats.forEach(s => {
@@ -1032,7 +1062,35 @@
                                 rejectReason: l.reject_reason
                             }));
                         }
+                        this.refreshScanRequests();
                     } catch(e) { console.error('Error refreshing scanner data', e); }
+                },
+                async refreshScanRequests() {
+                    try {
+                        const requests = await window.api.get('/api/scan-access-requests/pending');
+                        if (requests && !requests.error) {
+                            this.pendingScanRequests = requests;
+                        }
+                    } catch(e) { console.error('Error refreshing scan requests', e); }
+                },
+                async approveScanRequest(request) {
+                    try {
+                        const res = await window.api.post(`/api/scan-access-requests/${request.id}/approve`);
+                        if (res.success) {
+                            this.pendingScanRequests = this.pendingScanRequests.filter(r => r.id !== request.id);
+                            this.refreshScannerData();
+                        }
+                    } catch(e) { console.error('Error approving request', e); }
+                },
+                async rejectScanRequest(request) {
+                    // Logic for rejection could be added to backend, but for now just clear local
+                    this.pendingScanRequests = this.pendingScanRequests.filter(r => r.id !== request.id);
+                },
+                showConnectQR(event) {
+                    this.setupQREventName = event.name;
+                    const url = `${window.location.origin}/User/ticketmada-scanner.html?setup=${event.id}`;
+                    this.setupQRUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(url)}`;
+                    this.showSetupQR = true;
                 },
                 async createEvent() {
                     const result = await window.api.post('/events', this.newEvent);
@@ -1244,8 +1302,10 @@
                 setInterval(() => {
                     if (this.currentPage === 'scan' && this.scanTab === 'live') {
                         this.refreshScannerData();
+                    } else if (this.isLoggedIn) {
+                        this.refreshScanRequests();
                     }
-                }, 10000);
+                }, 5000);
 
                 document.addEventListener('mouseup', () => { this.seatmapDragging = false; });
             }

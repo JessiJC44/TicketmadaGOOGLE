@@ -28,6 +28,10 @@
             --shadow-brutal-lg: 10px 10px 0px #1a1a1a;
         }
         
+        [v-cloak] { display: none !important; }
+        .v-application { font-family: 'DM Sans', sans-serif !important; background: transparent !important; }
+        .v-application__wrap { min-height: auto !important; }
+        
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'DM Sans', sans-serif; background: var(--bg-cream); color: var(--text-dark); overflow-x: hidden; }
         
@@ -56,6 +60,19 @@
         .brutal-btn-secondary:hover { background: var(--accent-yellow); transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
         .brutal-btn-dark { background: var(--bg-dark); color: white; box-shadow: var(--shadow-brutal); }
         .brutal-btn-dark:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0px var(--accent-coral); }
+        
+        .brutal-btn-mega { 
+            background: var(--accent-coral); 
+            color: white; 
+            box-shadow: 8px 8px 0px #1a1a1a; 
+            font-size: 1.2rem; 
+            padding: 24px 48px; 
+            font-weight: 800;
+        }
+        .brutal-btn-mega:hover { 
+            transform: translate(-4px, -4px) rotate(-1deg); 
+            box-shadow: 12px 12px 0px #1a1a1a; 
+        }
         
         .lang-toggle { width: 45px; height: 45px; background: white; border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 1.4rem; box-shadow: 3px 3px 0px #1a1a1a; }
         .lang-toggle:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0px #1a1a1a; }
@@ -303,8 +320,9 @@
 <body>
 <script src="../js/site-config.js"></script>
 
-    <div id="app">
-        <nav class="navbar">
+    <div id="app" v-cloak>
+        <v-app>
+            <nav class="navbar">
             <div class="navbar-inner">
                 <a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
                 <ul class="nav-links">
@@ -333,7 +351,7 @@
                                     </div>
                                 </div>
                                 <div class="profile-dropdown-items">
-                                    <button class="profile-dropdown-item logout" @click="handleLogout"><v-icon size="small">mdi-logout</v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Logout' }}</button>
+                                    <button class="profile-dropdown-item logout" @click="handleLogout"><v-icon icon="mdi-logout" size="small"></v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Logout' }}</button>
                                 </div>
                             </div>
                         </div>
@@ -350,16 +368,18 @@
                                 </div>
                             </div>
                             <div class="profile-dropdown-items">
-                                <a class="profile-dropdown-item" :href="dashboardUrl"><v-icon size="small">mdi-view-dashboard</v-icon> Dashboard</a>
-                                <a class="profile-dropdown-item" :href="dashboardUrl + '?page=events'"><v-icon size="small">mdi-calendar-plus</v-icon> {{ lang === 'fr' ? 'Créer un événement' : 'Create event' }}</a>
+                                <a class="profile-dropdown-item" :href="dashboardUrl"><v-icon icon="mdi-view-dashboard" size="small"></v-icon> Dashboard</a>
+                                <a class="profile-dropdown-item" :href="dashboardUrl + '?page=events'"><v-icon icon="mdi-calendar-plus" size="small"></v-icon> {{ lang === 'fr' ? 'Créer un événement' : 'Create event' }}</a>
                                 <div class="profile-dropdown-divider"></div>
-                                <button class="profile-dropdown-item logout" @click="handleLogout"><v-icon size="small">mdi-logout</v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Logout' }}</button>
+                                <button class="profile-dropdown-item logout" @click="handleLogout"><v-icon icon="mdi-logout" size="small"></v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Logout' }}</button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </nav>
+
+        <v-main>
         
         <section class="hero">
             <div class="hero-bg-shapes"><div class="shape shape-1"></div><div class="shape shape-2"></div><div class="shape shape-3"></div><div class="shape shape-4"></div></div>
@@ -369,7 +389,12 @@
                     <h1 class="hero-title" v-html="t.hero.title"></h1>
                     <p class="hero-description">{{ t.hero.description }}</p>
                     <div class="hero-actions">
-                        <a href="ticketmada-become-organizer.html" class="brutal-btn brutal-btn-primary">{{ t.hero.cta1 }}<v-icon>mdi-arrow-right</v-icon></a>
+                        <template v-if="profileRole === 'organizer' || profileRole === 'admin' || profileRole === 'superadmin'">
+                             <a :href="dashboardUrl" class="brutal-btn brutal-btn-primary">Accéder au Dashboard <v-icon icon="mdi-view-dashboard"></v-icon></a>
+                        </template>
+                        <template v-else>
+                            <a href="ticketmada-become-organizer.html" class="brutal-btn brutal-btn-mega">{{ t.hero.cta1 }}<v-icon icon="mdi-arrow-right" class="ml-2"></v-icon></a>
+                        </template>
                         <a href="#fonctionnalites" class="brutal-btn brutal-btn-secondary">{{ t.hero.cta2 }}</a>
                     </div>
                     <div class="hero-stats">
@@ -441,7 +466,7 @@
                             <div v-if="index === 0" class="feature-image">
                                     <div style="padding: 25px; flex: 1;">
                                         <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                                            <v-icon size="small" color="#666">mdi-map-marker</v-icon>
+                                            <v-icon icon="mdi-map-marker" size="small" color="#666"></v-icon>
                                             <span style="font-size: 0.7rem; font-weight: 700; color: #666;">Antananarivo, MG</span>
                                         </div>
                                         <h4 style="font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; line-height: 1.1; margin-bottom: 15px;">
@@ -449,16 +474,16 @@
                                         </h4>
                                         <div style="display: flex; flex-direction: column; gap: 8px;">
                                             <div style="background: #f8f8f8; border: 2px solid #eee; padding: 8px; display: flex; align-items: center; gap: 8px;">
-                                                <v-icon size="small" color="#999">mdi-magnify</v-icon>
+                                                <v-icon icon="mdi-magnify" size="small" color="#999"></v-icon>
                                                 <span style="font-size: 0.8rem; color: #999;">Rechercher...</span>
                                             </div>
                                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                                                 <div style="background: #f8f8f8; border: 2px solid #eee; padding: 8px; display: flex; align-items: center; gap: 6px;">
-                                                    <v-icon size="small" color="#999">mdi-calendar</v-icon>
+                                                    <v-icon icon="mdi-calendar" size="small" color="#999"></v-icon>
                                                     <span style="font-size: 0.75rem; color: #999;">Aujourd'hui</span>
                                                 </div>
                                                 <div style="background: #f8f8f8; border: 2px solid #eee; padding: 8px; display: flex; align-items: center; gap: 6px;">
-                                                    <v-icon size="small" color="#999">mdi-clock-outline</v-icon>
+                                                    <v-icon icon="mdi-clock-outline" size="small" color="#999"></v-icon>
                                                     <span style="font-size: 0.75rem; color: #999;">Now</span>
                                                 </div>
                                             </div>
@@ -516,7 +541,7 @@
                                 <div class="brutal-card p-8" style="background: white; height: 320px; display: flex; flex-direction: column; justify-content: center;">
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                         <span style="font-size: 0.65rem; font-weight: 700; color: #666; letter-spacing: 1px;">ANALYST STATS</span>
-                                        <v-icon size="x-small" color="#666">mdi-chevron-right</v-icon>
+                                        <v-icon icon="mdi-chevron-right" size="x-small" color="#666"></v-icon>
                                     </div>
                                     <div style="font-family: 'Syne', sans-serif; font-size: 2.2rem; font-weight: 800; margin-bottom: 5px;">2.4M <span style="font-size: 0.9rem; color: #aaa;">Ar</span></div>
                                     <p style="font-size: 0.75rem; color: #666; margin-bottom: 20px;">Revenus : <span style="color: var(--accent-mint); font-weight: 700;">+24.8%</span></p>
@@ -561,7 +586,7 @@
                     <h3>{{ t.apiBanner.title }}</h3>
                     <p>{{ t.apiBanner.description }}</p>
                 </div>
-                <a href="ticketmada-ticketing.html" class="brutal-btn">{{ t.apiBanner.cta }} <v-icon>mdi-arrow-right</v-icon></a>
+                <a href="ticketmada-ticketing.html" class="brutal-btn">{{ t.apiBanner.cta }} <v-icon icon="mdi-arrow-right"></v-icon></a>
             </div>
         </section>
         
@@ -607,7 +632,7 @@
                 <h2 class="cta-title">{{ t.cta.title }}</h2>
                 <p class="cta-description">{{ t.cta.description }}</p>
                 <div class="cta-actions">
-                    <a href="#" class="brutal-btn brutal-btn-primary" @click.prevent="openAuth('register')">{{ t.cta.cta1 }} <v-icon>mdi-arrow-right</v-icon></a>
+                    <a href="#" class="brutal-btn brutal-btn-primary" @click.prevent="openAuth('register')">{{ t.cta.cta1 }} <v-icon icon="mdi-arrow-right"></v-icon></a>
                     <a href="#comment-ca-marche" class="brutal-btn brutal-btn-secondary">{{ t.cta.cta2 }}</a>
                 </div>
                 <div class="cta-features">
@@ -620,7 +645,7 @@
         <footer class="footer">
             <div class="footer-inner">
                 <div class="footer-grid">
-                    <div class="footer-brand"><a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a><p>{{ t.footer.description }}</p><div class="social-links"><a href="#" class="social-link"><v-icon>mdi-facebook</v-icon></a><a href="#" class="social-link"><v-icon>mdi-instagram</v-icon></a><a href="#" class="social-link"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.045 4.126H5.078z"/></svg></a><a href="#" class="social-link"><v-icon>mdi-linkedin</v-icon></a></div></div>
+                    <div class="footer-brand"><a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a><p>{{ t.footer.description }}</p><div class="social-links"><a href="#" class="social-link"><v-icon icon="mdi-facebook"></v-icon></a><a href="#" class="social-link"><v-icon icon="mdi-instagram"></v-icon></a><a href="#" class="social-link"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.045 4.126H5.078z"/></svg></a><a href="#" class="social-link"><v-icon icon="mdi-linkedin"></v-icon></a></div></div>
                     <div class="footer-column"><h4>{{ t.footer.product }}</h4><ul><li><a href="#fonctionnalites">{{ t.nav.features }}</a></li><li><a href="#tarifs">{{ t.nav.pricing }}</a></li><li><a href="ticketmada-ticketing.html">API</a></li></ul></div>
                     <div class="footer-column"><h4>{{ t.footer.resources }}</h4><ul><li><a href="#">{{ t.footer.helpCenter }}</a></li><li><a href="#">Blog</a></li><li><a href="#">{{ t.footer.guides }}</a></li></ul></div>
                     <div class="footer-column"><h4>{{ t.footer.company }}</h4><ul><li><a href="#">{{ t.footer.about }}</a></li><li><a href="#">{{ t.footer.contact }}</a></li><li><a href="#">{{ t.footer.careers }}</a></li></ul></div>
@@ -635,7 +660,7 @@
                 <div class="auth-header"><h2>{{ authMode === 'login' ? (lang === 'fr' ? 'Connexion' : 'Login') : (lang === 'fr' ? 'Créer un compte' : 'Create account') }}</h2><p>{{ authMode === 'login' ? (lang === 'fr' ? 'Heureux de vous revoir !' : 'Welcome back!') : (lang === 'fr' ? 'Rejoignez TicketMada' : 'Join TicketMada') }}</p></div>
                 <div class="social-auth">
                     <button class="social-auth-btn google-btn" @click.prevent="loginWith('Google')"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>{{ lang === 'fr' ? 'Continuer avec Google' : 'Continue with Google' }}</button>
-                    <button class="social-auth-btn facebook-btn" @click.prevent="loginWith('Facebook')"><v-icon>mdi-facebook</v-icon>{{ lang === 'fr' ? 'Continuer avec Facebook' : 'Continue with Facebook' }}</button>
+                    <button class="social-auth-btn facebook-btn" @click.prevent="loginWith('Facebook')"><v-icon icon="mdi-facebook"></v-icon>{{ lang === 'fr' ? 'Continuer avec Facebook' : 'Continue with Facebook' }}</button>
                 </div>
                 <div class="divider">{{ lang === 'fr' ? 'ou' : 'or' }}</div>
                 <form class="auth-form" @submit.prevent="handleAuth">
@@ -647,6 +672,8 @@
                 <p class="auth-footer"><template v-if="authMode === 'login'">{{ lang === 'fr' ? 'Pas de compte ?' : 'No account?' }} <a href="#" @click.prevent="authMode = 'register'">{{ lang === 'fr' ? "S'inscrire" : 'Sign up' }}</a></template><template v-else>{{ lang === 'fr' ? 'Déjà un compte ?' : 'Already have an account?' }} <a href="#" @click.prevent="authMode = 'login'">{{ lang === 'fr' ? 'Se connecter' : 'Log in' }}</a></template></p>
             </div>
         </div>
+        </v-main>
+        </v-app>
     </div>
 
     <script src="../js/api-client.js"></script>
@@ -658,7 +685,7 @@
         const translations = {
             fr: {
                 nav: { features: 'Fonctionnalités', howItWorks: 'Comment ça marche', pricing: 'Tarifs', testimonials: 'Témoignages', login: 'Connexion', createEvent: 'Créer un événement' },
-                hero: { badge: '✨ Pour les organisateurs', title: 'Gestion 360° de vos<br><span class="highlight">événements</span>', description: 'Billetterie en ligne et au guichet, plan de salle interactif, contrôle d\'accès QR code, gestion d\'équipe, finance et marketing. Tout en une seule plateforme.', cta1: 'Commencer gratuitement', cta2: 'Voir une démo', stat1: 'Billets vendus', stat2: 'Événements créés', stat3: 'Satisfaction' },
+                hero: { badge: '✨ Pour les organisateurs', title: 'Gestion 360° de vos<br><span class="highlight">événements</span>', description: 'Billetterie en ligne et au guichet, plan de salle interactif, contrôle d\'accès QR code, gestion d\'équipe, finance et marketing. Tout en une seule plateforme.', cta1: 'Devenir organisateur', cta2: 'Voir une démo', stat1: 'Billets vendus', stat2: 'Événements créés', stat3: 'Satisfaction' },
                 dashboard: { title: 'Tableau de bord', tickets: 'Billets vendus', revenue: 'Revenus (Ar)', scanRate: 'Taux de scan', paymentReceived: 'Paiement reçu!', ticketsShort: 'billets' },
                 keyFeatures: [
                     { title: 'Vos données, votre contrôle', subtitle: 'Exportez vos clients sans limite' },
@@ -695,7 +722,7 @@
             },
             en: {
                 nav: { features: 'Features', howItWorks: 'How it works', pricing: 'Pricing', testimonials: 'Testimonials', login: 'Login', createEvent: 'Create event' },
-                hero: { badge: '✨ For organizers', title: '360° management of<br>your <span class="highlight">events</span>', description: 'Online & on-site ticketing, interactive seating plans, QR code access control, team management, finance and marketing. All in one platform.', cta1: 'Start for free', cta2: 'See a demo', stat1: 'Tickets sold', stat2: 'Events created', stat3: 'Satisfaction' },
+                hero: { badge: '✨ For organizers', title: '360° management of<br>your <span class="highlight">events</span>', description: 'Online & on-site ticketing, interactive seating plans, QR code access control, team management, finance and marketing. All in one platform.', cta1: 'Become an organizer', cta2: 'See a demo', stat1: 'Tickets sold', stat2: 'Events created', stat3: 'Satisfaction' },
                 dashboard: { title: 'Dashboard', tickets: 'Tickets sold', revenue: 'Revenue (Ar)', scanRate: 'Scan rate', paymentReceived: 'Payment received!', ticketsShort: 'tickets' },
                 keyFeatures: [
                     { title: 'Your data, your control', subtitle: 'Export your customers without limits' },
@@ -760,6 +787,9 @@
         }
         
         const { createApp } = Vue;
+        const { createVuetify } = Vuetify;
+        const vuetify = createVuetify();
+        
         const app = createApp({
             data() {
                 return {
@@ -805,6 +835,8 @@
                             this.showAuth = false; 
                             if (result.user.role === 'buyer') {
                                 window.location.href = 'ticketmada-become-organizer.html';
+                            } else {
+                                window.location.href = this.dashboardUrl;
                             }
                         }
                     } catch(e) { 
@@ -820,7 +852,11 @@
                                 window.api.setAuth('mock-token', user);
                                 this.isLoggedIn = true;
                                 this.showAuth = false;
-                                window.location.href = 'ticketmada-become-organizer.html';
+                                if (user.role === 'buyer') {
+                                    window.location.href = 'ticketmada-become-organizer.html';
+                                } else {
+                                    window.location.href = this.dashboardUrl;
+                                }
                             });
                         }
                         return;
@@ -850,7 +886,7 @@
                 document.addEventListener('keydown', e => { if (e.key === 'Escape') { this.showAuth = false; this.showProfileMenu = false; } });
             }
         });
-        app.use(Vuetify.createVuetify());
+        app.use(vuetify);
         app.mount('#app');
     </script>
 </body>

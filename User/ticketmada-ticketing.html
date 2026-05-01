@@ -28,6 +28,10 @@
             --shadow-brutal-lg: 10px 10px 0px #1a1a1a;
         }
         
+        [v-cloak] { display: none !important; }
+        .v-application { font-family: 'DM Sans', sans-serif !important; background: transparent !important; }
+        .v-application__wrap { min-height: auto !important; }
+        
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'DM Sans', sans-serif; background: var(--bg-cream); color: var(--text-dark); overflow-x: hidden; }
         
@@ -243,8 +247,9 @@
 <body>
 <script src="../js/site-config.js"></script>
 
-    <div id="app">
-        <nav class="navbar">
+    <div id="app" v-cloak>
+        <v-app>
+            <nav class="navbar">
             <div class="navbar-inner">
                 <a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
                 <ul class="nav-links">
@@ -271,16 +276,18 @@
                                 </div>
                             </div>
                             <div class="profile-dropdown-items">
-                                <a class="profile-dropdown-item" :href="dashboardUrl"><v-icon size="small">mdi-view-dashboard</v-icon> Dashboard</a>
-                                <a class="profile-dropdown-item" :href="dashboardUrl + '?page=events'"><v-icon size="small">mdi-calendar-plus</v-icon> {{ lang === 'fr' ? 'Créer un événement' : 'Create event' }}</a>
+                                <a class="profile-dropdown-item" :href="dashboardUrl"><v-icon icon="mdi-view-dashboard" size="small"></v-icon> Dashboard</a>
+                                <a class="profile-dropdown-item" :href="dashboardUrl + '?page=events'"><v-icon icon="mdi-calendar-plus" size="small"></v-icon> {{ lang === 'fr' ? 'Créer un événement' : 'Create event' }}</a>
                                 <div class="profile-dropdown-divider"></div>
-                                <button class="profile-dropdown-item logout" @click="handleLogout"><v-icon size="small">mdi-logout</v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Logout' }}</button>
+                                <button class="profile-dropdown-item logout" @click="handleLogout"><v-icon icon="mdi-logout" size="small"></v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Logout' }}</button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </nav>
+        
+        <v-main>
         
         <!-- Hero -->
         <section class="hero">
@@ -291,7 +298,7 @@
                     <h1 class="hero-title" v-html="t.hero.title"></h1>
                     <p class="hero-description">{{ t.hero.description }}</p>
                     <div class="hero-actions">
-                        <a href="#" class="brutal-btn brutal-btn-primary" @click.prevent="openAuth('register')">{{ t.hero.cta1 }}<v-icon>mdi-arrow-right</v-icon></a>
+                        <a href="#" class="brutal-btn brutal-btn-primary" @click.prevent="openAuth('register')">{{ t.hero.cta1 }}<v-icon icon="mdi-arrow-right"></v-icon></a>
                         <a href="#fonctionnement" class="brutal-btn brutal-btn-secondary">{{ t.hero.cta2 }}</a>
                     </div>
                 </div>
@@ -422,6 +429,8 @@
                 <p class="auth-footer"><template v-if="authMode === 'login'">{{ lang === 'fr' ? 'Pas de compte ?' : 'No account?' }} <a href="#" @click.prevent="authMode = 'register'">{{ lang === 'fr' ? "S'inscrire" : 'Sign up' }}</a></template><template v-else>{{ lang === 'fr' ? 'Déjà un compte ?' : 'Already have an account?' }} <a href="#" @click.prevent="authMode = 'login'">{{ lang === 'fr' ? 'Se connecter' : 'Log in' }}</a></template></p>
             </div>
         </div>
+        </v-main>
+        </v-app>
     </div>
 
     <script src="../js/api-client.js"></script>
@@ -506,6 +515,9 @@
         };
         
         const { createApp } = Vue;
+        const { createVuetify } = Vuetify;
+        const vuetify = createVuetify();
+        
         const app = createApp({
             data() {
                 return {
@@ -582,7 +594,7 @@
                 document.addEventListener('keydown', e => { if (e.key === 'Escape') { this.showAuth = false; this.showProfileMenu = false; } });
             }
         });
-        app.use(Vuetify.createVuetify());
+        app.use(vuetify);
         app.mount('#app');
     </script>
 </body>

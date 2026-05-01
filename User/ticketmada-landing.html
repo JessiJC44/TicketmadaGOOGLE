@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TicketMada - Plateforme de Billetterie Événementielle</title>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,6 +13,10 @@
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
     
     <style>
+        [v-cloak] { display: none !important; }
+        .v-application { font-family: 'DM Sans', sans-serif !important; background: transparent !important; }
+        .v-application__wrap { min-height: auto !important; }
+
         .search-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal); margin-top: 10px; max-height: 400px; overflow-y: auto; z-index: 10; }
         .suggestion-item { padding: 15px 20px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: 0.2s; border-bottom: 2px solid #eee; }
         .suggestion-item:last-child { border-bottom: none; }
@@ -248,8 +252,9 @@
 <body>
 <script src="../js/site-config.js"></script>
 
-    <div id="app">
-        <nav class="navbar">
+    <div id="app" v-cloak>
+        <v-app>
+            <nav class="navbar">
             <div class="navbar-inner">
                 <a href="ticketmada-landing.html" class="logo">
                     <div class="logo-box">🎫</div>
@@ -264,7 +269,7 @@
                 </ul>
                 <div class="nav-cta">
                     <button class="lang-toggle" @click="toggleLang" :title="lang === 'fr' ? 'Switch to English' : 'Passer en Français'">{{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}</button>
-                    <button class="nav-search" @click="showSearch = true"><v-icon>mdi-magnify</v-icon></button>
+                    <button class="nav-search" @click="showSearch = true"><v-icon icon="mdi-magnify"></v-icon></button>
                     <template v-if="!isLoggedIn">
                         <a href="#" class="brutal-btn brutal-btn-secondary brutal-btn-small" @click.prevent="openAuth('login')">{{ t.nav.login }}</a>
                         <a href="#" class="brutal-btn brutal-btn-primary brutal-btn-small" @click.prevent="openAuth('register')">{{ t.nav.signup }}</a>
@@ -285,6 +290,8 @@
             </div>
         </nav>
         
+        <v-main>
+        
         <section class="hero">
             <div class="hero-bg-shapes"><div class="shape shape-1"></div><div class="shape shape-2"></div><div class="shape shape-3"></div><div class="shape shape-4"></div></div>
             <div class="hero-inner">
@@ -293,8 +300,9 @@
                     <h1 class="hero-title" v-html="t.hero.title"></h1>
                     <p class="hero-description">{{ t.hero.description }}</p>
                     <div class="hero-actions">
-                        <a href="#events" class="brutal-btn brutal-btn-primary">{{ t.hero.cta1 }}<v-icon>mdi-arrow-right</v-icon></a>
-                        <a href="ticketmada-organisateur.html" class="brutal-btn brutal-btn-secondary">{{ t.hero.cta2 }}</a>
+                        <a href="#events" class="brutal-btn brutal-btn-primary">{{ t.hero.cta1 }}<v-icon icon="mdi-arrow-right"></v-icon></a>
+                        <a href="#events" class="brutal-btn brutal-btn-secondary" v-if="lang === 'fr'">Découvrir</a>
+                        <a href="#events" class="brutal-btn brutal-btn-secondary" v-else>Discover</a>
                     </div>
                     <div class="hero-stats">
                         <div class="stat"><div class="stat-number counter" data-target="500" data-suffix="K+">0</div><div class="stat-label">{{ t.hero.stat1 }}</div></div>
@@ -304,13 +312,17 @@
                 </div>
                 <div class="hero-visual">
                     <div class="event-cards-stack">
+                        <div v-if="!featuredEvents.length" style="text-align:center;padding:40px;background:white;border:3px solid #1a1a1a;box-shadow:8px 8px 0 #1a1a1a;transform:rotate(-2deg);">
+                            <div style="font-size:3rem;animation:bounce 1s infinite;">🎫</div>
+                            <p style="font-family:'Syne';font-weight:700;margin-top:15px;">Chargement des événements...</p>
+                        </div>
                         <div class="event-card brutal-card" v-for="(event, index) in featuredEvents" :key="index">
-                            <img :src="event.image" :alt="event.title" class="event-card-image">
+                            <img :src="event.image || event.image_url" :alt="event.title || event.name" class="event-card-image">
                             <div class="event-card-content">
-                                <span class="event-card-date">{{ event.date }}</span>
-                                <h3 class="event-card-title">{{ event.title }}</h3>
-                                <p class="event-card-venue"><v-icon size="small">mdi-map-marker</v-icon>{{ event.venue }}</p>
-                                <div class="event-card-footer"><span class="event-price">{{ formatPrice(event.price) }}</span><a :href="'ticketmada-event.html?id=' + event.id" class="brutal-btn brutal-btn-primary brutal-btn-small">{{ t.buttons.book }}</a></div>
+                                <span class="event-card-date">{{ event.date || formatDate(event.date_start) }}</span>
+                                <h3 class="event-card-title">{{ event.title || event.name }}</h3>
+                                <p class="event-card-venue"><v-icon icon="mdi-map-marker" size="small"></v-icon>{{ event.venue || event.location }}</p>
+                                <div class="event-card-footer"><span class="event-price">{{ formatPrice(event.price || 20000) }}</span><a :href="'ticketmada-event.html?id=' + (event.id || index)" class="brutal-btn brutal-btn-primary brutal-btn-small">{{ t.buttons.book }}</a></div>
                             </div>
                         </div>
                     </div>
@@ -345,10 +357,10 @@
                         <div class="event-image-container">
                             <img :src="event.image" :alt="event.title">
                             <span class="event-badge" v-if="event.badgeKey">{{ t.badges[event.badgeKey] }}</span>
-                            <button class="event-wishlist"><v-icon size="small">mdi-heart-outline</v-icon></button>
+                            <button class="event-wishlist"><v-icon icon="mdi-heart-outline" size="small"></v-icon></button>
                         </div>
                         <div class="event-info">
-                            <div class="event-date-location"><span><v-icon size="x-small">mdi-calendar</v-icon> {{ event.date }}</span><span><v-icon size="x-small">mdi-map-marker</v-icon> {{ event.location }}</span></div>
+                            <div class="event-date-location"><span><v-icon icon="mdi-calendar" size="x-small"></v-icon> {{ event.date }}</span><span><v-icon icon="mdi-map-marker" size="x-small"></v-icon> {{ event.location }}</span></div>
                             <h3>{{ event.title }}</h3>
                             <div class="event-footer"><span class="price">{{ formatPrice(event.price) }}</span><a :href="'ticketmada-event.html?id=' + event.id" class="brutal-btn brutal-btn-primary brutal-btn-small">{{ t.buttons.buy }}</a></div>
                         </div>
@@ -384,8 +396,10 @@
                 <h2 class="cta-title">{{ t.cta.title }}</h2>
                 <p class="cta-description">{{ t.cta.description }}</p>
                 <div class="cta-actions">
-                    <a href="ticketmada-organisateur.html" class="brutal-btn brutal-btn-primary">{{ t.cta.cta1 }} <v-icon>mdi-arrow-right</v-icon></a>
-                    <a href="ticketmada-organisateur.html" class="brutal-btn brutal-btn-secondary">{{ t.cta.cta2 }}</a>
+                    <a href="ticketmada-organisateur.html" class="brutal-btn brutal-btn-primary" v-if="lang === 'fr'">Section Organisateurs <v-icon icon="mdi-arrow-right"></v-icon></a>
+                    <a href="ticketmada-organisateur.html" class="brutal-btn brutal-btn-primary" v-else>Organizers Section <v-icon icon="mdi-arrow-right"></v-icon></a>
+                    <a href="#events" class="brutal-btn brutal-btn-secondary" v-if="lang === 'fr'">Explorer</a>
+                    <a href="#events" class="brutal-btn brutal-btn-secondary" v-else>Explore</a>
                 </div>
             </div>
         </section>
@@ -432,7 +446,7 @@
                     <div class="footer-brand">
                         <a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
                         <p>{{ t.footer.description }}</p>
-                        <div class="social-links"><a href="#" class="social-link"><v-icon>mdi-facebook</v-icon></a><a href="#" class="social-link"><v-icon>mdi-instagram</v-icon></a><a href="#" class="social-link"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.045 4.126H5.078z"/></svg></a><a href="#" class="social-link"><v-icon>mdi-youtube</v-icon></a></div>
+                        <div class="social-links"><a href="#" class="social-link"><v-icon icon="mdi-facebook"></v-icon></a><a href="#" class="social-link"><v-icon icon="mdi-instagram"></v-icon></a><a href="#" class="social-link"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.045 4.126H5.078z"/></svg></a><a href="#" class="social-link"><v-icon icon="mdi-youtube"></v-icon></a></div>
                     </div>
                     <div class="footer-column"><h4>{{ t.footer.events }}</h4><ul><li><a href="#events" @click="activeCategory = 'concerts'">{{ t.nav.concerts }}</a></li><li><a href="#events" @click="activeCategory = 'festival'">{{ t.nav.festivals }}</a></li><li><a href="#events" @click="activeCategory = 'sports'">{{ t.nav.sports }}</a></li></ul></div>
                     <div class="footer-column"><h4>{{ t.nav.organizers }}</h4><ul><li><a href="ticketmada-organisateur.html">{{ t.footer.createEvent }}</a></li><li><a href="ticketmada-organisateur.html#tarifs">{{ t.footer.pricing }}</a></li></ul></div>
@@ -445,7 +459,7 @@
         
                     <div class="search-container">
                         <div style="position: relative;">
-                            <v-icon class="search-icon">mdi-magnify</v-icon>
+                            <v-icon icon="mdi-magnify" class="search-icon"></v-icon>
                             <input type="text" class="search-input" :placeholder="t.search.placeholder" v-model="searchQuery" @keyup.esc="showSearch = false" @keyup.enter="goToSearch" @input="fetchSuggestions" ref="searchInput">
                         </div>
                         <div v-if="suggestions.length" style="margin-top: 10px; background: white; border: 3px solid #1a1a1a; box-shadow: 6px 6px 0 #1a1a1a;">
@@ -455,10 +469,13 @@
                                     <div style="font-weight: 700; font-size: 0.95rem;">{{ s.name }}</div>
                                     <div style="font-size: 0.8rem; color: #666;">{{ s.venue }} · {{ s.category }}</div>
                                 </div>
-                                <v-icon size="small">mdi-chevron-right</v-icon>
+                                <v-icon icon="mdi-chevron-right" size="small"></v-icon>
                             </div>
                         </div>
                     </div>
+                </v-main>
+            </v-app>
+        </div>
         
         <div class="auth-modal" :class="{ active: showAuth }">
             <div class="auth-card brutal-card">
@@ -547,7 +564,7 @@
                     itemsPerPage: 20,
                     authForm: { name: '', email: '', password: '' },
                     featureIcons: ['🎫', '🔒', '📱', '💬', '🔄', '⭐'],
-                    featuredEvents: [{ title: 'Dama & The Gang', date: '15 Avril 2026', venue: 'Stade Mahamasina', price: '50,000', image: 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=400&h=300&fit=crop' },{ title: 'Jazz Festival Tana', date: '22-24 Mai 2026', venue: 'Palais des Sports', price: '35,000', image: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&h=300&fit=crop' },{ title: 'Electronic Night', date: '8 Juin 2026', venue: 'Le Glacier', price: '25,000', image: 'https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=400&h=300&fit=crop' }],
+                    featuredEvents: [],
                     categories: [{ icon: '🎸', countNum: 156 },{ icon: '🎪', countNum: 42 },{ icon: '⚽', countNum: 89 },{ icon: '🎭', countNum: 34 }],
                     events: []
                 };
@@ -598,19 +615,6 @@
                     }
                 },
                 goToEvent(id) { window.location.href = 'ticketmada-event.html?id=' + id; },
-                formatDate(dateStr) {
-                    if (!dateStr) return '';
-                    const d = new Date(dateStr);
-                    const months = {
-                        'fr': ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'],
-                        'en': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-                    };
-                    return `${d.getDate()} ${months[this.lang][d.getMonth()]}`;
-                },
-                formatPrice(price) {
-                    if (!price) return 'Gratuit';
-                    return new Intl.NumberFormat('fr-FR').format(price) + ' Ar';
-                },
                 scrollCarousel(dir) {
                     const el = document.getElementById('landing-carousel');
                     if (el) el.scrollBy({ left: dir * 320, behavior: 'smooth' });

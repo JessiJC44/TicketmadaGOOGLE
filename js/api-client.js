@@ -344,6 +344,11 @@ const TicketMadaAPI = (() => {
                 token: 'mock-buyer-token', 
                 user: { name: email.split('@')[0], email, role: 'buyer' } 
             };
+        },
+
+        setScanAuth(token, deviceId) {
+            this._scanToken = token;
+            this._deviceId = deviceId;
         }
     };
 
@@ -414,6 +419,10 @@ const TicketMadaAPI = (() => {
             const u = localStorage.getItem('ticketmada_user');
             return u ? JSON.parse(u) : null;
         }
+        getUserRole() {
+            const u = this.getUser();
+            return u ? (u.role || 'buyer') : 'buyer';
+        }
         getFingerprint() {
             return btoa(navigator.userAgent + navigator.language + screen.width + 'x' + screen.height).slice(0, 32);
         }
@@ -482,11 +491,13 @@ const TicketMadaAPI = (() => {
                     return MockAPI.getArtist(decodeURIComponent(name));
                 }
                 if (path.includes('/stats')) return MockAPI.getPlatformStats();
-                if (path.includes('/scan-links/validate')) {
-                    const token = path.split('/scan-links/')[1].split('/validate')[0];
-                    return MockAPI.validateScanLink(token);
+                if (path.includes('/scan-links/')) {
+                    if (path.includes('/validate')) {
+                        const token = path.split('/scan-links/')[1].split('/validate')[0];
+                        return MockAPI.validateScanLink(token);
+                    }
+                    return MockAPI.getScanLinks();
                 }
-                if (path.includes('/scan-links')) return MockAPI.getScanLinks();
                 if (path.includes('/scan-devices')) return MockAPI.getScanDevices();
                 if (path.includes('/scan-logs')) return MockAPI.getScanLogs();
                 if (path.includes('/auth/status')) return { loggedIn: this.isLoggedIn(), user: this.getUser() };
@@ -601,10 +612,14 @@ const TicketMadaAPI = (() => {
         async oauthLogin(data) { return this.real.post('/api/auth/oauth', data); }
 
         setAuth(token, user) { this.real.setAuth(token, user); }
-        setScanAuth(token, deviceId) { this.real.setScanAuth(token, deviceId); }
+        setScanAuth(token, deviceId) { 
+            if (this.useMock) MockAPI.setScanAuth(token, deviceId);
+            this.real.setScanAuth(token, deviceId); 
+        }
         logout() { this.real.clearAuth(); }
         isLoggedIn() { return this.real.isLoggedIn(); }
         getUser() { return this.real.getUser(); }
+        getUserRole() { return this.real.getUserRole(); }
 
         // --- Specific Methods ---
         async getEvents(filters) { return this.get('/events?' + new URLSearchParams(filters)); }

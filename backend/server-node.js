@@ -313,6 +313,18 @@ function initDB() {
             FOREIGN KEY (device_id) REFERENCES scan_devices(id),
             FOREIGN KEY (event_id) REFERENCES events(id)
         );
+        CREATE TABLE IF NOT EXISTS scan_access_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id INTEGER NOT NULL,
+            request_token TEXT UNIQUE NOT NULL,
+            device_info TEXT,
+            status TEXT DEFAULT 'pending', 
+            approved_by INTEGER,
+            created_at DATETIME DEFAULT (datetime('now')),
+            updated_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (event_id) REFERENCES events(id),
+            FOREIGN KEY (approved_by) REFERENCES users(id)
+        );
         CREATE TABLE IF NOT EXISTS organizer_applications (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -1235,7 +1247,52 @@ async function handleAnalytics(req, res, parts) {
 
 // SCANNER
 async function handleScanner(req, res, parts) {
-    const action = parts[2];
+    const action = parts[1]; // The router passes parts, and parts[1] is the resource
+
+    // POST /api/scan-access-requests (Staff requesting access)
+    if (action === 'scan-access-requests') {
+        if (req.method === 'POST') {
+            const body = await parseBody(req);
+            const { eventId, deviceInfo } = body;
+            const requestToken = 'ar_' + crypto.randomBytes(12).toString('hex');
+            db.prepare('INSERT INTO scan_access_requests (event_id, request_token, device_info) VALUES (?, ?, ?)')
+              .run(eventId, requestToken, JSON.stringify(deviceInfo));
+            return sendJSON(res, { success: true, requestToken });
+        }
+        
+        // GET /api/scan-access-requests/pending (Organizer polling)
+        if (req.method === 'GET' && parts[2] === 'pending') {
+            const user = requireAuth(req, ['organizer', 'admin']);
+            if (!user) return sendError(res, 'Non autorisé', 403);
+            const pending = db.prepare('SELECT sar.*, e.name as event_name FROM scan_access_requests sar JOIN events e ON sar.event_id = e.id WHERE sar.status = "pending" AND e.organizer_id = ?').all(user.id);
+            return sendJSON(res, pending.map(r => ({ ...r, deviceInfo: JSON.parse(r.device_info) })));
+        }
+
+        // POST /api/scan-access-requests/:id/approve (Organizer approving)
+        if (req.method === 'POST' && parts[3] === 'approve') {
+            const user = requireAuth(req, ['organizer', 'admin']);
+            if (!user) return sendError(res, 'Non autorisé', 403);
+            const requestId = parts[2];
+            db.prepare('UPDATE scan_access_requests SET status = "approved", approved_by = ?, updated_at = datetime("now") WHERE id = ?').run(user.id, requestId);
+            return sendJSON(res, { success: true });
+        }
+
+        // GET /api/scan-access-requests/:token/status (Staff polling)
+        if (req.method === 'GET' && parts[3] === 'status') {
+            const token = parts[2];
+            const request = db.prepare('SELECT sar.*, sl.token as scan_link_token FROM scan_access_requests sar LEFT JOIN scan_links sl ON sar.event_id = sl.event_id WHERE sar.request_token = ? ORDER BY sl.id DESC LIMIT 1').get(token);
+            if (!request) return sendError(res, 'Requête non trouvée', 404);
+            
+            let scanLink = null;
+            if (request.status === 'approved') {
+                // Return the scan link for this event if approved
+                const link = db.prepare('SELECT token FROM scan_links WHERE event_id = ? AND is_active = 1 LIMIT 1').get(request.event_id);
+                if (link) scanLink = `${APP_URL}/User/ticketmada-scanner.html?token=${link.token}`;
+            }
+            
+            return sendJSON(res, { status: request.status, scanLink });
+        }
+    }
 
     // GET /api/scan-links/:token/validate
     if (parts[3] === 'validate' && req.method === 'GET') {
@@ -1405,6 +1462,7 @@ const server = http.createServer(async (req, res) => {
                 case 'activity': return await handleActivity(req, res, parts);
                 case 'organizer-applications':
                 case 'my-application': return await handleOrganizerApplications(req, res, parts);
+                case 'scan-access-requests':
                 case 'scan-links':
                 case 'scan-devices':
                 case 'scan-logs': return await handleScanner(req, res, parts);

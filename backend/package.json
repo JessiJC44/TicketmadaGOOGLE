@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0",
-    "bcryptjs": "^2.4.3"
+    "bcryptjs": "^2.4.3",
+    "nodemailer": "^6.9.0"
   },
   "engines": {
     "node": ">=18.0.0"

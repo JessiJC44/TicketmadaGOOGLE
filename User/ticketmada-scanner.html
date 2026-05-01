@@ -121,6 +121,34 @@
             <button @click="retryAuth" class="neo-btn">Réessayer</button>
         </div>
 
+        <!-- Setup Request Screen -->
+        <div v-if="setupEventId && !isAuthenticated" class="full-screen-msg">
+            <template v-if="requestStatus === 'idle'">
+                <div class="msg-icon">📱</div>
+                <div class="msg-title">Demande d'accès scanner</div>
+                <p class="msg-desc">Vous allez demander l'autorisation de scanner les billets pour cet événement.</p>
+                <button @click="sendRequest" class="neo-btn" style="background:var(--accent-mint);">Envoyer la demande</button>
+            </template>
+            <template v-if="requestStatus === 'sending' || requestStatus === 'pending'">
+                <div class="msg-icon">⏳</div>
+                <div class="msg-title">Demande en attente...</div>
+                <p class="msg-desc">L'organisateur doit approuver votre appareil sur son tableau de bord.</p>
+                <v-progress-circular indeterminate color="var(--accent-coral)"></v-progress-circular>
+                <div style="margin-top:20px; font-size: 0.8rem; opacity:0.6;">TOKEN: {{ requestToken }}</div>
+            </template>
+            <template v-if="requestStatus === 'approved'">
+                <div class="msg-icon">✅</div>
+                <div class="msg-title">Accès approuvé !</div>
+                <p class="msg-desc">Veuillez patienter pendant le chargement du scanner...</p>
+            </template>
+            <template v-if="requestStatus === 'rejected'">
+                <div class="msg-icon">❌</div>
+                <div class="msg-title">Demande refusée</div>
+                <p class="msg-desc">L'organisateur a refusé l'accès à votre appareil.</p>
+                <button @click="requestStatus = 'idle'" class="neo-btn">Réessayer</button>
+            </template>
+        </div>
+
         <!-- Scanner Screen -->
         <template v-if="isAuthenticated">
             <!-- Top Bar -->
@@ -286,6 +314,10 @@
         data() {
             return {
                 scanToken: null,
+                setupEventId: null,
+                requestStatus: 'idle', // idle, sending, pending, approved, rejected
+                requestToken: null,
+                pollInterval: null,
                 isAuthenticated: false,
                 authError: '',
                 eventInfo: null,
@@ -322,7 +354,13 @@
             // Get token from URL
             const urlParams = new URLSearchParams(window.location.search);
             this.scanToken = urlParams.get('token');
+            this.setupEventId = urlParams.get('setup');
             
+            if (this.setupEventId && !this.scanToken) {
+                // Request access mode
+                return;
+            }
+
             if (!this.scanToken) {
                 this.authError = 'Lien de scan manquant';
                 return;
@@ -348,6 +386,47 @@
             }
         },
         methods: {
+            async sendRequest() {
+                this.requestStatus = 'sending';
+                try {
+                    const deviceInfo = {
+                        name: 'Appareil ' + Math.random().toString(36).substr(2, 5).toUpperCase(),
+                        browser: navigator.userAgent,
+                        os: navigator.platform
+                    };
+                    const res = await window.api.post('/api/scan-access-requests', {
+                        eventId: this.setupEventId,
+                        deviceInfo
+                    });
+                    if (res.success) {
+                        this.requestToken = res.requestToken;
+                        this.requestStatus = 'pending';
+                        this.startPolling();
+                    }
+                } catch (e) {
+                    this.authError = 'Erreur lors de la demande';
+                    this.requestStatus = 'idle';
+                }
+            },
+            startPolling() {
+                this.pollInterval = setInterval(async () => {
+                    try {
+                        const res = await window.api.get(`/api/scan-access-requests/${this.requestToken}/status`);
+                        if (res.status === 'approved') {
+                            this.requestStatus = 'approved';
+                            clearInterval(this.pollInterval);
+                            setTimeout(() => {
+                                window.location.href = res.scanLink;
+                            }, 1500);
+                        } else if (res.status === 'rejected') {
+                            this.requestStatus = 'rejected';
+                            clearInterval(this.pollInterval);
+                        }
+                    } catch (e) {
+                        console.error('Polling error', e);
+                    }
+                }, 3000);
+            },
             initScanner() {
                 this.scanner = new Html5Qrcode("qr-reader");
                 const config = { fps: 15, qrbox: { width: 260, height: 260 } };

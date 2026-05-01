@@ -70,7 +70,8 @@
 </head>
 <body>
     <div id="app" v-cloak>
-        <nav class="nav">
+        <v-app>
+            <nav class="nav">
             <a href="ticketmada-landing.html" class="logo">
                 <div class="logo-box">🎫</div>
                 <span class="logo-text">TicketMada</span>
@@ -181,7 +182,7 @@
                             <div v-for="t in eventTypesList" :key="t.id">
                                 <label class="checkbox-group">
                                     <input type="checkbox" v-model="form.event_types" :value="t.id">
-                                    <div class="checkbox-custom"><v-icon v-if="form.event_types.includes(t.id)" size="14" color="white">mdi-check</v-icon></div>
+                                    <div class="checkbox-custom"><v-icon v-if="form.event_types.includes(t.id)" icon="mdi-check" size="14" color="white"></v-icon></div>
                                     <span style="font-weight: 700; font-size: 0.9rem;">{{ t.label }}</span>
                                 </label>
                             </div>
@@ -242,7 +243,7 @@
 
                         <label class="checkbox-group" style="margin-top: 30px;">
                             <input type="checkbox" v-model="form.accepts_terms">
-                            <div class="checkbox-custom"><v-icon v-if="form.accepts_terms" size="14" color="white">mdi-check</v-icon></div>
+                            <div class="checkbox-custom"><v-icon v-if="form.accepts_terms" icon="mdi-check" size="14" color="white"></v-icon></div>
                             <span style="font-weight: 700; font-size: 0.85rem;">J'accepte les conditions d'utilisation et la commission de 3%</span>
                         </label>
                         <span v-if="errors.accepts_terms" class="error-msg">{{ errors.accepts_terms }}</span>
@@ -277,12 +278,17 @@
                 </div>
             </div>
         </div>
+        </v-app>
     </div>
 
     <script src="../js/api-client.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
     <script>
         const { createApp } = Vue;
+        const { createVuetify } = Vuetify;
+        const vuetify = createVuetify();
+
         createApp({
             data() {
                 return {
@@ -415,7 +421,7 @@
                     }
                 }
             }
-        }).mount('#app');
+        }).use(vuetify).mount('#app');
     </script>
 </body>
 </html>

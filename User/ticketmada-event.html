@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TicketMada - Choisir vos places</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,6 +26,9 @@
             --shadow-brutal-sm: 4px 4px 0px #1a1a1a;
             --shadow-brutal-lg: 10px 10px 0px #1a1a1a;
         }
+        [v-cloak] { display: none !important; }
+        .v-application { font-family: 'DM Sans', sans-serif !important; background: transparent !important; }
+        .v-application__wrap { min-height: auto !important; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'DM Sans', sans-serif; background: var(--bg-cream); color: var(--text-dark); overflow-x: hidden; }
 
@@ -312,7 +315,9 @@
 <body>
 <script src="../js/site-config.js"></script>
 
-<div id="app">
+<div id="app" v-cloak>
+    <v-app>
+    <v-main>
     <!-- Loading Overlay -->
     <div v-if="loading" style="position:fixed; inset:0; background:white; z-index:3000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;">
         <div class="logo-box" style="width:80px; height:80px; font-size:2rem; animation: pulse 1s infinite;">🎫</div>
@@ -328,7 +333,7 @@
                 <span class="logo-text">Ticket<span>Mada</span></span>
             </a>
             <a href="ticketmada-landing.html" class="nav-back">
-                <v-icon size="small">mdi-arrow-left</v-icon>
+                <v-icon icon="mdi-arrow-left" size="small"></v-icon>
                 {{ lang === 'fr' ? 'Retour aux événements' : 'Back to events' }}
             </a>
             <div class="nav-cta">
@@ -378,23 +383,31 @@
     <!-- Event Hero -->
     <div class="event-hero">
         <img :src="event.image_url || 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=1200'" class="hero-banner" alt="">
-        <div class="hero-content-overlay">
+        <div class="hero-content-overlay" v-if="!loading">
             <div class="hero-event-info">
                 <img :src="event.image_url || 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=300'" class="hero-poster" alt="">
                 <div class="hero-text">
                     <h1>{{ event.name }}</h1>
                     <div class="hero-meta">
-                        <span><v-icon color="white">mdi-calendar</v-icon> {{ formatDate(event.date_start) }}</span>
-                        <span><v-icon color="white">mdi-map-marker</v-icon> {{ event.venue }}</span>
-                        <span><v-icon color="white">mdi-account-group</v-icon> {{ event.capacity ? event.capacity.toLocaleString() : '—' }} {{ lang === 'fr' ? 'places' : 'seats' }}</span>
+                        <span><v-icon icon="mdi-calendar" color="white"></v-icon> {{ formatDate(event.date_start) }}</span>
+                        <span><v-icon icon="mdi-map-marker" color="white"></v-icon> {{ event.venue }}</span>
+                        <span><v-icon icon="mdi-account-group" color="white"></v-icon> {{ event.capacity ? event.capacity.toLocaleString() : '—' }} {{ lang === 'fr' ? 'places' : 'seats' }}</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="loading" style="display:flex;align-items:center;justify-content:center;min-height:80vh;background:var(--bg-cream);">
+        <div style="text-align:center;">
+            <div style="font-size:4rem;animation:bounce 1s infinite;">🎫</div>
+            <div style="font-family:'Syne';font-weight:800;font-size:1.5rem;margin-top:20px;">Chargement...</div>
+        </div>
+    </div>
+
     <!-- Social Proof Bar -->
-    <div class="social-proof-bar">
+    <div class="social-proof-bar" v-if="!loading">
         <div class="sp-inner">
             <div class="sp-item"><span class="sp-live"></span> 👥 <strong>{{ viewersCount }}</strong> {{ lang === 'fr' ? 'personnes consultent' : 'people viewing' }}</div>
             <div class="sp-item"><span class="sp-fire">🔥</span> <strong>{{ recentSales }}</strong> {{ lang === 'fr' ? 'ventes cette heure' : 'sales this hour' }}</div>
@@ -471,9 +484,9 @@
                     </svg>
                 </div>
                 <div class="view-seat-info">
-                    <div class="view-seat-tag"><v-icon size="x-small">mdi-eye</v-icon> {{ viewQualityText }}</div>
-                    <div class="view-seat-tag"><v-icon size="x-small">mdi-ruler</v-icon> {{ viewDistanceText }}</div>
-                    <div class="view-seat-tag"><v-icon size="x-small">mdi-volume-high</v-icon> {{ viewSoundText }}</div>
+                    <div class="view-seat-tag"><v-icon icon="mdi-eye" size="x-small"></v-icon> {{ viewQualityText }}</div>
+                    <div class="view-seat-tag"><v-icon icon="mdi-ruler" size="x-small"></v-icon> {{ viewDistanceText }}</div>
+                    <div class="view-seat-tag"><v-icon icon="mdi-volume-high" size="x-small"></v-icon> {{ viewSoundText }}</div>
                 </div>
             </div>
         </div>
@@ -486,9 +499,9 @@
                             <h3>{{ lang === 'fr' ? '🎫 Billets disponibles' : '🎫 Available Tickets' }}</h3>
                             <p>{{ totalAvailable }} {{ lang === 'fr' ? 'billets restants' : 'tickets remaining' }}</p>
                         </div>
-                        <button class="btn-icon" @click="scrollToMap" title="Voir le plan"><v-icon>mdi-map-marker-radius</v-icon></button>
+                        <button class="btn-icon" @click="scrollToMap" title="Voir le plan"><v-icon icon="mdi-map-marker-radius"></v-icon></button>
                     </div>
-                    <button class="alert-btn-inline" @click="showPriceAlert = true"><v-icon size="x-small">mdi-bell-outline</v-icon> {{ lang === 'fr' ? 'Alerte prix' : 'Price alert' }}</button>
+                    <button class="alert-btn-inline" @click="showPriceAlert = true"><v-icon icon="mdi-bell-outline" size="x-small"></v-icon> {{ lang === 'fr' ? 'Alerte prix' : 'Price alert' }}</button>
                 </div>
 
             <div class="listings-filter">
@@ -523,8 +536,8 @@
                     <div class="listing-info">
                         <div class="listing-zone-name">{{ listing.zoneName }}</div>
                         <div class="listing-detail">
-                            <span><v-icon size="x-small">mdi-seat</v-icon> {{ listing.seatInfo }}</span>
-                            <span><v-icon size="x-small">mdi-eye</v-icon> {{ listing.viewQuality }}</span>
+                            <span><v-icon icon="mdi-seat" size="x-small"></v-icon> {{ listing.seatInfo }}</span>
+                            <span><v-icon icon="mdi-eye" size="x-small"></v-icon> {{ listing.viewQuality }}</span>
                         </div>
                         <div class="listing-badges">
                             <span class="listing-badge badge-urgency" v-if="listing.available <= 10">
@@ -557,7 +570,7 @@
                 </div>
                 <button class="selection-buy" @click="confirmPurchase">
                     {{ lang === 'fr' ? 'Acheter' : 'Buy Now' }}
-                    <v-icon size="small">mdi-arrow-right</v-icon>
+                    <v-icon icon="mdi-arrow-right" size="small"></v-icon>
                 </button>
             </div>
         </div>
@@ -637,11 +650,11 @@
                 <div class="logo-text">Ticket<span>Mada</span></div>
             </div>
             <div class="footer-socials" style="display:flex;gap:15px;align-items:center;">
-                <a href="#" class="footer-social-link" style="color:white;"><v-icon>mdi-facebook</v-icon></a>
+                <a href="#" class="footer-social-link" style="color:white;"><v-icon icon="mdi-facebook"></v-icon></a>
                 <a href="#" class="footer-social-link" style="color:white;display:flex;align-items:center;">
                     <svg style="width:20px;height:20px;fill:currentColor;" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                 </a>
-                <a href="#" class="footer-social-link" style="color:white;"><v-icon>mdi-instagram</v-icon></a>
+                <a href="#" class="footer-social-link" style="color:white;"><v-icon icon="mdi-instagram"></v-icon></a>
             </div>
             <div style="font-size:0.85rem;opacity:0.6;">© 2026 TicketMada. All rights reserved.</div>
         </div>
@@ -687,10 +700,14 @@
             </div>
         </div>
     </section>
+    </v-main>
+    </v-app>
 </div>
 
-<script src="../js/api-client.js"></script>
-<script src="../js/venue-canvas.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/oauth-simulation.js"></script>
+    <script src="../js/profile-menu.js"></script>
+    <script src="../js/venue-canvas.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
 <script>
@@ -733,6 +750,9 @@ const app = createApp({
             // Auth
             isLoggedIn: false,
             showAuth: false,
+            pendingCheckout: false,
+            authMode: 'login',
+            authForm: { name: '', email: '', password: '' },
             showProfileMenu: false,
             userName: '',
             userPhoto: ''
@@ -863,6 +883,13 @@ const app = createApp({
             }
         },
         confirmPurchase() {
+            // REQUIRE LOGIN before checkout
+            if (!this.isLoggedIn) {
+                this.showAuth = true;
+                this.authMode = 'login';
+                this.pendingCheckout = true;
+                return;
+            }
             console.log('[TicketMada] confirmPurchase triggered. Selection:', this.canvasSelected.length);
             // If user selected seats on canvas, build info from those
             let zoneName = '';
@@ -917,6 +944,7 @@ const app = createApp({
             });
             window.location.href = 'ticketmada-checkout.html?' + params.toString();
         },
+        openAuth(mode) { this.authMode = mode; this.showAuth = true; },
         async loginWithGoogle() {
             try {
                 const result = await window.api.loginWithGoogle();
@@ -925,11 +953,43 @@ const app = createApp({
                     this.showAuth = false;
                     this.userName = result.user.name;
                     this.userPhoto = result.user.photo;
+                    if (this.pendingCheckout) {
+                        this.pendingCheckout = false;
+                        this.$nextTick(() => this.confirmPurchase());
+                    }
                 } else {
                     alert('Erreur Google: ' + result.error);
                 }
             } catch (e) {
                 console.error(e);
+            }
+        },
+        async handleAuth() {
+            try {
+                let result;
+                if (this.authMode === 'login') {
+                    result = await window.api.login(this.authForm.email, this.authForm.password);
+                } else {
+                    result = await window.api.register(this.authForm.name, this.authForm.email, this.authForm.password);
+                }
+                
+                if (result.error) {
+                    alert(result.error);
+                } else {
+                    this.isLoggedIn = true;
+                    this.showAuth = false;
+                    const user = window.api.getUser();
+                    if (user) {
+                        this.userName = user.name;
+                        this.userPhoto = user.photo || '';
+                    }
+                    if (this.pendingCheckout) {
+                        this.pendingCheckout = false;
+                        this.$nextTick(() => this.confirmPurchase());
+                    }
+                }
+            } catch(e) {
+                alert('Authentication error');
             }
         },
         async handleLogout() {
