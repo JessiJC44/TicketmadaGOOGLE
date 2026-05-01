@@ -52,6 +52,63 @@ const TicketMadaAPI = (() => {
         ]
     };
 
+    const MOCK_SUPERADMIN_STATS = {
+        totalRevenue: 245000000,
+        totalTicketsSold: 12500,
+        activeEvents: 42,
+        totalUsers: 8500,
+        activeOrganizers: 156,
+        pendingApplications: 12,
+        totalEvents: 184,
+        blockedUsers: 8,
+        totalCommission: 7350000,
+        avgFillRate: 72,
+        monthlyRevenue: [
+            { month: '2025-06', revenue: 12000000 },
+            { month: '2025-07', revenue: 15000000 },
+            { month: '2025-08', revenue: 22000000 },
+            { month: '2025-09', revenue: 18000000 },
+            { month: '2025-10', revenue: 25000000 },
+            { month: '2025-11', revenue: 30000000 },
+            { month: '2025-12', revenue: 45000000 },
+            { month: '2026-01', revenue: 20000000 },
+            { month: '2026-02', revenue: 15000000 },
+            { month: '2026-03', revenue: 18000000 },
+            { month: '2026-04', revenue: 25000000 }
+        ],
+        categoryDistribution: [
+            { category: 'concerts', ticket_count: 5200 },
+            { category: 'festival', ticket_count: 4100 },
+            { category: 'sports', ticket_count: 2100 },
+            { category: 'theatre', ticket_count: 800 },
+            { category: 'exhibition', ticket_count: 300 }
+        ],
+        topEvents: [
+            { id: 1, name: "Dama Live — Tournée 2026", tickets_sold: 12500, revenue: 125000000 },
+            { id: 2, name: "Festival Donia 2026", tickets_sold: 14000, revenue: 85000000 },
+            { id: 8, name: "Makis vs Kenya", tickets_sold: 21000, revenue: 42000000 },
+            { id: 12, name: "AmbondronA Rock", tickets_sold: 35000, revenue: 70000000 },
+            { id: 15, name: "Rossy en Fête", tickets_sold: 30000, revenue: 60000000 }
+        ],
+        recentActivity: [
+            { id: 1, type: 'ticket_purchased', actor_name: 'Jean Rakoto', description: 'Jean Rakoto a acheté 2 billets pour Dama Live', created_at: new Date().toISOString() },
+            { id: 2, type: 'organizer_application_submitted', actor_name: 'Events Plus', description: 'Nouvelle demande d\'organisateur de Events Plus', created_at: new Date(Date.now() - 3600000).toISOString() },
+            { id: 3, type: 'event_created', actor_name: 'Samoela Ent.', description: 'Nouvel événement créé: Samoela Acoustic', created_at: new Date(Date.now() - 7200000).toISOString() },
+            { id: 4, type: 'user_registered', actor_name: 'Miora Soa', description: 'Nouvel utilisateur inscrit: Miora Soa', created_at: new Date(Date.now() - 86400000).toISOString() }
+        ]
+    };
+
+    const MOCK_SUPERADMIN_ORGANIZERS = [
+        { id: 101, name: "Samoela Ent.", email: "samoela@ent.mg", status: "active", events_count: 12, total_revenue: 150000000, total_commission: 4500000, created_at: "2024-01-10" },
+        { id: 102, name: "Madagascar Events", email: "contact@madevents.com", status: "active", events_count: 8, total_revenue: 85000000, total_commission: 2550000, created_at: "2024-02-15" },
+        { id: 103, name: "Dago Productions", email: "prod@dago.mg", status: "suspended", events_count: 5, total_revenue: 42000000, total_commission: 1260000, created_at: "2024-03-20" }
+    ];
+
+    const MOCK_SUPERADMIN_USERS = [
+        { id: 201, name: "Jean Rakoto", email: "jean@gmail.com", status: "active", purchaseCount: 15, totalSpent: 450000, lastPurchase: "2026-04-20", created_at: "2025-05-10" },
+        { id: 202, name: "Miora Soa", email: "miora@yahoo.fr", status: "active", purchaseCount: 2, totalSpent: 80000, lastPurchase: "2026-04-25", created_at: "2026-04-01" },
+        { id: 203, name: "Fidy Antsa", email: "fidy@gmail.com", status: "blocked", purchaseCount: 0, totalSpent: 0, lastPurchase: null, created_at: "2026-04-10" }
+    ];
     const MOCK_EVENTS = [
         { id: 1, name: "Dama Live — Tournée 2026", artist: "Dama (Mahaleo)", description: "Le légendaire Dama revient sur scène.", emoji: "🎤", category: "concerts", date_start: "2026-06-15", time: "19:00", venue: "Stade Barea", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800", capacity: 15000, tickets_sold: 12500, status: "active", hot: true, zones: ZONE_TEMPLATES.concert },
         { id: 2, name: "Festival Donia 2026", artist: "Multiples", description: "Le plus grand festival de l'Océan Indien.", emoji: "🎪", category: "festival", date_start: "2026-07-20", time: "16:00", venue: "Plage Ambatoloaka", city: "Nosy Be", image_url: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800", capacity: 20000, tickets_sold: 14000, status: "active", hot: true, zones: ZONE_TEMPLATES.festival },
@@ -147,14 +204,20 @@ const TicketMadaAPI = (() => {
 
     const MockAPI = {
         getEvents(filters = {}) {
-            let events = [...MOCK_EVENTS_FINAL];
+            let events = [...MOCK_EVENTS_FINAL].map(e => ({
+                ...e,
+                organizer_name: ['Samoela Ent.', 'Madagascar Events', 'Dago Productions', 'Mahamasina Events'][Math.floor(Math.random() * 4)],
+                ticketsSold: e.tickets_sold || Math.floor(Math.random() * e.capacity),
+                totalRevenue: (e.tickets_sold || 1000) * 20000,
+                created_at: new Date(Date.now() - 86400000 * 30).toISOString()
+            }));
             if (filters.city) events = events.filter(e => e.city.toLowerCase() === filters.city.toLowerCase());
             if (filters.category) events = events.filter(e => e.category === filters.category);
             if (filters.search) {
                 const q = filters.search.toLowerCase();
                 events = events.filter(e =>
                     e.name.toLowerCase().includes(q) ||
-                    e.artist.toLowerCase().includes(q) ||
+                    (e.artist && e.artist.toLowerCase().includes(q)) ||
                     e.venue.toLowerCase().includes(q) ||
                     e.city.toLowerCase().includes(q)
                 );
@@ -282,6 +345,13 @@ const TicketMadaAPI = (() => {
             }).sort((a,b) => new Date(b.scanned_at) - new Date(a.scanned_at));
         },
 
+        getApplications() {
+            return [
+                { id: 1, full_name: 'Jean Mark', organization_name: 'Dago Music', status: 'pending', created_at: new Date().toISOString(), phone: '034 00 000 00', city: 'Antananarivo' },
+                { id: 2, full_name: 'Miora Soa', organization_name: 'Soa Events', status: 'approved', created_at: new Date(Date.now() - 86400000).toISOString(), phone: '032 11 111 11', city: 'Toamasina' }
+            ];
+        },
+
         validateScanLink(token) {
             const link = MOCK_SCAN_LINKS.find(l => l.token === token);
             if (!link) return { valid: false, error: 'Lien invalide ou expiré' };
@@ -332,6 +402,9 @@ const TicketMadaAPI = (() => {
 
         login(email, password) {
             // Check for special demo accounts
+            if (email === 'sedrayiokoraz@gmail.com') {
+                return { success: true, token: 'mock-superadmin-token', user: { id: 1, name: 'SuperAdmin', email, role: 'superadmin', avatar_initials: 'SA' } };
+            }
             if (email === 'admin@ticketmada.mg') {
                 return { success: true, token: 'mock-admin-token', user: { name: 'Super Admin', email, role: 'admin' } };
             }
@@ -500,6 +573,13 @@ const TicketMadaAPI = (() => {
                 }
                 if (path.includes('/scan-devices')) return MockAPI.getScanDevices();
                 if (path.includes('/scan-logs')) return MockAPI.getScanLogs();
+                if (path.includes('/superadmin/dashboard')) return MOCK_SUPERADMIN_STATS;
+                if (path.includes('/superadmin/organizers')) return MOCK_SUPERADMIN_ORGANIZERS;
+                if (path.includes('/superadmin/users')) return MOCK_SUPERADMIN_USERS;
+                if (path.includes('/superadmin/logs')) return MOCK_SUPERADMIN_STATS.recentActivity;
+                if (path.includes('/superadmin/events')) return MockAPI.getEvents().events;
+                if (path.includes('/organizer-applications')) return MockAPI.getApplications ? MockAPI.getApplications() : [];
+                
                 if (path.includes('/auth/status')) return { loggedIn: this.isLoggedIn(), user: this.getUser() };
                 return {};
             }
@@ -539,6 +619,8 @@ const TicketMadaAPI = (() => {
                     const code = path.match(/\/tickets\/([^\/]+)\/scan/)[1];
                     return MockAPI.scanTicket(code);
                 }
+                if (path.includes('/superadmin/')) return { success: true };
+                if (path.includes('/organizer-applications/')) return { success: true };
                 return { success: true };
             }
             return this.real.put(path, data);

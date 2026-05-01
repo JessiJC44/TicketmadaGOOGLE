@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TicketMada - SuperAdmin Dashboard</title>
+    <title>TicketMada - SuperAdmin Portal</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,548 +13,397 @@
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
     
     <style>
-        :root { --bg-cream: #FAF7F2; --bg-dark: #1a1a1a; --bg-sidebar: #0f0f0f; --accent-coral: #FF6B4A; --accent-yellow: #FECA57; --accent-mint: #00D9A5; --accent-blue: #4A90FF; --accent-purple: #9B59B6; --accent-red: #E74C3C; --text-dark: #1a1a1a; --text-light: #666; --border-dark: #1a1a1a; --shadow-brutal: 4px 4px 0px #1a1a1a; }
+        :root {
+            --bg-cream: #FAF7F2;
+            --bg-dark: #1a1a1a;
+            --bg-sidebar: #0f0f0f;
+            --accent-coral: #FF6B4A;
+            --accent-yellow: #FECA57;
+            --accent-mint: #00D9A5;
+            --accent-blue: #4A90FF;
+            --accent-purple: #9B59B6;
+            --accent-red: #E74C3C;
+            --text-dark: #1a1a1a;
+            --text-light: #666;
+            --border-dark: #1a1a1a;
+            --shadow-brutal: 4px 4px 0px #1a1a1a;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'DM Sans', sans-serif; background: #f5f5f5; color: var(--text-dark); }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg-cream); color: var(--text-dark); overflow-x: hidden; }
+
         .dashboard-layout { display: flex; min-height: 100vh; }
         
-        .sidebar { width: 260px; background: var(--bg-sidebar); color: white; position: fixed; height: 100vh; overflow-y: auto; z-index: 100; }
-        .sidebar-header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .sidebar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; margin-bottom: 15px; }
-        .logo-box { width: 40px; height: 40px; background: var(--accent-coral); border: 2px solid white; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transform: rotate(-3deg); }
-        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; }
-        .logo-text span { color: var(--accent-coral); }
-        .admin-badge { display: inline-block; background: var(--accent-coral); padding: 4px 10px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-radius: 3px; }
-        
-        .sidebar-nav { padding: 15px 0; }
-        .nav-section { padding: 0 12px; margin-bottom: 20px; }
-        .nav-section-title { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,0.4); margin-bottom: 10px; padding: 0 10px; }
-        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 6px; margin-bottom: 3px; transition: all 0.2s ease; cursor: pointer; font-size: 0.9rem; }
-        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
-        .nav-item.active { background: var(--accent-coral); color: white; }
-        .nav-item-icon { font-size: 1.1rem; width: 22px; }
-        .nav-item-badge { margin-left: auto; background: var(--accent-red); padding: 2px 7px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
-        
-        .sidebar-footer { padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .user-info { display: flex; align-items: center; gap: 10px; }
-        .user-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; overflow: hidden; }
-        .user-avatar svg { width: 36px; height: 36px; }
-        .user-details { flex: 1; }
-        .user-name { font-weight: 600; font-size: 0.85rem; }
-        .user-role { font-size: 0.7rem; color: rgba(255,255,255,0.5); }
-        
+        /* SIDEBAR */
+        .sidebar { 
+            width: 260px; 
+            background: var(--bg-sidebar); 
+            color: white; 
+            position: fixed; 
+            height: 100vh; 
+            overflow-y: auto; 
+            z-index: 100;
+            border-right: 3px solid var(--border-dark);
+        }
+        .sidebar-header { padding: 25px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: white; margin-bottom: 8px; }
+        .logo-box { 
+            width: 38px; height: 38px; 
+            background: var(--accent-coral); 
+            border: 2px solid white; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 1.1rem; transform: rotate(-3deg);
+        }
+        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; }
+        .admin-badge { 
+            display: inline-block; 
+            background: var(--accent-coral); 
+            padding: 3px 8px; 
+            font-size: 0.6rem; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            border-radius: 4px;
+        }
+
+        .sidebar-nav { padding: 20px 10px; }
+        .nav-item { 
+            display: flex; align-items: center; gap: 12px; 
+            padding: 12px 15px; 
+            color: rgba(255,255,255,0.7); 
+            text-decoration: none; 
+            border-radius: 8px; 
+            margin-bottom: 4px; 
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            cursor: pointer; font-size: 0.95rem; font-weight: 500;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; transform: translateX(5px); }
+        .nav-item.active { background: white; color: var(--bg-dark); box-shadow: 4px 4px 0 var(--accent-coral); font-weight: 700; }
+        .nav-item-icon { font-size: 1.2rem; }
+        .nav-item-badge { margin-left: auto; background: var(--accent-red); padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; }
+
+        /* MAIN CONTENT */
         .main-content { flex: 1; margin-left: 260px; min-height: 100vh; }
         
-        .topbar { background: white; padding: 15px 25px; display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid var(--border-dark); position: sticky; top: 0; z-index: 50; }
-        .topbar-left h1 { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; }
-        .topbar-left p { color: var(--text-light); font-size: 0.8rem; }
-        .topbar-right { display: flex; align-items: center; gap: 12px; }
-        .topbar-search { display: flex; align-items: center; gap: 8px; background: #f5f5f5; border: 2px solid var(--border-dark); padding: 8px 12px; width: 280px; position: relative; }
-        .topbar-search input { border: none; background: none; outline: none; flex: 1; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; }
-        .topbar-search input:focus ~ .search-dropdown, .search-dropdown:hover { display: block; }
-        .search-dropdown { display: none; position: absolute; top: 100%; left: -2px; right: -2px; background: white; border: 2px solid var(--border-dark); border-top: none; box-shadow: 4px 4px 0 var(--border-dark); max-height: 400px; overflow-y: auto; z-index: 100; }
-        .search-dropdown.has-results { display: block; }
-        .search-drop-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; cursor: pointer; transition: background 0.12s; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem; }
-        .search-drop-item:last-child { border-bottom: none; }
-        .search-drop-item:hover, .search-drop-item.active { background: #FFF5F2; }
-        .search-drop-icon { width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
-        .search-drop-icon.client { background: #E3F2FD; }
-        .search-drop-icon.event { background: #FFF3E0; }
-        .search-drop-icon.ticket { background: #E8F5E9; }
-        .search-drop-info { flex: 1; min-width: 0; }
-        .search-drop-title { font-weight: 600; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .search-drop-title mark { background: var(--accent-yellow); padding: 0 1px; border-radius: 2px; }
-        .search-drop-sub { font-size: 0.75rem; color: var(--text-light); }
-        .search-drop-type { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; background: #f0f0f0; color: var(--text-light); }
-        .search-drop-hint { padding: 14px; text-align: center; color: var(--text-light); font-size: 0.8rem; }
-        .topbar-btn { width: 38px; height: 38px; background: white; border: 2px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; position: relative; }
-        .topbar-btn:hover { background: var(--accent-yellow); transform: translate(-2px, -2px); box-shadow: 4px 4px 0px #1a1a1a; }
-        .notification-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; background: var(--accent-red); border-radius: 50%; }
-        
-        .dashboard-content { padding: 25px; }
-        
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 25px; }
-        .stat-card { background: white; border: 3px solid var(--border-dark); padding: 20px; box-shadow: var(--shadow-brutal); transition: all 0.2s ease; }
-        .stat-card:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
-        .stat-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-        .stat-icon { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; border: 2px solid var(--border-dark); }
-        .stat-card:nth-child(1) .stat-icon { background: var(--accent-coral); }
-        .stat-card:nth-child(2) .stat-icon { background: var(--accent-mint); }
-        .stat-card:nth-child(3) .stat-icon { background: var(--accent-yellow); }
-        .stat-card:nth-child(4) .stat-icon { background: var(--accent-blue); }
-        .stat-change { font-size: 0.75rem; padding: 3px 8px; border-radius: 15px; font-weight: 600; }
-        .stat-change.positive { background: rgba(0, 217, 165, 0.15); color: var(--accent-mint); }
-        .stat-change.negative { background: rgba(231, 76, 60, 0.15); color: var(--accent-red); }
-        .stat-value { font-family: 'Syne', sans-serif; font-size: 1.9rem; font-weight: 800; margin-bottom: 4px; }
-        .stat-label { color: var(--text-light); font-size: 0.85rem; }
-        
-        .section { background: white; border: 3px solid var(--border-dark); margin-bottom: 20px; box-shadow: var(--shadow-brutal); }
-        .section-header { padding: 15px 20px; border-bottom: 2px solid var(--border-dark); display: flex; justify-content: space-between; align-items: center; }
-        .section-title { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-        .section-actions { display: flex; gap: 8px; }
-        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.8rem; border: 2px solid var(--border-dark); cursor: pointer; transition: all 0.2s ease; text-decoration: none; }
-        .btn-primary { background: var(--accent-coral); color: white; }
-        .btn-secondary { background: white; color: var(--text-dark); }
-        .btn:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0px #1a1a1a; }
-        .btn-sm { padding: 5px 10px; font-size: 0.75rem; }
-        
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.9rem; }
-        th { background: #f9f9f9; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); }
-        tr:hover { background: #fafafa; }
-        .table-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent-blue); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.75rem; }
-        .table-user { display: flex; align-items: center; gap: 10px; }
-        .table-user-name { font-weight: 600; }
-        .table-user-email { font-size: 0.75rem; color: var(--text-light); }
-        .status-badge { display: inline-block; padding: 3px 10px; border-radius: 15px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
-        .status-active { background: rgba(0, 217, 165, 0.15); color: #00a878; }
-        .status-pending { background: rgba(254, 202, 87, 0.3); color: #c9940a; }
-        .status-cancelled, .status-suspended { background: rgba(231, 76, 60, 0.15); color: var(--accent-red); }
-        .status-completed { background: rgba(74, 144, 255, 0.15); color: var(--accent-blue); }
-        .status-pro { background: rgba(155, 89, 182, 0.15); color: var(--accent-purple); }
-        .status-enterprise { background: rgba(255, 107, 74, 0.15); color: var(--accent-coral); }
-        .status-starter { background: rgba(0, 217, 165, 0.15); color: var(--accent-mint); }
-        .action-btn { width: 28px; height: 28px; border: 1px solid #ddd; background: white; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; margin-right: 4px; }
-        .action-btn:hover { background: var(--accent-coral); color: white; border-color: var(--accent-coral); }
-        
-        .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .chart-placeholder { height: 250px; background: linear-gradient(135deg, #f5f5f5 0%, #fff 100%); display: flex; align-items: flex-end; padding: 15px; gap: 6px; }
-        .chart-bar { flex: 1; background: var(--accent-coral); border: 2px solid var(--border-dark); transition: all 0.3s ease; }
-        .chart-bar:hover { background: var(--accent-yellow); }
-        
-        .donut-chart { height: 160px; display: flex; align-items: center; justify-content: center; }
-        .donut { width: 150px; height: 150px; border-radius: 50%; background: conic-gradient(var(--accent-coral) 0% 45%, var(--accent-mint) 45% 70%, var(--accent-yellow) 70% 85%, var(--accent-blue) 85% 100%); position: relative; }
-        .donut::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80px; height: 80px; background: white; border-radius: 50%; }
-        .donut-legend { margin-top: 15px; }
-        .legend-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 0.85rem; }
-        .legend-color { width: 10px; height: 10px; border-radius: 2px; }
-        .legend-value { margin-left: auto; font-weight: 600; }
-        
-        .activity-feed { padding: 15px 20px; }
-        .activity-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid #eee; }
-        .activity-item:last-child { border-bottom: none; }
-        .activity-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
-        .activity-icon.sale { background: rgba(0, 217, 165, 0.15); color: var(--accent-mint); }
-        .activity-icon.refund { background: rgba(231, 76, 60, 0.15); color: var(--accent-red); }
-        .activity-icon.event { background: rgba(74, 144, 255, 0.15); color: var(--accent-blue); }
-        .activity-icon.user { background: rgba(155, 89, 182, 0.15); color: var(--accent-purple); }
-        .activity-text { font-size: 0.85rem; margin-bottom: 2px; }
-        .activity-text strong { font-weight: 600; }
-        .activity-time { font-size: 0.75rem; color: var(--text-light); }
-        
-        .filters-bar { display: flex; gap: 12px; padding: 15px 20px; background: #f9f9f9; border-bottom: 2px solid var(--border-dark); flex-wrap: wrap; }
-        .filter-group { display: flex; align-items: center; gap: 6px; }
-        .filter-label { font-size: 0.8rem; font-weight: 600; color: var(--text-light); }
-        .filter-select, .filter-input { padding: 6px 12px; border: 2px solid var(--border-dark); background: white; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; }
-        
-        .tabs { display: flex; border-bottom: 2px solid var(--border-dark); background: #f9f9f9; }
-        .tab { padding: 12px 20px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.85rem; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s ease; }
-        .tab:hover { background: rgba(255, 107, 74, 0.1); }
-        .tab.active { background: white; border-bottom-color: var(--accent-coral); color: var(--accent-coral); }
-        
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: none; align-items: center; justify-content: center; }
-        .modal-overlay.active { display: flex; }
-        .modal { background: white; border: 3px solid var(--border-dark); width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto; box-shadow: 10px 10px 0px #1a1a1a; }
-        .modal-header { padding: 20px; border-bottom: 2px solid var(--border-dark); display: flex; justify-content: space-between; align-items: center; }
-        .modal-title { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; }
-        .modal-close { width: 32px; height: 32px; border: 2px solid var(--border-dark); background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-        .modal-close:hover { background: var(--accent-coral); color: white; }
-        .modal-body { padding: 20px; }
-        .modal-footer { padding: 15px 20px; border-top: 2px solid var(--border-dark); display: flex; justify-content: flex-end; gap: 8px; }
-        
-        .form-group { margin-bottom: 15px; }
-        .form-label { display: block; font-family: 'Syne', sans-serif; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem; }
-        .form-input { width: 100%; padding: 10px 12px; border: 2px solid var(--border-dark); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; }
-        .form-input:focus { outline: none; box-shadow: 4px 4px 0px var(--accent-coral); }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        
-        @media (max-width: 1400px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .charts-grid { grid-template-columns: 1fr; } }
-        @media (max-width: 1024px) { .sidebar { transform: translateX(-100%); } .main-content { margin-left: 0; } }
-        @media (max-width: 768px) { .stats-grid { grid-template-columns: 1fr; } .topbar-search { display: none; } .form-row { grid-template-columns: 1fr; } }
+        .topbar { 
+            background: white; padding: 18px 30px; 
+            display: flex; align-items: center; justify-content: space-between; 
+            border-bottom: 3px solid var(--border-dark); 
+            position: sticky; top: 0; z-index: 50;
+        }
+        .topbar-left h1 { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; }
+        .topbar-right { display: flex; align-items: center; gap: 15px; }
 
-        .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26, 26, 26, 0.95); z-index: 2000; display: flex; align-items: center; justify-content: center; }
-        .auth-card { width: 100%; max-width: 480px; padding: 50px; position: relative; background: white; border: 3px solid var(--border-dark); box-shadow: 10px 10px 0px #1a1a1a; }
-        .auth-header-box { text-align: center; margin-bottom: 40px; }
-        .auth-header-box h2 { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; margin-bottom: 10px; }
-        .auth-header-box p { color: var(--text-light); }
-        .social-auth { display: flex; flex-direction: column; gap: 14px; margin-bottom: 30px; }
-        .social-auth-btn { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 16px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s ease; border: 3px solid var(--border-dark); }
-        .google-btn { background: white; color: var(--text-dark); box-shadow: 4px 4px 0px #1a1a1a; }
-        .google-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
-        .facebook-btn { background: #1877F2; color: white; box-shadow: 4px 4px 0px #1a1a1a; }
-        .facebook-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
-        .auth-divider { text-align: center; position: relative; margin: 20px 0; color: var(--text-light); }
-        .auth-divider::before, .auth-divider::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: #ddd; }
-        .auth-divider::before { left: 0; }
-        .auth-divider::after { right: 0; }
-        .auth-form { display: flex; flex-direction: column; gap: 20px; }
-        .auth-form .form-group { margin-bottom: 0; }
-        .auth-form label { display: block; font-family: 'Syne', sans-serif; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; }
-        .auth-form input { width: 100%; padding: 14px 16px; border: 3px solid var(--border-dark); font-family: 'DM Sans', sans-serif; font-size: 1rem; }
-        .auth-form input:focus { outline: none; box-shadow: 4px 4px 0px var(--accent-coral); }
-        .auth-submit { display: inline-flex; align-items: center; gap: 6px; padding: 16px 32px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; border: 3px solid var(--border-dark); cursor: pointer; transition: all 0.15s ease; background: var(--accent-coral); color: white; box-shadow: 4px 4px 0px #1a1a1a; margin-top: 10px; width: 100%; justify-content: center; }
-        .auth-submit:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
-        .auth-footer-text { text-align: center; margin-top: 24px; color: var(--text-light); }
-        .auth-footer-text a { color: var(--accent-coral); text-decoration: none; font-weight: 600; }
-        .auth-back { display: block; text-align: center; margin-top: 20px; color: var(--text-light); text-decoration: none; font-size: 0.9rem; }
-        .auth-back:hover { color: var(--accent-coral); }
+        .dashboard-container { padding: 30px; max-width: 1600px; margin: 0 auto; }
+
+        /* CARDS */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { 
+            background: white; 
+            border: 3px solid var(--border-dark); 
+            padding: 25px; 
+            box-shadow: var(--shadow-brutal); 
+            transition: all 0.2s; 
+            position: relative; overflow: hidden;
+        }
+        .stat-card:hover { transform: translate(-4px, -4px); box-shadow: 8px 8px 0 var(--border-dark); }
+        .stat-card::after { 
+            content: ''; position: absolute; top: 0; right: 0; width: 60px; height: 60px; 
+            background: rgba(0,0,0,0.03); transform: rotate(45deg) translate(30%, -30%);
+        }
+        .stat-icon { font-size: 1.8rem; margin-bottom: 15px; }
+        .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 2.2rem; font-weight: 800; line-height: 1; margin-bottom: 5px; }
+        .stat-label { color: var(--text-light); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-bottom: 30px; }
+        .grid-1 { display: grid; grid-template-columns: 1fr; gap: 30px; margin-bottom: 30px; }
+
+        .bento-card { 
+            background: white; border: 3px solid var(--border-dark); 
+            box-shadow: var(--shadow-brutal); overflow: hidden;
+        }
+        .card-header { padding: 20px 25px; border-bottom: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: space-between; background: #fff; }
+        .card-title { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .card-content { padding: 0; }
+
+        /* TABLES */
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { 
+            text-align: left; padding: 15px 25px; 
+            background: #f9f9f9; border-bottom: 2px solid var(--border-dark);
+            font-family: 'Syne', sans-serif; font-size: 0.75rem; font-weight: 800; 
+            text-transform: uppercase; letter-spacing: 1px; color: var(--text-light);
+        }
+        td { padding: 18px 25px; border-bottom: 1px solid #eee; font-size: 0.95rem; }
+        tr:hover td { background: #fafafa; }
+
+        .badge { 
+            display: inline-block; padding: 4px 10px; 
+            font-size: 0.7rem; font-weight: 800; 
+            text-transform: uppercase; border: 1.5px solid var(--border-dark);
+            border-radius: 4px;
+        }
+        .badge-pending { background: var(--accent-yellow); color: var(--bg-dark); }
+        .badge-active, .badge-approved { background: var(--accent-mint); color: var(--bg-dark); }
+        .badge-suspended, .badge-rejected, .badge-blocked { background: var(--accent-red); color: white; }
+
+        /* BRUTALIST BUTTONS */
+        .btn-brutal { 
+            display: inline-flex; align-items: center; gap: 8px; 
+            padding: 10px 20px; font-family: 'Syne', sans-serif; 
+            font-weight: 800; font-size: 0.85rem; 
+            border: 3px solid var(--border-dark); 
+            cursor: pointer; transition: all 0.15s; 
+            text-decoration: none; color: inherit; background: white;
+            box-shadow: 4px 4px 0 var(--border-dark);
+        }
+        .btn-brutal:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--border-dark); }
+        .btn-brutal:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--border-dark); }
+        .btn-brutal.primary { background: var(--accent-coral); color: white; }
+        .btn-brutal.mint { background: var(--accent-mint); }
+        .btn-brutal.yellow { background: var(--accent-yellow); }
+        .btn-brutal.sm { padding: 6px 12px; font-size: 0.75rem; border-width: 2px; box-shadow: 2px 2px 0 var(--border-dark); }
+
+        /* LOGS */
+        .log-item { padding: 15px 25px; border-bottom: 1px solid #eee; display: flex; align-items: flex-start; gap: 15px; }
+        .log-icon { 
+            width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--border-dark); 
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            background: #f5f5f5;
+        }
+        .log-content { flex: 1; }
+        .log-text { font-size: 0.9rem; margin-bottom: 4px; }
+        .log-meta { font-size: 0.75rem; color: var(--text-light); font-family: 'JetBrains Mono', monospace; }
+
+        /* MODALS */
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+            background: rgba(0,0,0,0.8); z-index: 1000; display: flex; 
+            align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-card { 
+            background: white; border: 4px solid var(--border-dark); 
+            width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto;
+            box-shadow: 12px 12px 0 var(--border-dark); position: relative;
+        }
+        .modal-body { padding: 30px; }
+        .modal-close { position: absolute; top: 15px; right: 15px; font-size: 1.5rem; cursor: pointer; }
+
+        /* CHART MOCK */
+        .chart-mock { height: 300px; padding: 20px; display: flex; align-items: flex-end; gap: 10px; }
+        .chart-bar { flex: 1; background: var(--accent-coral); border: 2px solid var(--border-dark); position: relative; }
+        .chart-bar:hover::after { 
+            content: attr(data-value); position: absolute; top: -30px; left: 50%; 
+            transform: translateX(-50%); background: var(--bg-dark); color: white; 
+            padding: 4px 8px; font-size: 0.7rem; font-family: 'JetBrains Mono', monospace;
+        }
+
+        .empty-state { padding: 60px; text-align: center; color: var(--text-light); }
+
+        /* AUTH */
+        .auth-screen { 
+            position: fixed; inset: 0; background: var(--bg-cream); 
+            display: flex; align-items: center; justify-content: center; z-index: 5000;
+        }
+        .auth-card { 
+            background: white; border: 4px solid var(--border-dark); padding: 50px; 
+            width: 100%; max-width: 480px; box-shadow: 15px 15px 0 var(--accent-coral);
+            text-align: center;
+        }
+        .auth-logo { margin-bottom: 30px; display: inline-flex; align-items: center; gap: 15px; }
+        .input-brutal { 
+            width: 100%; padding: 15px; border: 3px solid var(--border-dark); 
+            font-family: inherit; font-size: 1rem; margin-bottom: 20px; outline: none;
+            transition: all 0.2s;
+        }
+        .input-brutal:focus { box-shadow: 5px 5px 0 var(--accent-coral); transform: translate(-2px, -2px); }
+
+        [v-cloak] { display: none; }
     </style>
 </head>
-<body>
-<script src="../js/site-config.js"></script>
-
+<body v-cloak>
     <div id="app">
-        <div class="auth-overlay" v-if="!isLoggedIn">
+        <!-- AUTH SCREEN -->
+        <div class="auth-screen" v-if="!isLoggedIn">
             <div class="auth-card">
-                <div class="auth-header-box"><h2>{{ authMode === 'login' ? 'Connexion SuperAdmin' : 'Créer un compte' }}</h2><p>{{ authMode === 'login' ? 'Accédez au panneau d\'administration' : 'Rejoignez TicketMada' }}</p></div>
-                <div class="social-auth">
-                    <button class="social-auth-btn google-btn" @click="loginWith('google')"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continuer avec Google</button>
-                    <button class="social-auth-btn facebook-btn" @click="loginWith('facebook')"><v-icon>mdi-facebook</v-icon>Continuer avec Facebook</button>
+                <div class="auth-logo">
+                    <div class="logo-box">👑</div>
+                    <span class="logo-text" style="font-size: 2rem;">Portail<span>SuperAdmin</span></span>
                 </div>
-                <div class="auth-divider">ou</div>
-                <form class="auth-form" @submit.prevent="handleAuth">
-                    <div class="form-group" v-if="authMode === 'register'"><label>Nom complet</label><input type="text" placeholder="Votre nom" v-model="authForm.name"></div>
-                    <div class="form-group"><label>Email</label><input type="email" placeholder="admin@ticketmada.mg" v-model="authForm.email"></div>
-                    <div class="form-group"><label>Mot de passe</label><input type="password" placeholder="••••••••" v-model="authForm.password"></div>
-                    <button type="submit" class="auth-submit">{{ authMode === 'login' ? 'Se connecter' : 'Créer mon compte' }}</button>
+                <p style="margin-bottom: 30px; font-weight: 600; color: var(--text-light);">Accès réservé. Veuillez vous identifier.</p>
+                <form @submit.prevent="handleLogin">
+                    <input type="email" class="input-brutal" v-model="loginForm.email" placeholder="Email (sedrayiokoraz@gmail.com)" required>
+                    <input type="password" class="input-brutal" v-model="loginForm.password" placeholder="Mot de passe" required>
+                    <button type="submit" class="btn-brutal primary" style="width: 100%; padding: 18px; font-size: 1.1rem;">
+                        <v-icon>mdi-shield-lock</v-icon> SE CONNECTER
+                    </button>
                 </form>
-                <p class="auth-footer-text"><template v-if="authMode === 'login'">Pas de compte ? <a href="#" @click.prevent="authMode = 'register'">S'inscrire</a></template><template v-else>Déjà un compte ? <a href="#" @click.prevent="authMode = 'login'">Se connecter</a></template></p>
-                <a href="../User/ticketmada-landing.html" class="auth-back">&larr; Retour à l'accueil</a>
+                <div v-if="loginError" style="margin-top: 20px; padding: 12px; background: #ffebee; border: 2px solid #c62828; color: #c62828; font-weight: 700; font-size: 0.85rem;">
+                    {{ loginError }}
+                </div>
             </div>
         </div>
-        <div class="dashboard-layout">
+
+        <div class="dashboard-layout" v-if="isLoggedIn">
+            <!-- SIDEBAR -->
             <aside class="sidebar">
                 <div class="sidebar-header">
-                    <a href="../User/ticketmada-landing.html" class="sidebar-logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
+                    <div class="sidebar-logo">
+                        <div class="logo-box">🎫</div>
+                        <span class="logo-text">Ticket<span>Mada</span></span>
+                    </div>
                     <div class="admin-badge">SuperAdmin</div>
                 </div>
-                <nav class="sidebar-nav">
-                    <div class="nav-section">
-                        <div class="nav-section-title">Principal</div>
-                        <div class="nav-item" :class="{ active: currentPage === 'dashboard' }" @click="currentPage = 'dashboard'"><v-icon class="nav-item-icon">mdi-view-dashboard</v-icon><span>Dashboard</span></div>
-                        <div class="nav-item" :class="{ active: currentPage === 'clients' }" @click="currentPage = 'clients'"><v-icon class="nav-item-icon">mdi-account-group</v-icon><span>Clients</span><span class="nav-item-badge">{{ clients.length }}</span></div>
-                        <div class="nav-item" :class="{ active: currentPage === 'applications' }" @click="currentPage = 'applications'"><v-icon class="nav-item-icon">mdi-briefcase-account</v-icon><span>Demandes Org.</span><span class="nav-item-badge" v-if="pendingApplicationsCount">{{ pendingApplicationsCount }}</span></div>
-                        <div class="nav-item" :class="{ active: currentPage === 'events' }" @click="currentPage = 'events'"><v-icon class="nav-item-icon">mdi-calendar-star</v-icon><span>Événements</span></div>
+                <div class="sidebar-nav">
+                    <div class="nav-item" :class="{ active: currentTab === 'dashboard' }" @click="currentTab = 'dashboard'">
+                        <v-icon class="nav-item-icon">mdi-view-dashboard-variant</v-icon>
+                        <span>Tableau de bord</span>
                     </div>
-                    <div class="nav-section">
-                        <div class="nav-section-title">Transactions</div>
-                        <div class="nav-item" :class="{ active: currentPage === 'tickets' }" @click="currentPage = 'tickets'"><v-icon class="nav-item-icon">mdi-ticket</v-icon><span>Billets</span></div>
-                        <div class="nav-item" :class="{ active: currentPage === 'refunds' }" @click="currentPage = 'refunds'"><v-icon class="nav-item-icon">mdi-cash-refund</v-icon><span>Remboursements</span><span class="nav-item-badge">{{ pendingRefunds }}</span></div>
-                        <div class="nav-item" :class="{ active: currentPage === 'payouts' }" @click="currentPage = 'payouts'"><v-icon class="nav-item-icon">mdi-bank-transfer-out</v-icon><span>Versements</span></div>
+                    <div class="nav-item" :class="{ active: currentTab === 'organizers' }" @click="currentTab = 'organizers'">
+                        <v-icon class="nav-item-icon">mdi-account-star</v-icon>
+                        <span>Organisateurs</span>
                     </div>
-                    <div class="nav-section">
-                        <div class="nav-section-title">Contenu & Paiements</div>
-                        <div class="nav-item" :class="{ active: currentPage === 'content' }" @click="currentPage = 'content'"><v-icon class="nav-item-icon">mdi-web</v-icon><span>Contenu site</span></div>
-                        <div class="nav-item" :class="{ active: currentPage === 'payments' }" @click="currentPage = 'payments'"><v-icon class="nav-item-icon">mdi-cellphone-nfc</v-icon><span>Paiements</span></div>
+                    <div class="nav-item" :class="{ active: currentTab === 'applications' }" @click="currentTab = 'applications'">
+                        <v-icon class="nav-item-icon">mdi-file-account</v-icon>
+                        <span>Demandes</span>
+                        <span class="nav-item-badge" v-if="stats.pendingApplications > 0">{{ stats.pendingApplications }}</span>
                     </div>
-                    <div class="nav-section">
-                        <div class="nav-section-title">Analytics</div>
-                        <div class="nav-item" :class="{ active: currentPage === 'analytics' }" @click="currentPage = 'analytics'"><v-icon class="nav-item-icon">mdi-chart-line</v-icon><span>Statistiques</span></div>
-                        <div class="nav-item" :class="{ active: currentPage === 'reports' }" @click="currentPage = 'reports'"><v-icon class="nav-item-icon">mdi-file-chart</v-icon><span>Rapports</span></div>
+                    <div class="nav-item" :class="{ active: currentTab === 'users' }" @click="currentTab = 'users'">
+                        <v-icon class="nav-item-icon">mdi-account-group</v-icon>
+                        <span>Utilisateurs</span>
                     </div>
-                    <div class="nav-section">
-                        <div class="nav-section-title">Système</div>
-                        <div class="nav-item" :class="{ active: currentPage === 'admins' }" @click="currentPage = 'admins'"><v-icon class="nav-item-icon">mdi-shield-account</v-icon><span>Admins</span></div>
-                        <div class="nav-item" :class="{ active: currentPage === 'settings' }" @click="currentPage = 'settings'"><v-icon class="nav-item-icon">mdi-cog</v-icon><span>Paramètres</span></div>
-                        <div class="nav-item" :class="{ active: currentPage === 'logs' }" @click="currentPage = 'logs'"><v-icon class="nav-item-icon">mdi-history</v-icon><span>Logs</span></div>
+                    <div class="nav-item" :class="{ active: currentTab === 'events' }" @click="currentTab = 'events'">
+                        <v-icon class="nav-item-icon">mdi-calendar-multiple</v-icon>
+                        <span>Événements</span>
                     </div>
-                </nav>
-                <div class="sidebar-footer">
-                    <div class="user-info"><div class="user-avatar" v-html="userAvatar"></div><div class="user-details"><div class="user-name">{{ userName }}</div><div class="user-role">{{ userRole }}</div></div><v-icon style="cursor: pointer; opacity: 0.5;" @click="handleLogout">mdi-logout</v-icon></div>
+                    <div class="nav-item" :class="{ active: currentTab === 'logs' }" @click="currentTab = 'logs'">
+                        <v-icon class="nav-item-icon">mdi-history</v-icon>
+                        <span>Logs & Audit</span>
+                    </div>
+                    
+                    <div style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                        <div class="nav-item" @click="handleLogout">
+                            <v-icon class="nav-item-icon">mdi-logout</v-icon>
+                            <span>Déconnexion</span>
+                        </div>
+                    </div>
                 </div>
             </aside>
-            
+
+            <!-- MAIN CONTENT -->
             <main class="main-content">
                 <header class="topbar">
-                    <div class="topbar-left"><h1>{{ pageTitle }}</h1><p>{{ currentDate }}</p></div>
+                    <div class="topbar-left">
+                        <h1>{{ tabTitles[currentTab] }}</h1>
+                        <p style="font-size: 0.85rem; color: var(--text-light); font-weight: 600;">{{ currentDate }}</p>
+                    </div>
                     <div class="topbar-right">
-                        <div class="topbar-search">
-                            <v-icon size="small">mdi-magnify</v-icon>
-                            <input type="text" placeholder="Rechercher..." v-model="searchQuery" @keydown.down.prevent="navigateSearch(1)" @keydown.up.prevent="navigateSearch(-1)" @keydown.enter.prevent="selectSearch" @keydown.esc="searchQuery = ''" autocomplete="off">
-                            <div class="search-dropdown" :class="{ 'has-results': searchQuery.length > 0 }" v-show="searchQuery.length > 0">
-                                <div class="search-drop-item" v-for="(r, i) in globalSearchResults" :key="r.key" :class="{ active: i === activeSearchIdx }" @click="goToSearchResult(r)" @mouseenter="activeSearchIdx = i">
-                                    <div class="search-drop-icon" :class="r.type"><span>{{ r.icon }}</span></div>
-                                    <div class="search-drop-info">
-                                        <div class="search-drop-title" v-html="highlightSearch(r.title)"></div>
-                                        <div class="search-drop-sub">{{ r.sub }}</div>
-                                    </div>
-                                    <span class="search-drop-type">{{ r.typeLabel }}</span>
-                                </div>
-                                <div class="search-drop-hint" v-if="globalSearchResults.length === 0">Aucun résultat pour « {{ searchQuery }} »</div>
+                        <button class="btn-brutal sm" @click="fetchData">
+                            <v-icon size="16">mdi-refresh</v-icon> ACTUALISER
+                        </button>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-left: 10px; padding-left: 20px; border-left: 2px solid #eee;">
+                            <div style="text-align: right;">
+                                <div style="font-weight: 800; font-size: 0.9rem;">SuperAdmin</div>
+                                <div style="font-size: 0.75rem; color: var(--text-light);">{{ user?.email }}</div>
                             </div>
+                            <div style="width: 40px; height: 40px; background: var(--accent-coral); border: 2px solid var(--border-dark); font-weight: 800; display: flex; align-items: center; justify-content: center; color: white;">SA</div>
                         </div>
-                        <button class="topbar-btn"><v-icon size="small">mdi-bell-outline</v-icon><span class="notification-dot"></span></button>
-                        <button class="topbar-btn"><v-icon size="small">mdi-cog-outline</v-icon></button>
                     </div>
                 </header>
-                
-                <div class="dashboard-content">
-                    <!-- Dashboard -->
-                    <template v-if="currentPage === 'dashboard'">
+
+                <div class="dashboard-container">
+                    
+                    <!-- TAB: DASHBOARD -->
+                    <template v-if="currentTab === 'dashboard'">
                         <div class="stats-grid">
-                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">💰</div><span class="stat-change positive">+12.5%</span></div><div class="stat-value">{{ formatCurrency(totalRevenue) }}</div><div class="stat-label">Revenus (ce mois)</div></div>
-                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">🎫</div><span class="stat-change positive">+8.3%</span></div><div class="stat-value">{{ totalTickets.toLocaleString() }}</div><div class="stat-label">Billets vendus</div></div>
-                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">📅</div><span class="stat-change positive">+5</span></div><div class="stat-value">{{ activeEvents }}</div><div class="stat-label">Événements actifs</div></div>
-                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">👥</div><span class="stat-change positive">+15</span></div><div class="stat-value">{{ clients.length }}</div><div class="stat-label">Organisateurs</div></div>
-                        </div>
-                        
-                        <div class="charts-grid">
-                            <div class="section">
-                                <div class="section-header"><div class="section-title"><v-icon size="small">mdi-chart-bar</v-icon> Ventes 7 jours</div><select class="filter-select" style="font-size: 0.8rem;"><option>7 jours</option><option>30 jours</option></select></div>
-                                <div class="chart-placeholder"><div class="chart-bar" style="height: 45%;"></div><div class="chart-bar" style="height: 72%;"></div><div class="chart-bar" style="height: 58%;"></div><div class="chart-bar" style="height: 85%;"></div><div class="chart-bar" style="height: 63%;"></div><div class="chart-bar" style="height: 92%;"></div><div class="chart-bar" style="height: 78%;"></div></div>
+                            <div class="stat-card">
+                                <div class="stat-icon">💰</div>
+                                <div class="stat-value">{{ formatMoney(stats.totalRevenue) }}</div>
+                                <div class="stat-label">Chiffre d'affaires</div>
                             </div>
-                            <div class="section">
-                                <div class="section-header"><div class="section-title"><v-icon size="small">mdi-chart-pie</v-icon> Par catégorie</div></div>
-                                <div style="padding: 15px;"><div class="donut-chart"><div class="donut"></div></div><div class="donut-legend"><div class="legend-item"><div class="legend-color" style="background: var(--accent-coral);"></div><span>Concerts</span><span class="legend-value">45%</span></div><div class="legend-item"><div class="legend-color" style="background: var(--accent-mint);"></div><span>Festivals</span><span class="legend-value">25%</span></div><div class="legend-item"><div class="legend-color" style="background: var(--accent-yellow);"></div><span>Sports</span><span class="legend-value">15%</span></div><div class="legend-item"><div class="legend-color" style="background: var(--accent-blue);"></div><span>Autres</span><span class="legend-value">15%</span></div></div></div>
+                            <div class="stat-card">
+                                <div class="stat-icon">🎟️</div>
+                                <div class="stat-value">{{ formatNumber(stats.totalTicketsSold) }}</div>
+                                <div class="stat-label">Billets vendus</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">📊</div>
+                                <div class="stat-value">{{ formatMoney(stats.totalCommission) }}</div>
+                                <div class="stat-label">Commission (3%)</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">🌟</div>
+                                <div class="stat-value">{{ stats.activeOrganizers }}</div>
+                                <div class="stat-label">Orga. Actifs</div>
                             </div>
                         </div>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                            <div class="section">
-                                <div class="section-header"><div class="section-title"><v-icon size="small">mdi-clock-outline</v-icon> Activité récente</div></div>
-                                <div class="activity-feed">
-                                    <div class="activity-item" v-for="a in recentActivity" :key="a.id"><div class="activity-icon" :class="a.type"><v-icon size="small">{{ a.icon }}</v-icon></div><div><div class="activity-text" v-html="a.text"></div><div class="activity-time">{{ a.time }}</div></div></div>
+
+                        <div class="grid-2">
+                            <div class="bento-card">
+                                <div class="card-header">
+                                    <div class="card-title"><v-icon>mdi-chart-areaspline</v-icon> Performance Mensuelle (Ariary)</div>
+                                </div>
+                                <div class="chart-mock">
+                                    <div v-for="m in stats.monthlyRevenue" :key="m.month" class="chart-bar" 
+                                         :style="{ height: (m.revenue / maxMonthlyRevenue * 100) + '%' }" 
+                                         :data-value="formatMoney(m.revenue)">
+                                    </div>
                                 </div>
                             </div>
-                            <div class="section">
-                                <div class="section-header"><div class="section-title"><v-icon size="small">mdi-fire</v-icon> Top événements</div></div>
-                                <div class="table-container"><table><thead><tr><th>Événement</th><th>Billets</th><th>Revenus</th></tr></thead><tbody><tr v-for="e in topEvents" :key="e.id"><td><strong>{{ e.name }}</strong><br><small style="color: var(--text-light);">{{ e.organizer }}</small></td><td>{{ e.tickets }}</td><td><strong>{{ formatCurrency(e.revenue) }}</strong></td></tr></tbody></table></div>
+                            <div class="bento-card">
+                                <div class="card-header">
+                                    <div class="card-title"><v-icon>mdi-fire</v-icon> Top Événements</div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table>
+                                        <thead>
+                                            <tr><th>Événement</th><th>Ventes</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="e in stats.topEvents" :key="e.id">
+                                                <td><div style="font-weight: 700;">{{ e.name }}</div></td>
+                                                <td><div style="font-family: monospace; font-weight: 800;">{{ e.tickets_sold }}</div></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                        </div>
-                    </template>
-                    
-                    <!-- Clients -->
-                    <template v-if="currentPage === 'clients'">
-                        <div class="section">
-                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-account-group</v-icon> Clients (Organisateurs)</div><div class="section-actions"><button class="btn btn-secondary btn-sm"><v-icon size="x-small">mdi-download</v-icon> Export</button><button class="btn btn-primary btn-sm" @click="showModal = true"><v-icon size="x-small">mdi-plus</v-icon> Nouveau</button></div></div>
-                            <div class="filters-bar"><div class="filter-group"><span class="filter-label">Statut:</span><select class="filter-select" v-model="filters.status"><option value="">Tous</option><option value="active">Actif</option><option value="pending">En attente</option></select></div><div class="filter-group"><span class="filter-label">Plan:</span><select class="filter-select" v-model="filters.plan"><option value="">Tous</option><option value="starter">Starter</option><option value="pro">Pro</option><option value="enterprise">Enterprise</option></select></div><div class="filter-group" style="margin-left: auto;"><input type="text" class="filter-input" placeholder="Rechercher..." v-model="filters.search"></div></div>
-                            <div class="table-container"><table><thead><tr><th>Client</th><th>Plan</th><th>Événements</th><th>Revenus</th><th>Statut</th><th>Inscrit</th><th>Actions</th></tr></thead><tbody><tr v-for="c in filteredClients" :key="c.id"><td><div class="table-user"><div class="table-avatar">{{ c.initials }}</div><div><div class="table-user-name">{{ c.name }}</div><div class="table-user-email">{{ c.email }}</div></div></div></td><td><span class="status-badge" :class="'status-' + c.plan">{{ c.plan }}</span></td><td>{{ c.events }}</td><td><strong>{{ formatCurrency(c.revenue) }}</strong></td><td><span class="status-badge" :class="'status-' + c.status">{{ c.statusLabel }}</span></td><td>{{ c.joinDate }}</td><td><button class="action-btn" title="Voir"><v-icon size="x-small">mdi-eye</v-icon></button><button class="action-btn" title="Modifier"><v-icon size="x-small">mdi-pencil</v-icon></button><button class="action-btn" title="Supprimer"><v-icon size="x-small">mdi-delete</v-icon></button></td></tr></tbody></table></div>
-                        </div>
-                    </template>
-                    
-                    <!-- Events -->
-                    <template v-if="currentPage === 'events'">
-                        <div class="section">
-                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-calendar-star</v-icon> Tous les événements</div><button class="btn btn-secondary btn-sm"><v-icon size="x-small">mdi-download</v-icon> Export</button></div>
-                            <div class="tabs"><div class="tab" :class="{ active: eventTab === 'all' }" @click="eventTab = 'all'">Tous ({{ allEvents.length }})</div><div class="tab" :class="{ active: eventTab === 'active' }" @click="eventTab = 'active'">En cours</div><div class="tab" :class="{ active: eventTab === 'upcoming' }" @click="eventTab = 'upcoming'">À venir</div><div class="tab" :class="{ active: eventTab === 'past' }" @click="eventTab = 'past'">Passés</div></div>
-                            <div class="table-container"><table><thead><tr><th>Événement</th><th>Organisateur</th><th>Date</th><th>Lieu</th><th>Billets</th><th>Revenus</th><th>Statut</th><th>Actions</th></tr></thead><tbody><tr v-for="e in displayedEvents" :key="e.id"><td><strong>{{ e.name }}</strong><br><small style="color: var(--text-light);">{{ e.category }}</small></td><td>{{ e.organizer }}</td><td>{{ e.date }}</td><td>{{ e.venue }}</td><td>{{ e.ticketsSold }}/{{ e.capacity }}</td><td><strong>{{ formatCurrency(e.revenue) }}</strong></td><td><span class="status-badge" :class="'status-' + e.status">{{ e.statusLabel }}</span></td><td><button class="action-btn"><v-icon size="x-small">mdi-eye</v-icon></button><button class="action-btn"><v-icon size="x-small">mdi-chart-line</v-icon></button></td></tr></tbody></table></div>
-                        </div>
-                    </template>
-                    
-                    <!-- Tickets -->
-                    <template v-if="currentPage === 'tickets'">
-                        <div class="stats-grid"><div class="stat-card"><div class="stat-card-header"><div class="stat-icon">🎫</div></div><div class="stat-value">{{ totalTickets.toLocaleString() }}</div><div class="stat-label">Total vendus</div></div><div class="stat-card"><div class="stat-card-header"><div class="stat-icon">📱</div></div><div class="stat-value">{{ scannedTickets.toLocaleString() }}</div><div class="stat-label">Scannés</div></div><div class="stat-card"><div class="stat-card-header"><div class="stat-icon">⏳</div></div><div class="stat-value">{{ pendingTickets.toLocaleString() }}</div><div class="stat-label">En attente</div></div><div class="stat-card"><div class="stat-card-header"><div class="stat-icon">↩️</div></div><div class="stat-value">{{ refundedTickets }}</div><div class="stat-label">Remboursés</div></div></div>
-                        <div class="section">
-                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-ticket</v-icon> Historique billets</div><button class="btn btn-secondary btn-sm"><v-icon size="x-small">mdi-download</v-icon> CSV</button></div>
-                            <div class="filters-bar"><div class="filter-group"><span class="filter-label">Événement:</span><select class="filter-select"><option>Tous</option></select></div><div class="filter-group"><span class="filter-label">Statut:</span><select class="filter-select"><option>Tous</option><option>Validé</option><option>Scanné</option><option>Remboursé</option></select></div></div>
-                            <div class="table-container"><table><thead><tr><th>ID</th><th>Événement</th><th>Acheteur</th><th>Type</th><th>Prix</th><th>Statut</th><th>Date</th><th>Actions</th></tr></thead><tbody><tr v-for="t in tickets" :key="t.id"><td><code style="background: #f5f5f5; padding: 2px 6px; font-size: 0.8rem;">{{ t.id }}</code></td><td>{{ t.event }}</td><td>{{ t.buyer }}</td><td>{{ t.type }}</td><td>{{ formatCurrency(t.price) }}</td><td><span class="status-badge" :class="'status-' + t.status">{{ t.statusLabel }}</span></td><td>{{ t.date }}</td><td><button class="action-btn"><v-icon size="x-small">mdi-eye</v-icon></button><button class="action-btn"><v-icon size="x-small">mdi-cash-refund</v-icon></button></td></tr></tbody></table></div>
-                        </div>
-                    </template>
-                    
-                    <!-- Refunds -->
-                    <template v-if="currentPage === 'refunds'">
-                        <div class="section">
-                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-cash-refund</v-icon> Demandes de remboursement</div></div>
-                            <div class="tabs"><div class="tab" :class="{ active: refundTab === 'pending' }" @click="refundTab = 'pending'">En attente ({{ pendingRefunds }})</div><div class="tab" :class="{ active: refundTab === 'approved' }" @click="refundTab = 'approved'">Approuvés</div><div class="tab" :class="{ active: refundTab === 'rejected' }" @click="refundTab = 'rejected'">Refusés</div></div>
-                            <div class="table-container"><table><thead><tr><th>ID</th><th>Billet</th><th>Événement</th><th>Client</th><th>Montant</th><th>Raison</th><th>Date</th><th>Actions</th></tr></thead><tbody><tr v-for="r in refunds" :key="r.id"><td><code style="background: #f5f5f5; padding: 2px 6px; font-size: 0.8rem;">{{ r.id }}</code></td><td>{{ r.ticketId }}</td><td>{{ r.event }}</td><td>{{ r.client }}</td><td><strong>{{ formatCurrency(r.amount) }}</strong></td><td>{{ r.reason }}</td><td>{{ r.date }}</td><td><button class="btn btn-primary btn-sm" style="margin-right: 5px;">Approuver</button><button class="btn btn-secondary btn-sm">Refuser</button></td></tr></tbody></table></div>
-                        </div>
-                    </template>
-                    
-                    <!-- Payouts -->
-                    <template v-if="currentPage === 'payouts'">
-                        <div class="stats-grid"><div class="stat-card"><div class="stat-card-header"><div class="stat-icon">💰</div></div><div class="stat-value">{{ formatCurrency(totalPayouts) }}</div><div class="stat-label">Total versé</div></div><div class="stat-card"><div class="stat-card-header"><div class="stat-icon">⏳</div></div><div class="stat-value">{{ formatCurrency(pendingPayoutsAmount) }}</div><div class="stat-label">En attente</div></div><div class="stat-card"><div class="stat-card-header"><div class="stat-icon">📊</div></div><div class="stat-value">{{ formatCurrency(commissionTotal) }}</div><div class="stat-label">Commission TM</div></div><div class="stat-card"><div class="stat-card-header"><div class="stat-icon">🏦</div></div><div class="stat-value">{{ payoutCount }}</div><div class="stat-label">Ce mois</div></div></div>
-                        <div class="section">
-                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-bank-transfer-out</v-icon> Historique versements</div><button class="btn btn-primary btn-sm"><v-icon size="x-small">mdi-plus</v-icon> Nouveau</button></div>
-                            <div class="table-container"><table><thead><tr><th>ID</th><th>Organisateur</th><th>Montant</th><th>Commission</th><th>Net</th><th>Méthode</th><th>Statut</th><th>Date</th></tr></thead><tbody><tr v-for="p in payouts" :key="p.id"><td><code style="background: #f5f5f5; padding: 2px 6px; font-size: 0.8rem;">{{ p.id }}</code></td><td>{{ p.organizer }}</td><td>{{ formatCurrency(p.amount) }}</td><td style="color: var(--accent-coral);">-{{ formatCurrency(p.commission) }}</td><td><strong>{{ formatCurrency(p.net) }}</strong></td><td>{{ p.method }}</td><td><span class="status-badge" :class="'status-' + p.status">{{ p.statusLabel }}</span></td><td>{{ p.date }}</td></tr></tbody></table></div>
-                        </div>
-                    </template>
-                    
-                    <!-- Analytics -->
-                    <template v-if="currentPage === 'analytics'">
-                        <div class="stats-grid"><div class="stat-card"><div class="stat-card-header"><div class="stat-icon">📈</div><span class="stat-change positive">+18%</span></div><div class="stat-value">{{ formatCurrency(totalRevenue) }}</div><div class="stat-label">Revenus ce mois</div></div><div class="stat-card"><div class="stat-card-header"><div class="stat-icon">🎯</div><span class="stat-change positive">+5%</span></div><div class="stat-value">{{ conversionRate }}%</div><div class="stat-label">Taux conversion</div></div><div class="stat-card"><div class="stat-card-header"><div class="stat-icon">🎫</div></div><div class="stat-value">{{ formatCurrency(avgTicketPrice) }}</div><div class="stat-label">Prix moyen</div></div><div class="stat-card"><div class="stat-card-header"><div class="stat-icon">⏱️</div></div><div class="stat-value">{{ avgScanRate }}%</div><div class="stat-label">Taux présence</div></div></div>
-                        <div class="charts-grid">
-                            <div class="section"><div class="section-header"><div class="section-title"><v-icon size="small">mdi-chart-line</v-icon> Évolution revenus</div></div><div class="chart-placeholder"><div class="chart-bar" style="height: 35%;"></div><div class="chart-bar" style="height: 48%;"></div><div class="chart-bar" style="height: 55%;"></div><div class="chart-bar" style="height: 42%;"></div><div class="chart-bar" style="height: 68%;"></div><div class="chart-bar" style="height: 75%;"></div><div class="chart-bar" style="height: 62%;"></div><div class="chart-bar" style="height: 88%;"></div><div class="chart-bar" style="height: 72%;"></div><div class="chart-bar" style="height: 95%;"></div><div class="chart-bar" style="height: 80%;"></div><div class="chart-bar" style="height: 85%;"></div></div></div>
-                            <div class="section"><div class="section-header"><div class="section-title"><v-icon size="small">mdi-cellphone</v-icon> Canaux de vente</div></div><div style="padding: 15px;"><div class="donut-chart"><div class="donut"></div></div><div class="donut-legend"><div class="legend-item"><div class="legend-color" style="background: var(--accent-coral);"></div><span>Mobile Money</span><span class="legend-value">45%</span></div><div class="legend-item"><div class="legend-color" style="background: var(--accent-mint);"></div><span>Carte</span><span class="legend-value">25%</span></div><div class="legend-item"><div class="legend-color" style="background: var(--accent-yellow);"></div><span>Guichet</span><span class="legend-value">15%</span></div><div class="legend-item"><div class="legend-color" style="background: var(--accent-blue);"></div><span>API</span><span class="legend-value">15%</span></div></div></div></div>
-                        </div>
-                    </template>
-                    
-                    <!-- Admins Management -->
-                    <template v-if="currentPage === 'admins'">
-                        <div class="section">
-                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-shield-account</v-icon> Organisateurs (Admins)</div><div style="font-size:0.8rem;color:var(--text-light);">Gérez tous les comptes organisateurs et accédez à leurs événements</div></div>
-                            <div class="table-container"><table><thead><tr><th>Organisateur</th><th>Email</th><th>Plan</th><th>Événements</th><th>CA Total</th><th>Commission TM</th><th>Statut</th><th>Actions</th></tr></thead><tbody>
-                                <tr v-for="a in adminList" :key="a.id">
-                                    <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:32px;height:32px;background:var(--accent-coral);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.75rem;">{{ a.initials }}</div><div><strong>{{ a.name }}</strong><br><small style="color:var(--text-light);">ID: {{ a.id }}</small></div></div></td>
-                                    <td>{{ a.email }}</td>
-                                    <td><span class="status-badge" :class="a.plan === 'pro' ? 'status-active' : 'status-pending'">{{ a.plan }}</span></td>
-                                    <td>{{ a.eventCount }}</td>
-                                    <td><strong>{{ formatCurrency(a.totalRevenue) }}</strong></td>
-                                    <td style="color:var(--accent-coral);">{{ formatCurrency(a.commission) }}</td>
-                                    <td><span class="status-badge" :class="a.active ? 'status-active' : 'status-cancelled'">{{ a.active ? 'Actif' : 'Suspendu' }}</span></td>
-                                    <td>
-                                        <button class="action-btn" @click="viewAdminEvents(a)" title="Voir événements"><v-icon size="x-small">mdi-calendar</v-icon></button>
-                                        <button class="action-btn" @click="viewAdminDashboard(a)" title="Accéder au dashboard"><v-icon size="x-small">mdi-view-dashboard</v-icon></button>
-                                        <button class="action-btn" :style="a.active ? 'background:#ffebee;' : 'background:#e8f5e9;'" @click="a.active = !a.active" :title="a.active ? 'Suspendre' : 'Réactiver'"><v-icon size="x-small" :color="a.active ? '#c62828' : '#2e7d32'">{{ a.active ? 'mdi-account-off' : 'mdi-account-check' }}</v-icon></button>
-                                    </td>
-                                </tr>
-                            </tbody></table></div>
-                        </div>
-                        <!-- Admin detail view -->
-                        <div class="section" v-if="selectedAdmin" style="border-color:var(--accent-coral);">
-                            <div class="section-header"><div class="section-title"><v-icon size="small" color="#FF6B4A">mdi-account-details</v-icon> {{ selectedAdmin.name }} — Événements</div><button class="btn btn-sm btn-secondary" @click="selectedAdmin = null">Fermer</button></div>
-                            <div class="table-container"><table><thead><tr><th>Événement</th><th>Date</th><th>Lieu</th><th>Billets vendus</th><th>Revenus</th><th>Siège choix</th><th>Scan lien</th><th>Actions</th></tr></thead><tbody>
-                                <tr v-for="e in selectedAdmin.events" :key="e.id">
-                                    <td><strong>{{ e.name }}</strong></td>
-                                    <td>{{ e.date }}</td><td>{{ e.venue }}</td>
-                                    <td>{{ e.ticketsSold }}/{{ e.capacity }}</td>
-                                    <td><strong>{{ formatCurrency(e.revenue) }}</strong></td>
-                                    <td><span class="status-badge" :class="e.seatChoice === 'free' ? 'status-active' : 'status-pending'">{{ e.seatChoice === 'free' ? 'Libre' : e.seatChoice === 'assigned' ? 'Attribué' : 'Sans' }}</span></td>
-                                    <td style="font-family:monospace;font-size:0.7rem;">{{ e.scanLink || '—' }}</td>
-                                    <td><button class="action-btn" title="Modifier"><v-icon size="x-small">mdi-pencil</v-icon></button><button class="action-btn" title="Regénérer lien scan"><v-icon size="x-small">mdi-refresh</v-icon></button></td>
-                                </tr>
-                            </tbody></table></div>
                         </div>
                     </template>
 
-                    <!-- Content Manager (Template édition événements site) -->
-                    <template v-if="currentPage === 'content'">
-                        <div class="section" style="border-color:var(--accent-blue);">
-                            <div style="padding:20px;display:flex;gap:16px;align-items:flex-start;">
-                                <div style="font-size:2rem;">🌐</div>
-                                <div>
-                                    <h3 style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:4px;">Gestionnaire de contenu</h3>
-                                    <p style="color:var(--text-light);font-size:0.85rem;">Modifiez les événements visibles sur le site sans toucher au code. Les Admins soumettent leurs événements, vous les validez et publiez.</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div style="display:flex;gap:0;margin-bottom:20px;border:3px solid #1a1a1a;box-shadow:4px 4px 0 #1a1a1a;overflow:hidden;">
-                            <button v-for="tab in [{id:'pending',label:'En attente de validation',icon:'mdi-clock'},{id:'published',label:'Publiés sur le site',icon:'mdi-check-circle'},{id:'add',label:'Ajouter manuellement',icon:'mdi-plus'}]" :key="tab.id" @click="contentTab = tab.id" :style="contentTab === tab.id ? 'background:var(--accent-coral);color:white;' : 'background:white;'" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;border:none;border-right:2px solid #1a1a1a;cursor:pointer;">
-                                <v-icon size="small">{{ tab.icon }}</v-icon> {{ tab.label }}
-                            </button>
-                        </div>
-                        <!-- Pending events -->
-                        <template v-if="contentTab === 'pending'">
-                            <div class="section" v-for="evt in contentPendingEvents" :key="evt.id" style="margin-bottom:16px;">
-                                <div style="display:flex;gap:20px;padding:20px;align-items:flex-start;">
-                                    <div style="width:120px;height:90px;background:linear-gradient(135deg,#FF6B4A,#FECA57);border:2px solid #1a1a1a;display:flex;align-items:center;justify-content:center;font-size:2.5rem;flex-shrink:0;overflow:hidden;">
-                                        <img v-if="evt.image" :src="evt.image" style="width:100%;height:100%;object-fit:cover;">
-                                        <span v-else>🎫</span>
-                                    </div>
-                                    <div style="flex:1;">
-                                        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                                            <div>
-                                                <h3 style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;">{{ evt.name }}</h3>
-                                                <div style="font-size:0.8rem;color:var(--text-light);margin-top:4px;">Par: <strong>{{ evt.organizer }}</strong> · {{ evt.date }} · {{ evt.venue }}</div>
-                                            </div>
-                                            <span class="status-badge status-pending">En attente</span>
-                                        </div>
-                                        <div style="display:flex;gap:20px;margin-top:12px;font-size:0.85rem;">
-                                            <span>💰 {{ formatCurrency(evt.price) }}</span>
-                                            <span>👥 {{ evt.capacity }} places</span>
-                                            <span>🏷️ {{ evt.category }}</span>
-                                            <span>🪑 {{ evt.seatChoice === 'free' ? 'Choix libre' : evt.seatChoice === 'assigned' ? 'Attribué' : 'Sans plan' }}</span>
-                                        </div>
-                                        <div style="display:flex;gap:8px;margin-top:12px;">
-                                            <button class="btn btn-primary btn-sm" @click="publishEvent(evt)"><v-icon size="x-small">mdi-check</v-icon> Valider & Publier</button>
-                                            <button class="btn btn-secondary btn-sm" @click="editContentEvent(evt)"><v-icon size="x-small">mdi-pencil</v-icon> Modifier avant publication</button>
-                                            <button class="btn btn-sm" style="background:#ffebee;color:#c62828;border-color:#c62828;" @click="rejectEvent(evt)"><v-icon size="x-small">mdi-close</v-icon> Refuser</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div v-if="!contentPendingEvents.length" style="padding:40px;text-align:center;color:var(--text-light);">Aucun événement en attente de validation.</div>
-                        </template>
-                        <!-- Published events -->
-                        <template v-if="contentTab === 'published'">
-                            <div class="section">
-                                <div class="section-header"><div class="section-title"><v-icon size="small">mdi-web</v-icon> Événements publiés sur le site</div></div>
-                                <div class="table-container"><table><thead><tr><th>Image</th><th>Nom</th><th>Organisateur</th><th>Prix</th><th>Catégorie</th><th>Visible</th><th>Actions</th></tr></thead><tbody>
-                                    <tr v-for="evt in contentPublishedEvents" :key="evt.id">
-                                        <td><div style="width:50px;height:38px;background:linear-gradient(135deg,#FF6B4A,#FECA57);border:1px solid #ddd;border-radius:4px;overflow:hidden;"><img v-if="evt.image" :src="evt.image" style="width:100%;height:100%;object-fit:cover;"></div></td>
-                                        <td><strong>{{ evt.name }}</strong></td>
-                                        <td>{{ evt.organizer }}</td>
-                                        <td>{{ formatCurrency(evt.price) }}</td>
-                                        <td>{{ evt.category }}</td>
-                                        <td><label style="cursor:pointer;"><input type="checkbox" v-model="evt.visible"> {{ evt.visible ? 'Oui' : 'Non' }}</label></td>
-                                        <td>
-                                            <button class="action-btn" @click="editContentEvent(evt)"><v-icon size="x-small">mdi-pencil</v-icon></button>
-                                            <button class="action-btn" style="background:#ffebee;" @click="unpublishEvent(evt)"><v-icon size="x-small" color="#c62828">mdi-eye-off</v-icon></button>
-                                        </td>
-                                    </tr>
-                                </tbody></table></div>
-                            </div>
-                        </template>
-                        <!-- Add manually -->
-                        <template v-if="contentTab === 'add'">
-                            <div class="section">
-                                <div class="section-header"><div class="section-title"><v-icon size="small">mdi-plus-circle</v-icon> Ajouter un événement manuellement</div></div>
-                                <div style="padding:20px;">
-                                    <div class="form-row"><div class="form-group"><label class="form-label">Nom de l'événement</label><input type="text" class="form-input" v-model="contentNewEvent.name" placeholder="Festival Donia 2026"></div><div class="form-group"><label class="form-label">Organisateur (Admin)</label><select class="form-input" v-model="contentNewEvent.organizer"><option v-for="a in adminList" :key="a.id" :value="a.name">{{ a.name }}</option></select></div></div>
-                                    <div class="form-row"><div class="form-group"><label class="form-label">Date</label><input type="text" class="form-input" v-model="contentNewEvent.date" placeholder="15-17 Mai 2026"></div><div class="form-group"><label class="form-label">Lieu</label><input type="text" class="form-input" v-model="contentNewEvent.venue" placeholder="Nosy Be"></div></div>
-                                    <div class="form-row"><div class="form-group"><label class="form-label">Prix (Ariary)</label><input type="number" class="form-input" v-model.number="contentNewEvent.price" placeholder="50000"></div><div class="form-group"><label class="form-label">Catégorie</label><select class="form-input" v-model="contentNewEvent.category"><option>concerts</option><option>festivals</option><option>sports</option><option>theatre</option><option>conference</option></select></div></div>
-                                    <div class="form-row"><div class="form-group"><label class="form-label">Capacité</label><input type="number" class="form-input" v-model.number="contentNewEvent.capacity" placeholder="5000"></div><div class="form-group"><label class="form-label">URL image</label><input type="text" class="form-input" v-model="contentNewEvent.image" placeholder="https://..."></div></div>
-                                    <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" rows="3" v-model="contentNewEvent.description" placeholder="Description de l'événement..."></textarea></div>
-                                    <button class="btn btn-primary" @click="addContentEvent" style="margin-top:10px;"><v-icon size="small">mdi-check</v-icon> Publier sur le site</button>
-                                </div>
-                            </div>
-                        </template>
-                    </template>
-
-                    <!-- Organizer Applications -->
-                    <template v-if="currentPage === 'applications'">
-                        <div class="section">
-                            <div class="section-header">
-                                <div class="section-title"><v-icon size="small">mdi-briefcase-account</v-icon> Demandes d'organisateurs</div>
-                                <div style="display:flex;gap:10px;">
-                                    <div class="filter-group">
-                                        <select class="filter-select" v-model="appFilterStatus">
-                                            <option value="all">Tous les statuts</option>
-                                            <option value="pending">En attente</option>
-                                            <option value="approved">Approuvées</option>
-                                            <option value="rejected">Rejetées</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="table-container">
+                    <!-- TAB: ORGANIZERS -->
+                    <template v-if="currentTab === 'organizers'">
+                        <div class="bento-card">
+                            <div class="table-responsive">
                                 <table>
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
-                                            <th>Candidat</th>
-                                            <th>Organisation</th>
-                                            <th>Date demande</th>
+                                            <th>Organisateur</th>
+                                            <th>Email</th>
+                                            <th>Events</th>
+                                            <th>CA Total</th>
+                                            <th>Commission</th>
                                             <th>Statut</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr v-for="app in filteredApplications" :key="app.id">
-                                            <td>#{{ app.id }}</td>
+                                        <tr v-for="o in organizers" :key="o.id">
+                                            <td><div style="font-weight: 800;">{{ o.name }}</div></td>
+                                            <td>{{ o.email }}</td>
+                                            <td><span class="badge">{{ o.events_count }}</span></td>
+                                            <td><div style="font-weight: 700;">{{ formatMoney(o.total_revenue) }}</div></td>
+                                            <td><div style="color: var(--accent-coral); font-weight: 700;">{{ formatMoney(o.total_commission) }}</div></td>
+                                            <td><span class="badge" :class="'badge-' + o.status">{{ o.status }}</span></td>
                                             <td>
-                                                <div class="table-user">
-                                                    <div class="table-avatar">{{ app.full_name[0] }}</div>
-                                                    <div>
-                                                        <div class="table-user-name">{{ app.full_name }}</div>
-                                                        <div class="table-user-email">{{ app.email }}</div>
-                                                    </div>
-                                                </div>
+                                                <button v-if="o.status === 'active'" class="btn-brutal sm" style="background: #ffebee; color: #c62828;" @click="suspendOrganizer(o)">
+                                                    SUSPENDRE
+                                                </button>
+                                                <button v-else class="btn-brutal sm mint" @click="reactivateOrganizer(o)">
+                                                    RÉACTIVER
+                                                </button>
                                             </td>
-                                            <td>
-                                                <div style="font-weight: 600;">{{ app.organization_name || 'Individuel' }}</div>
-                                                <div style="font-size: 0.75rem; color: var(--text-light);">{{ app.organization_type }}</div>
-                                            </td>
-                                            <td>{{ formatDateShort(app.created_at) }}</td>
-                                            <td><span class="status-badge" :class="'status-' + app.status">{{ app.status }}</span></td>
-                                            <td>
-                                                <button class="action-btn" title="Voir détails" @click="viewApp(app)"><v-icon size="16">mdi-eye</v-icon></button>
-                                                <button v-if="app.status === 'pending'" class="action-btn" title="Approuver" @click="confirmApprove(app)" style="border-color: #00d9a5; color: #00d9a5;"><v-icon size="16">mdi-check-bold</v-icon></button>
-                                                <button v-if="app.status === 'pending'" class="action-btn" title="Rejeter" @click="confirmReject(app)" style="border-color: #ff6b4a; color: #ff6b4a;"><v-icon size="16">mdi-close-thick</v-icon></button>
-                                            </td>
-                                        </tr>
-                                        <tr v-if="filteredApplications.length === 0">
-                                            <td colspan="6" style="text-align: center; padding: 40px; color: #999;">Aucune demande trouvée</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -562,428 +411,386 @@
                         </div>
                     </template>
 
-                    <!-- Payments Configuration -->
-                    <template v-if="currentPage === 'payments'">
-                        <div class="section" style="border-color:var(--accent-mint);">
-                            <div style="padding:20px;display:flex;gap:16px;align-items:flex-start;">
-                                <div style="font-size:2rem;">💳</div>
-                                <div>
-                                    <h3 style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:4px;">Intégration paiements Mobile Money</h3>
-                                    <p style="color:var(--text-light);font-size:0.85rem;">Configuration des API de paiement. La commission TicketMada (3% min) est prélevée automatiquement et versée sur le Mobile Money SuperAdmin.</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px;">
-                            <div class="section" v-for="pm in paymentMethods" :key="pm.id" :style="pm.active ? 'border-color:var(--accent-mint);' : ''">
-                                <div style="padding:20px;text-align:center;">
-                                    <div style="font-size:2.5rem;margin-bottom:8px;">{{ pm.icon }}</div>
-                                    <h3 style="font-family:'Syne',sans-serif;font-weight:700;">{{ pm.name }}</h3>
-                                    <div style="font-size:0.8rem;color:var(--text-light);margin:8px 0;">{{ pm.provider }}</div>
-                                    <span class="status-badge" :class="pm.active ? 'status-active' : 'status-pending'">{{ pm.active ? 'Actif' : 'À configurer' }}</span>
-                                    <div style="margin-top:16px;">
-                                        <div class="form-group" style="text-align:left;"><label class="form-label" style="font-size:0.75rem;">API Key</label><input type="password" class="form-input" :value="pm.apiKey" style="font-size:0.8rem;" :placeholder="'Clé API ' + pm.name"></div>
-                                        <div class="form-group" style="text-align:left;"><label class="form-label" style="font-size:0.75rem;">N° receveur (SuperAdmin)</label><input type="text" class="form-input" :value="pm.receiverNumber" style="font-size:0.8rem;" placeholder="034 XX XXX XX"></div>
-                                        <label style="display:flex;gap:6px;align-items:center;font-size:0.8rem;cursor:pointer;margin-top:8px;"><input type="checkbox" v-model="pm.active"> Activer {{ pm.name }}</label>
+                    <!-- TAB: APPLICATIONS -->
+                    <template v-if="currentTab === 'applications'">
+                        <div class="grid-1">
+                            <div class="bento-card" v-for="app in applications" :key="app.id" style="margin-bottom: 20px;">
+                                <div style="display: flex; gap: 30px; padding: 25px; align-items: center;">
+                                    <div style="width: 80px; height: 80px; background: var(--accent-yellow); border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 2.5rem;">
+                                        {{ app.full_name[0] }}
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                            <div>
+                                                <h2 style="font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem;">{{ app.full_name }}</h2>
+                                                <div style="font-weight: 600; color: var(--text-light); margin-top: 4px;">
+                                                    {{ app.organization_name || 'Particulier' }} · {{ app.city }} · {{ app.phone }}
+                                                </div>
+                                            </div>
+                                            <span class="badge" :class="'badge-' + app.status">{{ app.status }}</span>
+                                        </div>
+                                        <div style="margin-top: 15px; font-size: 0.9rem; line-height: 1.5; color: #444;">
+                                            <strong>Motivation:</strong> {{ app.motivation }}
+                                        </div>
+                                        <div v-if="app.status === 'pending'" style="margin-top: 20px; display: flex; gap: 15px;">
+                                            <button class="btn-brutal mint" @click="approveApp(app)">
+                                                <v-icon>mdi-check-bold</v-icon> APPROUVER
+                                            </button>
+                                            <button class="btn-brutal" style="background: #ffebee; color: #c62828; border-color: #c62828;" @click="promptReject(app)">
+                                                <v-icon>mdi-close-thick</v-icon> REJETER
+                                            </button>
+                                            <button class="btn-brutal yellow" @click="viewAppDetails(app)">
+                                                VOIR DÉTAILS
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="section">
-                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-percent</v-icon> Commission & Répartition</div></div>
-                            <div style="padding:20px;">
-                                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:20px;">
-                                    <div style="background:#fff3e0;border:2px solid #ff9800;border-radius:8px;padding:16px;text-align:center;">
-                                        <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#e65100;">3%</div>
-                                        <div style="font-size:0.8rem;font-weight:600;">Commission minimum</div>
-                                        <div style="font-size:0.7rem;color:#666;margin-top:4px;">À la charge du client</div>
-                                    </div>
-                                    <div style="background:#e8f5e9;border:2px solid #4caf50;border-radius:8px;padding:16px;text-align:center;">
-                                        <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#2e7d32;">97%</div>
-                                        <div style="font-size:0.8rem;font-weight:600;">Versé à l'Admin</div>
-                                        <div style="font-size:0.7rem;color:#666;margin-top:4px;">Mobile Money organisateur</div>
-                                    </div>
-                                    <div style="background:#e3f2fd;border:2px solid #1565c0;border-radius:8px;padding:16px;text-align:center;">
-                                        <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#1565c0;">Auto</div>
-                                        <div style="font-size:0.8rem;font-weight:600;">Split automatique</div>
-                                        <div style="font-size:0.7rem;color:#666;margin-top:4px;">Versement instantané</div>
-                                    </div>
-                                </div>
-                                <p style="font-size:0.85rem;color:var(--text-light);line-height:1.6;">À chaque achat de billet, le montant est automatiquement réparti: <strong>3% (ou plus selon le tarif défini par l'Admin)</strong> vers le Mobile Money du SuperAdmin, le reste vers le compte de l'organisateur (Admin). En cas de remboursement, le montant est remboursé au client SANS les 3% de commission. Cette commission reste à la charge de l'Admin.</p>
+                            <div v-if="applications.length === 0" class="empty-state">
+                                <v-icon size="64" color="#ccc">mdi-file-outline</v-icon>
+                                <p style="margin-top: 20px; font-weight: 600;">Aucune demande d'organisateur pour le moment.</p>
                             </div>
                         </div>
-                        <div class="section">
-                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-code-braces</v-icon> Stack technique</div></div>
-                            <div style="padding:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
-                                <div style="background:#f8f8f8;border:2px solid #ddd;border-radius:8px;padding:14px;">
-                                    <div style="font-weight:700;font-family:'Syne',sans-serif;margin-bottom:4px;">⚡ Electron</div>
-                                    <div style="font-size:0.8rem;color:#666;">App desktop cross-platform</div>
-                                </div>
-                                <div style="background:#f8f8f8;border:2px solid #ddd;border-radius:8px;padding:14px;">
-                                    <div style="font-weight:700;font-family:'Syne',sans-serif;margin-bottom:4px;">🔴 Laravel</div>
-                                    <div style="font-size:0.8rem;color:#666;">Backend API + Auth + Queues</div>
-                                </div>
-                                <div style="background:#f8f8f8;border:2px solid #ddd;border-radius:8px;padding:14px;">
-                                    <div style="font-weight:700;font-family:'Syne',sans-serif;margin-bottom:4px;">🐘 PHP</div>
-                                    <div style="font-size:0.8rem;color:#666;">Logique serveur + API paiements</div>
-                                </div>
-                                <div style="background:#f8f8f8;border:2px solid #ddd;border-radius:8px;padding:14px;">
-                                    <div style="font-weight:700;font-family:'Syne',sans-serif;margin-bottom:4px;">💚 Vue.js</div>
-                                    <div style="font-size:0.8rem;color:#666;">Frontend réactif + Vuetify</div>
-                                </div>
-                                <div style="background:#f8f8f8;border:2px solid #ddd;border-radius:8px;padding:14px;">
-                                    <div style="font-weight:700;font-family:'Syne',sans-serif;margin-bottom:4px;">🔵 Node.js</div>
-                                    <div style="font-size:0.8rem;color:#666;">WebSocket temps réel + QR scan</div>
-                                </div>
-                                <div style="background:#f8f8f8;border:2px solid #ddd;border-radius:8px;padding:14px;">
-                                    <div style="font-weight:700;font-family:'Syne',sans-serif;margin-bottom:4px;">🗄️ MySQL</div>
-                                    <div style="font-size:0.8rem;color:#666;">Base de données principale</div>
+                    </template>
+
+                    <!-- TAB: USERS -->
+                    <template v-if="currentTab === 'users'">
+                        <div class="bento-card">
+                            <div class="table-responsive">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Utilisateur</th>
+                                            <th>Achats</th>
+                                            <th>Dépense Totale</th>
+                                            <th>Dernier Achat</th>
+                                            <th>Inscrit le</th>
+                                            <th>Statut</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="u in users" :key="u.id">
+                                            <td>
+                                                <div style="font-weight: 800;">{{ u.name }}</div>
+                                                <div style="font-size: 0.75rem; color: var(--text-light);">{{ u.email }}</div>
+                                            </td>
+                                            <td><span class="badge">{{ u.purchaseCount || 0 }}</span></td>
+                                            <td><div style="font-weight: 700;">{{ formatMoney(u.totalSpent || 0) }}</div></td>
+                                            <td>{{ u.lastPurchase ? formatDate(u.lastPurchase) : '—' }}</td>
+                                            <td>{{ formatDate(u.created_at) }}</td>
+                                            <td><span class="badge" :class="'badge-' + u.status">{{ u.status }}</span></td>
+                                            <td>
+                                                <button v-if="u.status === 'active'" class="btn-brutal sm" style="background: #ffebee; color: #c62828;" @click="blockUser(u)">
+                                                    BLOQUER
+                                                </button>
+                                                <button v-else class="btn-brutal sm mint" @click="unblockUser(u)">
+                                                    DÉBLOQUER
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- TAB: EVENTS -->
+                    <template v-if="currentTab === 'events'">
+                        <div class="bento-card">
+                            <div class="table-responsive">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Événement</th>
+                                            <th>Organisateur</th>
+                                            <th>Ventes</th>
+                                            <th>Revenus</th>
+                                            <th>Statut</th>
+                                            <th>Date Création</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="e in events" :key="e.id">
+                                            <td>
+                                                <div style="font-weight: 800;">{{ e.name }}</div>
+                                                <div style="font-size: 0.75rem; color: var(--text-light);">{{ e.category }} · {{ e.venue }}</div>
+                                            </td>
+                                            <td>{{ e.organizer_name }}</td>
+                                            <td><div style="font-weight: 700;">{{ e.ticketsSold }} / {{ e.capacity }}</div></td>
+                                            <td><div style="font-weight: 800;">{{ formatMoney(e.totalRevenue) }}</div></td>
+                                            <td><span class="badge" :class="'badge-' + e.status">{{ e.status }}</span></td>
+                                            <td>{{ formatDate(e.created_at) }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- TAB: LOGS -->
+                    <template v-if="currentTab === 'logs'">
+                        <div class="bento-card">
+                            <div class="card-content">
+                                <div class="log-item" v-for="log in logs" :key="log.id">
+                                    <div class="log-icon">
+                                        <v-icon v-if="log.type.includes('ticket')" color="var(--accent-coral)">mdi-ticket</v-icon>
+                                        <v-icon v-else-if="log.type.includes('user')" color="var(--accent-blue)">mdi-account</v-icon>
+                                        <v-icon v-else-if="log.type.includes('event')" color="var(--accent-mint)">mdi-calendar</v-icon>
+                                        <v-icon v-else color="#666">mdi-bell</v-icon>
+                                    </div>
+                                    <div class="log-content">
+                                        <div class="log-text" v-html="log.description"></div>
+                                        <div class="log-meta">
+                                            <span>{{ log.actor_name }}</span> | 
+                                            <span>{{ formatDateTime(log.created_at) }}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </template>
 
-                    <!-- Other pages -->
-                    <template v-if="['reports', 'settings', 'logs'].includes(currentPage)">
-                        <div class="section"><div class="section-header"><div class="section-title"><v-icon size="small">mdi-cog</v-icon> {{ pageTitle }}</div></div><div style="padding: 50px; text-align: center; color: var(--text-light);"><v-icon size="48" style="opacity: 0.3; margin-bottom: 15px;">mdi-hammer-wrench</v-icon><h3 style="font-family: 'Syne', sans-serif; margin-bottom: 8px;">En développement</h3><p>Cette fonctionnalité sera bientôt disponible.</p></div></div>
-                    </template>
                 </div>
             </main>
         </div>
-        
-        <!-- Modal -->
-        <div class="modal-overlay" :class="{ active: showModal }">
-            <div class="modal">
-                <div class="modal-header"><div class="modal-title">Nouveau client</div><button class="modal-close" @click="showModal = false">×</button></div>
+
+        <!-- REJECTION MODAL -->
+        <div class="modal-overlay" v-if="showRejectModal" @click.self="showRejectModal = false">
+            <div class="modal-card">
+                <span class="modal-close" @click="showRejectModal = false">&times;</span>
                 <div class="modal-body">
-                    <div class="form-row"><div class="form-group"><label class="form-label">Entreprise</label><input type="text" class="form-input" placeholder="Festival Donia"></div><div class="form-group"><label class="form-label">Contact</label><input type="text" class="form-input" placeholder="Jean Rakoto"></div></div>
-                    <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" placeholder="contact@example.com"></div>
-                    <div class="form-group"><label class="form-label">Téléphone</label><input type="tel" class="form-input" placeholder="+261 34 00 000 00"></div>
-                    <div class="form-row"><div class="form-group"><label class="form-label">Plan</label><select class="form-input"><option>Starter</option><option>Pro</option><option>Enterprise</option></select></div><div class="form-group"><label class="form-label">Statut</label><select class="form-input"><option>Actif</option><option>En attente</option></select></div></div>
+                    <h2 style="font-family: 'Syne', sans-serif; font-weight: 800; margin-bottom: 20px;">Refuser la demande</h2>
+                    <p style="margin-bottom: 15px; font-weight: 600;">Spécifiez la raison du refus (envoyée par email):</p>
+                    <textarea class="input-brutal" v-model="rejectReason" style="min-height: 120px;" placeholder="Ex: Documents d'identité non lisibles ou informations manquantes."></textarea>
+                    <div style="display: flex; gap: 15px; justify-content: flex-end;">
+                        <button class="btn-brutal" @click="showRejectModal = false">ANNULER</button>
+                        <button class="btn-brutal" style="background: #ffebee; color: #c62828; border-color: #c62828;" @click="confirmReject">
+                            CONFIRMER LE REJET
+                        </button>
+                    </div>
                 </div>
-                <div class="modal-footer"><button class="btn btn-secondary" @click="showModal = false">Annuler</button><button class="btn btn-primary">Créer</button></div>
             </div>
         </div>
 
-        <!-- Application Detail Modal -->
-        <div class="modal-overlay" :class="{ active: showAppModal }">
-            <div class="modal" style="max-width: 800px;">
-                <div class="modal-header">
-                    <div class="modal-title">Demande Organisateur #{{ selectedApp?.id }}</div>
-                    <button class="modal-close" @click="showAppModal = false">×</button>
-                </div>
-                <div class="modal-body" v-if="selectedApp">
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        <!-- APP DETAILS MODAL -->
+        <div class="modal-overlay" v-if="showAppDetails" @click.self="showAppDetails = false">
+            <div class="modal-card" style="max-width: 850px;">
+                <span class="modal-close" @click="showAppDetails = false">&times;</span>
+                <div class="modal-body" v-if="activeApp">
+                    <h2 style="font-family: 'Syne', sans-serif; font-weight: 800; margin-bottom: 30px; border-bottom: 3px solid var(--border-dark); padding-bottom: 10px;">
+                        Détails de la demande #{{ activeApp.id }}
+                    </h2>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
                         <div>
-                            <h3 style="font-family:'Syne',sans-serif;font-size:0.8rem;text-transform:uppercase;color:var(--accent-coral);margin-bottom:15px;border-bottom:1px solid #eee;padding-bottom:5px;">👤 Candidat</h3>
-                            <div class="form-group"><label class="form-label">Nom complet</label><div style="font-weight:700;">{{ selectedApp.full_name }}</div></div>
-                            <div class="form-group"><label class="form-label">Email</label><div>{{ selectedApp.email }}</div></div>
-                            <div class="form-group"><label class="form-label">Téléphone / Ville</label><div>{{ selectedApp.phone }} / {{ selectedApp.city }}</div></div>
-                            
-                            <h3 style="font-family:'Syne',sans-serif;font-size:0.8rem;text-transform:uppercase;color:var(--accent-coral);margin-bottom:15px;border-bottom:1px solid #eee;padding-bottom:5px;margin-top:25px;">🏢 Organisation</h3>
-                            <div class="form-group"><label class="form-label">Type / Nom</label><div>{{ selectedApp.organization_type }} - <strong>{{ selectedApp.organization_name || 'N/A' }}</strong></div></div>
-                            <div class="form-group"><label class="form-label">Description</label><div style="font-size:0.85rem;line-height:1.4;">{{ selectedApp.organization_description }}</div></div>
-                            <div class="form-group"><label class="form-label">Motivation</label><div style="font-size:0.85rem;line-height:1.4;background:#f9f9f9;padding:10px;border-left:4px solid var(--accent-coral);">"{{ selectedApp.motivation }}"</div></div>
-                        </div>
-                        <div>
-                            <h3 style="font-family:'Syne',sans-serif;font-size:0.8rem;text-transform:uppercase;color:var(--accent-coral);margin-bottom:15px;border-bottom:1px solid #eee;padding-bottom:5px;">🎫 Événements & ID</h3>
-                            <div class="form-group"><label class="form-label">Types d'événements</label><div>{{ formatJsonList(selectedApp.event_types) }}</div></div>
-                            <div class="form-group"><label class="form-label">ID Document</label><div>{{ (selectedApp.id_document_type||'').toUpperCase() }}: {{ selectedApp.id_document_number }}</div></div>
-                            
-                            <div style="background:#fff3e0;padding:15px;border:2px dashed var(--border-dark);margin-top:20px;">
-                                <h4 style="font-size:0.8rem;margin-bottom:10px;">Prochain événement</h4>
-                                <div style="font-weight:700;">{{ selectedApp.first_event_name || 'Non renseigné' }}</div>
-                                <div style="font-size:0.85rem;">Date: {{ selectedApp.first_event_date || '?' }} | Capacité: {{ selectedApp.first_event_capacity || '?' }}</div>
+                            <h3 style="font-family: 'Syne', sans-serif; font-size: 0.85rem; color: var(--accent-coral); margin-bottom: 15px; text-transform: uppercase;">Profil & Contact</h3>
+                            <div style="margin-bottom: 20px;">
+                                <div style="font-size: 0.75rem; color: var(--text-light); text-transform: uppercase;">Nom Complet</div>
+                                <div style="font-weight: 800; font-size: 1.1rem;">{{ activeApp.full_name }}</div>
                             </div>
+                            <div style="margin-bottom: 20px;">
+                                <div style="font-size: 0.75rem; color: var(--text-light); text-transform: uppercase;">Email & Téléphone</div>
+                                <div style="font-weight: 700;">{{ activeApp.email }}</div>
+                                <div style="font-weight: 700;">{{ activeApp.phone }}</div>
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <div style="font-size: 0.75rem; color: var(--text-light); text-transform: uppercase;">Localisation</div>
+                                <div style="font-weight: 700;">{{ activeApp.city }}</div>
+                            </div>
+                        </div>
 
-                            <h3 style="font-family:'Syne',sans-serif;font-size:0.8rem;text-transform:uppercase;color:var(--accent-coral);margin-bottom:15px;border-bottom:1px solid #eee;padding-bottom:5px;margin-top:25px;">💰 Paiements</h3>
-                            <div class="form-group"><label class="form-label">Méthode préférée</label><div>{{ selectedApp.preferred_payment }}</div></div>
-                            <div v-if="selectedApp.mobile_money_number" class="form-group"><label class="form-label">N° Mobile Money</label><div style="font-weight:700;">{{ selectedApp.mobile_money_number }}</div></div>
+                        <div>
+                            <h3 style="font-family: 'Syne', sans-serif; font-size: 0.85rem; color: var(--accent-coral); margin-bottom: 15px; text-transform: uppercase;">Organisation</h3>
+                            <div style="margin-bottom: 20px;">
+                                <div style="font-size: 0.75rem; color: var(--text-light); text-transform: uppercase;">Nom / Type</div>
+                                <div style="font-weight: 800;">{{ activeApp.organization_name || 'N/A' }}</div>
+                                <div style="font-weight: 600;">{{ activeApp.organization_type }}</div>
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <div style="font-size: 0.75rem; color: var(--text-light); text-transform: uppercase;">Pièce d'identité</div>
+                                <div style="font-weight: 700;">{{ activeApp.id_document_type.toUpperCase() }}: {{ activeApp.id_document_number }}</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer" v-if="selectedApp && selectedApp.status === 'pending'">
-                    <button class="btn btn-secondary" @click="confirmReject(selectedApp)" style="border-color:#ff6b4a;color:#ff6b4a;">Rejeter la demande</button>
-                    <v-spacer></v-spacer>
-                    <button class="btn btn-primary" @click="handleApprove(selectedApp)" style="background:#00d9a5;border-color:#00d9a5;">Approuver & Activer</button>
-                </div>
-                <div class="modal-footer" v-else>
-                    <div v-if="selectedApp?.status === 'rejected'" style="color:#ff6b4a;font-weight:700;font-size:0.9rem;">Rejeté: {{ selectedApp.reject_reason }}</div>
-                    <div v-else-if="selectedApp?.status === 'approved'" style="color:#00d9a5;font-weight:700;font-size:0.9rem;">Demande approuvée le {{ formatDateShort(selectedApp.reviewed_at) }}</div>
-                    <v-spacer></v-spacer>
-                    <button class="btn btn-secondary" @click="showAppModal = false">Fermer</button>
-                </div>
-            </div>
-        </div>
 
-        <!-- Rejection Reason Modal -->
-        <div class="modal-overlay" :class="{ active: showRejectModal }">
-            <div class="modal">
-                <div class="modal-header"><div class="modal-title">Motif du refus</div><button class="modal-close" @click="showRejectModal = false">×</button></div>
-                <div class="modal-body">
-                    <p style="font-size:0.85rem;margin-bottom:15px;">Veuillez préciser pourquoi cette demande est rejetée. Un email sera envoyé au candidat.</p>
-                    <div class="form-group">
-                        <label class="form-label">Raison du rejet</label>
-                        <textarea class="form-input" rows="4" v-model="rejectReason" placeholder="Ex: Informations incomplètes ou document d'identité invalide."></textarea>
+                    <div style="margin-top: 30px; padding: 25px; background: #fbfbfb; border: 3px solid var(--border-dark); box-shadow: 6px 6px 0 #eee;">
+                         <h3 style="font-family: 'Syne', sans-serif; font-size: 0.85rem; color: var(--accent-coral); margin-bottom: 10px; text-transform: uppercase;">Motivation & Vision</h3>
+                         <p style="font-size: 1rem; line-height: 1.6; font-style: italic;">"{{ activeApp.motivation }}"</p>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @click="showRejectModal = false">Annuler</button>
-                    <button class="btn btn-primary" style="background:#ff6b4a;border-color:#ff6b4a;" @click="handleReject">Confirmer le rejet</button>
+
+                    <div style="margin-top: 40px; display: flex; gap: 15px; justify-content: flex-end;">
+                        <button v-if="activeApp.status === 'pending'" class="btn-brutal mint" @click="approveApp(activeApp); showAppDetails = false">APPROUVER</button>
+                        <button v-if="activeApp.status === 'pending'" class="btn-brutal" style="background: #ffebee; color: #c62828; border-color: #c62828;" @click="promptReject(activeApp); showAppDetails = false">REJETER</button>
+                        <button class="btn-brutal" @click="showAppDetails = false">FERMER</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <script src="../js/api-client.js"></script>
-    <script src="../js/oauth-simulation.js"></script>
-    <script src="../js/profile-menu.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
     <script>
         const { createApp } = Vue;
-        const app = createApp({
+        const { createVuetify } = Vuetify;
+
+        const vuetify = createVuetify();
+
+        createApp({
             data() {
                 return {
-                    isLoggedIn: false, authMode: 'login', authForm: { name: '', email: '', password: '' }, authError: '',
-                    currentPage: 'dashboard', searchQuery: '', showModal: false, eventTab: 'all', refundTab: 'pending',
-                    filters: { status: '', plan: '', search: '' },
-                    appFilterStatus: 'pending',
+                    isLoggedIn: false,
+                    loginForm: { email: '', password: '' },
+                    loginError: '',
+                    user: null,
+                    currentTab: 'dashboard',
+                    stats: {
+                        totalRevenue: 0,
+                        totalTicketsSold: 0,
+                        totalCommission: 0,
+                        activeOrganizers: 0,
+                        pendingApplications: 0,
+                        monthlyRevenue: [],
+                        topEvents: []
+                    },
+                    organizers: [],
+                    users: [],
+                    events: [],
                     applications: [],
-                    selectedApp: null,
-                    showAppModal: false,
+                    logs: [],
+                    
                     showRejectModal: false,
                     rejectReason: '',
-                    totalRevenue: 0, totalTickets: 0, activeEvents: 0, scannedTickets: 0, pendingTickets: 0, refundedTickets: 0, pendingRefunds: 0,
-                    totalPayouts: 0, pendingPayoutsAmount: 0, commissionTotal: 0, payoutCount: 0, conversionRate: 0, avgTicketPrice: 0, avgScanRate: 0,
-                    clients: [], allEvents: [], tickets: [], refunds: [], payouts: [],
-                    recentActivity: [], topEvents: [],
-                    activeSearchIdx: -1,
-                    // Admin management
-                    selectedAdmin: null,
-                    adminList: [
-                        { id: 'ADM-001', name: 'Festival Donia SARL', email: 'contact@festivalDonia.mg', initials: 'FD', plan: 'pro', eventCount: 8, totalRevenue: 45000000, commission: 1350000, active: true, events: [
-                            { id: 1, name: 'Festival Donia 2026', date: '15-17 Mai', venue: 'Nosy Be', ticketsSold: 2500, capacity: 5000, revenue: 25000000, seatChoice: 'free', scanLink: '/scan/fd2026x8k' },
-                            { id: 2, name: 'Donia After Party', date: '17 Mai', venue: 'Nosy Be', ticketsSold: 300, capacity: 500, revenue: 4500000, seatChoice: 'none', scanLink: '/scan/fdap2026' }
-                        ]},
-                        { id: 'ADM-002', name: 'Mahamasina Events', email: 'events@mahamasina.mg', initials: 'ME', plan: 'pro', eventCount: 12, totalRevenue: 78000000, commission: 2340000, active: true, events: [
-                            { id: 3, name: 'Concert Dama Live', date: '15 Avril', venue: 'Stade Mahamasina', ticketsSold: 8000, capacity: 15000, revenue: 40000000, seatChoice: 'assigned', scanLink: '/scan/dama2026' }
-                        ]},
-                        { id: 'ADM-003', name: 'Tana Culture Org', email: 'info@tanaculture.mg', initials: 'TC', plan: 'starter', eventCount: 3, totalRevenue: 5600000, commission: 168000, active: true, events: [] },
-                        { id: 'ADM-004', name: 'Diego Sport Club', email: 'contact@diegosport.mg', initials: 'DS', plan: 'starter', eventCount: 2, totalRevenue: 1200000, commission: 36000, active: false, events: [] }
-                    ],
-                    // Content manager
-                    contentTab: 'pending',
-                    contentPendingEvents: [
-                        { id: 101, name: 'Jaojoby en Concert', organizer: 'Tana Culture Org', date: '18 Mai 2026', venue: 'Toamasina', price: 40000, capacity: 2000, category: 'concerts', seatChoice: 'free', image: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=400&h=300&fit=crop', status: 'pending' },
-                        { id: 102, name: 'Beach Festival Anakao', organizer: 'Festival Donia SARL', date: '1-3 Juil 2026', venue: 'Anakao', price: 150000, capacity: 1000, category: 'festivals', seatChoice: 'none', image: 'https://images.unsplash.com/photo-1504680177321-2e6a879aac86?w=400&h=300&fit=crop', status: 'pending' }
-                    ],
-                    contentPublishedEvents: [
-                        { id: 201, name: 'Dama Live - Tournée 2026', organizer: 'Mahamasina Events', price: 50000, category: 'concerts', image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop', visible: true },
-                        { id: 202, name: 'Festival Donia - Nosy Be', organizer: 'Festival Donia SARL', price: 120000, category: 'festivals', image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400&h=300&fit=crop', visible: true },
-                        { id: 203, name: 'Match CNaPS vs Fosa', organizer: 'Mahamasina Events', price: 15000, category: 'sports', image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400&h=300&fit=crop', visible: true },
-                        { id: 204, name: 'Jazz Festival Tana', organizer: 'Tana Culture Org', price: 35000, category: 'concerts', image: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&h=300&fit=crop', visible: true },
-                        { id: 205, name: 'Electronic Night', organizer: 'Mahamasina Events', price: 25000, category: 'concerts', image: 'https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=400&h=300&fit=crop', visible: true }
-                    ],
-                    contentNewEvent: { name: '', organizer: '', date: '', venue: '', price: 0, capacity: 0, category: 'concerts', image: '', description: '' },
-                    // Payment methods
-                    paymentMethods: [
-                        { id: 'mvola', name: 'MVola', provider: 'Telma Madagascar', icon: '📱', active: true, apiKey: '••••••••', receiverNumber: '034 XX XXX XX' },
-                        { id: 'orange', name: 'Orange Money', provider: 'Orange Madagascar', icon: '🟠', active: true, apiKey: '••••••••', receiverNumber: '032 XX XXX XX' },
-                        { id: 'airtel', name: 'Airtel Money', provider: 'Airtel Madagascar', icon: '🔴', active: false, apiKey: '', receiverNumber: '' }
-                    ]
+                    appToReject: null,
+                    
+                    showAppDetails: false,
+                    activeApp: null,
+
+                    tabTitles: {
+                        dashboard: 'Tableau de bord Global',
+                        organizers: 'Gestion des Organisateurs',
+                        applications: 'Candidatures Organisateur',
+                        users: 'Gestion des Utilisateurs',
+                        events: 'Surveillance des Événements',
+                        logs: 'Journal d\'Audit Système'
+                    }
                 };
             },
             computed: {
-                currentDate() { return new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); },
-                pageTitle() { return { dashboard: 'Dashboard', clients: 'Clients', applications: 'Demandes Org.', events: 'Événements', tickets: 'Billets', refunds: 'Remboursements', payouts: 'Versements', analytics: 'Statistiques', reports: 'Rapports', admins: 'Administrateurs', content: 'Contenu site', payments: 'Paiements', settings: 'Paramètres', logs: 'Logs' }[this.currentPage] || 'Dashboard'; },
-                userName() { const u = window.api?.getUser(); return u ? u.name : 'Super Admin'; },
-                userEmail() { const u = window.api?.getUser(); return u ? u.email : ''; },
-                userRole() { const r = window.api?.getUserRole(); return r === 'superadmin' ? 'Super Administrateur' : r === 'admin' ? 'Administrateur' : 'Organisateur'; },
-                userAvatar() {
-                    const name = this.userName;
-                    if (window.ProfileMenu) {
-                        const gender = window.ProfileMenu.detectGender(name);
-                        return window.ProfileMenu.getAvatarSVG(name, gender, 36);
-                    }
-                    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                currentDate() {
+                    return new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
                 },
-                filteredClients() { return this.clients.filter(c => { if (this.filters.status && c.status !== this.filters.status) return false; if (this.filters.plan && c.plan !== this.filters.plan) return false; if (this.filters.search && !c.name.toLowerCase().includes(this.filters.search.toLowerCase())) return false; return true; }); },
-                filteredApplications() { return this.applications.filter(a => { if (this.appFilterStatus !== 'all' && a.status !== this.appFilterStatus) return false; return true; }); },
-                pendingApplicationsCount() { return this.applications.filter(a => a.status === 'pending').length; },
-                displayedEvents() { if (this.eventTab === 'active') return this.allEvents.filter(e => e.status === 'active'); if (this.eventTab === 'upcoming') return this.allEvents.filter(e => e.status === 'pending'); if (this.eventTab === 'past') return this.allEvents.filter(e => e.status === 'completed'); return this.allEvents; },
-                globalSearchResults() {
-                    if (!this.searchQuery || this.searchQuery.length === 0) return [];
-                    const q = this.searchQuery.toLowerCase().trim();
-                    const results = [];
-                    this.clients.forEach(c => { if (c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q)) results.push({ key: 'c-'+c.id, type: 'client', icon: '👤', title: c.name, sub: c.email + ' — ' + c.events + ' événements', typeLabel: 'Client', page: 'clients' }); });
-                    this.allEvents.forEach(e => { if (e.name.toLowerCase().includes(q) || (e.venue && e.venue.toLowerCase().includes(q)) || (e.organizer && e.organizer.toLowerCase().includes(q))) results.push({ key: 'e-'+e.id, type: 'event', icon: '🎫', title: e.name, sub: e.venue + ' — ' + e.date, typeLabel: 'Événement', page: 'events' }); });
-                    this.tickets.forEach(t => { if ((t.id && t.id.toLowerCase().includes(q)) || (t.buyer && t.buyer.toLowerCase().includes(q)) || (t.event && t.event.toLowerCase().includes(q))) results.push({ key: 't-'+t.id, type: 'ticket', icon: '🎟️', title: t.id + ' — ' + t.buyer, sub: t.event + ' — ' + t.statusLabel, typeLabel: 'Billet', page: 'tickets' }); });
-                    this.refunds.forEach(r => { if ((r.id && r.id.toLowerCase().includes(q)) || (r.client && r.client.toLowerCase().includes(q))) results.push({ key: 'r-'+r.id, type: 'ticket', icon: '🔄', title: r.id + ' — ' + r.client, sub: r.event + ' — ' + this.formatCurrency(r.amount), typeLabel: 'Remboursement', page: 'refunds' }); });
-                    this.payouts.forEach(p => { if ((p.id && p.id.toLowerCase().includes(q)) || (p.organizer && p.organizer.toLowerCase().includes(q))) results.push({ key: 'p-'+p.id, type: 'client', icon: '💰', title: p.id + ' — ' + p.organizer, sub: this.formatCurrency(p.amount) + ' — ' + p.statusLabel, typeLabel: 'Versement', page: 'payouts' }); });
-                    return results.slice(0, 10);
+                maxMonthlyRevenue() {
+                    if (!this.stats.monthlyRevenue.length) return 1;
+                    return Math.max(...this.stats.monthlyRevenue.map(m => m.revenue));
                 }
             },
-            watch: {
-                searchQuery() { this.activeSearchIdx = -1; }
+            async mounted() {
+                const user = TicketMadaAPI.getUser();
+                const token = localStorage.getItem('ticketmada-token');
+                
+                if (user && user.role === 'superadmin' && token) {
+                    this.user = user;
+                    this.isLoggedIn = true;
+                    this.fetchData();
+                }
             },
             methods: {
-                formatCurrency(v) { if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M Ar'; if (v >= 1000) return (v / 1000).toFixed(0) + 'K Ar'; return v.toLocaleString() + ' Ar'; },
-                highlightSearch(text) {
-                    if (!this.searchQuery) return text;
-                    const q = this.searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    return text.replace(new RegExp('(' + q + ')', 'gi'), '<mark>$1</mark>');
-                },
-                navigateSearch(dir) {
-                    const len = this.globalSearchResults.length;
-                    if (len === 0) return;
-                    this.activeSearchIdx = (this.activeSearchIdx + dir + len) % len;
-                },
-                selectSearch() {
-                    if (this.activeSearchIdx >= 0 && this.activeSearchIdx < this.globalSearchResults.length) {
-                        this.goToSearchResult(this.globalSearchResults[this.activeSearchIdx]);
-                    }
-                },
-                goToSearchResult(r) {
-                    this.currentPage = r.page;
-                    this.searchQuery = '';
-                    this.activeSearchIdx = -1;
-                },
-                async handleLogout() { await window.api.logout(); this.isLoggedIn = false; },
-                loginWith(provider) {
-                    const vm = this;
-                    window.OAuthSim.show(provider, async (name, email) => {
-                        try {
-                            const result = await window.api.oauthLogin(provider, name, email);
-                            if (!result.error) { vm.isLoggedIn = true; vm.loadAll(); }
-                            else {
-                                window.api.setAuth('sim-' + Date.now(), { name: name, email: email, role: 'superadmin' });
-                                vm.isLoggedIn = true;
-                            }
-                        } catch(e) {
-                            window.api.setAuth('sim-' + Date.now(), { name: name, email: email, role: 'superadmin' });
-                            vm.isLoggedIn = true;
-                        }
-                    });
-                },
-                async handleAuth() {
-                    this.authError = '';
+                async handleLogin() {
+                    this.loginError = '';
                     try {
-                        let result;
-                        if (this.authMode === 'login') { result = await window.api.login(this.authForm.email, this.authForm.password); }
-                        else { result = await window.api.register(this.authForm.name, this.authForm.email, this.authForm.password, 'admin'); }
-                        if (result.error) {
-                            if (result.status === 0) {
-                                const name = this.authForm.name || this.authForm.email.split('@')[0];
-                                window.api.setAuth('sim-' + Date.now(), { name: name, email: this.authForm.email, role: 'superadmin' });
-                                this.isLoggedIn = true;
-                            } else { this.authError = result.error; }
-                        } else { this.isLoggedIn = true; this.loadAll(); }
-                    } catch(e) { this.authError = 'Erreur de connexion'; }
-                },
-                viewAdminEvents(admin) {
-                    this.selectedAdmin = admin;
-                },
-                viewAdminDashboard(admin) {
-                    // Open admin's dashboard in new tab (simulated)
-                    const url = '/Admin/ticketmada-dashboard.html?admin_id=' + admin.id;
-                    window.open(url, '_blank');
-                },
-                publishEvent(evt) {
-                    // Move from pending to published
-                    const idx = this.contentPendingEvents.findIndex(e => e.id === evt.id);
-                    if (idx > -1) {
-                        this.contentPendingEvents.splice(idx, 1);
-                        this.contentPublishedEvents.push({ id: evt.id, name: evt.name, organizer: evt.organizer, price: evt.price, category: evt.category, image: evt.image, visible: true });
-                    }
-                },
-                editContentEvent(evt) {
-                    // Pre-fill the "add manually" form with event data for editing
-                    this.contentTab = 'add';
-                    this.contentNewEvent = { name: evt.name, organizer: evt.organizer || '', date: evt.date || '', venue: evt.venue || '', price: evt.price || 0, capacity: evt.capacity || 0, category: evt.category || 'concerts', image: evt.image || '', description: evt.description || '' };
-                },
-                rejectEvent(evt) {
-                    if (confirm('Refuser cet événement ? L\'organisateur sera notifié.')) {
-                        const idx = this.contentPendingEvents.findIndex(e => e.id === evt.id);
-                        if (idx > -1) this.contentPendingEvents.splice(idx, 1);
-                    }
-                },
-                addContentEvent() {
-                    if (!this.contentNewEvent.name) return;
-                    const newId = 300 + this.contentPublishedEvents.length;
-                    this.contentPublishedEvents.push({
-                        id: newId, name: this.contentNewEvent.name, organizer: this.contentNewEvent.organizer,
-                        price: this.contentNewEvent.price, category: this.contentNewEvent.category,
-                        image: this.contentNewEvent.image || 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=400&h=300&fit=crop', visible: true
-                    });
-                    this.contentNewEvent = { name: '', organizer: '', date: '', venue: '', price: 0, capacity: 0, category: 'concerts', image: '', description: '' };
-                    this.contentTab = 'published';
-                },
-                unpublishEvent(evt) {
-                    const idx = this.contentPublishedEvents.findIndex(e => e.id === evt.id);
-                    if (idx > -1) this.contentPublishedEvents.splice(idx, 1);
-                },
-                formatDateShort(d) { return new Date(d).toLocaleDateString('fr-FR'); },
-                formatJsonList(json) { try { return JSON.parse(json).join(', '); } catch(e) { return json; } },
-                viewApp(app) { this.selectedApp = app; this.showAppModal = true; },
-                async handleApprove(app) {
-                    if (!confirm(`Confirmer l'approbation de ${app.full_name} ?`)) return;
-                    try {
-                        const res = await window.api.put(`/organizer-applications/${app.id}/approve`);
-                        if (!res.error) {
-                            app.status = 'approved';
-                            this.showAppModal = false;
-                            this.loadAll(); // Refresh to move to clients
+                        const res = await TicketMadaAPI.login(this.loginForm.email, this.loginForm.password);
+                        if (res.user.role !== 'superadmin') {
+                            this.loginError = "Access denied. Only SuperAdmin can access this portal.";
+                            return;
                         }
-                    } catch(e) { alert('Erreur lors de l\'approbation'); }
+                        this.user = res.user;
+                        this.isLoggedIn = true;
+                        this.fetchData();
+                    } catch (err) {
+                        this.loginError = "Identifiants invalides.";
+                    }
                 },
-                confirmReject(app) {
-                    this.selectedApp = app;
+                handleLogout() {
+                    TicketMadaAPI.logout();
+                    this.isLoggedIn = false;
+                    this.user = null;
+                },
+                async fetchData() {
+                    try {
+                        const res = await TicketMadaAPI.get('superadmin/dashboard');
+                        this.stats = res;
+                        this.logs = res.recentActivity;
+
+                        // Parallel fetch others
+                        const [orgs, users, events, apps] = await Promise.all([
+                            TicketMadaAPI.get('superadmin/organizers'),
+                            TicketMadaAPI.get('superadmin/users'),
+                            TicketMadaAPI.get('superadmin/events'),
+                            TicketMadaAPI.get('organizer-applications')
+                        ]);
+                        
+                        this.organizers = orgs;
+                        this.users = users;
+                        this.events = events;
+                        this.applications = apps;
+                    } catch (err) {
+                        console.error('Fetch error:', err);
+                    }
+                },
+                formatMoney(v) {
+                    return new Intl.NumberFormat('fr-MG', { style: 'currency', currency: 'MGA', minimumFractionDigits: 0 }).format(v).replace('MGA', 'Ar');
+                },
+                formatNumber(v) {
+                    return new Intl.NumberFormat('fr-FR').format(v);
+                },
+                formatDate(d) {
+                    return new Date(d).toLocaleDateString('fr-FR');
+                },
+                formatDateTime(d) {
+                    return new Date(d).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+                },
+                async approveApp(app) {
+                    try {
+                        await TicketMadaAPI.put(`organizer-applications/${app.id}/approve`);
+                        alert(`${app.full_name} est maintenant organisateur !`);
+                        this.fetchData();
+                    } catch (err) {
+                        alert("Erreur lors de l'approbation.");
+                    }
+                },
+                promptReject(app) {
+                    this.appToReject = app;
                     this.rejectReason = '';
                     this.showRejectModal = true;
-                    this.showAppModal = false;
                 },
-                async handleReject() {
-                    if (!this.rejectReason) return alert('Veuillez saisir un motif');
+                async confirmReject() {
+                    if (!this.rejectReason.trim()) return alert("Spécifiez une raison.");
                     try {
-                        const res = await window.api.put(`/organizer-applications/${this.selectedApp.id}/reject`, { reason: this.rejectReason });
-                        if (!res.error) {
-                            this.selectedApp.status = 'rejected';
-                            this.showRejectModal = false;
-                            this.loadAll();
-                        }
-                    } catch(e) { alert('Erreur lors du rejet'); }
+                        await TicketMadaAPI.put(`organizer-applications/${this.appToReject.id}/reject`, { reason: this.rejectReason });
+                        this.showRejectModal = false;
+                        this.fetchData();
+                    } catch (err) {
+                        alert("Erreur.");
+                    }
                 },
-                async loadAll() {
+                viewAppDetails(app) {
+                    this.activeApp = app;
+                    this.showAppDetails = true;
+                },
+                async suspendOrganizer(org) {
+                    if (!confirm(`Suspendre ${org.name} ? Ses événements ne seront plus visibles.`)) return;
                     try {
-                        const [analytics, clients, events, tickets, refunds, payouts, activity, applications] = await Promise.all([
-                            window.api.get('/analytics/superadmin'), window.api.get('/clients'), window.api.get('/events'),
-                            window.api.get('/tickets'), window.api.get('/refunds'), window.api.get('/payouts'), window.api.get('/activity'),
-                            window.api.get('/organizer-applications')
-                        ]);
-                        if (applications && !applications.error) this.applications = applications;
-                        if (analytics && !analytics.error) {
-                            Object.assign(this, { totalRevenue: analytics.totalRevenue||0, totalTickets: analytics.totalTickets||0, activeEvents: analytics.activeEvents||0, scannedTickets: analytics.scannedTickets||0, pendingTickets: analytics.pendingTickets||0, refundedTickets: analytics.refundedTickets||0, pendingRefunds: analytics.pendingRefunds||0, totalPayouts: analytics.totalPayouts||0, pendingPayoutsAmount: analytics.pendingPayoutsAmount||0, commissionTotal: analytics.commissionTotal||0, payoutCount: analytics.payoutCount||0, conversionRate: analytics.conversionRate||0, avgTicketPrice: analytics.avgTicketPrice||0, avgScanRate: analytics.avgScanRate||0 });
-                            this.topEvents = (analytics.topEvents||[]).map(e => ({ id: e.id, name: e.name, organizer: e.organizer_name||'N/A', tickets: (e.tickets_sold||0).toLocaleString(), revenue: e.revenue||0 }));
-                        }
-                        const sLabels = { active: 'Actif', pending: 'En attente', suspended: 'Suspendu' };
-                        if (clients && !clients.error) { this.clients = (clients.clients||clients||[]).map(c => ({ id: c.id, name: c.name, email: c.email, initials: c.name.substring(0,2).toUpperCase(), plan: c.plan||'starter', events: c.events_count||0, revenue: c.total_revenue||0, status: c.status, statusLabel: sLabels[c.status]||c.status, joinDate: new Date(c.created_at).toLocaleDateString('fr-FR') })); }
-                        const eLabels = { active: 'En vente', pending: 'Bientôt', completed: 'Terminé', cancelled: 'Annulé' };
-                        if (events && !events.error) { this.allEvents = (Array.isArray(events)?events:[]).map(e => ({ id: e.id, name: e.name, category: e.category, organizer: e.organizer_name||'N/A', date: new Date(e.date_start).toLocaleDateString('fr-FR'), venue: e.venue, ticketsSold: e.tickets_sold, capacity: e.capacity, revenue: e.revenue, status: e.status, statusLabel: eLabels[e.status]||e.status })); }
-                        const tLabels = { active: 'Validé', scanned: 'Scanné', refunded: 'Remboursé' };
-                        if (tickets && !tickets.error) { this.tickets = (tickets.tickets||tickets||[]).map(t => ({ id: t.id_code||'TKT-'+t.id, event: t.event_name||'N/A', buyer: t.buyer_name||'Client', type: t.type, price: t.price, status: t.status==='scanned'?'completed':t.status==='refunded'?'cancelled':t.status, statusLabel: tLabels[t.status]||t.status, date: new Date(t.created_at).toLocaleDateString('fr-FR') })); }
-                        if (refunds && !refunds.error) { this.refunds = (refunds.refunds||refunds||[]).map(r => ({ id: r.id_code||'REF-'+r.id, ticketId: 'TKT-'+r.ticket_id, event: r.event_name||'N/A', client: r.client_name||'Client', amount: r.amount, reason: r.reason, date: new Date(r.created_at).toLocaleDateString('fr-FR') })); }
-                        if (payouts && !payouts.error) { this.payouts = (payouts.payouts||payouts||[]).map(p => ({ id: p.id_code||'PAY-'+p.id, organizer: p.organizer_name||'N/A', amount: p.amount, commission: p.commission, net: p.net, method: p.method, status: p.status, statusLabel: p.status==='completed'?'Effectué':'En cours', date: new Date(p.created_at).toLocaleDateString('fr-FR') })); }
-                        if (activity && !activity.error) { this.recentActivity = (activity.activities||activity||[]).map(a => ({ id: a.id, type: a.type, icon: a.icon||'mdi-information', text: a.text||a.description, time: a.time||'N/A' })); }
-                    } catch(e) { console.log('API not available'); }
+                        await TicketMadaAPI.put(`superadmin/organizers/${org.id}/suspend`, { reason: 'Suspension par le SuperAdmin' });
+                        this.fetchData();
+                    } catch (err) {
+                        alert("Erreur.");
+                    }
                 }
-            },
-            mounted() {
-                if (window.api && window.api.isLoggedIn()) { this.isLoggedIn = true; this.loadAll(); }
-                if (window.ProfileMenu) window.ProfileMenu.injectStyles();
             }
-        });
-        app.use(Vuetify.createVuetify());
-        app.mount('#app');
+        }).use(vuetify).mount('#app');
     </script>
 </body>
 </html>

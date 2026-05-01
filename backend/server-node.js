@@ -325,6 +325,18 @@ function initDB() {
             FOREIGN KEY (event_id) REFERENCES events(id),
             FOREIGN KEY (approved_by) REFERENCES users(id)
         );
+        CREATE TABLE IF NOT EXISTS activity_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            type TEXT NOT NULL,           -- 'user_registered', 'ticket_purchased', etc.
+            actor_id INTEGER,            -- who did the action (user ID)
+            actor_name TEXT,             -- readable name
+            target_type TEXT,            -- 'user', 'event', 'organizer', 'ticket'
+            target_id INTEGER,
+            target_name TEXT,
+            description TEXT NOT NULL,   -- human-readable description in French
+            metadata TEXT,               -- JSON extra data
+            created_at DATETIME DEFAULT (datetime('now'))
+        );
         CREATE TABLE IF NOT EXISTS organizer_applications (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -450,6 +462,13 @@ function seedDB() {
 }
 
 // ============ HELPERS ============
+function logActivity(type, actorId, actorName, targetType, targetId, targetName, description, metadata = null) {
+    db.prepare(`
+        INSERT INTO activity_logs (type, actor_id, actor_name, target_type, target_id, target_name, description, metadata)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(type, actorId, actorName, targetType, targetId, targetName, description, metadata ? JSON.stringify(metadata) : null);
+}
+
 function getUser(token) {
     if (!token) return null;
     const session = db.prepare(`SELECT user_id FROM sessions WHERE token = ? AND expires_at > datetime('now')`).get(token);
@@ -525,6 +544,7 @@ async function handleOrganizerApplications(req, res, parts) {
         );
         
         await sendOrganizerApplicationEmail(result.lastInsertRowid, body, user);
+        logActivity('organizer_application_submitted', user.id, user.name, 'organizer_application', result.lastInsertRowid, body.organization_name || body.full_name, `Nouvelle demande d'organisateur de ${body.full_name}`);
         return sendJSON(res, { success: true, application_id: result.lastInsertRowid }, 201);
     }
 
@@ -551,6 +571,7 @@ async function handleOrganizerApplications(req, res, parts) {
         db.prepare(`UPDATE organizer_applications SET status = 'approved', reviewed_by = ?, reviewed_at = datetime('now') WHERE id = ?`).run(user.id, id);
         db.prepare(`UPDATE users SET role = 'organizer', plan = 'starter' WHERE id = ?`).run(app.user_id);
         await sendApprovalEmail(app);
+        logActivity('organizer_application_approved', user.id, user.name, 'organizer_application', id, app.full_name, `Demande d'organisateur approuvée pour ${app.full_name}`);
         return sendJSON(res, { success: true });
     }
 
@@ -562,6 +583,7 @@ async function handleOrganizerApplications(req, res, parts) {
         const body = await parseBody(req);
         db.prepare(`UPDATE organizer_applications SET status = 'rejected', reject_reason = ?, reviewed_by = ?, reviewed_at = datetime('now') WHERE id = ?`).run(body.reason, user.id, id);
         await sendRejectionEmail(app, body.reason);
+        logActivity('organizer_application_rejected', user.id, user.name, 'organizer_application', id, app.full_name, `Demande d'organisateur rejetée pour ${app.full_name}`);
         return sendJSON(res, { success: true });
     }
 
@@ -591,6 +613,7 @@ async function handleAuth(req, res, parts) {
         const expires = new Date(Date.now() + TOKEN_EXPIRY_MS).toISOString().replace('T', ' ').split('.')[0];
         db.prepare('INSERT INTO sessions (user_id, token, expires_at) VALUES (?,?,?)').run(result.lastInsertRowid, token, expires);
         const user = db.prepare('SELECT id, name, email, role, plan, avatar_initials, phone, status, created_at FROM users WHERE id = ?').get(result.lastInsertRowid);
+        logActivity('user_registered', user.id, user.name, 'user', user.id, user.name, `Nouvel utilisateur inscrit: ${user.name}`);
         return sendJSON(res, { user, token }, 201);
     }
 
@@ -600,6 +623,7 @@ async function handleAuth(req, res, parts) {
         const user = db.prepare('SELECT * FROM users WHERE email = ?').get(body.email);
         if (!user || !verifyPassword(body.password, user.password_hash)) return sendError(res, 'Email ou mot de passe incorrect', 401);
         db.prepare(`UPDATE users SET last_login = datetime('now') WHERE id = ?`).run(user.id);
+        logActivity('user_login', user.id, user.name, 'user', user.id, user.name, `${user.name} s'est connecté`);
         const token = generateToken();
         const expires = new Date(Date.now() + TOKEN_EXPIRY_MS).toISOString().replace('T', ' ').split('.')[0];
         db.prepare('INSERT INTO sessions (user_id, token, expires_at) VALUES (?,?,?)').run(user.id, token, expires);
@@ -618,8 +642,10 @@ async function handleAuth(req, res, parts) {
             const initials = (name[0] + (name.split(' ').pop()?.[0] || name[1] || '')).toUpperCase();
             const r = db.prepare('INSERT INTO users (name, email, password_hash, role, avatar_initials, status) VALUES (?,?,?,?,?,?)').run(name, email, hash, 'buyer', initials, 'active');
             user = db.prepare('SELECT id, name, email, role, plan, avatar_initials, phone, status, created_at FROM users WHERE id = ?').get(r.lastInsertRowid);
+            logActivity('user_registered', user.id, user.name, 'user', user.id, user.name, `Nouvel utilisateur inscrit (${provider}): ${user.name}`);
         } else {
             db.prepare(`UPDATE users SET last_login = datetime('now') WHERE id = ?`).run(user.id);
+            logActivity('user_login', user.id, user.name, 'user', user.id, user.name, `${user.name} s'est connecté (${provider})`);
             delete user.password_hash;
         }
         const token = generateToken();
@@ -845,6 +871,7 @@ async function handleEvents(req, res, parts) {
         if (!body.name || !body.category || !body.date_start || !body.venue || !body.capacity) return sendError(res, 'Champs requis manquants');
         const r = db.prepare('INSERT INTO events (organizer_id, name, category, description, emoji, date_start, date_end, venue, capacity, image_url, badge, status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)').run(user.id, body.name, body.category, body.description||'', body.emoji||'🎫', body.date_start, body.date_end||null, body.venue, body.capacity, body.image_url||null, body.badge||null, body.status||'pending');
         db.prepare('INSERT INTO activity_log (type, icon, text, user_id) VALUES (?,?,?,?)').run('event', 'mdi-calendar-plus', `Événement: <strong>${body.name}</strong>`, user.id);
+        logActivity('event_created', user.id, user.name, 'event', r.lastInsertRowid, body.name, `Nouvel événement créé: ${body.name}`);
         const event = db.prepare('SELECT e.*, u.name as organizer_name FROM events e LEFT JOIN users u ON e.organizer_id = u.id WHERE e.id = ?').get(r.lastInsertRowid);
         return sendJSON(res, { event }, 201);
     }
@@ -899,6 +926,7 @@ async function handleTickets(req, res, parts) {
             }
             db.prepare('UPDATE events SET tickets_sold = tickets_sold + ?, revenue = revenue + ? WHERE id = ?').run(qty, body.price * qty, body.event_id);
             db.prepare('INSERT INTO activity_log (type, icon, text, user_id) VALUES (?,?,?,?)').run('sale', 'mdi-ticket', `<strong>+${qty} billet${qty > 1 ? 's' : ''}</strong> ${event.name}`, user.id);
+            logActivity('ticket_purchased', user.id, user.name, 'ticket', tickets[0].id_code, event.name, `${user.name} a acheté ${qty} billet(s) pour ${event.name}`);
         });
         insert();
         return sendJSON(res, { tickets, total: body.price * qty }, 201);
@@ -1462,17 +1490,150 @@ const server = http.createServer(async (req, res) => {
                 case 'activity': return await handleActivity(req, res, parts);
                 case 'organizer-applications':
                 case 'my-application': return await handleOrganizerApplications(req, res, parts);
-                case 'scan-access-requests':
-                case 'scan-links':
-                case 'scan-devices':
-                case 'scan-logs': return await handleScanner(req, res, parts);
-                default: return sendError(res, 'Route non trouvée', 404);
-            }
-        } catch (err) {
-            console.error('Error:', err);
-            return sendError(res, 'Erreur serveur: ' + err.message, 500);
+        case 'superadmin': return await handleSuperAdmin(req, res, parts);
+        case 'scan-access-requests':
+        case 'scan-links':
+        case 'scan-devices':
+        case 'scan-logs': return await handleScanner(req, res, parts);
+        default: return sendError(res, 'Route non trouvée', 404);
+    }
+} catch (err) {
+    console.error('Error:', err);
+    return sendError(res, 'Erreur serveur: ' + err.message, 500);
+}
+}
+
+// SUPERADMIN
+async function handleSuperAdmin(req, res, parts) {
+    const user = requireAuth(req);
+    if (!user || user.email !== 'sedrayiokoraz@gmail.com') {
+        return sendError(res, 'Accès réservé au SuperAdmin', 403);
+    }
+
+    const resource = parts[2];
+    const id = parts[3] ? parseInt(parts[3]) : null;
+    const action = parts[4];
+
+    if (resource === 'dashboard' && req.method === 'GET') {
+        const stats = {
+            totalRevenue: db.prepare('SELECT COALESCE(SUM(price), 0) as total FROM tickets WHERE status = ?').get('confirmed')?.total || 0,
+            totalTicketsSold: db.prepare('SELECT COUNT(*) as count FROM tickets WHERE status = ?').get('confirmed')?.count || 0,
+            activeEvents: db.prepare('SELECT COUNT(*) as count FROM events WHERE status = ?').get('active')?.count || 0,
+            totalUsers: db.prepare('SELECT COUNT(*) as count FROM users WHERE role = ?').get('buyer')?.count || 0,
+            activeOrganizers: db.prepare('SELECT COUNT(*) as count FROM users WHERE role = ? AND status = ?').get('organizer', 'active')?.count || 0,
+            pendingApplications: db.prepare('SELECT COUNT(*) as count FROM organizer_applications WHERE status = ?').get('pending')?.count || 0,
+            totalEvents: db.prepare('SELECT COUNT(*) as count FROM events').get()?.count || 0,
+            blockedUsers: db.prepare('SELECT COUNT(*) as count FROM users WHERE status = ?').get('blocked')?.count || 0,
+            
+            // Monthly revenue for chart (last 12 months)
+            monthlyRevenue: db.prepare(`
+                SELECT strftime('%Y-%m', created_at) as month, 
+                       COALESCE(SUM(price), 0) as revenue
+                FROM tickets 
+                WHERE status = 'confirmed' 
+                AND created_at >= datetime('now', '-12 months')
+                GROUP BY month 
+                ORDER BY month
+            `).all(),
+            
+            // Category distribution
+            categoryDistribution: db.prepare(`
+                SELECT e.category, COUNT(t.id) as ticket_count
+                FROM tickets t 
+                JOIN events e ON t.event_id = e.id
+                WHERE t.status = 'confirmed'
+                GROUP BY e.category
+            `).all(),
+            
+            // Top 5 events this month
+            topEvents: db.prepare(`
+                SELECT e.name, e.id, COUNT(t.id) as tickets_sold, 
+                       COALESCE(SUM(t.price), 0) as revenue
+                FROM events e 
+                LEFT JOIN tickets t ON t.event_id = e.id AND t.status = 'confirmed'
+                AND t.created_at >= datetime('now', 'start of month')
+                GROUP BY e.id 
+                ORDER BY tickets_sold DESC 
+                LIMIT 5
+            `).all(),
+            
+            // Recent activity (last 20)
+            recentActivity: db.prepare(`
+                SELECT * FROM activity_logs 
+                ORDER BY created_at DESC 
+                LIMIT 20
+            `).all()
+        };
+        
+        stats.totalCommission = Math.round(stats.totalRevenue * 0.03);
+        stats.avgFillRate = 72; // Placeholder, could be calculated more precisely
+        
+        return sendJSON(res, stats);
+    }
+
+    if (resource === 'organizers' && req.method === 'GET') {
+        const orgs = db.prepare(`
+            SELECT u.*, 
+                   (SELECT COUNT(*) FROM events WHERE organizer_id = u.id) as events_count,
+                   (SELECT COALESCE(SUM(price), 0) FROM tickets WHERE event_id IN (SELECT id FROM events WHERE organizer_id = u.id) AND status = 'confirmed') as total_revenue
+            FROM users u 
+            WHERE u.role = 'organizer' 
+            ORDER BY u.created_at DESC
+        `).all();
+        orgs.forEach(o => {
+            o.total_commission = Math.round(o.total_revenue * 0.03);
+        });
+        return sendJSON(res, orgs);
+    }
+
+    if (resource === 'users' && req.method === 'GET') {
+        const users = db.prepare(`
+            SELECT u.*, 
+                   (SELECT COUNT(*) FROM tickets WHERE buyer_id = u.id) as purchaseCount,
+                   (SELECT COALESCE(SUM(price), 0) FROM tickets WHERE buyer_id = u.id AND status = 'confirmed') as totalSpent,
+                   (SELECT MAX(created_at) FROM tickets WHERE buyer_id = u.id) as lastPurchase
+            FROM users u 
+            WHERE u.role = 'buyer' 
+            ORDER BY u.created_at DESC
+        `).all();
+        return sendJSON(res, users);
+    }
+
+    if (resource === 'events' && req.method === 'GET') {
+        const events = db.prepare(`
+            SELECT e.*, u.name as organizer_name,
+                   (SELECT COUNT(*) FROM tickets WHERE event_id = e.id AND status = 'confirmed') as ticketsSold,
+                   (SELECT COALESCE(SUM(price), 0) FROM tickets WHERE event_id = e.id AND status = 'confirmed') as totalRevenue
+            FROM events e
+            JOIN users u ON e.organizer_id = u.id
+            ORDER BY e.created_at DESC
+        `).all();
+        return sendJSON(res, events);
+    }
+
+    if (resource === 'logs' && req.method === 'GET') {
+        const logs = db.prepare('SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT 100').all();
+        return sendJSON(res, logs);
+    }
+
+    // Actions
+    if (req.method === 'PUT') {
+        if (resource === 'organizers' && id && action === 'suspend') {
+            const body = await parseBody(req);
+            db.prepare("UPDATE users SET status = 'suspended' WHERE id = ?").run(id);
+            logActivity('organizer_suspended', user.id, user.name, 'organizer', id, '', `Organisateur suspendu: ${body.reason}`);
+            return sendJSON(res, { success: true });
+        }
+        if (resource === 'users' && id && action === 'block') {
+            const body = await parseBody(req);
+            db.prepare("UPDATE users SET status = 'blocked' WHERE id = ?").run(id);
+            logActivity('user_blocked', user.id, user.name, 'user', id, '', `Utilisateur bloqué: ${body.reason}`);
+            return sendJSON(res, { success: true });
         }
     }
+
+    return sendError(res, 'Route superadmin non trouvée', 404);
+}
 
     // Static files
     if (!serveStatic(req, res)) {
