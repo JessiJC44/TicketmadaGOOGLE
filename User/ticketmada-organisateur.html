@@ -946,6 +946,7 @@
                 toggleLang() { this.lang = this.lang === 'fr' ? 'en' : 'fr'; localStorage.setItem('ticketmada-lang', this.lang); document.documentElement.lang = this.lang; },
                 openAuth(mode) { this.authMode = mode; this.showAuth = true; },
                 async checkAndApply() {
+                    console.log('[Auth] Check and Apply... isLoggedIn:', this.isLoggedIn, 'Role:', this.profileRole);
                     if (!this.isLoggedIn) {
                         this.openAuth('login');
                         return;
@@ -953,19 +954,27 @@
                     
                     const role = this.profileRole;
                     if (role === 'organizer' || role === 'admin' || role === 'superadmin') {
+                        console.log('[Auth] Redirecting to dashboard...');
                         window.location.href = this.dashboardUrl;
                     } else {
                         // Check if already applied
                         try {
-                            const apps = await window.api.get('/organizer-applications');
-                            const myApp = Array.isArray(apps) ? apps.find(a => a.uid === window.api.getUser().uid && a.status === 'pending') : null;
-                            if (myApp) {
-                                alert("Vous avez déjà une demande en cours de traitement.");
+                            console.log('[Auth] Checking existing applications...');
+                            // Use the specialized endpoint for the current user's application
+                            const myApp = await window.api.get('/my-application');
+                            
+                            if (myApp && myApp.status === 'pending') {
+                                alert(this.lang === 'fr' ? "Vous avez déjà une demande en cours de traitement. Nous vous contacterons par email dès qu'elle sera examinée." : "You already have a pending application. We will contact you by email as soon as it is reviewed.");
+                            } else if (myApp && myApp.status === 'approved') {
+                                // If approved but role not yet updated in session, just redirect
+                                window.location.href = this.dashboardUrl;
                             } else {
                                 this.organizerForm.fullName = this.profileName;
                                 this.showOrganizerModal = true;
                             }
                         } catch(e) {
+                            console.error('[Auth] Error checking application status:', e);
+                            this.organizerForm.fullName = this.profileName;
                             this.showOrganizerModal = true;
                         }
                     }
@@ -1008,24 +1017,45 @@
                 },
                 async handleLogout() { await window.api.logout(); this.isLoggedIn = false; this.showProfileMenu = false; },
                 async handleAuth() {
+                    console.log('[Auth] Method handleAuth called');
+                    if (!this.authForm.email || !this.authForm.password) {
+                        console.log('[Auth] Missing email or password');
+                        alert(this.lang === 'fr' ? 'Veuillez remplir tous les champs.' : 'Please fill in all fields.');
+                        return;
+                    }
                     try {
+                        console.log('[Auth] Attempting login...', this.authMode, this.authForm.email);
                         let result;
-                        if (this.authMode === 'login') { result = await window.api.login(this.authForm.email, this.authForm.password); }
-                        else { result = await window.api.register(this.authForm.name, this.authForm.email, this.authForm.password); }
-                        
-                        if (result.error) {
-                            alert(result.error);
+                        if (this.authMode === 'login') { 
+                            console.log('[Auth] Calling window.api.login...');
+                            result = await window.api.login(this.authForm.email, this.authForm.password); 
                         } else { 
+                            if (!this.authForm.name) {
+                                alert(this.lang === 'fr' ? 'Nom complet requis.' : 'Full name required.');
+                                return;
+                            }
+                            console.log('[Auth] Calling window.api.register...');
+                            result = await window.api.register(this.authForm.name, this.authForm.email, this.authForm.password); 
+                        }
+                        
+                        console.log('[Auth] API response received:', result);
+                        if (!result || result.success === false || result.error) {
+                            console.error('[Auth] Login failed:', result);
+                            alert(result?.error || (this.lang === 'fr' ? 'Échec de l\'authentification.' : 'Authentication failed.'));
+                        } else { 
+                            console.log('[Auth] Login success! Redirecting or applying state...');
                             this.isLoggedIn = true; 
                             this.showAuth = false; 
                             this.checkAndApply();
                         }
                     } catch(e) { 
-                        alert('Une erreur est survenue lors de l\'authentification.');
+                        console.error('[Auth] Caught error in handleAuth:', e);
+                        alert(this.lang === 'fr' ? 'Une erreur est survenue lors de l\'authentification.' : 'An error occurred during authentication.');
                     }
                 },
                 async loginWith(provider) {
-                    if (provider !== 'Google') {
+                    const prov = provider.toLowerCase();
+                    if (prov !== 'google') {
                         // Mock for others
                         if (window.OAuthSim) {
                             window.OAuthSim.show(provider, (name, email) => {
@@ -1040,18 +1070,39 @@
                     }
 
                     try {
+                        console.log('[Auth] Google Login requested');
                         const result = await window.api.loginWithGoogle();
-                        if (result.success) {
+                        console.log('[Auth] Google Result:', result);
+                        
+                        if (result && result.success) {
                             this.isLoggedIn = true;
                             this.showAuth = false;
+                            
+                            // If user is a buyer, show the organizer modal or redirect to specialized page
                             if (result.user.role === 'buyer') {
-                                window.location.href = 'ticketmada-become-organizer.html';
+                                // Default behavior: stay on page and open modal if they were applying
+                                this.checkAndApply();
+                            } else {
+                                window.location.href = this.dashboardUrl;
                             }
-                        } else if (!result.canceled) {
-                            alert('Erreur de connexion Google');
+                        } else if (result && !result.canceled) {
+                            alert(result.error || (this.lang === 'fr' ? 'Erreur de connexion Google' : 'Google Login Error'));
+                        } else if (!result) {
+                            // Fallback if Firebase is not configured at all
+                            console.warn('[Auth] Google login failed to return result, trying simulation fallback');
+                            if (window.OAuthSim) {
+                                window.OAuthSim.show('Google', (name, email) => {
+                                    const user = { name, email, role: 'buyer' };
+                                    window.api.setAuth('mock-token', user);
+                                    this.isLoggedIn = true;
+                                    this.showAuth = false;
+                                    this.checkAndApply();
+                                });
+                            }
                         }
                     } catch (e) {
-                        console.error('Login error', e);
+                        console.error('[Auth] Login error', e);
+                        alert(this.lang === 'fr' ? 'Échec de la connexion Google.' : 'Google connection failed.');
                     }
                 }
             },

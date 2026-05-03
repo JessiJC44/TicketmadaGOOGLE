@@ -691,7 +691,21 @@
                 toggleLang() { this.lang = this.lang === 'fr' ? 'en' : 'fr'; localStorage.setItem('ticketmada-lang', this.lang); document.documentElement.lang = this.lang; },
                 openAuth(mode) { this.authMode = mode; this.showAuth = true; },
                 async loginWith(provider) {
-                    if (provider !== 'google') {
+                    const prov = provider.toLowerCase();
+                    if (prov === 'google') {
+                        // Real Google Auth
+                        try {
+                            const result = await window.api.loginWithGoogle();
+                            if (result.success) {
+                                this.isLoggedIn = true;
+                                this.showAuth = false;
+                            } else if (!result.canceled) {
+                                alert('Erreur de connexion Google: ' + (result.error || 'Inconnue'));
+                            }
+                        } catch (e) {
+                            console.error('Google Auth error', e);
+                        }
+                    } else {
                         // Keep mock for others if not implemented
                         if (window.api.useMock && window.OAuthSim) {
                             window.OAuthSim.show(provider, (name, email) => {
@@ -700,21 +714,9 @@
                                 this.isLoggedIn = true;
                                 this.showAuth = false;
                             });
+                        } else {
+                            alert("Ce service n'est pas encore disponible.");
                         }
-                        return;
-                    }
-                    
-                    // Real Google Auth
-                    try {
-                        const result = await window.api.loginWithGoogle();
-                        if (result.success) {
-                            this.isLoggedIn = true;
-                            this.showAuth = false;
-                        } else if (!result.canceled) {
-                            alert('Erreur de connexion Google: ' + (result.error || 'Inconnue'));
-                        }
-                    } catch (e) {
-                        console.error('Google Auth error', e);
                     }
                 },
                 async handleAuth() {
