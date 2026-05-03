@@ -421,14 +421,14 @@
                             <div class="bento-card" v-for="app in applications" :key="app.id" style="margin-bottom: 20px;">
                                 <div style="display: flex; gap: 30px; padding: 25px; align-items: center;">
                                     <div style="width: 80px; height: 80px; background: var(--accent-yellow); border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 2.5rem;">
-                                        {{ app.full_name[0] }}
+                                        {{ app.fullName[0] }}
                                     </div>
                                     <div style="flex: 1;">
                                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                                             <div>
-                                                <h2 style="font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem;">{{ app.full_name }}</h2>
+                                                <h2 style="font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem;">{{ app.fullName }}</h2>
                                                 <div style="font-weight: 600; color: var(--text-light); margin-top: 4px;">
-                                                    {{ app.organization_name || 'Particulier' }} · {{ app.city }} · {{ app.phone }}
+                                                    {{ app.organizationName || 'Particulier' }} · {{ app.city }} · {{ app.phone }}
                                                 </div>
                                             </div>
                                             <span class="badge" :class="'badge-' + app.status">{{ app.status }}</span>
@@ -608,7 +608,7 @@
                             <h3 style="font-family: 'Syne', sans-serif; font-size: 0.85rem; color: var(--accent-coral); margin-bottom: 15px; text-transform: uppercase;">Profil & Contact</h3>
                             <div style="margin-bottom: 20px;">
                                 <div style="font-size: 0.75rem; color: var(--text-light); text-transform: uppercase;">Nom Complet</div>
-                                <div style="font-weight: 800; font-size: 1.1rem;">{{ activeApp.full_name }}</div>
+                                <div style="font-weight: 800; font-size: 1.1rem;">{{ activeApp.fullName }}</div>
                             </div>
                             <div style="margin-bottom: 20px;">
                                 <div style="font-size: 0.75rem; color: var(--text-light); text-transform: uppercase;">Email & Téléphone</div>
@@ -624,13 +624,9 @@
                         <div>
                             <h3 style="font-family: 'Syne', sans-serif; font-size: 0.85rem; color: var(--accent-coral); margin-bottom: 15px; text-transform: uppercase;">Organisation</h3>
                             <div style="margin-bottom: 20px;">
-                                <div style="font-size: 0.75rem; color: var(--text-light); text-transform: uppercase;">Nom / Type</div>
-                                <div style="font-weight: 800;">{{ activeApp.organization_name || 'N/A' }}</div>
-                                <div style="font-weight: 600;">{{ activeApp.organization_type }}</div>
-                            </div>
-                            <div style="margin-bottom: 20px;">
-                                <div style="font-size: 0.75rem; color: var(--text-light); text-transform: uppercase;">Pièce d'identité</div>
-                                <div style="font-weight: 700;">{{ activeApp.id_document_type.toUpperCase() }}: {{ activeApp.id_document_number }}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-light); text-transform: uppercase;">Nom / Description</div>
+                                <div style="font-weight: 800;">{{ activeApp.organizationName || 'N/A' }}</div>
+                                <div style="font-weight: 600; font-size: 0.9rem; margin-top: 5px;">{{ activeApp.organizationDescription }}</div>
                             </div>
                         </div>
                     </div>

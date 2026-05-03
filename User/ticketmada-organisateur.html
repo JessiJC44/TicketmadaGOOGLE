@@ -35,21 +35,16 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'DM Sans', sans-serif; background: var(--bg-cream); color: var(--text-dark); overflow-x: hidden; }
         
-        @keyframes vibrate {
-            0%, 100% { transform: rotate(-2deg) translate(0, 0); }
-            25% { transform: rotate(-2deg) translate(-1px, -0.5px); }
-            50% { transform: rotate(-2deg) translate(1px, 0.5px); }
-            75% { transform: rotate(-2deg) translate(-0.5px, 1px); }
-        }
-        .hero-badge { animation: vibrate 1.8s ease-in-out 0.3s; }
-        .hero-badge:hover { animation: vibrate 1.2s ease-in-out infinite; }
+        .hero-badge { display: inline-block; background: var(--accent-yellow); border: 3px solid var(--border-dark); padding: 10px 20px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 30px; transform: rotate(-2deg); }
         
         @keyframes growUp { from { transform: scaleY(0); } to { transform: scaleY(1); } }
         .chart-bar { transform-origin: bottom; transform: scaleY(0); }
         .chart-bar.animated { animation: growUp 1s ease-out forwards; animation-delay: calc(var(--bar-index) * 0.1s); }
         
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        .float-animation { animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translate3d(0, 0, 0); } 50% { transform: translate3d(0, -10px, 0); } }
+        .float-animation { animation: float 3s ease-in-out infinite; will-change: transform; transition: none; }
+        .float-animation-delayed-1 { animation-delay: 0.2s; }
+        .float-animation-delayed-2 { animation-delay: 0.5s; }
         
         .brutal-card { background: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal); transition: all 0.2s ease; }
         .brutal-card:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0px #1a1a1a; }
@@ -104,13 +99,38 @@
         .hero-description { font-size: 1.25rem; color: var(--text-light); line-height: 1.7; margin-bottom: 40px; max-width: 550px; }
         .hero-actions { display: flex; gap: 20px; margin-bottom: 60px; flex-wrap: wrap; }
         .hero-stats { display: flex; gap: 50px; padding-top: 40px; border-top: 3px solid var(--border-dark); }
-        .stat { text-align: left; }
-        .stat-number { font-family: 'Syne', sans-serif; font-size: 3rem; font-weight: 800; color: var(--accent-coral); }
-        .stat-label { font-size: 0.95rem; color: var(--text-light); margin-top: 5px; }
+        .stat { text-align: left; min-width: 160px; flex-shrink: 0; }
+        .stat-number { font-family: 'Syne', sans-serif; font-size: 3rem; font-weight: 800; color: var(--accent-coral); font-variant-numeric: tabular-nums; display: inline-block; min-height: 3.5rem; }
+        .stat-label { font-size: 0.95rem; color: var(--text-light); margin-top: 5px; white-space: nowrap; }
         
-        .hero-visual { position: relative; perspective: 1000px; }
-        .dashboard-preview { position: relative; transform: rotateY(-8deg) rotateX(3deg); transform-style: preserve-3d; }
-        .dashboard-main { background: white; border: 3px solid var(--border-dark); border-radius: 20px; padding: 25px; box-shadow: var(--shadow-brutal-lg); }
+        .hero-visual { position: relative; perspective: 1200px; transform-style: preserve-3d; }
+        .dashboard-floating-wrapper { 
+            animation: float 4s ease-in-out infinite; 
+            will-change: transform; 
+            transform-style: preserve-3d;
+        }
+        .dashboard-preview { 
+            position: relative; 
+            transform: rotateY(-8deg) rotateX(3deg) translate3d(0, 0, 0); 
+            transform-style: preserve-3d; 
+            will-change: transform; 
+            backface-visibility: hidden; 
+            -webkit-backface-visibility: hidden; 
+        }
+        .dashboard-main { 
+            background: white; 
+            border: 3px solid var(--border-dark); 
+            border-radius: 20px; 
+            padding: 25px; 
+            box-shadow: var(--shadow-brutal-lg); 
+            backface-visibility: hidden; 
+            -webkit-backface-visibility: hidden; 
+            transform: translate3d(0, 0, 0); 
+            outline: 1px solid transparent;
+            -webkit-font-smoothing: antialiased;
+            transform-style: preserve-3d;
+            contain: layout paint;
+        }
         .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px dashed var(--border-dark); }
         .dashboard-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; }
         .dashboard-dots { display: flex; gap: 8px; }
@@ -127,10 +147,10 @@
         .mini-stat-label { font-size: 0.75rem; color: var(--text-light); margin-top: 3px; }
         .dashboard-chart { height: 100px; background: linear-gradient(to top, rgba(255, 107, 74, 0.2), transparent); border: 2px solid var(--border-dark); position: relative; display: flex; align-items: flex-end; padding: 8px; gap: 6px; overflow: hidden; }
         .chart-bar { flex: 1; background: var(--accent-coral); border: 2px solid var(--border-dark); }
-        .floating-card { position: absolute; background: white; border: 3px solid var(--border-dark); padding: 12px 16px; box-shadow: var(--shadow-brutal); }
-        .floating-card-1 { top: -25px; right: -35px; transform: rotate(5deg); }
-        .floating-card-2 { bottom: 30px; left: -50px; transform: rotate(-3deg); }
-        .floating-card-3 { top: 40%; right: -60px; transform: rotate(2deg); }
+        .floating-card { position: absolute; background: white; border: 3px solid var(--border-dark); padding: 12px 16px; box-shadow: var(--shadow-brutal); backface-visibility: hidden; }
+        .floating-card-1 { top: -25px; right: -35px; --rotate: 5deg; transform: rotate(var(--rotate)); }
+        .floating-card-2 { bottom: 30px; left: -50px; --rotate: -3deg; transform: rotate(var(--rotate)); }
+        .floating-card-3 { top: 40%; right: -60px; --rotate: 2deg; transform: rotate(var(--rotate)); }
         .floating-icon { font-size: 1.3rem; margin-bottom: 5px; }
         .floating-text { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.8rem; }
         
@@ -311,7 +331,11 @@
         .auth-form .form-group { margin-bottom: 0; }
         .auth-form label { display: block; font-family: 'Syne', sans-serif; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; }
         .auth-form input { width: 100%; padding: 14px 16px; border: 3px solid var(--border-dark); font-family: 'DM Sans', sans-serif; font-size: 1rem; }
-        .auth-form input:focus { outline: none; box-shadow: 4px 4px 0px var(--accent-coral); }
+        .auth-form input:focus, .auth-form textarea:focus { outline: none; border-color: var(--accent-coral); transform: translate(-1px, -1px); box-shadow: 4px 4px 0px var(--border-dark); }
+        .auth-form input.error, .auth-form textarea.error { border-color: #ff4757 !important; background: #fff1f2; }
+        .auth-form textarea { width: 100%; padding: 14px 16px; border: 3px solid var(--border-dark); font-family: 'DM Sans', sans-serif; font-size: 1rem; resize: vertical; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        @media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } }
         .auth-submit { margin-top: 10px; width: 100%; justify-content: center; }
         .auth-footer { text-align: center; margin-top: 24px; color: var(--text-light); }
         .auth-footer a { color: var(--accent-coral); text-decoration: none; font-weight: 600; }
@@ -335,10 +359,10 @@
                     <button class="lang-toggle" @click="toggleLang" :title="lang === 'fr' ? 'Switch to English' : 'Passer en Français'">{{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}</button>
                     <template v-if="!isLoggedIn">
                         <a href="#" class="brutal-btn brutal-btn-secondary" @click.prevent="openAuth('login')">{{ t.nav.login }}</a>
-                        <a href="ticketmada-become-organizer.html" class="brutal-btn brutal-btn-primary">{{ t.nav.createEvent }}</a>
+                        <a href="#" @click.prevent="checkAndApply" class="brutal-btn brutal-btn-primary">{{ t.nav.createEvent }}</a>
                     </template>
                     <template v-else-if="profileRole === 'buyer'">
-                        <a href="ticketmada-become-organizer.html" class="brutal-btn brutal-btn-primary">{{ t.nav.createEvent }}</a>
+                        <a href="#" @click.prevent="checkAndApply" class="brutal-btn brutal-btn-primary">{{ t.nav.createEvent }}</a>
                         <div class="profile-wrapper">
                             <button class="profile-avatar-btn" @click="showProfileMenu = !showProfileMenu" v-html="profileAvatar"></button>
                             <div class="profile-dropdown" :class="{ open: showProfileMenu }">
@@ -389,11 +413,11 @@
                     <h1 class="hero-title" v-html="t.hero.title"></h1>
                     <p class="hero-description">{{ t.hero.description }}</p>
                     <div class="hero-actions">
-                        <template v-if="profileRole === 'organizer' || profileRole === 'admin' || profileRole === 'superadmin'">
+                        <template v-if="isLoggedIn && (profileRole === 'organizer' || profileRole === 'admin' || profileRole === 'superadmin')">
                              <a :href="dashboardUrl" class="brutal-btn brutal-btn-primary">Accéder au Dashboard <v-icon icon="mdi-view-dashboard"></v-icon></a>
                         </template>
                         <template v-else>
-                            <a href="ticketmada-become-organizer.html" class="brutal-btn brutal-btn-mega">{{ t.hero.cta1 }}<v-icon icon="mdi-arrow-right" class="ml-2"></v-icon></a>
+                            <a href="#" @click.prevent="checkAndApply" class="brutal-btn brutal-btn-mega">{{ t.hero.cta1 }}<v-icon icon="mdi-arrow-right" class="ml-2"></v-icon></a>
                         </template>
                         <a href="#fonctionnalites" class="brutal-btn brutal-btn-secondary">{{ t.hero.cta2 }}</a>
                     </div>
@@ -404,27 +428,36 @@
                     </div>
                 </div>
                 <div class="hero-visual">
-                    <div class="dashboard-preview">
-                        <div class="dashboard-main">
-                            <div class="dashboard-header"><span class="dashboard-title">📊 {{ t.dashboard.title }}</span><div class="dashboard-dots"><div class="dot dot-red"></div><div class="dot dot-yellow"></div><div class="dot dot-green"></div></div></div>
-                            <div class="dashboard-stats-row">
-                                <div class="mini-stat"><div class="mini-stat-value counter" data-target="1247">0</div><div class="mini-stat-label">{{ t.dashboard.tickets }}</div></div>
-                                <div class="mini-stat"><div class="mini-stat-value"><span class="counter" data-target="12" data-suffix=".4M">0</span></div><div class="mini-stat-label">{{ t.dashboard.revenue }}</div></div>
-                                <div class="mini-stat"><div class="mini-stat-value counter" data-target="89" data-suffix="%">0</div><div class="mini-stat-label">{{ t.dashboard.scanRate }}</div></div>
+                    <div class="dashboard-floating-wrapper">
+                        <div class="dashboard-preview">
+                            <div class="dashboard-main">
+                                <div class="dashboard-header"><span class="dashboard-title">📊 {{ t.dashboard.title }}</span><div class="dashboard-dots"><div class="dot dot-red"></div><div class="dot dot-yellow"></div><div class="dot dot-green"></div></div></div>
+                                <div class="dashboard-stats-row">
+                                    <div class="mini-stat"><div class="mini-stat-value counter" data-target="1247">0</div><div class="mini-stat-label">{{ t.dashboard.tickets }}</div></div>
+                                    <div class="mini-stat"><div class="mini-stat-value"><span class="counter" data-target="12" data-suffix=".4M">0</span></div><div class="mini-stat-label">{{ t.dashboard.revenue }}</div></div>
+                                    <div class="mini-stat"><div class="mini-stat-value counter" data-target="89" data-suffix="%">0</div><div class="mini-stat-label">{{ t.dashboard.scanRate }}</div></div>
+                                </div>
+                                <div class="dashboard-chart" id="animated-chart">
+                                    <div class="chart-bar" style="--bar-index: 0; height: 40%;"></div>
+                                    <div class="chart-bar" style="--bar-index: 1; height: 65%;"></div>
+                                    <div class="chart-bar" style="--bar-index: 2; height: 45%;"></div>
+                                    <div class="chart-bar" style="--bar-index: 3; height: 80%;"></div>
+                                    <div class="chart-bar" style="--bar-index: 4; height: 60%;"></div>
+                                    <div class="chart-bar" style="--bar-index: 5; height: 90%;"></div>
+                                    <div class="chart-bar" style="--bar-index: 6; height: 75%;"></div>
+                                </div>
                             </div>
-                            <div class="dashboard-chart" id="animated-chart">
-                                <div class="chart-bar" style="--bar-index: 0; height: 40%;"></div>
-                                <div class="chart-bar" style="--bar-index: 1; height: 65%;"></div>
-                                <div class="chart-bar" style="--bar-index: 2; height: 45%;"></div>
-                                <div class="chart-bar" style="--bar-index: 3; height: 80%;"></div>
-                                <div class="chart-bar" style="--bar-index: 4; height: 60%;"></div>
-                                <div class="chart-bar" style="--bar-index: 5; height: 90%;"></div>
-                                <div class="chart-bar" style="--bar-index: 6; height: 75%;"></div>
+                            <!-- Small cards float independently to avoid overwriting dashboard transform -->
+                            <div class="floating-card-1 float-animation" style="position: absolute; top: -25px; right: -35px;">
+                                <div class="floating-card" style="position: static; transform: rotate(5deg);"><div class="floating-icon">✅</div><div class="floating-text">{{ t.dashboard.paymentReceived }}</div></div>
+                            </div>
+                            <div class="floating-card-2 float-animation float-animation-delayed-1" style="position: absolute; bottom: 30px; left: -50px;">
+                                <div class="floating-card" style="position: static; transform: rotate(-3deg);"><div class="floating-icon">🎟️</div><div class="floating-text">+25 {{ t.dashboard.ticketsShort }}</div></div>
+                            </div>
+                            <div class="floating-card-3 float-animation float-animation-delayed-2" style="position: absolute; top: 40%; right: -60px;">
+                                <div class="floating-card" style="position: static; transform: rotate(2deg);"><div class="floating-icon">📱</div><div class="floating-text">QR Scan OK</div></div>
                             </div>
                         </div>
-                        <div class="floating-card floating-card-1 float-animation"><div class="floating-icon">✅</div><div class="floating-text">{{ t.dashboard.paymentReceived }}</div></div>
-                        <div class="floating-card floating-card-2 float-animation" style="animation-delay: 0.5s;"><div class="floating-icon">🎟️</div><div class="floating-text">+25 {{ t.dashboard.ticketsShort }}</div></div>
-                        <div class="floating-card floating-card-3 float-animation" style="animation-delay: 1s;"><div class="floating-icon">📱</div><div class="floating-text">QR Scan OK</div></div>
                     </div>
                 </div>
             </div>
@@ -671,6 +704,69 @@
                 <p class="auth-footer"><template v-if="authMode === 'login'">{{ lang === 'fr' ? 'Pas de compte ?' : 'No account?' }} <a href="#" @click.prevent="authMode = 'register'">{{ lang === 'fr' ? "S'inscrire" : 'Sign up' }}</a></template><template v-else>{{ lang === 'fr' ? 'Déjà un compte ?' : 'Already have an account?' }} <a href="#" @click.prevent="authMode = 'login'">{{ lang === 'fr' ? 'Se connecter' : 'Log in' }}</a></template></p>
             </div>
         </div>
+
+        <div class="auth-modal" :class="{ active: showOrganizerModal }" @click.self="showOrganizerModal = false">
+            <div class="auth-card brutal-card" style="max-width: 600px;">
+                <div class="auth-close" @click="showOrganizerModal = false">✕</div>
+                
+                <div v-if="!organizerFormSubmitted">
+                    <div class="auth-header">
+                        <h2>Devenir organisateur</h2>
+                        <p>Remplissez ce formulaire pour commencer à vendre vos billets.</p>
+                    </div>
+                    
+                    <form class="auth-form" @submit.prevent="submitOrganizerForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Nom complet*</label>
+                                <input type="text" v-model="organizerForm.fullName" :class="{ 'error': !organizerForm.fullName && showFormErrors }">
+                            </div>
+                            <div class="form-group">
+                                <label>Téléphone*</label>
+                                <input type="text" v-model="organizerForm.phone" :class="{ 'error': !organizerForm.phone && showFormErrors }" placeholder="034 XX XXX XX">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Ville*</label>
+                            <input type="text" v-model="organizerForm.city" :class="{ 'error': !organizerForm.city && showFormErrors }">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Nom de l'organisation*</label>
+                            <input type="text" v-model="organizerForm.organizationName" :class="{ 'error': !organizerForm.organizationName && showFormErrors }">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Description de vos événements*</label>
+                            <textarea v-model="organizerForm.organizationDescription" :class="{ 'error': !organizerForm.organizationDescription && showFormErrors }" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Motivation (Pourquoi TicketMada?)*</label>
+                            <textarea v-model="organizerForm.motivation" :class="{ 'error': !organizerForm.motivation && showFormErrors }" rows="2"></textarea>
+                        </div>
+
+                        <div style="margin-top: 20px;">
+                            <button type="submit" class="brutal-btn brutal-btn-primary w-full" :disabled="isSubmittingOrganizer || !isOrganizerFormValid">
+                                <span v-if="isSubmittingOrganizer">Envoi en cours...</span>
+                                <span v-else>Envoyer ma demande</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div v-else style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">✅</div>
+                    <h2 style="font-family: 'Syne', sans-serif; text-transform: uppercase; margin-bottom: 10px;">Demande reçue !</h2>
+                    <p style="font-weight: 600; color: #666; line-height: 1.6;">
+                        Merci ! Votre demande a été envoyée avec succès.<br>
+                        Notre équipe va l'étudier et vous contactera par email très prochainement.
+                    </p>
+                    <button class="brutal-btn brutal-btn-secondary mt-8" @click="showOrganizerModal = false">Fermer</button>
+                </div>
+            </div>
+        </div>
         </v-main>
         </v-app>
     </div>
@@ -763,13 +859,31 @@
             document.querySelectorAll('.counter').forEach(counter => {
                 const target = parseFloat(counter.getAttribute('data-target'));
                 const suffix = counter.getAttribute('data-suffix') || '';
-                let current = 0, started = false;
+                let started = false;
+                
                 const observer = new IntersectionObserver(entries => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting && !started) {
                             started = true;
-                            const update = () => { current += target / 60; if (current < target) { const val = Number.isInteger(target) ? Math.floor(current) : current.toFixed(1); counter.textContent = val.toLocaleString() + suffix; setTimeout(update, 33); } else { const val = Number.isInteger(target) ? target : target.toFixed(1); counter.textContent = val.toLocaleString() + suffix; } };
-                            update();
+                            let startTimestamp = null;
+                            const duration = 2000; // 2 seconds
+
+                            const step = (timestamp) => {
+                                if (!startTimestamp) startTimestamp = timestamp;
+                                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                                const current = progress * target;
+                                
+                                const val = Number.isInteger(target) ? Math.floor(current) : current.toFixed(1);
+                                counter.textContent = val.toLocaleString() + suffix;
+                                
+                                if (progress < 1) {
+                                    window.requestAnimationFrame(step);
+                                } else {
+                                    const finalVal = Number.isInteger(target) ? target : target.toFixed(1);
+                                    counter.textContent = finalVal.toLocaleString() + suffix;
+                                }
+                            };
+                            window.requestAnimationFrame(step);
                         }
                     });
                 }, { threshold: 0.5 });
@@ -798,6 +912,11 @@
                     showAuth: false,
                     authMode: 'login',
                     authForm: { name: '', email: '', password: '' },
+                    showOrganizerModal: false,
+                    organizerForm: { fullName: '', phone: '', city: '', organizationName: '', organizationDescription: '', motivation: '' },
+                    isSubmittingOrganizer: false,
+                    organizerFormSubmitted: false,
+                    showFormErrors: false,
                     isLoggedIn: false, showProfileMenu: false,
                     keyFeatureIcons: ['🔐', '💵', '🇲🇬', '☁️'],
                     useCaseIcons: ['🎸', '🎭', '⚽', '🎤'],
@@ -816,11 +935,77 @@
                 profileRole() { return window.api?.getUserRole() || 'buyer'; },
                 profileRoleLabel() { return { superadmin: 'Super Admin', admin: 'Admin', organizer: 'Organisateur', buyer: 'Membre' }[this.profileRole] || 'Membre'; },
                 profileAvatar() { const g = window.ProfileMenu?.detectGender(this.profileName) || 'neutral'; return window.ProfileMenu?.getAvatarSVG(this.profileName, g) || ''; },
-                dashboardUrl() { return (this.profileRole === 'superadmin' || this.profileRole === 'admin') ? '/Admin/ticketmada-superadmin.html' : '/Admin/ticketmada-dashboard.html'; }
+                dashboardUrl() { return (this.profileRole === 'superadmin' || this.profileRole === 'admin') ? '/Admin/ticketmada-superadmin.html' : '/Admin/ticketmada-dashboard.html'; },
+                isOrganizerFormValid() {
+                    return this.organizerForm.fullName && this.organizerForm.phone && this.organizerForm.city && 
+                           this.organizerForm.organizationName && this.organizerForm.organizationDescription && 
+                           this.organizerForm.motivation;
+                }
             },
             methods: {
                 toggleLang() { this.lang = this.lang === 'fr' ? 'en' : 'fr'; localStorage.setItem('ticketmada-lang', this.lang); document.documentElement.lang = this.lang; },
                 openAuth(mode) { this.authMode = mode; this.showAuth = true; },
+                async checkAndApply() {
+                    if (!this.isLoggedIn) {
+                        this.openAuth('login');
+                        return;
+                    }
+                    
+                    const role = this.profileRole;
+                    if (role === 'organizer' || role === 'admin' || role === 'superadmin') {
+                        window.location.href = this.dashboardUrl;
+                    } else {
+                        // Check if already applied
+                        try {
+                            const apps = await window.api.get('/organizer-applications');
+                            const myApp = Array.isArray(apps) ? apps.find(a => a.uid === window.api.getUser().uid && a.status === 'pending') : null;
+                            if (myApp) {
+                                alert("Vous avez déjà une demande en cours de traitement.");
+                            } else {
+                                this.organizerForm.fullName = this.profileName;
+                                this.showOrganizerModal = true;
+                            }
+                        } catch(e) {
+                            this.showOrganizerModal = true;
+                        }
+                    }
+                },
+                async submitOrganizerForm() {
+                    if (!this.isOrganizerFormValid) {
+                        this.showFormErrors = true;
+                        return;
+                    }
+                    this.isSubmittingOrganizer = true;
+                    try {
+                        const user = window.api.getUser();
+                        const applicationData = {
+                            uid: user.uid,
+                            fullName: this.organizerForm.fullName,
+                            email: user.email,
+                            phone: this.organizerForm.phone,
+                            city: this.organizerForm.city,
+                            organizationName: this.organizerForm.organizationName,
+                            organizationDescription: this.organizerForm.organizationDescription,
+                            motivation: this.organizerForm.motivation,
+                            status: 'pending',
+                            createdAt: new Date().toISOString() // SmartAPI/Firestore will handle this
+                        };
+                        
+                        const res = await window.api.post('/organizer-applications', applicationData);
+                        if (res && (res.success || res.id)) {
+                            this.organizerFormSubmitted = true;
+                            // Reset form
+                            this.organizerForm = { fullName: '', phone: '', city: '', organizationName: '', organizationDescription: '', motivation: '' };
+                        } else {
+                            alert("Erreur lors de l'envoi de la demande.");
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        alert("Erreur serveur.");
+                    } finally {
+                        this.isSubmittingOrganizer = false;
+                    }
+                },
                 async handleLogout() { await window.api.logout(); this.isLoggedIn = false; this.showProfileMenu = false; },
                 async handleAuth() {
                     try {
@@ -833,11 +1018,7 @@
                         } else { 
                             this.isLoggedIn = true; 
                             this.showAuth = false; 
-                            if (result.user.role === 'buyer') {
-                                window.location.href = 'ticketmada-become-organizer.html';
-                            } else {
-                                window.location.href = this.dashboardUrl;
-                            }
+                            this.checkAndApply();
                         }
                     } catch(e) { 
                         alert('Une erreur est survenue lors de l\'authentification.');
@@ -852,11 +1033,7 @@
                                 window.api.setAuth('mock-token', user);
                                 this.isLoggedIn = true;
                                 this.showAuth = false;
-                                if (user.role === 'buyer') {
-                                    window.location.href = 'ticketmada-become-organizer.html';
-                                } else {
-                                    window.location.href = this.dashboardUrl;
-                                }
+                                this.checkAndApply();
                             });
                         }
                         return;

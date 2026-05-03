@@ -58,7 +58,7 @@ const TicketMadaAPI = (() => {
         activeEvents: 42,
         totalUsers: 8500,
         activeOrganizers: 156,
-        pendingApplications: 12,
+        pendingApplications: 1,
         totalEvents: 184,
         blockedUsers: 8,
         totalCommission: 7350000,
@@ -92,7 +92,7 @@ const TicketMadaAPI = (() => {
         ],
         recentActivity: [
             { id: 1, type: 'ticket_purchased', actor_name: 'Jean Rakoto', description: 'Jean Rakoto a acheté 2 billets pour Dama Live', created_at: new Date().toISOString() },
-            { id: 2, type: 'organizer_application_submitted', actor_name: 'Events Plus', description: 'Nouvelle demande d\'organisateur de Events Plus', created_at: new Date(Date.now() - 3600000).toISOString() },
+            { id: 2, type: 'organizer_application_submitted', actor_name: 'Rakoto Jean', description: 'Nouvelle demande d\'organisateur de Rakoto Jean', created_at: new Date(Date.now() - 3600000).toISOString() },
             { id: 3, type: 'event_created', actor_name: 'Samoela Ent.', description: 'Nouvel événement créé: Samoela Acoustic', created_at: new Date(Date.now() - 7200000).toISOString() },
             { id: 4, type: 'user_registered', actor_name: 'Miora Soa', description: 'Nouvel utilisateur inscrit: Miora Soa', created_at: new Date(Date.now() - 86400000).toISOString() }
         ]
@@ -109,6 +109,22 @@ const TicketMadaAPI = (() => {
         { id: 202, name: "Miora Soa", email: "miora@yahoo.fr", status: "active", purchaseCount: 2, totalSpent: 80000, lastPurchase: "2026-04-25", created_at: "2026-04-01" },
         { id: 203, name: "Fidy Antsa", email: "fidy@gmail.com", status: "blocked", purchaseCount: 0, totalSpent: 0, lastPurchase: null, created_at: "2026-04-10" }
     ];
+    const MOCK_APPLICATIONS = [
+        { 
+            id: "app_1", 
+            uid: "buyer_01", 
+            fullName: "Rakoto Jean", 
+            email: "rakoto@gmail.com", 
+            phone: "034 00 123 45", 
+            city: "Antananarivo", 
+            organizationName: "Rakoto Events", 
+            organizationDescription: "Concerts de jazz et folk.", 
+            motivation: "Je souhaite professionaliser ma billetterie sur TicketMada.", 
+            status: "pending", 
+            createdAt: new Date(Date.now() - 86400000).toISOString() 
+        }
+    ];
+
     const MOCK_EVENTS = [
         { id: 1, name: "Dama Live — Tournée 2026", artist: "Dama (Mahaleo)", description: "Le légendaire Dama revient sur scène.", emoji: "🎤", category: "concerts", date_start: "2026-06-15", time: "19:00", venue: "Stade Barea", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800", capacity: 15000, tickets_sold: 12500, status: "active", hot: true, zones: ZONE_TEMPLATES.concert },
         { id: 2, name: "Festival Donia 2026", artist: "Multiples", description: "Le plus grand festival de l'Océan Indien.", emoji: "🎪", category: "festival", date_start: "2026-07-20", time: "16:00", venue: "Plage Ambatoloaka", city: "Nosy Be", image_url: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800", capacity: 20000, tickets_sold: 14000, status: "active", hot: true, zones: ZONE_TEMPLATES.festival },
@@ -346,10 +362,7 @@ const TicketMadaAPI = (() => {
         },
 
         getApplications() {
-            return [
-                { id: 1, full_name: 'Jean Mark', organization_name: 'Dago Music', status: 'pending', created_at: new Date().toISOString(), phone: '034 00 000 00', city: 'Antananarivo' },
-                { id: 2, full_name: 'Miora Soa', organization_name: 'Soa Events', status: 'approved', created_at: new Date(Date.now() - 86400000).toISOString(), phone: '032 11 111 11', city: 'Toamasina' }
-            ];
+            return MOCK_APPLICATIONS;
         },
 
         validateScanLink(token) {
@@ -468,6 +481,38 @@ const TicketMadaAPI = (() => {
         post(path, data) { return this.request('POST', path, data); }
         put(path, data) { return this.request('PUT', path, data); }
         delete(path) { return this.request('DELETE', path); }
+
+        async put(path, data) {
+            console.log('[SmartAPI] PUT', path, data);
+            if (this.useMock) {
+                if (path.match(/\/organizer-applications\/(.+)\/approve/)) {
+                    const id = path.match(/\/organizer-applications\/(.+)\/approve/)[1];
+                    const app = MOCK_APPLICATIONS.find(a => a.id === id);
+                    if (app) {
+                        app.status = 'approved';
+                        // Simulate sending welcome email
+                        console.log('%c[EMAIL SIMULATION] TO: ' + app.email, 'background: #00D9A5; color: black; padding: 5px;', 'Welcome to TicketMada! Your organizer account is now active. Access your dashboard here: http://localhost:3000/Admin/ticketmada-dashboard.html');
+                        
+                        // Update stats
+                        MOCK_SUPERADMIN_STATS.pendingApplications = MOCK_APPLICATIONS.filter(a => a.status === 'pending').length;
+                        return { success: true };
+                    }
+                }
+                if (path.match(/\/organizer-applications\/(.+)\/reject/)) {
+                    const id = path.match(/\/organizer-applications\/(.+)\/reject/)[1];
+                    const app = MOCK_APPLICATIONS.find(a => a.id === id);
+                    if (app) {
+                        app.status = 'rejected';
+                        console.log('%c[EMAIL SIMULATION] TO: ' + app.email, 'background: #E74C3C; color: white; padding: 5px;', 'Your application has been rejected. Reason: ' + (data?.reason || 'Non spécifiée'));
+                        
+                        MOCK_SUPERADMIN_STATS.pendingApplications = MOCK_APPLICATIONS.filter(a => a.status === 'pending').length;
+                        return { success: true };
+                    }
+                }
+                return { success: true };
+            }
+            return this.request('PUT', path, data);
+        }
 
         setAuth(token, user = null) { 
             this.token = token; 
@@ -592,6 +637,21 @@ const TicketMadaAPI = (() => {
         async post(path, data) {
             console.log('[SmartAPI] POST', path, data);
             if (this.useMock) {
+                if (path.includes('/organizer-applications')) {
+                    const newApp = {
+                        id: 'app_' + Math.random().toString(36).substr(2, 9),
+                        ...data,
+                        status: 'pending',
+                        createdAt: new Date().toISOString()
+                    };
+                    MOCK_APPLICATIONS.push(newApp);
+                    MOCK_SUPERADMIN_STATS.pendingApplications = MOCK_APPLICATIONS.filter(a => a.status === 'pending').length;
+                    
+                    // Simulate email to admin
+                    console.log('%c[EMAIL SIMULATION] TO: sedrayiokoraz@gmail.com', 'background: #FF6B4A; color: white; padding: 5px;', 'New organizer application from ' + data.fullName + ' (' + data.organizationName + '). Review it at: http://localhost:3000/Admin/ticketmada-superadmin.html');
+                    
+                    return { success: true, id: newApp.id };
+                }
                 if (path.includes('/orders')) return MockAPI.createOrder(data);
                 if (path.includes('/price-alerts')) return MockAPI.setPriceAlert(data);
                 if (path.includes('/auth/login')) return MockAPI.login(data.email, data.password);

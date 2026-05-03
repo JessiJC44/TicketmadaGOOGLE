@@ -13,38 +13,59 @@ service cloud.firestore {
     function existing() { return resource.data; }
     function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
     function isEmailVerified() { return request.auth.token.email_verified == true; }
+    function isAdmin() { 
+      return isSignedIn() && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin'
+      );
+    }
+    function isSuperAdmin() {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
+    }
 
     // --- Users Collection ---
     match /users/{userId} {
       function isValidUser(data) {
         return data.keys().hasAll(['uid', 'name', 'email', 'role', 'createdAt', 'updatedAt'])
-          && data.keys().size() == 6
+          && data.keys().size() >= 6
           && data.uid == request.auth.uid
           && data.name is string && data.name.size() <= 100
           && data.email is string && data.email.size() <= 100
-          && data.role in ['user', 'organizer']
+          && data.role in ['user', 'organizer', 'admin', 'superadmin']
           && data.createdAt is timestamp
           && data.updatedAt is timestamp;
       }
 
       allow get: if isSignedIn();
-      allow list: if false; // Users shouldn't be listable
+      allow list: if isAdmin();
       
       allow create: if isOwner(userId) 
         && isValidUser(incoming())
-        && incoming().createdAt == request.time;
+        && incoming().createdAt == request.time
+        && incoming().role == 'user'; // Users can't create themselves as admin
         
-      allow update: if isOwner(userId)
-        && isValidUser(incoming())
-        && incoming().uid == existing().uid
-        && incoming().createdAt == existing().createdAt
-        && incoming().updatedAt == request.time
+      allow update: if (isOwner(userId) || isAdmin())
         && (
-          // Action: Profile Update
-          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'photo', 'updatedAt']) ||
-          // Action: Role Switch (only if not admin)
-          incoming().diff(existing()).affectedKeys().hasOnly(['role', 'updatedAt'])
+          // Action: Profile Update (Owner)
+          (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'photo', 'updatedAt'])) ||
+          // Action: Role Change (Admin only)
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['role', 'updatedAt']))
         );
+    }
+
+    // --- Organizer Applications ---
+    match /organizer_applications/{applicationId} {
+      function isValidApplication(data) {
+        return data.keys().hasAll(['uid', 'fullName', 'email', 'status', 'createdAt'])
+          && data.uid == request.auth.uid
+          && data.status == 'pending'
+          && data.createdAt == request.time;
+      }
+
+      allow get, list: if isSignedIn() && (isOwner(resource.data.uid) || isAdmin());
+      allow create: if isSignedIn() && isValidApplication(incoming());
+      allow update: if isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
+      allow delete: if isAdmin();
     }
 
     // --- Tickets Collection ---

@@ -9,11 +9,35 @@
         "name": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "photo": { "type": "string", "format": "uri" },
-        "role": { "type": "string", "enum": ["user", "organizer", "admin"] },
+        "role": { "type": "string", "enum": ["user", "organizer", "admin", "superadmin"] },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "name", "email", "role"]
+    },
+    "OrganizerApplication": {
+      "title": "Organizer Application",
+      "description": "Application to become an organizer",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "fullName": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "city": { "type": "string" },
+        "organizationType": { "type": "string" },
+        "organizationName": { "type": "string" },
+        "organizationDescription": { "type": "string" },
+        "socialFacebook": { "type": "string" },
+        "socialInstagram": { "type": "string" },
+        "eventTypes": { "type": "array", "items": { "type": "string" } },
+        "preferredPayment": { "type": "string" },
+        "idDocumentNumber": { "type": "string" },
+        "motivation": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "fullName", "email", "status"]
     },
     "Ticket": {
       "title": "Event Ticket",
@@ -41,6 +65,10 @@
     "/tickets/{ticketId}": {
       "schema": "Ticket",
       "description": "Individual ticket records"
+    },
+    "/organizer_applications/{applicationId}": {
+      "schema": "OrganizerApplication",
+      "description": "Requests to become an organizer"
     }
   }
 }
