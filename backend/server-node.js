@@ -14,8 +14,6 @@ const COMMISSION_RATE = 0.03;
 const TOKEN_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
-const FB_CLIENT_ID = process.env.FB_CLIENT_ID || '';
-const FB_CLIENT_SECRET = process.env.FB_CLIENT_SECRET || '';
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
 
 // Email transporter configuration
@@ -680,15 +678,6 @@ async function handleAuth(req, res, parts) {
             });
             return sendJSON(res, { url: `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}` });
         }
-        if (provider === 'facebook') {
-            const params = new URLSearchParams({
-                client_id: FB_CLIENT_ID,
-                redirect_uri: redirectUri,
-                response_type: 'code',
-                scope: 'email,public_profile'
-            });
-            return sendJSON(res, { url: `https://www.facebook.com/v19.0/dialog/oauth?${params.toString()}` });
-        }
         return sendError(res, 'Provider non supporté');
     }
 
@@ -732,20 +721,6 @@ async function handleOAuthCallback(req, res, parts) {
             }
         } catch (e) {
             console.error('Google OAuth exchange error', e);
-        }
-    } else if (provider === 'facebook' && FB_CLIENT_ID && FB_CLIENT_SECRET) {
-        try {
-            const redirectUri = `${APP_URL}/api/auth/callback/facebook`;
-            const tokenRes = await fetch(`https://graph.facebook.com/v19.0/oauth/access_token?client_id=${FB_CLIENT_ID}&redirect_uri=${redirectUri}&client_secret=${FB_CLIENT_SECRET}&code=${code}`);
-            const tokens = await tokenRes.json();
-            if (tokens.access_token) {
-                const userRes = await fetch(`https://graph.facebook.com/me?fields=name,email&access_token=${tokens.access_token}`);
-                const fbUser = await userRes.json();
-                email = fbUser.email;
-                name = fbUser.name;
-            }
-        } catch (e) {
-            console.error('Facebook OAuth exchange error', e);
         }
     }
 

@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TicketMada - Dashboard Organisateur</title>
     
@@ -185,8 +185,6 @@
         .social-auth-btn { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 16px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s ease; border: 3px solid var(--border-dark); }
         .google-btn { background: white; color: var(--text-dark); box-shadow: 4px 4px 0px #1a1a1a; }
         .google-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
-        .facebook-btn { background: #1877F2; color: white; box-shadow: 4px 4px 0px #1a1a1a; }
-        .facebook-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
         .divider { text-align: center; position: relative; margin: 20px 0; color: var(--text-light); }
         .divider::before, .divider::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: #ddd; }
         .divider::before { left: 0; }
@@ -214,7 +212,6 @@
                 <div class="auth-header"><h2>{{ authMode === 'login' ? 'Connexion Organisateur' : 'Créer un compte' }}</h2><p>{{ authMode === 'login' ? 'Accédez à votre tableau de bord' : 'Rejoignez TicketMada' }}</p></div>
                 <div class="social-auth">
                     <button class="social-auth-btn google-btn" @click="loginWith('google')"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continuer avec Google</button>
-                    <button class="social-auth-btn facebook-btn" @click="loginWith('facebook')"><v-icon>mdi-facebook</v-icon>Continuer avec Facebook</button>
                 </div>
                 <div class="divider">ou</div>
                 <form class="auth-form" @submit.prevent="handleAuth">
@@ -370,7 +367,7 @@
                                     <div class="balance-item"><div class="balance-item-label">Attente</div><div class="balance-item-value">{{ formatCurrency(pendingBalance) }}</div></div>
                                     <div class="balance-item"><div class="balance-item-label">Mois</div><div class="balance-item-value positive">+{{ formatCurrency(monthRevenue) }}</div></div>
                                 </div>
-                                <button class="btn btn-white" style="width: 100%; justify-content: center;">Verser</button>
+                                <button class="btn btn-white" style="width: 100%; justify-content: center;" @click="currentPage = 'payouts'">Verser</button>
                             </div>
                         </div>
                         
@@ -388,8 +385,8 @@
                                     </div>
                                 </div>
                                 <div class="event-actions">
-                                    <button class="btn btn-primary btn-sm"><v-icon size="x-small">mdi-eye</v-icon> Voir</button>
-                                    <button class="btn btn-secondary btn-sm"><v-icon size="x-small">mdi-pencil</v-icon> Modifier</button>
+                                    <button class="btn btn-primary btn-sm" @click="selectedEvent = event; currentPage = 'events'"><v-icon size="x-small">mdi-eye</v-icon> Voir</button>
+                                    <button class="btn btn-secondary btn-sm" @click="editingEvent = JSON.parse(JSON.stringify(event)); showEditModal = true"><v-icon size="x-small">mdi-pencil</v-icon> Modifier</button>
                                 </div>
                             </div>
                         </div>
@@ -412,9 +409,9 @@
                                     </div>
                                 </div>
                                 <div class="event-actions">
-                                    <button class="btn btn-primary btn-sm"><v-icon size="x-small">mdi-eye</v-icon> Détails</button>
-                                    <button class="btn btn-secondary btn-sm"><v-icon size="x-small">mdi-pencil</v-icon> Modifier</button>
-                                    <button class="btn btn-secondary btn-sm"><v-icon size="x-small">mdi-chart-line</v-icon> Stats</button>
+                                    <button class="btn btn-primary btn-sm" @click="selectedEvent = event"><v-icon size="x-small">mdi-eye</v-icon> Détails</button>
+                                    <button class="btn btn-secondary btn-sm" @click="editingEvent = JSON.parse(JSON.stringify(event)); showEditModal = true"><v-icon size="x-small">mdi-pencil</v-icon> Modifier</button>
+                                    <button class="btn btn-secondary btn-sm" @click="selectedEvent = event; currentPage = 'analytics'"><v-icon size="x-small">mdi-chart-line</v-icon> Stats</button>
                                 </div>
                             </div>
                         </div>
@@ -429,7 +426,7 @@
                             <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">↩️</div></div><div class="stat-value">{{ refundedTickets }}</div><div class="stat-label">Remboursés</div></div>
                         </div>
                         <div class="section">
-                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-ticket</v-icon> Dernières ventes</div><button class="btn btn-secondary btn-sm"><v-icon size="x-small">mdi-download</v-icon> Exporter</button></div>
+                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-ticket</v-icon> Dernières ventes</div><button class="btn btn-secondary btn-sm" @click="exportSales()"><v-icon size="x-small">mdi-download</v-icon> Exporter</button></div>
                             <div class="filters-bar"><div class="filter-group"><span class="filter-label">Événement:</span><select class="filter-select"><option>Tous</option><option v-for="e in myEvents" :key="e.id">{{ e.name }}</option></select></div><div class="filter-group"><span class="filter-label">Statut:</span><select class="filter-select"><option>Tous</option><option>Validé</option><option>Scanné</option></select></div></div>
                             <div class="table-container"><table><thead><tr><th>ID</th><th>Événement</th><th>Acheteur</th><th>Type</th><th>Prix</th><th>Statut</th><th>Date</th></tr></thead><tbody><tr v-for="t in myTickets" :key="t.id"><td><code style="background: #f5f5f5; padding: 2px 6px; font-size: 0.75rem;">{{ t.id }}</code></td><td>{{ t.event }}</td><td>{{ t.buyer }}</td><td>{{ t.type }}</td><td>{{ formatCurrency(t.price) }}</td><td><span class="status-badge" :class="'status-' + t.status">{{ t.statusLabel }}</span></td><td>{{ t.date }}</td></tr></tbody></table></div>
                         </div>
@@ -487,7 +484,7 @@
                                         <div style="font-size: 0.8rem; color: var(--text-light); text-transform: uppercase; font-weight: 700;">Solde disponible</div>
                                         <div style="font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800;">{{ formatCurrency(availableBalance) }}</div>
                                     </div>
-                                    <button class="btn btn-primary" style="padding: 14px 24px;"><v-icon size="small" class="mr-2">mdi-bank-transfer</v-icon> Virer maintenant</button>
+                                    <button class="btn btn-primary" style="padding: 14px 24px;" @click="requestPayout()"><v-icon size="small" class="mr-2">mdi-bank-transfer</v-icon> Virer maintenant</button>
                                 </div>
                                 <p style="color: var(--text-light); font-size: 0.85rem;">Les fonds sont transférés vers votre compte Mobile Money ou Bancaire sous 48h ouvrées.</p>
                             </div>
@@ -662,10 +659,10 @@
                     <template v-if="currentPage === 'team'">
                         <div class="upgrade-banner" v-if="currentPlan === 'starter'">
                             <div><h3>Passez à Pro pour inviter votre équipe</h3><p>Le plan Starter ne permet pas d'ajouter des membres d'équipe.</p></div>
-                            <button class="btn btn-white">Passer à Pro</button>
+                            <button class="btn btn-white" @click="showProUpgrade = true">Passer à Pro</button>
                         </div>
                         <div class="section">
-                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-account-group</v-icon> Mon équipe</div><button class="btn btn-primary btn-sm"><v-icon size="x-small">mdi-plus</v-icon> Inviter</button></div>
+                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-account-group</v-icon> Mon équipe</div><button class="btn btn-primary btn-sm" @click="showInviteModal = true"><v-icon size="x-small">mdi-plus</v-icon> Inviter</button></div>
                             <div class="table-container"><table><thead><tr><th>Membre</th><th>Rôle</th><th>Événements</th><th>Dernier accès</th><th>Actions</th></tr></thead><tbody><tr v-for="m in teamMembers" :key="m.id"><td><div style="display: flex; align-items: center; gap: 10px;"><div class="user-avatar" style="width: 32px; height: 32px; font-size: 0.75rem;">{{ m.initials }}</div><div><div style="font-weight: 600;">{{ m.name }}</div><div style="font-size: 0.75rem; color: var(--text-light);">{{ m.email }}</div></div></div></td><td><span class="status-badge" :class="'status-' + m.role">{{ m.roleLabel }}</span></td><td>{{ m.events }}</td><td>{{ m.lastAccess }}</td><td><button class="action-btn"><v-icon size="x-small">mdi-pencil</v-icon></button><button class="action-btn"><v-icon size="x-small">mdi-delete</v-icon></button></td></tr></tbody></table></div>
                         </div>
                     </template>
@@ -865,8 +862,73 @@
             </div>
         </div>
 
+        <!-- Edit Event Modal -->
+        <v-dialog v-model="showEditModal" max-width="800">
+            <div class="modal-card">
+                <div class="modal-header"><h3>Modifier l'événement</h3><button class="btn-icon" @click="showEditModal = false"><v-icon>mdi-close</v-icon></button></div>
+                <div class="modal-body">
+                    <form v-if="editingEvent" @submit.prevent="updateEvent">
+                        <div class="form-grid">
+                            <div class="form-group"><label>Nom de l'événement</label><input type="text" v-model="editingEvent.name" required></div>
+                            <div class="form-group"><label>Catégorie</label><select v-model="editingEvent.category"><option value="concerts">Concert</option><option value="festival">Festival</option><option value="sports">Sport</option></select></div>
+                            <div class="form-group"><label>Date de début</label><input type="date" v-model="editingEvent.date_start" required></div>
+                            <div class="form-group"><label>Lieu</label><input type="text" v-model="editingEvent.venue"></div>
+                        </div>
+                        <div class="form-group mt-4"><label>Description</label><textarea v-model="editingEvent.description" rows="3"></textarea></div>
+                    </form>
+                </div>
+                <div class="modal-footer"><button class="btn btn-secondary" @click="showEditModal = false">Annuler</button><button class="btn btn-primary" @click="updateEvent">Enregistrer les modifications</button></div>
+            </div>
+        </v-dialog>
+
+        <!-- Payout Modal -->
+        <v-dialog v-model="showPayoutModal" max-width="500">
+            <div class="modal-card">
+                <div class="modal-header"><h3>Demander un versement</h3><button class="btn-icon" @click="showPayoutModal = false"><v-icon>mdi-close</v-icon></button></div>
+                <div class="modal-body">
+                    <div style="text-align: center; padding: 20px 0;">
+                        <div style="font-size: 0.9rem; color: var(--text-light);">Montant à verser</div>
+                        <div style="font-size: 2.2rem; font-weight: 800; font-family: 'Syne';">{{ formatCurrency(availableBalance) }}</div>
+                    </div>
+                    <div class="form-group"><label>Méthode de paiement</label><select class="filter-select" style="width: 100%;"><option>MVola</option><option>Orange Money</option><option>Airtel Money</option><option>Virement Bancaire (BNI/BOA)</option></select></div>
+                    <div class="form-group mt-4"><label>Numéro ou RIB</label><input type="text" placeholder="034 00 000 00" style="width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 8px;"></div>
+                </div>
+                <div class="modal-footer"><button class="btn btn-secondary" @click="showPayoutModal = false">Annuler</button><button class="btn btn-primary" @click="confirmPayout">Confirmer le versement</button></div>
+            </div>
+        </v-dialog>
+
+        <!-- Invite Modal -->
+        <v-dialog v-model="showInviteModal" max-width="500">
+            <div class="modal-card">
+                <div class="modal-header"><h3>Inviter un membre</h3><button class="btn-icon" @click="showInviteModal = false"><v-icon>mdi-close</v-icon></button></div>
+                <div class="modal-body">
+                    <div class="form-group"><label>Email du collaborateur</label><input type="email" placeholder="email@exemple.com" style="width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 8px;"></div>
+                    <div class="form-group mt-4"><label>Rôle</label><select class="filter-select" style="width: 100%;"><option>Gestionnaire d'événement</option><option>Analyste (Lecture seule)</option><option>Scanner (Accès scan uniquement)</option></select></div>
+                </div>
+                <div class="modal-footer"><button class="btn btn-secondary" @click="showInviteModal = false">Annuler</button><button class="btn btn-primary" @click="inviteMember">Envoyer l'invitation</button></div>
+            </div>
+        </v-dialog>
+
+        <!-- Upgrade Pro Modal -->
+        <v-dialog v-model="showProUpgrade" max-width="500">
+            <div class="modal-card">
+                <div class="modal-header"><h3>Passer au Plan PRO</h3><button class="btn-icon" @click="showProUpgrade = false"><v-icon>mdi-close</v-icon></button></div>
+                <div class="modal-body" style="text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 20px;">🚀</div>
+                    <h3>Débloquez la puissance de TicketMada</h3>
+                    <p style="color: var(--text-light); margin: 15px 0;">Accédez à la gestion d'équipe, aux plans de salle numérotés et aux statistiques avancées.</p>
+                    <div style="background: #f8f9ff; padding: 20px; border-radius: 12px; margin: 20px 0;">
+                        <div style="font-weight: 800; font-size: 1.5rem; color: var(--primary);">49.000 Ar / mois</div>
+                        <div style="font-size: 0.8rem; color: var(--text-light);">Facturé annuellement</div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button class="btn btn-secondary" @click="showProUpgrade = false">Plus tard</button><button class="btn btn-primary" @click="showProUpgrade = false">Choisir ce plan</button></div>
+            </div>
+        </v-dialog>
+
     </div>
     
+    <script src="../js/site-config.js"></script>
     <script src="../js/api-client.js"></script>
     <script src="../js/oauth-simulation.js"></script>
     <script src="../js/profile-menu.js"></script>
@@ -915,6 +977,12 @@
                     showSetupQR: false,
                     setupQRUrl: '',
                     setupQREventName: '',
+                    selectedEvent: null,
+                    showEditModal: false,
+                    editingEvent: null,
+                    showInviteModal: false,
+                    showProUpgrade: false,
+                    showPayoutModal: false,
                     // Seatmap
                     seatmapEditing: false,
                     seatmapPlanName: '',
@@ -967,7 +1035,49 @@
             },
             methods: {
                 formatCurrency(v) { if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M Ar'; if (v >= 1000) return (v / 1000).toFixed(0) + 'K Ar'; return v.toLocaleString() + ' Ar'; },
-                async handleLogout() { await window.api.logout(); this.isLoggedIn = false; },
+                async handleLogout() { 
+                    await window.api.logout(); 
+                    this.isLoggedIn = false; 
+                    window.location.reload();
+                },
+                exportSales() {
+                    alert('L\'exportation de vos ventes (CSV) va commencer...');
+                },
+                requestPayout() {
+                    if (this.availableBalance <= 0) {
+                        alert('Votre solde disponible est de 0 Ar.');
+                        return;
+                    }
+                    this.showPayoutModal = true;
+                },
+                confirmPayout() {
+                    alert('Versement demandé avec succès !');
+                    this.showPayoutModal = false;
+                    this.availableBalance = 0;
+                    this.myPayouts.unshift({
+                        id: 'PO-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
+                        date: new Date().toLocaleDateString('fr-FR'),
+                        amount: this.availableBalance,
+                        status: 'pending',
+                        statusLabel: 'En attente',
+                        method: 'Mobile Money'
+                    });
+                },
+                inviteMember() {
+                    alert('Invitation envoyée à ' + this.inviteEmail);
+                    this.showInviteModal = false;
+                    this.inviteEmail = '';
+                },
+                async updateEvent() {
+                    try {
+                        const result = await window.api.put(`/events/${this.editingEvent.id}`, this.editingEvent);
+                        if (!result.error) {
+                            alert('Événement mis à jour !');
+                            this.showEditModal = false;
+                            this.loadDashboard();
+                        }
+                    } catch(e) { alert('Erreur de mise à jour'); }
+                },
                 loginWith(provider) {
                     const vm = this;
                     window.OAuthSim.show(provider, async (name, email) => {
@@ -983,6 +1093,21 @@
                             vm.isLoggedIn = true;
                         }
                     });
+                },
+                async loginWith(provider) {
+                    if (provider === 'google') {
+                        try {
+                            const result = await window.api.loginWithGoogle();
+                            if (result.success) {
+                                this.isLoggedIn = true;
+                                this.loadDashboard();
+                            } else if (!result.canceled) {
+                                alert('Erreur Google: ' + (result.error || 'Inconnue'));
+                            }
+                        } catch (e) {
+                            console.error('Google Auth Error', e);
+                        }
+                    }
                 },
                 async handleAuth() {
                     this.authError = '';
@@ -1067,7 +1192,7 @@
                 },
                 async refreshScanRequests() {
                     try {
-                        const requests = await window.api.get('/api/scan-access-requests/pending');
+                        const requests = await window.api.get('/scan-access-requests/pending');
                         if (requests && !requests.error) {
                             this.pendingScanRequests = requests;
                         }
@@ -1075,7 +1200,7 @@
                 },
                 async approveScanRequest(request) {
                     try {
-                        const res = await window.api.post(`/api/scan-access-requests/${request.id}/approve`);
+                        const res = await window.api.post(`/scan-access-requests/${request.id}/approve`);
                         if (res.success) {
                             this.pendingScanRequests = this.pendingScanRequests.filter(r => r.id !== request.id);
                             this.refreshScannerData();

@@ -60,6 +60,10 @@ export async function loginWithGoogle() {
             token: await user.getIdToken()
         };
     } catch (error) {
+        if (error.code === 'auth/popup-closed-by-user') {
+            console.log('[Firebase] User closed the sign-in popup');
+            return { success: false, canceled: true };
+        }
         console.error('[Firebase] Sign-in error:', error);
         return { success: false, error: error.message };
     }

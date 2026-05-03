@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <title>Scanner — TicketMada</title>
     
     <!-- CSS & Fonts -->
@@ -301,7 +302,7 @@
 <!-- JS -->
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vuetify@3/dist/vuetify.min.js"></script>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="../js/site-config.js"></script>
 <script src="../js/api-client.js"></script>
 
 <script>
@@ -394,7 +395,7 @@
                         browser: navigator.userAgent,
                         os: navigator.platform
                     };
-                    const res = await window.api.post('/api/scan-access-requests', {
+                    const res = await window.api.post('/scan-access-requests', {
                         eventId: this.setupEventId,
                         deviceInfo
                     });
@@ -411,7 +412,7 @@
             startPolling() {
                 this.pollInterval = setInterval(async () => {
                     try {
-                        const res = await window.api.get(`/api/scan-access-requests/${this.requestToken}/status`);
+                        const res = await window.api.get(`/scan-access-requests/${this.requestToken}/status`);
                         if (res.status === 'approved') {
                             this.requestStatus = 'approved';
                             clearInterval(this.pollInterval);
@@ -427,10 +428,34 @@
                     }
                 }, 3000);
             },
-            initScanner() {
-                this.scanner = new Html5Qrcode("qr-reader");
-                const config = { fps: 15, qrbox: { width: 260, height: 260 } };
-                this.scanner.start({ facingMode: "environment" }, config, this.onScanSuccess);
+            async initScanner() {
+                // Charger html5-qrcode dynamiquement seulement au moment du scan
+                if (!window.Html5Qrcode) {
+                    await new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+                        script.onload = resolve;
+                        script.onerror = reject;
+                        document.head.appendChild(script);
+                    });
+                }
+                try {
+                    this.scanner = new Html5Qrcode("qr-reader");
+                    const config = { fps: 15, qrbox: { width: 260, height: 260 } };
+                    await this.scanner.start(
+                        { facingMode: "environment" },
+                        config,
+                        this.onScanSuccess,
+                        (errorMessage) => { /* ignore scan errors silently */ }
+                    );
+                } catch (err) {
+                    console.error('Camera error:', err);
+                    if (err.toString().includes('NotAllowedError') || err.toString().includes('Permission')) {
+                        this.authError = 'Accès caméra refusé. Veuillez autoriser la caméra dans les paramètres de votre navigateur puis rechargez la page.';
+                    } else {
+                        this.authError = 'Impossible d\'accéder à la caméra. Vérifiez que votre appareil a une caméra disponible.';
+                    }
+                }
             },
             async onScanSuccess(decodedText) {
                 if (this.showResult) return;

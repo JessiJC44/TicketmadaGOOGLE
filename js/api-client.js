@@ -698,7 +698,6 @@ const TicketMadaAPI = (() => {
             if (this.useMock) MockAPI.setScanAuth(token, deviceId);
             this.real.setScanAuth(token, deviceId); 
         }
-        logout() { this.real.clearAuth(); }
         isLoggedIn() { return this.real.isLoggedIn(); }
         getUser() { return this.real.getUser(); }
         getUserRole() { return this.real.getUserRole(); }
