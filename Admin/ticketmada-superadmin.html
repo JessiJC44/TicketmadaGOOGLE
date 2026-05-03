@@ -2,8 +2,9 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
     <title>TicketMada - SuperAdmin Portal</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -403,6 +404,9 @@
                                                 <button v-else class="btn-brutal sm mint" @click="reactivateOrganizer(o)">
                                                     RÉACTIVER
                                                 </button>
+                                                <button class="btn-brutal sm" style="border-color: #eee; background: white; margin-left: 5px;" @click="confirmDeleteOrganizer(o)">
+                                                    <v-icon size="14">mdi-delete</v-icon>
+                                                </button>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -487,6 +491,9 @@
                                                 <button v-else class="btn-brutal sm mint" @click="unblockUser(u)">
                                                     DÉBLOQUER
                                                 </button>
+                                                <button class="btn-brutal sm" style="border-color: #eee; background: white; margin-left: 5px;" @click="confirmDeleteUser(u)">
+                                                    <v-icon size="14">mdi-delete</v-icon>
+                                                </button>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -508,6 +515,7 @@
                                             <th>Revenus</th>
                                             <th>Statut</th>
                                             <th>Date Création</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -521,6 +529,19 @@
                                             <td><div style="font-weight: 800;">{{ formatMoney(e.totalRevenue) }}</div></td>
                                             <td><span class="badge" :class="'badge-' + e.status">{{ e.status }}</span></td>
                                             <td>{{ formatDate(e.created_at) }}</td>
+                                            <td>
+                                                <div style="display: flex; gap: 5px;">
+                                                    <button v-if="e.status === 'active'" class="btn-brutal sm" style="background: #ffebee; color: #c62828;" @click="suspendEvent(e)">
+                                                        SUSPENDRE
+                                                    </button>
+                                                    <button v-if="e.status === 'suspended'" class="btn-brutal sm mint" @click="reactivateEvent(e)">
+                                                        RÉACTIVER
+                                                    </button>
+                                                    <button class="btn-brutal sm" style="border-color: #eee; background: white;" @click="confirmDeleteEvent(e)">
+                                                        <v-icon size="14">mdi-delete</v-icon>
+                                                    </button>
+                                                </div>
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -629,6 +650,7 @@
         </div>
     </div>
 
+    <script src="../js/site-config.js"></script>
     <script src="../js/api-client.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
@@ -688,8 +710,8 @@
                 }
             },
             async mounted() {
-                const user = TicketMadaAPI.getUser();
-                const token = localStorage.getItem('ticketmada-token');
+                const user = JSON.parse(localStorage.getItem('ticketmada_user') || 'null');
+                const token = localStorage.getItem('ticketmada_token');
                 
                 if (user && user.role === 'superadmin' && token) {
                     this.user = user;
@@ -701,7 +723,7 @@
                 async handleLogin() {
                     this.loginError = '';
                     try {
-                        const res = await TicketMadaAPI.login(this.loginForm.email, this.loginForm.password);
+                        const res = await window.api.login({ email: this.loginForm.email, password: this.loginForm.password });
                         if (res.user.role !== 'superadmin') {
                             this.loginError = "Access denied. Only SuperAdmin can access this portal.";
                             return;
@@ -714,22 +736,22 @@
                     }
                 },
                 handleLogout() {
-                    TicketMadaAPI.logout();
+                    window.api.logout();
                     this.isLoggedIn = false;
                     this.user = null;
                 },
                 async fetchData() {
                     try {
-                        const res = await TicketMadaAPI.get('superadmin/dashboard');
+                        const res = await window.api.get('/superadmin/dashboard');
                         this.stats = res;
                         this.logs = res.recentActivity;
 
                         // Parallel fetch others
                         const [orgs, users, events, apps] = await Promise.all([
-                            TicketMadaAPI.get('superadmin/organizers'),
-                            TicketMadaAPI.get('superadmin/users'),
-                            TicketMadaAPI.get('superadmin/events'),
-                            TicketMadaAPI.get('organizer-applications')
+                            window.api.get('/superadmin/organizers'),
+                            window.api.get('/superadmin/users'),
+                            window.api.get('/superadmin/events'),
+                            window.api.get('/organizer-applications')
                         ]);
                         
                         this.organizers = orgs;
@@ -754,7 +776,7 @@
                 },
                 async approveApp(app) {
                     try {
-                        await TicketMadaAPI.put(`organizer-applications/${app.id}/approve`);
+                        await window.api.put(`/organizer-applications/${app.id}/approve`);
                         alert(`${app.full_name} est maintenant organisateur !`);
                         this.fetchData();
                     } catch (err) {
@@ -769,7 +791,7 @@
                 async confirmReject() {
                     if (!this.rejectReason.trim()) return alert("Spécifiez une raison.");
                     try {
-                        await TicketMadaAPI.put(`organizer-applications/${this.appToReject.id}/reject`, { reason: this.rejectReason });
+                        await window.api.put(`/organizer-applications/${this.appToReject.id}/reject`, { reason: this.rejectReason });
                         this.showRejectModal = false;
                         this.fetchData();
                     } catch (err) {
@@ -783,10 +805,90 @@
                 async suspendOrganizer(org) {
                     if (!confirm(`Suspendre ${org.name} ? Ses événements ne seront plus visibles.`)) return;
                     try {
-                        await TicketMadaAPI.put(`superadmin/organizers/${org.id}/suspend`, { reason: 'Suspension par le SuperAdmin' });
+                        await window.api.put(`/superadmin/organizers/${org.id}/suspend`, { reason: 'Suspension par le SuperAdmin' });
                         this.fetchData();
                     } catch (err) {
                         alert("Erreur.");
+                    }
+                },
+                async reactivateOrganizer(org) {
+                    if (!confirm(`Réactiver l'organisateur "${org.name}" ?`)) return;
+                    try {
+                        const res = await window.api.put('/superadmin/organizers/' + org.id + '/reactivate');
+                        if (res && !res.error) {
+                            org.status = 'active';
+                            alert('Organisateur réactivé');
+                        }
+                    } catch (err) {
+                        alert("Erreur lors de la réactivation.");
+                    }
+                },
+                async blockUser(user) {
+                    const reason = prompt('Raison du blocage:');
+                    if (reason === null) return;
+                    try {
+                        const res = await window.api.put('/superadmin/users/' + user.id + '/block', { reason });
+                        if (res && !res.error) {
+                            user.status = 'blocked';
+                            alert('Utilisateur bloqué');
+                        }
+                    } catch (err) {
+                        alert("Erreur lors du blocage.");
+                    }
+                },
+                async unblockUser(user) {
+                    try {
+                        const res = await window.api.put('/superadmin/users/' + user.id + '/unblock');
+                        if (res && !res.error) {
+                            user.status = 'active';
+                            alert('Utilisateur débloqué');
+                        }
+                    } catch (err) {
+                        alert("Erreur lors du déblocage.");
+                    }
+                },
+                async suspendEvent(event) {
+                    if (!confirm(`Suspendre l'événement "${event.name}" ?`)) return;
+                    try {
+                        await window.api.put(`/superadmin/events/${event.id}/suspend`);
+                        this.fetchData();
+                    } catch (err) {
+                        alert("Erreur lors de la suspension.");
+                    }
+                },
+                async reactivateEvent(event) {
+                    try {
+                        await window.api.put(`/superadmin/events/${event.id}/reactivate`);
+                        this.fetchData();
+                    } catch (err) {
+                        alert("Erreur lors de la réactivation.");
+                    }
+                },
+                async confirmDeleteOrganizer(org) {
+                    if (!confirm(`SUPPRIMER DÉFINITIVEMENT l'organisateur "${org.name}" ? Tous ses événements seront annulés.`)) return;
+                    try {
+                        await window.api.delete(`/superadmin/organizers/${org.id}`);
+                        this.fetchData();
+                    } catch (err) {
+                        alert("Erreur lors de la suppression.");
+                    }
+                },
+                async confirmDeleteUser(user) {
+                    if (!confirm(`SUPPRIMER l'utilisateur "${user.name}" ? Ses billets seront invalidés.`)) return;
+                    try {
+                        await window.api.delete(`/superadmin/users/${user.id}`);
+                        this.fetchData();
+                    } catch (err) {
+                        alert("Erreur lors de la suppression.");
+                    }
+                },
+                async confirmDeleteEvent(event) {
+                    if (!confirm(`ANNULER ET SUPPRIMER l'événement "${event.name}" ?`)) return;
+                    try {
+                        await window.api.delete(`/superadmin/events/${event.id}`);
+                        this.fetchData();
+                    } catch (err) {
+                        alert("Erreur lors de la suppression.");
                     }
                 }
             }

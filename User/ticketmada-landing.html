@@ -261,10 +261,10 @@
                     <span class="logo-text">Ticket<span>Mada</span></span>
                 </a>
                 <ul class="nav-links">
-                    <li><a href="#events">{{ t.nav.events }}</a></li>
-                    <li><a href="#concerts">{{ t.nav.concerts }}</a></li>
-                    <li><a href="#festivals">{{ t.nav.festivals }}</a></li>
-                    <li><a href="#sports">{{ t.nav.sports }}</a></li>
+                    <li><a href="#events" @click.prevent="activeCategory = 'all'; scrollToEvents()">{{ t.nav.events }}</a></li>
+                    <li><a href="#events" @click.prevent="activeCategory = 'concerts'; scrollToEvents()">{{ t.nav.concerts }}</a></li>
+                    <li><a href="#events" @click.prevent="activeCategory = 'festival'; scrollToEvents()">{{ t.nav.festivals }}</a></li>
+                    <li><a href="#events" @click.prevent="activeCategory = 'sports'; scrollToEvents()">{{ t.nav.sports }}</a></li>
                     <li><a href="ticketmada-organisateur.html">{{ t.nav.organizers }}</a></li>
                 </ul>
                 <div class="nav-cta">
@@ -334,9 +334,9 @@
             <div class="categories-inner">
                 <div class="categories-header"><h2>{{ t.categories.title }}</h2><a href="#events" class="brutal-btn brutal-btn-secondary brutal-btn-small">{{ t.categories.viewAll }}</a></div>
                 <div class="categories-grid">
-                    <div class="category-card brutal-card" v-for="(category, index) in categories" :key="index">
+                    <div class="category-card brutal-card" v-for="(category, index) in categories" :key="index" @click="activeCategory = category.id === 'festival' ? 'festivals' : category.id; scrollToEvents()">
                         <div class="category-icon">{{ category.icon }}</div>
-                        <h3>{{ t.categories.items[index] }}</h3>
+                        <h3>{{ category.title }}</h3>
                         <p><span class="counter" :data-target="category.countNum">0</span> {{ t.categories.events }}</p>
                     </div>
                 </div>
@@ -349,7 +349,7 @@
                 <div class="events-filter">
                     <button class="filter-btn" :class="{ active: activeCategory === 'all' }" @click="activeCategory = 'all'">{{ t.filters.all }}</button>
                     <button class="filter-btn" :class="{ active: activeCategory === 'concerts' }" @click="activeCategory = 'concerts'">{{ t.filters.concerts }}</button>
-                    <button class="filter-btn" :class="{ active: activeCategory === 'festival' }" @click="activeCategory = 'festival'">{{ t.filters.festivals }}</button>
+                    <button class="filter-btn" :class="{ active: activeCategory === 'festivals' }" @click="activeCategory = 'festivals'">{{ t.filters.festivals }}</button>
                     <button class="filter-btn" :class="{ active: activeCategory === 'sports' }" @click="activeCategory = 'sports'">{{ t.filters.sports }}</button>
                 </div>
                 <div class="events-grid">
@@ -591,15 +591,78 @@
                     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
                 }
             },
-            mounted() {
+            async mounted() {
+                document.documentElement.lang = this.lang;
+                if (window.api && window.api.isLoggedIn()) { this.isLoggedIn = true; }
+                if (window.ProfileMenu) window.ProfileMenu.injectStyles();
+                
+                await this.loadEvents();
                 animateCounters();
-                this.loadEvents();
+
+                document.addEventListener('click', (e) => { if (this.showProfileMenu && !e.target.closest('.nav-cta')) this.showProfileMenu = false; });
+                document.addEventListener('keydown', e => { if (e.key === 'Escape') { this.showSearch = false; this.showAuth = false; this.showProfileMenu = false; } if (e.key === 'k' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); this.showSearch = true; } });
+
+                // Auto-scroll Carousel
+                setInterval(() => {
+                    const el = document.getElementById('landing-carousel');
+                    if (el) {
+                        if (el.scrollLeft + el.offsetWidth >= el.scrollWidth - 10) {
+                            el.scrollTo({ left: 0, behavior: 'smooth' });
+                        } else {
+                            this.scrollCarousel(1);
+                        }
+                    }
+                }, 4000);
             },
             methods: {
+                scrollToEvents() {
+                    const el = document.getElementById('events');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                },
                 async loadEvents() {
                     try {
-                        const result = await window.api.getEvents();
-                        this.events = result.events || result;
+                        const eventsData = await window.api.getEvents();
+                        const eventsList = eventsData.events || (Array.isArray(eventsData) ? eventsData : []);
+                        
+                        const CATEGORY_IMAGES = {
+                            concerts: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800',
+                            festival: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
+                            sports: 'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800',
+                            theatre: 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=800',
+                            humour: 'https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=800',
+                            exhibition: 'https://images.unsplash.com/photo-1531058020387-3be344556be6?w=800'
+                        };
+
+                        this.events = eventsList.map(e => ({
+                            id: e.id,
+                            title: e.name,
+                            date: new Date(e.date_start).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
+                            location: e.venue,
+                            price: e.capacity > 0 ? (e.zones ? e.zones[e.zones.length-1].price : 15000) : 0,
+                            category: e.category,
+                            badgeKey: (e.tickets_sold / e.capacity) > 0.7 ? 'popular' : (e.hot ? 'popular' : null),
+                            image: e.image_url || CATEGORY_IMAGES[e.category] || 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800'
+                        }));
+                        
+                        // Pick featured events (e.g. popular ones)
+                        this.featuredEvents = this.events.filter(e => e.badgeKey === 'popular').slice(0, 3);
+                        if (this.featuredEvents.length === 0) this.featuredEvents = this.events.slice(0, 3);
+
+                        // Simple category counts based on fetched events
+                        const catCounts = {};
+                        this.events.forEach(e => {
+                            catCounts[e.category] = (catCounts[e.category] || 0) + (Math.floor(Math.random() * 5) + 1);
+                        });
+                        
+                        const icons = { concerts: '🎸', festival: '🎪', sports: '⚽', theatre: '🎭' };
+                        const titles = { concerts: this.t.nav.concerts, festival: this.t.nav.festivals, sports: this.t.nav.sports, theatre: 'Théâtre' };
+                        
+                        this.categories = Object.keys(icons).map(cat => ({
+                            id: cat,
+                            icon: icons[cat],
+                            title: titles[cat],
+                            countNum: catCounts[cat] || (Math.floor(Math.random() * 5) + 1)
+                        }));
                     } catch (e) {
                         console.error('Failed to load events', e);
                     }
@@ -684,69 +747,6 @@
             watch: { 
                 showSearch(val) { if (val) this.$nextTick(() => this.$refs.searchInput?.focus()); },
                 activeCategory() { this.currentPage = 1; }
-            },
-            async mounted() {
-                document.documentElement.lang = this.lang; animateCounters();
-                if (window.api && window.api.isLoggedIn()) { this.isLoggedIn = true; }
-                if (window.ProfileMenu) window.ProfileMenu.injectStyles();
-                
-                // Fetch data from API
-                try {
-                    const eventsData = await window.api.getEvents();
-                    if (eventsData && eventsData.events) {
-                        const CATEGORY_IMAGES = {
-                            concerts: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800',
-                            festival: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
-                            sports: 'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800',
-                            theatre: 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=800',
-                            humour: 'https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=800',
-                            exhibition: 'https://images.unsplash.com/photo-1531058020387-3be344556be6?w=800'
-                        };
-
-                        this.events = eventsData.events.map(e => ({
-                            id: e.id,
-                            title: e.name,
-                            date: new Date(e.date_start).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
-                            location: e.venue,
-                            price: e.capacity > 0 ? (e.zones ? e.zones[e.zones.length-1].price : 15000) : 0,
-                            category: e.category,
-                            badgeKey: (e.tickets_sold / e.capacity) > 0.7 ? 'popular' : (e.hot ? 'popular' : null),
-                            image: e.image_url || CATEGORY_IMAGES[e.category] || 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800'
-                        }));
-                        
-                        // Pick featured events (e.g. popular ones)
-                        this.featuredEvents = this.events.filter(e => e.badgeKey === 'popular').slice(0, 3);
-                        if (this.featuredEvents.length === 0) this.featuredEvents = this.events.slice(0, 3);
-                    }
-                    
-                    // Simple category counts based on fetched events
-                    const catCounts = {};
-                    this.events.forEach(e => {
-                        catCounts[e.category] = (catCounts[e.category] || 0) + (Math.floor(Math.random() * 20) + 10);
-                    });
-                    
-                    const icons = { concerts: '🎸', festivals: '🎪', sports: '⚽', theatre: '🎭', humour: '😂', conference: '💡' };
-                    this.categories = Object.keys(icons).map(cat => ({
-                        id: cat,
-                        icon: icons[cat],
-                        countNum: catCounts[cat] || (Math.floor(Math.random() * 15) + 5)
-                    }));
-                } catch(e) { console.error('Failed to load data', e); }
-
-                document.addEventListener('click', (e) => { if (this.showProfileMenu && !e.target.closest('.nav-cta')) this.showProfileMenu = false; });
-                document.addEventListener('keydown', e => { if (e.key === 'Escape') { this.showSearch = false; this.showAuth = false; this.showProfileMenu = false; } if (e.key === 'k' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); this.showSearch = true; } });
-
-                // Auto-scroll Carousel
-                setInterval(() => {
-                    const el = document.getElementById('landing-carousel');
-                    if (el) {
-                        if (el.scrollLeft + el.offsetWidth >= el.scrollWidth - 10) {
-                            el.scrollTo({ left: 0, behavior: 'smooth' });
-                        } else {
-                            this.scrollCarousel(1);
-                        }
-                    }
-                }, 2000);
             }
         });
         app.use(Vuetify.createVuetify());

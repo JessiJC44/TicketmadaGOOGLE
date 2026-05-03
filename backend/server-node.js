@@ -250,14 +250,22 @@ function initDB() {
             FOREIGN KEY (organizer_id) REFERENCES users(id),
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
-        CREATE TABLE activity_log (
+        CREATE TABLE IF NOT EXISTS activity_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             type TEXT NOT NULL,
             icon TEXT,
-            text TEXT NOT NULL,
+            text TEXT,
             user_id INTEGER,
+            actor_id INTEGER,
+            actor_name TEXT,
+            target_type TEXT,
+            target_id INTEGER,
+            target_name TEXT,
+            description TEXT,
+            metadata TEXT,
             created_at DATETIME DEFAULT (datetime('now')),
-            FOREIGN KEY (user_id) REFERENCES users(id)
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (actor_id) REFERENCES users(id)
         );
         CREATE TABLE sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -320,23 +328,12 @@ function initDB() {
             device_info TEXT,
             status TEXT DEFAULT 'pending', 
             approved_by INTEGER,
-            created_at DATETIME DEFAULT (datetime('now')),
             updated_at DATETIME DEFAULT (datetime('now')),
+            created_at DATETIME DEFAULT (datetime('now')),
             FOREIGN KEY (event_id) REFERENCES events(id),
             FOREIGN KEY (approved_by) REFERENCES users(id)
         );
-        CREATE TABLE IF NOT EXISTS activity_logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            type TEXT NOT NULL,           -- 'user_registered', 'ticket_purchased', etc.
-            actor_id INTEGER,            -- who did the action (user ID)
-            actor_name TEXT,             -- readable name
-            target_type TEXT,            -- 'user', 'event', 'organizer', 'ticket'
-            target_id INTEGER,
-            target_name TEXT,
-            description TEXT NOT NULL,   -- human-readable description in French
-            metadata TEXT,               -- JSON extra data
-            created_at DATETIME DEFAULT (datetime('now'))
-        );
+        -- Note: activity_logs table already defined above in this fix
         CREATE TABLE IF NOT EXISTS organizer_applications (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -455,10 +452,10 @@ function seedDB() {
     db.prepare('INSERT INTO team_members (id, organizer_id, user_id, role, role_label, events_access, last_access) VALUES (?,?,?,?,?,?,?)').run(2, 5, 11, 'guichetier', 'Guichetier', 'Festival Donia', '2026-03-03');
     db.prepare('INSERT INTO team_members (id, organizer_id, user_id, role, role_label, events_access, last_access) VALUES (?,?,?,?,?,?,?)').run(3, 5, 12, 'analyste', 'Analyste', 'Tous', '2026-03-02');
 
-    db.prepare('INSERT INTO activity_log (id, type, icon, text, user_id, created_at) VALUES (?,?,?,?,?,?)').run(1, 'sale', 'mdi-ticket', '<strong>+25 billets</strong> Dama Live 2026', null, '2026-03-03 10:55:00');
-    db.prepare('INSERT INTO activity_log (id, type, icon, text, user_id, created_at) VALUES (?,?,?,?,?,?)').run(2, 'user', 'mdi-account-plus', 'Nouveau client: <strong>Event Pro</strong>', null, '2026-03-03 10:37:00');
-    db.prepare('INSERT INTO activity_log (id, type, icon, text, user_id, created_at) VALUES (?,?,?,?,?,?)').run(3, 'refund', 'mdi-cash-refund', 'Remboursement <strong>Rabe Faly</strong>', null, '2026-03-03 09:00:00');
-    db.prepare('INSERT INTO activity_log (id, type, icon, text, user_id, created_at) VALUES (?,?,?,?,?,?)').run(4, 'event', 'mdi-calendar-plus', 'Événement: <strong>Beach Party</strong>', null, '2026-03-03 08:00:00');
+    db.prepare('INSERT INTO activity_logs (type, icon, text, user_id, created_at) VALUES (?,?,?,?,?)').run(1, 'sale', 'mdi-ticket', '<strong>+25 billets</strong> Dama Live 2026', null, '2026-03-03 10:55:00');
+    db.prepare('INSERT INTO activity_logs (type, icon, text, user_id, created_at) VALUES (?,?,?,?,?)').run(2, 'user', 'mdi-account-plus', 'Nouveau client: <strong>Event Pro</strong>', null, '2026-03-03 10:37:00');
+    db.prepare('INSERT INTO activity_logs (type, icon, text, user_id, created_at) VALUES (?,?,?,?,?)').run(3, 'refund', 'mdi-cash-refund', 'Remboursement <strong>Rabe Faly</strong>', null, '2026-03-03 09:00:00');
+    db.prepare('INSERT INTO activity_logs (type, icon, text, user_id, created_at) VALUES (?,?,?,?,?)').run(4, 'event', 'mdi-calendar-plus', 'Événement: <strong>Beach Party</strong>', null, '2026-03-03 08:00:00');
 }
 
 // ============ HELPERS ============
@@ -783,8 +780,8 @@ async function handleOAuthCallback(req, res, parts) {
                     }, '*');
                     window.close();
                 } else {
-                    localStorage.setItem('ticketmada-token', '${token}');
-                    localStorage.setItem('ticketmada-user', '${JSON.stringify(user)}');
+                    localStorage.setItem('ticketmada_token', '${token}');
+                    localStorage.setItem('ticketmada_user', '${JSON.stringify(user).replace(/'/g, "\\'")}');
                     window.location.href = '/';
                 }
             </script>
@@ -870,7 +867,7 @@ async function handleEvents(req, res, parts) {
         const body = await parseBody(req);
         if (!body.name || !body.category || !body.date_start || !body.venue || !body.capacity) return sendError(res, 'Champs requis manquants');
         const r = db.prepare('INSERT INTO events (organizer_id, name, category, description, emoji, date_start, date_end, venue, capacity, image_url, badge, status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)').run(user.id, body.name, body.category, body.description||'', body.emoji||'🎫', body.date_start, body.date_end||null, body.venue, body.capacity, body.image_url||null, body.badge||null, body.status||'pending');
-        db.prepare('INSERT INTO activity_log (type, icon, text, user_id) VALUES (?,?,?,?)').run('event', 'mdi-calendar-plus', `Événement: <strong>${body.name}</strong>`, user.id);
+        db.prepare('INSERT INTO activity_logs (type, icon, text, user_id) VALUES (?,?,?,?)').run('event', 'mdi-calendar-plus', `Événement: <strong>${body.name}</strong>`, user.id);
         logActivity('event_created', user.id, user.name, 'event', r.lastInsertRowid, body.name, `Nouvel événement créé: ${body.name}`);
         const event = db.prepare('SELECT e.*, u.name as organizer_name FROM events e LEFT JOIN users u ON e.organizer_id = u.id WHERE e.id = ?').get(r.lastInsertRowid);
         return sendJSON(res, { event }, 201);
@@ -925,7 +922,7 @@ async function handleTickets(req, res, parts) {
                 tickets.push({ id_code: code, type: body.type || 'Standard', price: body.price });
             }
             db.prepare('UPDATE events SET tickets_sold = tickets_sold + ?, revenue = revenue + ? WHERE id = ?').run(qty, body.price * qty, body.event_id);
-            db.prepare('INSERT INTO activity_log (type, icon, text, user_id) VALUES (?,?,?,?)').run('sale', 'mdi-ticket', `<strong>+${qty} billet${qty > 1 ? 's' : ''}</strong> ${event.name}`, user.id);
+            db.prepare('INSERT INTO activity_logs (type, icon, text, user_id) VALUES (?,?,?,?)').run('sale', 'mdi-ticket', `<strong>+${qty} billet${qty > 1 ? 's' : ''}</strong> ${event.name}`, user.id);
             logActivity('ticket_purchased', user.id, user.name, 'ticket', tickets[0].id_code, event.name, `${user.name} a acheté ${qty} billet(s) pour ${event.name}`);
         });
         insert();
@@ -1136,7 +1133,7 @@ async function handleClients(req, res, parts) {
         const hash = hashPassword('password123');
         const initials = (body.name[0] + (body.name.split(' ').pop()?.[0] || '')).toUpperCase();
         const r = db.prepare('INSERT INTO users (name, email, password_hash, role, plan, avatar_initials, phone, status) VALUES (?,?,?,?,?,?,?,?)').run(body.name, body.email, hash, 'organizer', body.plan || 'starter', initials, body.phone || '', body.status || 'active');
-        db.prepare('INSERT INTO activity_log (type, icon, text, user_id) VALUES (?,?,?,?)').run('user', 'mdi-account-plus', `Nouveau client: <strong>${body.name}</strong>`, user.id);
+        db.prepare('INSERT INTO activity_logs (type, icon, text, user_id) VALUES (?,?,?,?)').run('user', 'mdi-account-plus', `Nouveau client: <strong>${body.name}</strong>`, user.id);
         return sendJSON(res, { client: { id: r.lastInsertRowid, name: body.name, email: body.email, plan: body.plan || 'starter' } }, 201);
     }
 
@@ -1275,17 +1272,28 @@ async function handleAnalytics(req, res, parts) {
 
 // SCANNER
 async function handleScanner(req, res, parts) {
-    const action = parts[1]; // The router passes parts, and parts[1] is the resource
+    const action = parts[1];
 
-    // POST /api/scan-access-requests (Staff requesting access)
     if (action === 'scan-access-requests') {
         if (req.method === 'POST') {
             const body = await parseBody(req);
-            const { eventId, deviceInfo } = body;
+            const scanToken = body.scan_token;
+            const deviceInfo = body.device_info || body.deviceInfo || {};
+            
+            // Validate scan token
+            const scanLink = db.prepare('SELECT sl.*, e.name as event_name FROM scan_links sl JOIN events e ON sl.event_id = e.id WHERE sl.token = ? AND sl.is_active = 1').get(scanToken);
+            if (!scanLink) return sendError(res, 'Lien invalide ou expiré', 404);
+            
             const requestToken = 'ar_' + crypto.randomBytes(12).toString('hex');
-            db.prepare('INSERT INTO scan_access_requests (event_id, request_token, device_info) VALUES (?, ?, ?)')
-              .run(eventId, requestToken, JSON.stringify(deviceInfo));
-            return sendJSON(res, { success: true, requestToken });
+            db.prepare('INSERT INTO scan_access_requests (event_id, request_token, device_info, status) VALUES (?, ?, ?, ?)').run(
+                scanLink.event_id, requestToken, JSON.stringify(deviceInfo), 'pending'
+            );
+            
+            return sendJSON(res, { 
+                success: true,
+                requestToken: requestToken,
+                event: { id: scanLink.event_id, name: scanLink.event_name }
+            }, 201);
         }
         
         // GET /api/scan-access-requests/pending (Organizer polling)
@@ -1308,12 +1316,11 @@ async function handleScanner(req, res, parts) {
         // GET /api/scan-access-requests/:token/status (Staff polling)
         if (req.method === 'GET' && parts[3] === 'status') {
             const token = parts[2];
-            const request = db.prepare('SELECT sar.*, sl.token as scan_link_token FROM scan_access_requests sar LEFT JOIN scan_links sl ON sar.event_id = sl.event_id WHERE sar.request_token = ? ORDER BY sl.id DESC LIMIT 1').get(token);
+            const request = db.prepare('SELECT * FROM scan_access_requests WHERE request_token = ?').get(token);
             if (!request) return sendError(res, 'Requête non trouvée', 404);
             
             let scanLink = null;
             if (request.status === 'approved') {
-                // Return the scan link for this event if approved
                 const link = db.prepare('SELECT token FROM scan_links WHERE event_id = ? AND is_active = 1 LIMIT 1').get(request.event_id);
                 if (link) scanLink = `${APP_URL}/User/ticketmada-scanner.html?token=${link.token}`;
             }
@@ -1418,7 +1425,7 @@ async function handleActivity(req, res, parts) {
     let where = '1=1', params = [];
     if (type) { where = 'type = ?'; params.push(type); }
     params.push(limit);
-    const activities = db.prepare(`SELECT * FROM activity_log WHERE ${where} ORDER BY created_at DESC LIMIT ?`).all(...params);
+    const activities = db.prepare(`SELECT * FROM activity_logs WHERE ${where} ORDER BY created_at DESC LIMIT ?`).all(...params);
     activities.forEach(a => {
         const diff = Math.floor((Date.now() - new Date(a.created_at).getTime()) / 1000);
         if (diff < 60) a.time = `Il y a ${diff} sec`;
@@ -1490,23 +1497,30 @@ const server = http.createServer(async (req, res) => {
                 case 'activity': return await handleActivity(req, res, parts);
                 case 'organizer-applications':
                 case 'my-application': return await handleOrganizerApplications(req, res, parts);
-        case 'superadmin': return await handleSuperAdmin(req, res, parts);
-        case 'scan-access-requests':
-        case 'scan-links':
-        case 'scan-devices':
-        case 'scan-logs': return await handleScanner(req, res, parts);
-        default: return sendError(res, 'Route non trouvée', 404);
+                case 'superadmin': return await handleSuperAdmin(req, res, parts);
+                case 'scan-access-requests':
+                case 'scan-links':
+                case 'scan-devices':
+                case 'scan-logs': return await handleScanner(req, res, parts);
+                default: return sendError(res, 'Route non trouvée', 404);
+            }
+        } catch (err) {
+            console.error('Error:', err);
+            return sendError(res, 'Erreur serveur: ' + err.message, 500);
+        }
     }
-} catch (err) {
-    console.error('Error:', err);
-    return sendError(res, 'Erreur serveur: ' + err.message, 500);
-}
-}
+
+    // Static files
+    if (!serveStatic(req, res)) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('404 Not Found');
+    }
+});
 
 // SUPERADMIN
 async function handleSuperAdmin(req, res, parts) {
-    const user = requireAuth(req);
-    if (!user || user.email !== 'sedrayiokoraz@gmail.com') {
+    const user = requireAuth(req, ['superadmin']);
+    if (!user) {
         return sendError(res, 'Accès réservé au SuperAdmin', 403);
     }
 
@@ -1516,21 +1530,21 @@ async function handleSuperAdmin(req, res, parts) {
 
     if (resource === 'dashboard' && req.method === 'GET') {
         const stats = {
-            totalRevenue: db.prepare('SELECT COALESCE(SUM(price), 0) as total FROM tickets WHERE status = ?').get('confirmed')?.total || 0,
-            totalTicketsSold: db.prepare('SELECT COUNT(*) as count FROM tickets WHERE status = ?').get('confirmed')?.count || 0,
-            activeEvents: db.prepare('SELECT COUNT(*) as count FROM events WHERE status = ?').get('active')?.count || 0,
-            totalUsers: db.prepare('SELECT COUNT(*) as count FROM users WHERE role = ?').get('buyer')?.count || 0,
-            activeOrganizers: db.prepare('SELECT COUNT(*) as count FROM users WHERE role = ? AND status = ?').get('organizer', 'active')?.count || 0,
-            pendingApplications: db.prepare('SELECT COUNT(*) as count FROM organizer_applications WHERE status = ?').get('pending')?.count || 0,
+            totalRevenue: db.prepare("SELECT COALESCE(SUM(price), 0) as total FROM tickets WHERE status IN ('active', 'scanned')").get()?.total || 0,
+            totalTicketsSold: db.prepare("SELECT COUNT(*) as count FROM tickets WHERE status IN ('active', 'scanned')").get()?.count || 0,
+            activeEvents: db.prepare("SELECT COUNT(*) as count FROM events WHERE status = 'active'").get()?.count || 0,
+            totalUsers: db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'buyer' AND status != 'deleted'").get()?.count || 0,
+            activeOrganizers: db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'organizer' AND status = 'active'").get()?.count || 0,
+            pendingApplications: db.prepare("SELECT COUNT(*) as count FROM organizer_applications WHERE status = 'pending'").get()?.count || 0,
             totalEvents: db.prepare('SELECT COUNT(*) as count FROM events').get()?.count || 0,
-            blockedUsers: db.prepare('SELECT COUNT(*) as count FROM users WHERE status = ?').get('blocked')?.count || 0,
+            blockedUsers: db.prepare("SELECT COUNT(*) as count FROM users WHERE status = 'blocked'").get()?.count || 0,
             
             // Monthly revenue for chart (last 12 months)
             monthlyRevenue: db.prepare(`
                 SELECT strftime('%Y-%m', created_at) as month, 
                        COALESCE(SUM(price), 0) as revenue
                 FROM tickets 
-                WHERE status = 'confirmed' 
+                WHERE status IN ('active', 'scanned')
                 AND created_at >= datetime('now', '-12 months')
                 GROUP BY month 
                 ORDER BY month
@@ -1541,7 +1555,7 @@ async function handleSuperAdmin(req, res, parts) {
                 SELECT e.category, COUNT(t.id) as ticket_count
                 FROM tickets t 
                 JOIN events e ON t.event_id = e.id
-                WHERE t.status = 'confirmed'
+                WHERE t.status IN ('active', 'scanned')
                 GROUP BY e.category
             `).all(),
             
@@ -1550,7 +1564,7 @@ async function handleSuperAdmin(req, res, parts) {
                 SELECT e.name, e.id, COUNT(t.id) as tickets_sold, 
                        COALESCE(SUM(t.price), 0) as revenue
                 FROM events e 
-                LEFT JOIN tickets t ON t.event_id = e.id AND t.status = 'confirmed'
+                LEFT JOIN tickets t ON t.event_id = e.id AND t.status IN ('active', 'scanned')
                 AND t.created_at >= datetime('now', 'start of month')
                 GROUP BY e.id 
                 ORDER BY tickets_sold DESC 
@@ -1566,7 +1580,7 @@ async function handleSuperAdmin(req, res, parts) {
         };
         
         stats.totalCommission = Math.round(stats.totalRevenue * 0.03);
-        stats.avgFillRate = 72; // Placeholder, could be calculated more precisely
+        stats.avgFillRate = 72;
         
         return sendJSON(res, stats);
     }
@@ -1575,9 +1589,9 @@ async function handleSuperAdmin(req, res, parts) {
         const orgs = db.prepare(`
             SELECT u.*, 
                    (SELECT COUNT(*) FROM events WHERE organizer_id = u.id) as events_count,
-                   (SELECT COALESCE(SUM(price), 0) FROM tickets WHERE event_id IN (SELECT id FROM events WHERE organizer_id = u.id) AND status = 'confirmed') as total_revenue
+                   (SELECT COALESCE(SUM(price), 0) FROM tickets WHERE event_id IN (SELECT id FROM events WHERE organizer_id = u.id) AND status IN ('active', 'scanned')) as total_revenue
             FROM users u 
-            WHERE u.role = 'organizer' 
+            WHERE u.role = 'organizer' AND u.status != 'deleted'
             ORDER BY u.created_at DESC
         `).all();
         orgs.forEach(o => {
@@ -1590,10 +1604,10 @@ async function handleSuperAdmin(req, res, parts) {
         const users = db.prepare(`
             SELECT u.*, 
                    (SELECT COUNT(*) FROM tickets WHERE buyer_id = u.id) as purchaseCount,
-                   (SELECT COALESCE(SUM(price), 0) FROM tickets WHERE buyer_id = u.id AND status = 'confirmed') as totalSpent,
+                   (SELECT COALESCE(SUM(price), 0) FROM tickets WHERE buyer_id = u.id AND status IN ('active', 'scanned')) as totalSpent,
                    (SELECT MAX(created_at) FROM tickets WHERE buyer_id = u.id) as lastPurchase
             FROM users u 
-            WHERE u.role = 'buyer' 
+            WHERE u.role = 'buyer' AND u.status != 'deleted'
             ORDER BY u.created_at DESC
         `).all();
         return sendJSON(res, users);
@@ -1602,8 +1616,8 @@ async function handleSuperAdmin(req, res, parts) {
     if (resource === 'events' && req.method === 'GET') {
         const events = db.prepare(`
             SELECT e.*, u.name as organizer_name,
-                   (SELECT COUNT(*) FROM tickets WHERE event_id = e.id AND status = 'confirmed') as ticketsSold,
-                   (SELECT COALESCE(SUM(price), 0) FROM tickets WHERE event_id = e.id AND status = 'confirmed') as totalRevenue
+                   (SELECT COUNT(*) FROM tickets WHERE event_id = e.id AND status IN ('active', 'scanned')) as ticketsSold,
+                   (SELECT COALESCE(SUM(price), 0) FROM tickets WHERE event_id = e.id AND status IN ('active', 'scanned')) as totalRevenue
             FROM events e
             JOIN users u ON e.organizer_id = u.id
             ORDER BY e.created_at DESC
@@ -1621,26 +1635,61 @@ async function handleSuperAdmin(req, res, parts) {
         if (resource === 'organizers' && id && action === 'suspend') {
             const body = await parseBody(req);
             db.prepare("UPDATE users SET status = 'suspended' WHERE id = ?").run(id);
-            logActivity('organizer_suspended', user.id, user.name, 'organizer', id, '', `Organisateur suspendu: ${body.reason}`);
+            logActivity('organizer_suspended', user.id, user.name, 'organizer', id, '', `Organisateur suspendu: ${body.reason || ''}`);
+            return sendJSON(res, { success: true });
+        }
+        if (resource === 'organizers' && id && action === 'reactivate') {
+            db.prepare("UPDATE users SET status = 'active' WHERE id = ?").run(id);
+            logActivity('organizer_reactivated', user.id, user.name, 'organizer', id, '', 'Organisateur réactivé');
             return sendJSON(res, { success: true });
         }
         if (resource === 'users' && id && action === 'block') {
             const body = await parseBody(req);
             db.prepare("UPDATE users SET status = 'blocked' WHERE id = ?").run(id);
-            logActivity('user_blocked', user.id, user.name, 'user', id, '', `Utilisateur bloqué: ${body.reason}`);
+            logActivity('user_blocked', user.id, user.name, 'user', id, '', `Utilisateur bloqué: ${body.reason || ''}`);
+            return sendJSON(res, { success: true });
+        }
+        if (resource === 'users' && id && action === 'unblock') {
+            db.prepare("UPDATE users SET status = 'active' WHERE id = ?").run(id);
+            logActivity('user_unblocked', user.id, user.name, 'user', id, '', 'Utilisateur débloqué');
+            return sendJSON(res, { success: true });
+        }
+        if (resource === 'events' && id && action === 'suspend') {
+            const body = await parseBody(req);
+            db.prepare("UPDATE events SET status = 'suspended' WHERE id = ?").run(id);
+            logActivity('event_suspended', user.id, user.name, 'event', id, '', `Événement suspendu: ${body.reason || ''}`);
+            return sendJSON(res, { success: true });
+        }
+        if (resource === 'events' && id && action === 'reactivate') {
+            db.prepare("UPDATE events SET status = 'active' WHERE id = ?").run(id);
+            logActivity('event_reactivated', user.id, user.name, 'event', id, '', 'Événement réactivé');
+            return sendJSON(res, { success: true });
+        }
+    }
+
+    if (req.method === 'DELETE') {
+        if (resource === 'organizers' && id) {
+            db.prepare("UPDATE events SET status = 'cancelled' WHERE organizer_id = ?").run(id);
+            db.prepare("UPDATE users SET status = 'deleted' WHERE id = ?").run(id);
+            logActivity('organizer_deleted', user.id, user.name, 'organizer', id, '', 'Organisateur supprimé');
+            return sendJSON(res, { success: true });
+        }
+        if (resource === 'users' && id) {
+            db.prepare("UPDATE tickets SET status = 'cancelled' WHERE buyer_id = ?").run(id);
+            db.prepare("UPDATE users SET status = 'deleted' WHERE id = ?").run(id);
+            logActivity('user_deleted', user.id, user.name, 'user', id, '', 'Utilisateur supprimé');
+            return sendJSON(res, { success: true });
+        }
+        if (resource === 'events' && id) {
+            db.prepare("UPDATE events SET status = 'cancelled' WHERE id = ?").run(id);
+            db.prepare("UPDATE tickets SET status = 'cancelled' WHERE event_id = ?").run(id);
+            logActivity('event_deleted', user.id, user.name, 'event', id, '', 'Événement supprimé');
             return sendJSON(res, { success: true });
         }
     }
 
     return sendError(res, 'Route superadmin non trouvée', 404);
 }
-
-    // Static files
-    if (!serveStatic(req, res)) {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('404 Not Found');
-    }
-});
 
 server.listen(PORT, '0.0.0.0', () => {
     // Get local IP for LAN access
