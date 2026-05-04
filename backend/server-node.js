@@ -966,12 +966,50 @@ function initDB() {
         if (!colNames.includes('attendee_id')) db.exec("ALTER TABLE tickets ADD COLUMN attendee_id INTEGER");
     } catch(e) { console.warn('Migration tickets new cols:', e.message); }
 
+    // ═══ Migration : Orders & Financials (CRITICAL) ═══
     try {
         const cols = db.prepare("PRAGMA table_info(orders)").all();
         const colNames = cols.map(c => c.name);
+        
         if (!colNames.includes('expires_at')) db.exec("ALTER TABLE orders ADD COLUMN expires_at DATETIME");
         if (!colNames.includes('total_tax')) db.exec("ALTER TABLE orders ADD COLUMN total_tax INTEGER DEFAULT 0");
-    } catch(e) { console.warn('Migration orders new cols:', e.message); }
+        if (!colNames.includes('total_gross')) db.exec("ALTER TABLE orders ADD COLUMN total_gross INTEGER DEFAULT 0");
+        if (!colNames.includes('total_before_fees')) db.exec("ALTER TABLE orders ADD COLUMN total_before_fees INTEGER DEFAULT 0");
+        if (!colNames.includes('total_fees')) db.exec("ALTER TABLE orders ADD COLUMN total_fees INTEGER DEFAULT 0");
+        if (!colNames.includes('total_discount')) db.exec("ALTER TABLE orders ADD COLUMN total_discount INTEGER DEFAULT 0");
+        if (!colNames.includes('commission_amount')) db.exec("ALTER TABLE orders ADD COLUMN commission_amount INTEGER DEFAULT 0");
+        if (!colNames.includes('commission_rate')) db.exec("ALTER TABLE orders ADD COLUMN commission_rate REAL DEFAULT 0.03");
+        if (!colNames.includes('paid_at')) db.exec("ALTER TABLE orders ADD COLUMN paid_at DATETIME");
+        if (!colNames.includes('public_id')) db.exec("ALTER TABLE orders ADD COLUMN public_id TEXT");
+        
+        // Backfill data for old orders
+        db.exec(`
+            UPDATE orders 
+            SET total_gross = total_before_fees + total_fees + total_tax - total_discount
+            WHERE total_gross = 0 AND total_before_fees > 0
+        `);
+        db.exec(`
+            UPDATE orders 
+            SET commission_amount = total_fees
+            WHERE (commission_amount = 0 OR commission_amount IS NULL) AND total_fees > 0
+        `);
+
+        // Backfill events revenue and tickets_sold
+        db.exec(`
+            UPDATE events 
+            SET 
+                revenue = (SELECT COALESCE(SUM(price), 0) FROM tickets WHERE event_id = events.id AND status IN ('active', 'scanned')),
+                tickets_sold = (SELECT COUNT(*) FROM tickets WHERE event_id = events.id AND status IN ('active', 'scanned'))
+        `);
+        
+        // Ensure ALL orders have a public_id for safety
+        const ordersWithoutPublicId = db.prepare("SELECT id FROM orders WHERE public_id IS NULL OR public_id = ''").all();
+        ordersWithoutPublicId.forEach(o => {
+            const pid = crypto.randomBytes(16).toString('hex');
+            db.prepare("UPDATE orders SET public_id = ? WHERE id = ?").run(pid, o.id);
+        });
+
+    } catch(e) { console.warn('Migration orders financial cols:', e.message); }
 
     const userCount = db.prepare("SELECT COUNT(*) as count FROM users").get().count;
     if (userCount === 0) {
@@ -1941,8 +1979,10 @@ async function handleAnalytics(req, res, parts) {
         const url = new URL(req.url, 'http://localhost');
         const orgId = parseInt(url.searchParams.get('organizer_id') || user.id);
 
-        const totalRevenue = db.prepare('SELECT COALESCE(SUM(revenue),0) as v FROM events WHERE organizer_id=?').get(orgId).v;
-        const ts = db.prepare("SELECT COUNT(*) as total, SUM(CASE WHEN t.status='scanned' THEN 1 ELSE 0 END) as scanned, SUM(CASE WHEN t.status='active' THEN 1 ELSE 0 END) as pending, SUM(CASE WHEN t.status='refunded' THEN 1 ELSE 0 END) as refunded FROM tickets t JOIN events e ON t.event_id=e.id WHERE e.organizer_id=?").get(orgId);
+        const totalRevenueResult = db.prepare("SELECT COALESCE(SUM(price), 0) as v FROM tickets t JOIN events e ON t.event_id = e.id WHERE e.organizer_id = ? AND t.status IN ('active', 'scanned')").get(orgId);
+        const totalRevenue = totalRevenueResult.v;
+        
+        const ts = db.prepare("SELECT COUNT(*) as total, SUM(CASE WHEN t.status='scanned' THEN 1 ELSE 0 END) as scanned, SUM(CASE WHEN t.status='active' THEN 1 ELSE 0 END) as pending, SUM(CASE WHEN t.status='refunded' THEN 1 ELSE 0 END) as refunded FROM tickets t JOIN events e ON t.event_id=e.id WHERE e.organizer_id=? AND t.status != 'reserved'").get(orgId);
         const ps = db.prepare("SELECT COALESCE(SUM(CASE WHEN status='completed' THEN net ELSE 0 END),0) as paid_out, COALESCE(SUM(CASE WHEN status='pending' THEN net ELSE 0 END),0) as pending_balance FROM payouts WHERE organizer_id=?").get(orgId);
         const monthRev = db.prepare("SELECT COALESCE(SUM(t.price),0) as v FROM tickets t JOIN events e ON t.event_id=e.id WHERE e.organizer_id=? AND strftime('%Y-%m',t.created_at)=strftime('%Y-%m','now')").get(orgId).v;
         const events = db.prepare("SELECT * FROM events WHERE organizer_id=? AND status!='cancelled' ORDER BY date_start ASC").all(orgId);
@@ -3029,7 +3069,8 @@ async function handleOrders(req, res, parts) {
             const taxRate = activeTaxes.reduce((sum, t) => sum + t.rate, 0) / 100;
             const totalTax = Math.round(totalAfterDiscount * taxRate);
             
-            const feePercent = 0.03;
+            const commissionConfig = db.prepare("SELECT value FROM system_config WHERE key = 'commission_rate'").get()?.value || '0.03';
+            const feePercent = parseFloat(commissionConfig);
             const commission = Math.round(totalAfterDiscount * feePercent);
             const totalGross = totalAfterDiscount + commission + totalTax;
 
@@ -3079,7 +3120,9 @@ async function handleOrders(req, res, parts) {
         db.prepare("UPDATE orders SET status = 'COMPLETED', paid_at = datetime('now') WHERE id = ?").run(id);
         db.prepare("UPDATE tickets SET status = 'active' WHERE order_id = ? AND status = 'reserved'").run(id);
         
-        // Update stats
+        // Update stats (Sync both tables for now)
+        db.prepare(`UPDATE events SET revenue = revenue + ?, tickets_sold = tickets_sold + (SELECT COUNT(*) FROM tickets WHERE order_id = ?) WHERE id = ?`).run(order.total_gross, id, order.event_id);
+        
         db.prepare(`
             INSERT INTO event_statistics (event_id, tickets_sold, sales_total_gross)
             VALUES (?, (SELECT COUNT(*) FROM tickets WHERE order_id = ?), ?)
