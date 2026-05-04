@@ -223,8 +223,8 @@
         [v-cloak] { display: none; }
     </style>
 </head>
-<body v-cloak>
-    <div id="app">
+<body>
+    <div id="app" v-cloak>
         <div class="auth-screen" v-if="!isLoggedIn && !checkingAuth">
             <div class="auth-card">
                 <div class="auth-logo">

@@ -497,27 +497,6 @@ const TicketMadaAPI = (() => {
         post(path, data) { return this.request(path, { method: 'POST', body: data }); }
         delete(path) { return this.request(path, { method: 'DELETE' }); }
         async put(path, data) {
-            console.log('[SmartAPI] PUT', path, data);
-            if (path.match(/\/organizer-applications\/(.+)\/approve/)) {
-                const id = path.match(/\/organizer-applications\/(.+)\/approve/)[1];
-                const app = MOCK_APPLICATIONS.find(a => a.id === id);
-                if (app) {
-                    app.status = 'approved';
-                    console.log('%c[EMAIL SIMULATION] TO: ' + app.email, 'background: #00D9A5; color: black; padding: 5px;', 'Welcome to TicketMada! Your organizer account is now active. Access your dashboard here: http://localhost:3000/Admin/ticketmada-dashboard.html');
-                    MOCK_SUPERADMIN_STATS.pendingApplications = MOCK_APPLICATIONS.filter(a => a.status === 'pending').length;
-                    return { success: true };
-                }
-            }
-            if (path.match(/\/organizer-applications\/(.+)\/reject/)) {
-                const id = path.match(/\/organizer-applications\/(.+)\/reject/)[1];
-                const app = MOCK_APPLICATIONS.find(a => a.id === id);
-                if (app) {
-                    app.status = 'rejected';
-                    console.log('%c[EMAIL SIMULATION] TO: ' + app.email, 'background: #E74C3C; color: white; padding: 5px;', 'Your application has been rejected. Reason: ' + (data?.reason || 'Non spécifiée'));
-                    MOCK_SUPERADMIN_STATS.pendingApplications = MOCK_APPLICATIONS.filter(a => a.status === 'pending').length;
-                    return { success: true };
-                }
-            }
             return this.request(path, { method: 'PUT', body: data });
         }
 
@@ -646,6 +625,11 @@ const TicketMadaAPI = (() => {
                     return {};
                 }
                 
+                if (path.includes('/auth/me')) {
+                    const u = this.getUser();
+                    if (u) return { user: u };
+                    throw { status: 401, error: 'Not logged in' };
+                }
                 if (path.includes('/auth/status')) return { loggedIn: this.isLoggedIn(), user: this.getUser() };
                 return {};
             }
@@ -817,6 +801,7 @@ const TicketMadaAPI = (() => {
         async oauthLogin(data) { return this.real.post('/api/auth/oauth', data); }
 
         setAuth(token, user) { this.real.setAuth(token, user); }
+        clearAuth() { this.real.clearAuth(); }
         setScanAuth(token, deviceId) { 
             if (this.useMock) MockAPI.setScanAuth(token, deviceId);
             this.real.setScanAuth(token, deviceId); 
