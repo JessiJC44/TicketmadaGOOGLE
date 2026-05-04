@@ -1,6 +1,6 @@
 {
   "name": "TicketMada",
   "description": "Plateforme de billetterie #1 à Madagascar",
-  "requestFramePermissions": ["camera"],
+  "requestFramePermissions": [],
   "majorCapabilities": []
 }

@@ -27,31 +27,35 @@ export function getFirebaseAuth() { return auth; }
 export function getFirebaseDb() { return db; }
 
 export async function loginWithGoogle() {
-    if (!auth) await initFirebase();
+    console.log('[Firebase] loginWithGoogle called');
+    if (!auth) {
+        console.log('[Firebase] Initializing before login...');
+        await initFirebase();
+    }
     const provider = new GoogleAuthProvider();
+    console.log('[Firebase] Provider created, opening popup...');
     try {
         const result = await signInWithPopup(auth, provider);
+        console.log('[Firebase] Popup result received for:', result.user.email);
         const user = result.user;
         
-        // Sync to Firestore
         const userProfile = {
             name: user.displayName,
             email: user.email,
             photo: user.photoURL,
             uid: user.uid,
-            role: 'user', // default role
+            role: 'user',
             updatedAt: serverTimestamp()
         };
 
-        try {
-            await setDoc(doc(db, 'users', user.uid), {
-                ...userProfile,
-                createdAt: serverTimestamp() // Only if it doesn't exist, but setDoc with merge:true or checking could be better
-            }, { merge: true });
-        } catch (err) {
+        // Sync to Firestore (non-blocking for login flow)
+        setDoc(doc(db, 'users', user.uid), {
+            ...userProfile,
+            createdAt: serverTimestamp()
+        }, { merge: true }).catch(err => {
             console.error('[Firebase] Failed to sync profile:', err);
-            handleFirestoreError(err, 'write', `users/${user.uid}`);
-        }
+            // We don't throw here to avoid blocking login if Firestore fails
+        });
 
         console.log('[Firebase] Signed in user:', user.displayName);
         return {

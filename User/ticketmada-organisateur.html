@@ -1070,24 +1070,28 @@
                     }
 
                     try {
-                        console.log('[Auth] Google Login requested');
+                        console.log('[UI] Google Login requested');
                         const result = await window.api.loginWithGoogle();
-                        console.log('[Auth] Google Result:', result);
+                        console.log('[UI] Google Result:', result);
                         
                         if (result && result.success) {
+                            console.log('[UI] Login success, updating state');
                             this.isLoggedIn = true;
                             this.showAuth = false;
                             
                             // If user is a buyer, show the organizer modal or redirect to specialized page
                             if (result.user.role === 'buyer') {
-                                // Default behavior: stay on page and open modal if they were applying
+                                console.log('[UI] User is buyer, triggering checkAndApply');
                                 this.checkAndApply();
                             } else {
+                                console.log('[UI] User is already organizer or admin, redirecting to dashboard');
                                 window.location.href = this.dashboardUrl;
                             }
                         } else if (result && !result.canceled) {
+                            console.error('[UI] Login failed:', result.error);
                             alert(result.error || (this.lang === 'fr' ? 'Erreur de connexion Google' : 'Google Login Error'));
                         } else if (!result) {
+                            console.warn('[UI] No result from Google login, falling back to simulation');
                             // Fallback if Firebase is not configured at all
                             console.warn('[Auth] Google login failed to return result, trying simulation fallback');
                             if (window.OAuthSim) {
@@ -1101,7 +1105,7 @@
                             }
                         }
                     } catch (e) {
-                        console.error('[Auth] Login error', e);
+                        console.error('[UI] Google Auth exception:', e);
                         alert(this.lang === 'fr' ? 'Échec de la connexion Google.' : 'Google connection failed.');
                     }
                 }

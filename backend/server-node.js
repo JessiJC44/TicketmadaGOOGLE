@@ -366,7 +366,115 @@ function initDB() {
             user_agent TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
+
+        -- ═══ Table : Historique des reviews d'événements ═══
+        CREATE TABLE IF NOT EXISTS event_reviews (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id INTEGER NOT NULL,
+            reviewer_id INTEGER NOT NULL,
+            action TEXT NOT NULL, -- 'submitted', 'approved', 'rejected', 'changes_requested', 'resubmitted', 'published', 'modification_requested'
+            comment TEXT,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (event_id) REFERENCES events(id),
+            FOREIGN KEY (reviewer_id) REFERENCES users(id)
+        );
+
+        -- ═══ Table : Invitations SuperAdmin ═══
+        CREATE TABLE IF NOT EXISTS superadmin_invitations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL,
+            level TEXT NOT NULL, -- 'god', 'level2', 'level1'
+            token TEXT UNIQUE NOT NULL,
+            invited_by INTEGER NOT NULL,
+            status TEXT DEFAULT 'pending', -- 'pending', 'accepted', 'expired'
+            created_at DATETIME DEFAULT (datetime('now')),
+            accepted_at DATETIME,
+            FOREIGN KEY (invited_by) REFERENCES users(id)
+        );
+
+        -- ═══ Table : Historique des changements de licence ═══
+        CREATE TABLE IF NOT EXISTS license_changes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            old_value TEXT,
+            new_value TEXT,
+            changed_by INTEGER NOT NULL,
+            license_type TEXT NOT NULL, -- 'superadmin' ou 'organizer'
+            reason TEXT,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (changed_by) REFERENCES users(id)
+        );
     `);
+
+    // ═══ Migration : SuperAdmin levels + Organizer licenses ═══
+    try {
+        const cols = db.prepare("PRAGMA table_info(users)").all();
+        const colNames = cols.map(c => c.name);
+        
+        if (!colNames.includes('superadmin_level')) {
+            db.exec("ALTER TABLE users ADD COLUMN superadmin_level TEXT"); // 'god', 'level2', 'level1', ou NULL
+        }
+        if (!colNames.includes('organizer_license')) {
+            db.exec("ALTER TABLE users ADD COLUMN organizer_license TEXT DEFAULT 'standard'"); // 'standard', 'verified', 'premium'
+        }
+        if (!colNames.includes('invited_by')) {
+            db.exec("ALTER TABLE users ADD COLUMN invited_by INTEGER");
+        }
+        
+        // Assigner GODLevel au compte principal
+        db.prepare("UPDATE users SET role = 'superadmin', superadmin_level = 'god' WHERE email = 'sedrayiokoraz@gmail.com'").run();
+        
+        // Assigner GODLevel au superadmin seed existant aussi
+        db.prepare("UPDATE users SET superadmin_level = 'god' WHERE role = 'superadmin' AND superadmin_level IS NULL").run();
+        
+        // Assigner license standard aux organisateurs sans licence
+        db.prepare("UPDATE users SET organizer_license = 'standard' WHERE role = 'organizer' AND organizer_license IS NULL").run();
+        
+    } catch(e) { console.warn('Migration users levels:', e.message); }
+
+    // ═══ Migration : Event workflow ═══
+    try {
+        const cols = db.prepare("PRAGMA table_info(events)").all();
+        const colNames = cols.map(c => c.name);
+        
+        if (!colNames.includes('review_status')) {
+            db.exec("ALTER TABLE events ADD COLUMN review_status TEXT DEFAULT 'pending_review'");
+            // Valeurs: 'draft', 'pending_review', 'changes_requested', 'approved', 'published'
+        }
+        if (!colNames.includes('seatmap_requested')) {
+            db.exec("ALTER TABLE events ADD COLUMN seatmap_requested INTEGER DEFAULT 0"); // 0 ou 1
+        }
+        if (!colNames.includes('review_notes')) {
+            db.exec("ALTER TABLE events ADD COLUMN review_notes TEXT"); // Commentaires du SuperAdmin
+        }
+        if (!colNames.includes('reviewed_by')) {
+            db.exec("ALTER TABLE events ADD COLUMN reviewed_by INTEGER");
+        }
+        if (!colNames.includes('published_at')) {
+            db.exec("ALTER TABLE events ADD COLUMN published_at DATETIME");
+        }
+        if (!colNames.includes('trashed_at')) {
+            db.exec("ALTER TABLE events ADD COLUMN trashed_at DATETIME"); // NULL = pas en corbeille
+        }
+        if (!colNames.includes('trashed_by')) {
+            db.exec("ALTER TABLE events ADD COLUMN trashed_by INTEGER"); // user_id qui a mis en corbeille
+        }
+        if (!colNames.includes('permanently_deleted')) {
+            db.exec("ALTER TABLE events ADD COLUMN permanently_deleted INTEGER DEFAULT 0"); // 1 = supprimé par SuperAdmin
+        }
+        if (!colNames.includes('pending_changes')) {
+            db.exec("ALTER TABLE events ADD COLUMN pending_changes TEXT"); // JSON des modifs en attente post-publication
+        }
+        if (!colNames.includes('cover_image')) {
+            db.exec("ALTER TABLE events ADD COLUMN cover_image TEXT");
+        }
+        
+        // Marquer les événements existants avec status='active' comme publiés
+        db.prepare("UPDATE events SET review_status = 'published' WHERE status = 'active' AND review_status IS NULL").run();
+        db.prepare("UPDATE events SET review_status = 'pending_review' WHERE status = 'pending' AND review_status IS NULL").run();
+        
+    } catch(e) { console.warn('Migration events workflow:', e.message); }
 
     seedDB();
     console.log('Database initialized and seeded.');
@@ -386,39 +494,39 @@ function generateToken() {
 
 function seedDB() {
     const hash = hashPassword('password123');
-    const insertUser = db.prepare('INSERT INTO users (id, name, email, password_hash, role, plan, avatar_initials, phone, status, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)');
+    const insertUser = db.prepare('INSERT INTO users (id, name, email, password_hash, role, plan, avatar_initials, phone, status, created_at, superadmin_level, organizer_license) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
     const users = [
-        [1, 'Rabe Jean', 'rabe@example.mg', hash, 'buyer', null, 'RJ', null, 'active', '2025-06-15'],
-        [2, 'Marie Rakoto', 'marie@example.mg', hash, 'buyer', null, 'MR', null, 'active', '2025-08-20'],
-        [3, 'Solo Andry', 'solo@example.mg', hash, 'buyer', null, 'SA', null, 'active', '2025-09-10'],
-        [4, 'Faly Nina', 'faly@example.mg', hash, 'buyer', null, 'FN', null, 'active', '2025-11-05'],
-        [5, 'Festival Donia', 'contact@donia.mg', hash, 'organizer', 'pro', 'FD', '+261 34 00 000 01', 'active', '2024-01-15'],
-        [6, 'Live Nation MG', 'info@livenation.mg', hash, 'organizer', 'enterprise', 'LN', '+261 34 00 000 02', 'active', '2023-06-03'],
-        [7, 'Palais des Sports', 'admin@palais.mg', hash, 'organizer', 'pro', 'PS', '+261 34 00 000 03', 'active', '2023-09-22'],
-        [8, 'Madajazzcar', 'hello@madajazz.mg', hash, 'organizer', 'starter', 'MJ', '+261 34 00 000 04', 'pending', '2024-03-01'],
-        [9, 'CNaPS Sport', 'events@cnaps.mg', hash, 'organizer', 'pro', 'CS', '+261 34 00 000 05', 'active', '2023-11-10'],
-        [10, 'Jean Rakoto', 'jean@donia.mg', hash, 'organizer', null, 'JR', null, 'active', '2024-02-01'],
-        [11, 'Marie Razafy', 'marie@donia.mg', hash, 'organizer', null, 'MR', null, 'active', '2024-03-15'],
-        [12, 'Solo Andria', 'solo@donia.mg', hash, 'organizer', null, 'SA', null, 'active', '2024-04-01'],
-        [13, 'Admin TM', 'admin@ticketmada.mg', hash, 'admin', null, 'AT', null, 'active', '2023-01-01'],
-        [14, 'Super Admin', 'superadmin@ticketmada.mg', hash, 'superadmin', null, 'SA', null, 'active', '2023-01-01'],
-        [15, 'TicketMada Admin', 'sedrayiokoraz@gmail.com', hash, 'superadmin', null, 'TM', null, 'active', '2024-01-01'],
+        [1, 'Rabe Jean', 'rabe@example.mg', hash, 'buyer', null, 'RJ', null, 'active', '2025-06-15', null, null],
+        [2, 'Marie Rakoto', 'marie@example.mg', hash, 'buyer', null, 'MR', null, 'active', '2025-08-20', null, null],
+        [3, 'Solo Andry', 'solo@example.mg', hash, 'buyer', null, 'SA', null, 'active', '2025-09-10', null, null],
+        [4, 'Faly Nina', 'faly@example.mg', hash, 'buyer', null, 'FN', null, 'active', '2025-11-05', null, null],
+        [5, 'Festival Donia', 'contact@donia.mg', hash, 'organizer', 'pro', 'FD', '+261 34 00 000 01', 'active', '2024-01-15', null, 'verified'],
+        [6, 'Live Nation MG', 'info@livenation.mg', hash, 'organizer', 'enterprise', 'LN', '+261 34 00 000 02', 'active', '2023-06-03', null, 'premium'],
+        [7, 'Palais des Sports', 'admin@palais.mg', hash, 'organizer', 'pro', 'PS', '+261 34 00 000 03', 'active', '2023-09-22', null, 'standard'],
+        [8, 'Madajazzcar', 'hello@madajazz.mg', hash, 'organizer', 'starter', 'MJ', '+261 34 00 000 04', 'pending', '2024-03-01', null, 'standard'],
+        [9, 'CNaPS Sport', 'events@cnaps.mg', hash, 'organizer', 'pro', 'CS', '+261 34 00 000 05', 'active', '2023-11-10', null, 'verified'],
+        [10, 'Jean Rakoto', 'jean@donia.mg', hash, 'organizer', null, 'JR', null, 'active', '2024-02-01', null, 'standard'],
+        [11, 'Marie Razafy', 'marie@donia.mg', hash, 'organizer', null, 'MR', null, 'active', '2024-03-15', null, 'standard'],
+        [12, 'Solo Andria', 'solo@donia.mg', hash, 'organizer', null, 'SA', null, 'active', '2024-04-01', null, 'standard'],
+        [13, 'Admin TM', 'admin@ticketmada.mg', hash, 'admin', null, 'AT', null, 'active', '2023-01-01', null, null],
+        [14, 'Super Admin', 'superadmin@ticketmada.mg', hash, 'superadmin', null, 'SA', null, 'active', '2023-01-01', 'level2', null],
+        [15, 'TicketMada Admin', 'sedrayiokoraz@gmail.com', hash, 'superadmin', null, 'TM', null, 'active', '2024-01-01', 'god', null],
     ];
     const insertMany = db.transaction((items) => { for (const u of items) insertUser.run(...u); });
     insertMany(users);
 
-    const insertEvent = db.prepare('INSERT INTO events (id, organizer_id, name, category, description, emoji, date_start, date_end, venue, capacity, tickets_sold, revenue, image_url, badge, status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+    const insertEvent = db.prepare('INSERT INTO events (id, organizer_id, name, category, description, emoji, date_start, date_end, venue, capacity, tickets_sold, revenue, image_url, badge, status, review_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
     const events = [
-        [1, 6, 'Dama Live - Tournée Nationale 2026', 'concerts', 'Le plus grand concert de l\'année', '🎤', '2026-04-15', null, 'Antananarivo', 15000, 12500, 625000000, 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400', 'popular', 'active'],
-        [2, 5, 'Festival Donia 2026', 'festivals', 'Le festival incontournable de Nosy Be', '🎉', '2026-05-20', '2026-05-22', 'Nosy Be', 10000, 8500, 1020000000, 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400', 'festival', 'active'],
-        [3, 9, 'CNaPS vs Fosa Juniors', 'sports', 'Match de la saison', '⚽', '2026-03-28', null, 'Mahamasina', 8000, 5200, 78000000, 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400', 'popular', 'completed'],
-        [4, 6, 'Erick Manana Unplugged', 'concerts', 'Concert acoustique exceptionnel', '🎸', '2026-04-05', null, 'IFM Analakely', 800, 650, 22750000, 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400', 'soon', 'active'],
-        [5, 8, 'Madajazzcar 2026', 'festivals', 'Festival de jazz international', '🎷', '2026-10-10', '2026-10-15', 'Antananarivo', 5000, 0, 0, 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=400', 'soon', 'pending'],
-        [6, 9, 'Course de Côte - Diego', 'sports', 'Compétition automobile', '🏎️', '2026-06-12', null, 'Diego Suarez', 3000, 1200, 30000000, 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=400', null, 'active'],
-        [7, 6, 'Jaojoby en Concert', 'concerts', 'Le roi du salegy en live', '🎵', '2026-05-18', null, 'Toamasina', 5000, 3800, 152000000, 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400', 'vip', 'active'],
-        [8, 5, 'Beach Festival Anakao', 'festivals', 'Festival sur la plage', '🏖️', '2026-07-01', '2026-07-03', 'Anakao', 2000, 500, 75000000, 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400', 'festival', 'active'],
-        [9, 5, 'Donia Beach Party', 'concerts', 'After party sur la plage', '🏖️', '2026-05-23', null, 'Ambatoloaka', 1000, 800, 40000000, null, null, 'active'],
-        [10, 5, 'Donia Sunset Session', 'concerts', 'Session acoustique au coucher du soleil', '🌅', '2026-05-19', null, 'Hell-Ville', 500, 0, 0, null, null, 'pending'],
+        [1, 6, 'Dama Live - Tournée Nationale 2026', 'concerts', 'Le plus grand concert de l\'année', '🎤', '2026-04-15', null, 'Antananarivo', 15000, 12500, 625000000, 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400', 'popular', 'active', 'published'],
+        [2, 5, 'Festival Donia 2026', 'festivals', 'Le festival incontournable de Nosy Be', '🎉', '2026-05-20', '2026-05-22', 'Nosy Be', 10000, 8500, 1020000000, 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400', 'festival', 'active', 'published'],
+        [3, 9, 'CNaPS vs Fosa Juniors', 'sports', 'Match de la saison', '⚽', '2026-03-28', null, 'Mahamasina', 8000, 5200, 78000000, 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400', 'popular', 'completed', 'published'],
+        [4, 6, 'Erick Manana Unplugged', 'concerts', 'Concert acoustique exceptionnel', '🎸', '2026-04-05', null, 'IFM Analakely', 800, 650, 22750000, 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400', 'soon', 'active', 'published'],
+        [5, 8, 'Madajazzcar 2026', 'festivals', 'Festival de jazz international', '🎷', '2026-10-10', '2026-10-15', 'Antananarivo', 5000, 0, 0, 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=400', 'soon', 'pending', 'pending_review'],
+        [6, 9, 'Course de Côte - Diego', 'sports', 'Compétition automobile', '🏎️', '2026-06-12', null, 'Diego Suarez', 3000, 1200, 30000000, 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=400', null, 'active', 'published'],
+        [7, 6, 'Jaojoby en Concert', 'concerts', 'Le roi du salegy en live', '🎵', '2026-05-18', null, 'Toamasina', 5000, 3800, 152000000, 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400', 'vip', 'active', 'published'],
+        [8, 5, 'Beach Festival Anakao', 'festivals', 'Festival sur la plage', '🏖️', '2026-07-01', '2026-07-03', 'Anakao', 2000, 500, 75000000, 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400', 'festival', 'active', 'published'],
+        [9, 5, 'Donia Beach Party', 'concerts', 'After party sur la plage', '🏖️', '2026-05-23', null, 'Ambatoloaka', 1000, 800, 40000000, null, null, 'active', 'published'],
+        [10, 5, 'Donia Sunset Session', 'concerts', 'Session acoustique au coucher du soleil', '🌅', '2026-05-19', null, 'Hell-Ville', 500, 0, 0, null, null, 'pending', 'pending_review'],
     ];
     const insertManyE = db.transaction((items) => { for (const e of items) insertEvent.run(...e); });
     insertManyE(events);
@@ -469,7 +577,7 @@ function getUser(token) {
     if (!token) return null;
     const session = db.prepare(`SELECT user_id FROM sessions WHERE token = ? AND expires_at > datetime('now')`).get(token);
     if (!session) return null;
-    const user = db.prepare('SELECT id, name, email, role, plan, avatar_initials, phone, status, created_at, last_login FROM users WHERE id = ?').get(session.user_id);
+    const user = db.prepare('SELECT id, name, email, role, plan, avatar_initials, phone, status, created_at, last_login, superadmin_level, organizer_license FROM users WHERE id = ?').get(session.user_id);
     return user;
 }
 
@@ -608,7 +716,7 @@ async function handleAuth(req, res, parts) {
         const token = generateToken();
         const expires = new Date(Date.now() + TOKEN_EXPIRY_MS).toISOString().replace('T', ' ').split('.')[0];
         db.prepare('INSERT INTO sessions (user_id, token, expires_at) VALUES (?,?,?)').run(result.lastInsertRowid, token, expires);
-        const user = db.prepare('SELECT id, name, email, role, plan, avatar_initials, phone, status, created_at FROM users WHERE id = ?').get(result.lastInsertRowid);
+        const user = db.prepare('SELECT id, name, email, role, plan, avatar_initials, phone, status, created_at, superadmin_level, organizer_license FROM users WHERE id = ?').get(result.lastInsertRowid);
         logActivity('user_registered', user.id, user.name, 'user', user.id, user.name, `Nouvel utilisateur inscrit: ${user.name}`);
         return sendJSON(res, { user, token }, 201);
     }
@@ -637,7 +745,7 @@ async function handleAuth(req, res, parts) {
             const hash = hashPassword(generateToken());
             const initials = (name[0] + (name.split(' ').pop()?.[0] || name[1] || '')).toUpperCase();
             const r = db.prepare('INSERT INTO users (name, email, password_hash, role, avatar_initials, status) VALUES (?,?,?,?,?,?)').run(name, email, hash, 'buyer', initials, 'active');
-            user = db.prepare('SELECT id, name, email, role, plan, avatar_initials, phone, status, created_at FROM users WHERE id = ?').get(r.lastInsertRowid);
+            user = db.prepare('SELECT id, name, email, role, plan, avatar_initials, phone, status, created_at, superadmin_level, organizer_license FROM users WHERE id = ?').get(r.lastInsertRowid);
             logActivity('user_registered', user.id, user.name, 'user', user.id, user.name, `Nouvel utilisateur inscrit (${provider}): ${user.name}`);
         } else {
             db.prepare(`UPDATE users SET last_login = datetime('now') WHERE id = ?`).run(user.id);
@@ -779,8 +887,8 @@ async function handleEvents(req, res, parts) {
         const limit = parseInt(url.searchParams.get('limit') || '10');
         if (!q || q.length < 2) return sendError(res, 'Query too short (min 2 chars)');
         const pattern = '%' + q + '%';
-        const events = db.prepare("SELECT e.*, u.name as organizer_name FROM events e LEFT JOIN users u ON e.organizer_id = u.id WHERE (e.name LIKE ? OR e.venue LIKE ? OR e.category LIKE ? OR e.description LIKE ?) AND e.status IN ('active','pending') ORDER BY e.tickets_sold DESC LIMIT ?").all(pattern, pattern, pattern, pattern, limit);
-        const categories = db.prepare("SELECT category as name, COUNT(*) as count FROM events WHERE (category LIKE ? OR name LIKE ?) AND status IN ('active','pending') GROUP BY category").all(pattern, pattern);
+        const events = db.prepare("SELECT e.*, u.name as organizer_name FROM events e LEFT JOIN users u ON e.organizer_id = u.id WHERE (e.name LIKE ? OR e.venue LIKE ? OR e.category LIKE ? OR e.description LIKE ?) AND e.status IN ('active','pending') AND e.trashed_at IS NULL AND e.permanently_deleted = 0 ORDER BY e.tickets_sold DESC LIMIT ?").all(pattern, pattern, pattern, pattern, limit);
+        const categories = db.prepare("SELECT category as name, COUNT(*) as count FROM events WHERE (category LIKE ? OR name LIKE ?) AND status IN ('active','pending') AND trashed_at IS NULL AND permanently_deleted = 0 GROUP BY category").all(pattern, pattern);
         const icons = { concerts: '🎵', festivals: '🎪', sports: '⚽', theatre: '🎭' };
         categories.forEach(c => c.icon = icons[c.name] || '🎫');
         return sendJSON(res, { events, categories, query: q });
@@ -788,12 +896,12 @@ async function handleEvents(req, res, parts) {
 
     if (action === 'featured' && req.method === 'GET') {
         const limit = parseInt(new URL(req.url, 'http://localhost').searchParams.get('limit') || '8');
-        const events = db.prepare("SELECT e.*, u.name as organizer_name FROM events e LEFT JOIN users u ON e.organizer_id = u.id WHERE e.status IN ('active','pending') ORDER BY e.tickets_sold DESC LIMIT ?").all(limit);
+        const events = db.prepare("SELECT e.*, u.name as organizer_name FROM events e LEFT JOIN users u ON e.organizer_id = u.id WHERE e.status IN ('active','pending') AND e.trashed_at IS NULL AND e.permanently_deleted = 0 ORDER BY e.tickets_sold DESC LIMIT ?").all(limit);
         return sendJSON(res, { events });
     }
 
     if (action === 'categories' && req.method === 'GET') {
-        const cats = db.prepare("SELECT category, COUNT(*) as count FROM events WHERE status IN ('active','pending') GROUP BY category ORDER BY count DESC").all();
+        const cats = db.prepare("SELECT category, COUNT(*) as count FROM events WHERE status IN ('active','pending') AND trashed_at IS NULL AND permanently_deleted = 0 GROUP BY category ORDER BY count DESC").all();
         const icons = { concerts: '🎵', festivals: '🎪', sports: '⚽', theatre: '🎭' };
         cats.forEach(c => c.icon = icons[c.category] || '🎫');
         return sendJSON(res, { categories: cats });
@@ -825,7 +933,7 @@ async function handleEvents(req, res, parts) {
 
     if (req.method === 'GET') {
         const url = new URL(req.url, 'http://localhost');
-        let where = ['1=1'], params = [];
+        let where = ['e.trashed_at IS NULL', 'e.permanently_deleted = 0'], params = [];
         if (url.searchParams.get('category') && url.searchParams.get('category') !== 'all') { where.push('e.category = ?'); params.push(url.searchParams.get('category')); }
         if (url.searchParams.get('status')) { where.push('e.status = ?'); params.push(url.searchParams.get('status')); }
         if (url.searchParams.get('search')) { where.push('(e.name LIKE ? OR e.venue LIKE ?)'); params.push(`%${url.searchParams.get('search')}%`, `%${url.searchParams.get('search')}%`); }
@@ -842,9 +950,30 @@ async function handleEvents(req, res, parts) {
         if (!user) return sendError(res, 'Non autorisé', 403);
         const body = await parseBody(req);
         if (!body.name || !body.category || !body.date_start || !body.venue || !body.capacity) return sendError(res, 'Champs requis manquants');
-        const r = db.prepare('INSERT INTO events (organizer_id, name, category, description, emoji, date_start, date_end, venue, capacity, image_url, badge, status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)').run(user.id, body.name, body.category, body.description||'', body.emoji||'🎫', body.date_start, body.date_end||null, body.venue, body.capacity, body.image_url||null, body.badge||null, body.status||'pending');
+        
+        // Un événement commence soit en 'draft' soit en 'pending_review'
+        const review_status = body.is_draft ? 'draft' : 'pending_review';
+        const status = 'pending';
+        
+        const r = db.prepare(`
+            INSERT INTO events (
+                organizer_id, name, category, description, emoji, 
+                date_start, date_end, venue, capacity, image_url, 
+                badge, status, review_status, seatmap_requested, cover_image
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        `).run(
+            user.id, body.name, body.category, body.description||'', body.emoji||'🎫', 
+            body.date_start, body.date_end||null, body.venue, body.capacity, body.image_url||null, 
+            body.badge||null, status, review_status, body.seatmap_requested ? 1 : 0, body.cover_image||null
+        );
+        
+        db.prepare('INSERT INTO event_reviews (event_id, reviewer_id, action, comment) VALUES (?,?,?,?)').run(
+            r.lastInsertRowid, user.id, review_status === 'draft' ? 'draft_created' : 'submitted', 
+            review_status === 'draft' ? 'Caché aux admins' : 'Soumis pour validation'
+        );
+        
         db.prepare('INSERT INTO activity_logs (type, icon, text, user_id) VALUES (?,?,?,?)').run('event', 'mdi-calendar-plus', `Événement: <strong>${body.name}</strong>`, user.id);
-        logActivity('event_created', user.id, user.name, 'event', r.lastInsertRowid, body.name, `Nouvel événement créé: ${body.name}`);
+        logActivity('event_created', user.id, user.name, 'event', r.lastInsertRowid, body.name, `Nouvel événement créé: ${body.name} (${review_status})`);
         const event = db.prepare('SELECT e.*, u.name as organizer_name FROM events e LEFT JOIN users u ON e.organizer_id = u.id WHERE e.id = ?').get(r.lastInsertRowid);
         return sendJSON(res, { event }, 201);
     }
@@ -853,9 +982,34 @@ async function handleEvents(req, res, parts) {
         const user = requireAuth(req, ['organizer', 'admin', 'superadmin']);
         if (!user) return sendError(res, 'Non autorisé', 403);
         const body = await parseBody(req);
-        const allowed = ['name', 'category', 'description', 'emoji', 'date_start', 'date_end', 'venue', 'capacity', 'image_url', 'badge', 'status'];
+
+        const existing = db.prepare("SELECT * FROM events WHERE id = ?").get(id);
+        if (!existing) return sendError(res, 'Événement non trouvé');
+        if (existing.organizer_id !== user.id && user.role !== 'superadmin') return sendError(res, 'Propriétaire requis', 403);
+
+        // Si l'événement est déjà publié, les modifs vont en attente
+        if (existing.review_status === 'published' && user.role !== 'superadmin') {
+            const changes = {};
+            const keys = ['name', 'description', 'category', 'venue', 'date_start', 'date_end', 'capacity', 'emoji', 'cover_image'];
+            for (const k of keys) { if (body[k] !== undefined) changes[k] = body[k]; }
+            
+            if (Object.keys(changes).length > 0) {
+                db.prepare("UPDATE events SET pending_changes = ?, review_status = 'modification_pending' WHERE id = ?").run(JSON.stringify(changes), id);
+                db.prepare('INSERT INTO event_reviews (event_id, reviewer_id, action, comment) VALUES (?,?,?,?)').run(id, user.id, 'modification_requested', 'Modifications post-publication soumises');
+                return sendJSON(res, { message: 'Modifications envoyées pour validation', status: 'modification_pending' });
+            }
+            return sendError(res, 'Aucune modification détectée');
+        }
+
+        const allowed = ['name', 'category', 'description', 'emoji', 'date_start', 'date_end', 'venue', 'capacity', 'image_url', 'badge', 'status', 'review_status', 'cover_image'];
         const sets = [], vals = [];
         for (const f of allowed) { if (body[f] !== undefined) { sets.push(`${f} = ?`); vals.push(body[f]); } }
+        
+        // Si on soumet un brouillon
+        if (existing.review_status === 'draft' && body.review_status === 'pending_review') {
+            db.prepare('INSERT INTO event_reviews (event_id, reviewer_id, action, comment) VALUES (?,?,?,?)').run(id, user.id, 'submitted', 'Brouillon soumis pour validation');
+        }
+
         if (!sets.length) return sendError(res, 'Aucun champ à mettre à jour');
         vals.push(id);
         db.prepare(`UPDATE events SET ${sets.join(', ')} WHERE id = ?`).run(...vals);
@@ -866,8 +1020,16 @@ async function handleEvents(req, res, parts) {
     if (req.method === 'DELETE' && id) {
         const user = requireAuth(req, ['organizer', 'admin', 'superadmin']);
         if (!user) return sendError(res, 'Non autorisé', 403);
-        db.prepare("UPDATE events SET status = 'cancelled' WHERE id = ?").run(id);
-        return sendJSON(res, { message: 'Événement supprimé' });
+        
+        const existing = db.prepare("SELECT * FROM events WHERE id = ?").get(id);
+        if (!existing) return sendError(res, 'Événement non trouvé');
+        if (existing.organizer_id !== user.id && user.role !== 'superadmin') return sendError(res, 'Propriétaire requis', 403);
+
+        // Soft delete (Corbeille)
+        db.prepare("UPDATE events SET trashed_at = datetime('now'), trashed_by = ?, status = 'cancelled' WHERE id = ?").run(user.id, id);
+        logActivity('event_trashed', user.id, user.name, 'event', id, existing.name, `Événement mis à la corbeille: ${existing.name}`);
+        
+        return sendJSON(res, { message: 'Événement mis à la corbeille' });
     }
 
     sendError(res, 'Route non trouvée', 404);
@@ -1427,7 +1589,8 @@ function serveStatic(req, res) {
     const searchPaths = [
         path.join(PROJECT_ROOT, urlPath),
         path.join(PROJECT_ROOT, 'User', urlPath),
-        path.join(PROJECT_ROOT, 'Admin', urlPath)
+        path.join(PROJECT_ROOT, 'Admin', urlPath),
+        path.join(PROJECT_ROOT, 'libs', urlPath)
     ];
 
     for (const filePath of searchPaths) {
@@ -1495,6 +1658,33 @@ const server = http.createServer(async (req, res) => {
 });
 
 // SUPERADMIN
+// ═══ Hiérarchie SuperAdmin ═══
+const SUPERADMIN_HIERARCHY = { god: 3, level2: 2, level1: 1 };
+const PRIMARY_GOD_EMAIL = 'sedrayiokoraz@gmail.com';
+
+function canManageLevel(actorLevel, targetLevel) {
+    // Retourne true si l'acteur peut gérer (attribuer/retirer) le niveau cible
+    const actorRank = SUPERADMIN_HIERARCHY[actorLevel] || 0;
+    const targetRank = SUPERADMIN_HIERARCHY[targetLevel] || 0;
+    
+    if (actorLevel === 'god') return true; // GOD peut tout
+    if (actorLevel === 'level2' && targetLevel === 'level1') return true;
+    return false;
+}
+
+function getAssignableLevels(actorLevel) {
+    // Retourne les niveaux que cet acteur peut attribuer
+    if (actorLevel === 'god') return ['god', 'level2', 'level1'];
+    if (actorLevel === 'level2') return ['level1'];
+    return [];
+}
+
+function canRevokeTarget(actor, target) {
+    // Vérifie si l'acteur peut révoquer le target
+    if (target.email === PRIMARY_GOD_EMAIL) return false; // JAMAIS révoquer le compte principal
+    return canManageLevel(actor.superadmin_level, target.superadmin_level);
+}
+
 async function handleSuperAdmin(req, res, parts) {
     const user = requireAuth(req, ['superadmin']);
     if (!user) {
@@ -1605,6 +1795,313 @@ async function handleSuperAdmin(req, res, parts) {
     if (resource === 'logs' && req.method === 'GET') {
         const logs = db.prepare('SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT 100').all();
         return sendJSON(res, logs);
+    }
+
+    // ═══ GET /api/superadmin/admins — Liste tous les SuperAdmins ═══
+    if (resource === 'admins' && req.method === 'GET') {
+        const admins = db.prepare(`
+            SELECT id, name, email, superadmin_level, status, created_at, invited_by,
+                   (SELECT name FROM users WHERE id = u.invited_by) as invited_by_name
+            FROM users u
+            WHERE role = 'superadmin' AND status != 'deleted'
+            ORDER BY 
+                CASE superadmin_level WHEN 'god' THEN 1 WHEN 'level2' THEN 2 WHEN 'level1' THEN 3 END,
+                created_at ASC
+        `).all();
+        
+        return sendJSON(res, {
+            admins,
+            currentLevel: user.superadmin_level,
+            assignableLevels: getAssignableLevels(user.superadmin_level),
+            primaryEmail: PRIMARY_GOD_EMAIL
+        });
+    }
+
+    // ═══ POST /api/superadmin/admins/invite — Inviter un nouveau SuperAdmin ═══
+    if (resource === 'admins' && !id && req.method === 'POST') {
+        const body = await parseBody(req);
+        if (!body.email || !body.level) return sendError(res, 'Email et level requis');
+        
+        const assignable = getAssignableLevels(user.superadmin_level);
+        if (!assignable.includes(body.level)) {
+            return sendError(res, `Vous n'avez pas le droit d'attribuer le niveau ${body.level}`, 403);
+        }
+        
+        // Vérifier si l'email est déjà superadmin
+        const existing = db.prepare("SELECT id, role, superadmin_level FROM users WHERE email = ?").get(body.email);
+        if (existing && existing.role === 'superadmin') {
+            return sendError(res, 'Cet utilisateur est déjà SuperAdmin');
+        }
+        
+        const token = crypto.randomUUID();
+        
+        db.prepare('INSERT INTO superadmin_invitations (email, level, token, invited_by) VALUES (?,?,?,?)').run(body.email, body.level, token, user.id);
+        
+        logActivity('superadmin_invited', user.id, user.name, 'superadmin', null, body.email, `${user.name} a invité ${body.email} comme SuperAdmin ${body.level}`);
+        
+        // Le lien d'activation
+        const activationLink = `${APP_URL}/api/superadmin/activate?token=${token}`;
+        
+        return sendJSON(res, {
+            success: true,
+            invitation_token: token,
+            activation_link: activationLink,
+            message: `Invitation envoyée à ${body.email}. Partagez ce lien : ${activationLink}`
+        });
+    }
+
+    // ═══ GET /api/superadmin/activate?token=xxx — Activer une invitation ═══
+    if (resource === 'activate' && req.method === 'GET') {
+        const url = new URL(req.url, `http://${req.headers.host}`);
+        const token = url.searchParams.get('token');
+        if (!token) return sendError(res, 'Token manquant');
+        
+        const invitation = db.prepare("SELECT * FROM superadmin_invitations WHERE token = ? AND status = 'pending'").get(token);
+        if (!invitation) return sendError(res, 'Invitation invalide ou expirée');
+        
+        // Vérifier si l'utilisateur existe
+        const existingUser = db.prepare("SELECT id, name, email, role FROM users WHERE email = ?").get(invitation.email);
+        
+        if (existingUser) {
+            // L'utilisateur existe → promouvoir
+            db.prepare("UPDATE users SET role = 'superadmin', superadmin_level = ?, invited_by = ? WHERE id = ?").run(invitation.level, invitation.invited_by, existingUser.id);
+            db.prepare("UPDATE superadmin_invitations SET status = 'accepted', accepted_at = datetime('now') WHERE id = ?").run(invitation.id);
+            
+            logActivity('superadmin_activated', existingUser.id, existingUser.name, 'superadmin', existingUser.id, '', `${existingUser.name} est devenu SuperAdmin ${invitation.level}`);
+            
+            db.prepare('INSERT INTO license_changes (user_id, old_value, new_value, changed_by, license_type, reason) VALUES (?,?,?,?,?,?)').run(
+                existingUser.id, existingUser.role, `superadmin:${invitation.level}`, invitation.invited_by, 'superadmin', 'Invitation acceptée'
+            );
+            
+            // Rediriger vers le dashboard SuperAdmin avec message
+            res.writeHead(302, { 'Location': `/Admin/ticketmada-superadmin.html?activated=true&level=${invitation.level}` });
+            return res.end();
+        } else {
+            // L'utilisateur n'existe pas → rediriger vers la page organisateur pour créer un compte
+            // Le token sera utilisé après la création du compte
+            res.writeHead(302, { 'Location': `/User/ticketmada-organisateur.html?invite_token=${token}&invite_email=${encodeURIComponent(invitation.email)}&invite_level=${invitation.level}` });
+            return res.end();
+        }
+    }
+
+    // ═══ POST /api/superadmin/activate-after-signup — Activer après création de compte ═══
+    if (resource === 'activate-after-signup' && req.method === 'POST') {
+        const body = await parseBody(req);
+        if (!body.token) return sendError(res, 'Token requis');
+        
+        const invitation = db.prepare("SELECT * FROM superadmin_invitations WHERE token = ? AND status = 'pending' AND email = ?").get(body.token, user.email);
+        if (!invitation) return sendError(res, 'Invitation invalide');
+        
+        db.prepare("UPDATE users SET role = 'superadmin', superadmin_level = ?, invited_by = ? WHERE id = ?").run(invitation.level, invitation.invited_by, user.id);
+        db.prepare("UPDATE superadmin_invitations SET status = 'accepted', accepted_at = datetime('now') WHERE id = ?").run(invitation.id);
+        
+        logActivity('superadmin_activated', user.id, user.name, 'superadmin', user.id, '', `${user.name} est devenu SuperAdmin ${invitation.level}`);
+        
+        return sendJSON(res, { success: true, level: invitation.level, redirect: '/Admin/ticketmada-superadmin.html' });
+    }
+
+    // ═══ PUT /api/superadmin/admins/:id/change-level — Changer le niveau d'un SuperAdmin ═══
+    if (resource === 'admins' && id && action === 'change-level' && req.method === 'PUT') {
+        const body = await parseBody(req);
+        if (!body.level) return sendError(res, 'Nouveau level requis');
+        
+        const target = db.prepare("SELECT * FROM users WHERE id = ? AND role = 'superadmin'").get(id);
+        if (!target) return sendError(res, 'SuperAdmin non trouvé');
+        
+        // Vérifications hiérarchiques
+        if (target.email === PRIMARY_GOD_EMAIL) return sendError(res, 'Le compte principal ne peut pas être modifié', 403);
+        if (!canManageLevel(user.superadmin_level, target.superadmin_level)) {
+            return sendError(res, 'Vous n\'avez pas les droits pour modifier ce niveau', 403);
+        }
+        if (!getAssignableLevels(user.superadmin_level).includes(body.level)) {
+            return sendError(res, `Vous ne pouvez pas attribuer le niveau ${body.level}`, 403);
+        }
+        
+        const oldLevel = target.superadmin_level;
+        db.prepare("UPDATE users SET superadmin_level = ? WHERE id = ?").run(body.level, id);
+        
+        db.prepare('INSERT INTO license_changes (user_id, old_value, new_value, changed_by, license_type, reason) VALUES (?,?,?,?,?,?)').run(
+            id, `superadmin:${oldLevel}`, `superadmin:${body.level}`, user.id, 'superadmin', body.reason || 'Changement de niveau'
+        );
+        logActivity('superadmin_level_changed', user.id, user.name, 'superadmin', id, target.name, `${target.name}: ${oldLevel} → ${body.level}`);
+        
+        return sendJSON(res, { success: true });
+    }
+
+    // ═══ PUT /api/superadmin/admins/:id/revoke — Rétrograder un SuperAdmin en organisateur ═══
+    if (resource === 'admins' && id && action === 'revoke' && req.method === 'PUT') {
+        const target = db.prepare("SELECT * FROM users WHERE id = ? AND role = 'superadmin'").get(id);
+        if (!target) return sendError(res, 'SuperAdmin non trouvé');
+        
+        if (target.email === PRIMARY_GOD_EMAIL) return sendError(res, 'Le compte principal ne peut JAMAIS être rétrogradé', 403);
+        if (!canRevokeTarget(user, target)) return sendError(res, 'Droits insuffisants pour cette action', 403);
+        
+        const oldLevel = target.superadmin_level;
+        db.prepare("UPDATE users SET role = 'organizer', superadmin_level = NULL, organizer_license = 'standard' WHERE id = ?").run(id);
+        
+        db.prepare('INSERT INTO license_changes (user_id, old_value, new_value, changed_by, license_type, reason) VALUES (?,?,?,?,?,?)').run(
+            id, `superadmin:${oldLevel}`, 'organizer:standard', user.id, 'superadmin', 'Rétrogradé en organisateur'
+        );
+        logActivity('superadmin_revoked', user.id, user.name, 'superadmin', id, target.name, `${target.name} rétrogradé de SuperAdmin ${oldLevel} → Organisateur`);
+        
+        return sendJSON(res, { success: true });
+    }
+
+    // ═══ GET /api/superadmin/licenses — Stats des licences ═══
+    if (resource === 'licenses' && req.method === 'GET') {
+        const stats = {
+            standard: db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'organizer' AND (organizer_license = 'standard' OR organizer_license IS NULL)").get().count,
+            verified: db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'organizer' AND organizer_license = 'verified'").get().count,
+            premium: db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'organizer' AND organizer_license = 'premium'").get().count,
+            history: db.prepare("SELECT lc.*, u.name as user_name, cb.name as changed_by_name FROM license_changes lc JOIN users u ON lc.user_id = u.id JOIN users cb ON lc.changed_by = cb.id WHERE lc.license_type = 'organizer' ORDER BY lc.created_at DESC LIMIT 50").all()
+        };
+        return sendJSON(res, stats);
+    }
+
+    // ═══ PUT /api/superadmin/organizers/:id/license — Changer la licence d'un organisateur ═══
+    if (resource === 'organizers' && id && action === 'license' && req.method === 'PUT') {
+        const body = await parseBody(req);
+        if (!body.license || !['standard', 'verified', 'premium'].includes(body.license)) {
+            return sendError(res, 'Licence invalide. Valeurs : standard, verified, premium');
+        }
+        
+        const target = db.prepare("SELECT * FROM users WHERE id = ? AND role = 'organizer'").get(id);
+        if (!target) return sendError(res, 'Organisateur non trouvé');
+        
+        const oldLicense = target.organizer_license || 'standard';
+        db.prepare("UPDATE users SET organizer_license = ? WHERE id = ?").run(body.license, id);
+        
+        db.prepare('INSERT INTO license_changes (user_id, old_value, new_value, changed_by, license_type, reason) VALUES (?,?,?,?,?,?)').run(
+            id, `organizer:${oldLicense}`, `organizer:${body.license}`, user.id, 'organizer', body.reason || 'Changement de licence'
+        );
+        logActivity('license_changed', user.id, user.name, 'organizer', id, target.name, `Licence ${target.name}: ${oldLicense} → ${body.license}`);
+        
+        return sendJSON(res, { success: true });
+    }
+
+    // ═══ GET /api/superadmin/events/review-queue — File de validation ═══
+    if (resource === 'events' && action === 'review-queue' && req.method === 'GET') {
+        const queue = db.prepare(`
+            SELECT e.*, u.name as organizer_name, u.organizer_license,
+                   (SELECT COUNT(*) FROM event_reviews WHERE event_id = e.id) as review_count
+            FROM events e
+            JOIN users u ON e.organizer_id = u.id
+            WHERE e.review_status IN ('pending_review', 'modification_pending')
+            AND e.permanently_deleted = 0
+            ORDER BY e.created_at ASC
+        `).all();
+        return sendJSON(res, queue);
+    }
+
+    // ═══ GET /api/superadmin/events/:id/reviews — Historique des reviews ═══
+    if (resource === 'events' && id && action === 'reviews' && req.method === 'GET') {
+        const reviews = db.prepare(`
+            SELECT er.*, u.name as reviewer_name, u.superadmin_level
+            FROM event_reviews er
+            JOIN users u ON er.reviewer_id = u.id
+            WHERE er.event_id = ?
+            ORDER BY er.created_at ASC
+        `).all(id);
+        return sendJSON(res, reviews);
+    }
+
+    // ═══ PUT /api/superadmin/events/:id/approve — Approuver un événement ═══
+    if (resource === 'events' && id && action === 'approve' && req.method === 'PUT') {
+        const body = await parseBody(req);
+        db.prepare("UPDATE events SET review_status = 'approved', reviewed_by = ?, review_notes = ? WHERE id = ?").run(user.id, body.comment || 'Approuvé', id);
+        db.prepare('INSERT INTO event_reviews (event_id, reviewer_id, action, comment) VALUES (?,?,?,?)').run(id, user.id, 'approved', body.comment || 'Événement approuvé');
+        logActivity('event_approved', user.id, user.name, 'event', id, '', 'Événement approuvé');
+        return sendJSON(res, { success: true });
+    }
+
+    // ═══ PUT /api/superadmin/events/:id/reject — Refuser un événement ═══
+    if (resource === 'events' && id && action === 'reject' && req.method === 'PUT') {
+        const body = await parseBody(req);
+        if (!body.reason) return sendError(res, 'Raison requise');
+        db.prepare("UPDATE events SET review_status = 'rejected', reviewed_by = ?, review_notes = ? WHERE id = ?").run(user.id, body.reason, id);
+        db.prepare('INSERT INTO event_reviews (event_id, reviewer_id, action, comment) VALUES (?,?,?,?)').run(id, user.id, 'rejected', body.reason);
+        logActivity('event_rejected', user.id, user.name, 'event', id, '', `Rejeté: ${body.reason}`);
+        return sendJSON(res, { success: true });
+    }
+
+    // ═══ PUT /api/superadmin/events/:id/request-changes — Demander des modifications ═══
+    if (resource === 'events' && id && action === 'request-changes' && req.method === 'PUT') {
+        const body = await parseBody(req);
+        if (!body.comment) return sendError(res, 'Commentaire requis');
+        db.prepare("UPDATE events SET review_status = 'changes_requested', reviewed_by = ?, review_notes = ? WHERE id = ?").run(user.id, body.comment, id);
+        db.prepare('INSERT INTO event_reviews (event_id, reviewer_id, action, comment) VALUES (?,?,?,?)').run(id, user.id, 'changes_requested', body.comment);
+        logActivity('event_changes_requested', user.id, user.name, 'event', id, '', `Modifications demandées: ${body.comment}`);
+        return sendJSON(res, { success: true });
+    }
+
+    // ═══ PUT /api/superadmin/events/:id/publish — Publier un événement approuvé ═══
+    if (resource === 'events' && id && action === 'publish' && req.method === 'PUT') {
+        const event = db.prepare("SELECT review_status FROM events WHERE id = ?").get(id);
+        if (!event || event.review_status !== 'approved') return sendError(res, 'L\'événement doit être approuvé avant publication');
+        db.prepare("UPDATE events SET status = 'active', review_status = 'published', published_at = datetime('now') WHERE id = ?").run(id);
+        db.prepare('INSERT INTO event_reviews (event_id, reviewer_id, action, comment) VALUES (?,?,?,?)').run(id, user.id, 'published', 'Événement mis en ligne');
+        logActivity('event_published', user.id, user.name, 'event', id, '', 'Événement publié');
+        return sendJSON(res, { success: true });
+    }
+
+    // ═══ PUT /api/superadmin/events/:id/apply-changes — Appliquer les modifications post-publication ═══
+    if (resource === 'events' && id && action === 'apply-changes' && req.method === 'PUT') {
+        const event = db.prepare("SELECT pending_changes, review_status FROM events WHERE id = ?").get(id);
+        if (!event || event.review_status !== 'modification_pending') return sendError(res, 'Pas de modifications en attente');
+        
+        const changes = JSON.parse(event.pending_changes || '{}');
+        const sets = [];
+        const vals = [];
+        for (const [key, value] of Object.entries(changes)) {
+            if (['name', 'description', 'category', 'venue', 'date_start', 'date_end', 'capacity', 'emoji', 'cover_image'].includes(key)) {
+                sets.push(`${key} = ?`);
+                vals.push(value);
+            }
+        }
+        if (sets.length > 0) {
+            vals.push(id);
+            db.prepare(`UPDATE events SET ${sets.join(', ')}, pending_changes = NULL, review_status = 'published' WHERE id = ?`).run(...vals);
+        }
+        db.prepare('INSERT INTO event_reviews (event_id, reviewer_id, action, comment) VALUES (?,?,?,?)').run(id, user.id, 'modification_applied', 'Modifications post-publication appliquées');
+        logActivity('event_changes_applied', user.id, user.name, 'event', id, '', 'Modifications appliquées');
+        return sendJSON(res, { success: true });
+    }
+
+    // ═══ PUT /api/superadmin/events/:id/reject-changes — Refuser les modifications post-publication ═══
+    if (resource === 'events' && id && action === 'reject-changes' && req.method === 'PUT') {
+        const body = await parseBody(req);
+        db.prepare("UPDATE events SET pending_changes = NULL, review_status = 'published', review_notes = ? WHERE id = ?").run(body.reason || 'Modifications refusées', id);
+        db.prepare('INSERT INTO event_reviews (event_id, reviewer_id, action, comment) VALUES (?,?,?,?)').run(id, user.id, 'modification_rejected', body.reason || 'Modifications refusées');
+        return sendJSON(res, { success: true });
+    }
+
+    // ═══ GET /api/superadmin/trash — Corbeille globale ═══
+    if (resource === 'trash' && req.method === 'GET') {
+        const trashed = db.prepare(`
+            SELECT e.*, u.name as organizer_name,
+                   tu.name as trashed_by_name
+            FROM events e
+            JOIN users u ON e.organizer_id = u.id
+            LEFT JOIN users tu ON e.trashed_by = tu.id
+            WHERE e.trashed_at IS NOT NULL AND e.permanently_deleted = 0
+            ORDER BY e.trashed_at DESC
+        `).all();
+        return sendJSON(res, trashed);
+    }
+
+    // ═══ PUT /api/superadmin/trash/:id/restore — Restaurer un événement ═══
+    if (resource === 'trash' && id && action === 'restore' && req.method === 'PUT') {
+        db.prepare("UPDATE events SET trashed_at = NULL, trashed_by = NULL, status = CASE WHEN review_status = 'published' THEN 'active' ELSE 'pending' END WHERE id = ? AND permanently_deleted = 0").run(id);
+        logActivity('event_restored', user.id, user.name, 'event', id, '', 'Événement restauré depuis la corbeille');
+        return sendJSON(res, { success: true });
+    }
+
+    // ═══ DELETE /api/superadmin/trash/:id — Suppression définitive ═══
+    if (resource === 'trash' && id && req.method === 'DELETE') {
+        db.prepare("UPDATE events SET permanently_deleted = 1 WHERE id = ?").run(id);
+        db.prepare("UPDATE tickets SET status = 'cancelled' WHERE event_id = ?").run(id);
+        logActivity('event_permanently_deleted', user.id, user.name, 'event', id, '', 'Événement supprimé définitivement');
+        return sendJSON(res, { success: true });
     }
 
     // Actions
