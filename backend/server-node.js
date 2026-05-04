@@ -403,6 +403,97 @@ function initDB() {
             FOREIGN KEY (user_id) REFERENCES users(id),
             FOREIGN KEY (changed_by) REFERENCES users(id)
         );
+
+        -- ═══ Table : Configuration Système ═══
+        CREATE TABLE IF NOT EXISTS system_config (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            key TEXT UNIQUE NOT NULL,
+            value TEXT,
+            description TEXT,
+            updated_at DATETIME DEFAULT (datetime('now'))
+        );
+
+        -- ═══ Tables de Marketing & Taxes (Inspiration Hi.Events) ═══
+        CREATE TABLE IF NOT EXISTS promo_codes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id INTEGER, -- NULL if global (rare but possible)
+            code TEXT UNIQUE NOT NULL,
+            discount_type TEXT DEFAULT 'percentage', -- 'percentage', 'fixed'
+            discount_value REAL NOT NULL,
+            usage_limit INTEGER,
+            used_count INTEGER DEFAULT 0,
+            valid_from DATETIME,
+            valid_until DATETIME,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (event_id) REFERENCES events(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS tax_rules (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            rate REAL NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT (datetime('now'))
+        );
+
+        -- ═══ Tables de Questions Personnalisées (Hi.Events style) ═══
+        CREATE TABLE IF NOT EXISTS custom_questions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id INTEGER NOT NULL,
+            type TEXT NOT NULL, -- 'text', 'select', 'checkbox'
+            label TEXT NOT NULL,
+            options TEXT, -- JSON string for select options
+            is_required INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (event_id) REFERENCES events(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS attendee_responses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ticket_id INTEGER NOT NULL,
+            question_id INTEGER NOT NULL,
+            response TEXT,
+            FOREIGN KEY (ticket_id) REFERENCES tickets(id),
+            FOREIGN KEY (question_id) REFERENCES custom_questions(id)
+        );
+
+        -- ═══ Table : Payouts (Versements Financiers) ═══
+        CREATE TABLE IF NOT EXISTS payouts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_code TEXT UNIQUE NOT NULL,
+            organizer_id INTEGER NOT NULL,
+            amount REAL NOT NULL,
+            commission REAL NOT NULL,
+            net REAL NOT NULL,
+            status TEXT DEFAULT 'pending', -- 'pending', 'submitted', 'completed', 'failed'
+            bank_details TEXT,
+            paid_at DATETIME,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (organizer_id) REFERENCES users(id)
+        );
+
+        -- ═══ Table : Documents KYC ═══
+        CREATE TABLE IF NOT EXISTS kyc_documents (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            doc_type TEXT NOT NULL, -- 'cin', 'passport', 'nif', 'stat'
+            doc_url TEXT NOT NULL,
+            status TEXT DEFAULT 'pending', -- 'pending', 'approved', 'rejected'
+            reject_reason TEXT,
+            verified_by INTEGER,
+            verified_at DATETIME,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+
+        -- Insérer les configs par défaut si elles n'existent pas
+        INSERT OR IGNORE INTO system_config (key, value, description) VALUES ('commission_rate', '0.03', 'Taux de commission standard (ex: 0.03 pour 3%)');
+        INSERT OR IGNORE INTO system_config (key, value, description) VALUES ('payout_minimum', '50000', 'Montant minimum pour un retrait en Ariary');
+        INSERT OR IGNORE INTO system_config (key, value, description) VALUES ('auto_approve_events', '0', 'Approuver automatiquement les événements (0=manuel, 1=auto)');
+        INSERT OR IGNORE INTO system_config (key, value, description) VALUES ('support_email', 'support@ticketmada.mg', 'Email de support affiché aux utilisateurs');
+        INSERT OR IGNORE INTO system_config (key, value, description) VALUES ('currency_symbol', 'Ar', 'Symbole monétaire principal');
+        INSERT OR IGNORE INTO system_config (key, value, description) VALUES ('site_name', 'TicketMada', 'Nom de la plateforme');
+        INSERT OR IGNORE INTO system_config (key, value, description) VALUES ('maintenance_mode', '0', 'Désactiver le site pour maintenance (0=non, 1=oui)');
     `);
 
     // ═══ Migration : SuperAdmin levels + Organizer licenses ═══
@@ -1707,6 +1798,10 @@ async function handleSuperAdmin(req, res, parts) {
     const action = parts[4];
 
     if (resource === 'dashboard' && req.method === 'GET') {
+        // Obtenir le taux de commission dynamique
+        const configRate = db.prepare("SELECT value FROM system_config WHERE key = 'commission_rate'").get();
+        const commissionRate = configRate ? parseFloat(configRate.value) : 0.03;
+
         const stats = {
             totalRevenue: db.prepare("SELECT COALESCE(SUM(price), 0) as total FROM tickets WHERE status IN ('active', 'scanned')").get()?.total || 0,
             totalTicketsSold: db.prepare("SELECT COUNT(*) as count FROM tickets WHERE status IN ('active', 'scanned')").get()?.count || 0,
@@ -1737,6 +1832,16 @@ async function handleSuperAdmin(req, res, parts) {
                 GROUP BY e.category
             `).all(),
             
+            // Top 10 events global performance (Hi.Events integration style)
+            topEventsPerformance: db.prepare(`
+                SELECT e.name, e.id, strftime('%Y-%m-%d', e.date_start) as event_date,
+                       (SELECT COUNT(*) FROM tickets WHERE event_id = e.id AND status IN ('active', 'scanned')) as tickets_sold,
+                       (SELECT COALESCE(SUM(price), 0) FROM tickets WHERE event_id = e.id AND status IN ('active', 'scanned')) as revenue
+                FROM events e 
+                ORDER BY revenue DESC 
+                LIMIT 10
+            `).all(),
+            
             // Top 5 events this month
             topEvents: db.prepare(`
                 SELECT e.name, e.id, COUNT(t.id) as tickets_sold, 
@@ -1757,7 +1862,7 @@ async function handleSuperAdmin(req, res, parts) {
             `).all()
         };
         
-        stats.totalCommission = Math.round(stats.totalRevenue * 0.03);
+        stats.totalCommission = Math.round(stats.totalRevenue * commissionRate);
         stats.avgFillRate = 72;
         
         return sendJSON(res, stats);
@@ -1810,6 +1915,149 @@ async function handleSuperAdmin(req, res, parts) {
             LIMIT 100
         `).all();
         return sendJSON(res, logs);
+    }
+
+    // ═══ FINANCE SECTION ═══
+    if (resource === 'finance' && req.method === 'GET') {
+        const stats = {
+            totalVolume: db.prepare("SELECT COALESCE(SUM(price), 0) as total FROM tickets WHERE status IN ('active', 'scanned')").get()?.total || 0,
+            pendingPayouts: db.prepare("SELECT COALESCE(SUM(net), 0) as total FROM payouts WHERE status = 'pending'").get()?.total || 0,
+            completedPayouts: db.prepare("SELECT COALESCE(SUM(net), 0) as total FROM payouts WHERE status = 'completed'").get()?.total || 0,
+            totalCommissionCollected: db.prepare("SELECT COALESCE(SUM(commission), 0) as total FROM payouts WHERE status = 'completed'").get()?.total || 0
+        };
+        const payouts = db.prepare(`
+            SELECT p.*, u.name as organizer_name 
+            FROM payouts p 
+            JOIN users u ON p.organizer_id = u.id 
+            ORDER BY p.created_at DESC 
+            LIMIT 50
+        `).all();
+        const config = db.prepare("SELECT * FROM system_config").all();
+        const taxes = db.prepare("SELECT * FROM tax_rules WHERE is_active = 1").all();
+        return sendJSON(res, { stats, payouts, config, taxes });
+    }
+
+    if (resource === 'payouts' && id && action === 'approve' && req.method === 'PUT') {
+        db.prepare("UPDATE payouts SET status = 'completed', paid_at = datetime('now') WHERE id = ?").run(id);
+        const payout = db.prepare("SELECT * FROM payouts WHERE id = ?").get(id);
+        logActivity('payout_completed', user.id, user.name, 'payout', id, payout.id_code, `Versement de ${payout.net} MGA validé`);
+        return sendJSON(res, { success: true });
+    }
+
+    if (resource === 'config' && req.method === 'PUT') {
+        const body = await parseBody(req);
+        if (body.key && body.value !== undefined) {
+            db.prepare("UPDATE system_config SET value = ?, updated_at = datetime('now') WHERE key = ?").run(body.value.toString(), body.key);
+            logActivity('system_config_updated', user.id, user.name, 'config', null, body.key, `Configuration '${body.key}' mise à jour à '${body.value}'`);
+            return sendJSON(res, { success: true });
+        }
+        return sendError(res, 'Clé ou valeur absente');
+    }
+
+    // ═══ ORDERS & ATTENDEES (Hi.Events Style) ═══
+    if (resource === 'orders' && req.method === 'GET') {
+        const orders = db.prepare(`
+            SELECT t.*, e.name as event_name, u.name as buyer_name, u.email as buyer_email
+            FROM tickets t
+            JOIN events e ON t.event_id = e.id
+            JOIN users u ON t.buyer_id = u.id
+            ORDER BY t.created_at DESC
+            LIMIT 100
+        `).all();
+        return sendJSON(res, orders);
+    }
+
+    if (resource === 'orders' && action === 'export' && req.method === 'GET') {
+        const orders = db.prepare(`
+            SELECT t.id_code, e.name as event, u.name as buyer, u.email, t.price, t.status, t.created_at
+            FROM tickets t
+            JOIN events e ON t.event_id = e.id
+            JOIN users u ON t.buyer_id = u.id
+            ORDER BY t.created_at DESC
+        `).all();
+        
+        let csv = 'ID Code,Event,Buyer,Email,Price,Status,Date\n';
+        orders.forEach(o => {
+            csv += `${o.id_code},"${o.event}","${o.buyer}",${o.email},${o.price},${o.status},${o.created_at}\n`;
+        });
+        
+        res.writeHead(200, {
+            'Content-Type': 'text/csv',
+            'Content-Disposition': 'attachment; filename=orders_export.csv'
+        });
+        return res.end(csv);
+    }
+
+    // ═══ MARKETING & PROMO CODES ═══
+    if (resource === 'marketing' && req.method === 'GET') {
+        const promos = db.prepare(`
+            SELECT p.*, e.name as event_name 
+            FROM promo_codes p 
+            LEFT JOIN events e ON p.event_id = e.id 
+            ORDER BY p.created_at DESC
+        `).all();
+        return sendJSON(res, promos);
+    }
+
+    // ═══ TAXES SECTION ═══
+    if (resource === 'taxes' && req.method === 'GET') {
+        const taxes = db.prepare("SELECT * FROM tax_rules ORDER BY created_at DESC").all();
+        return sendJSON(res, taxes);
+    }
+
+    if (resource === 'taxes' && req.method === 'POST') {
+        const body = await parseBody(req);
+        db.prepare("INSERT INTO tax_rules (name, rate) VALUES (?, ?)").run(body.name, body.rate);
+        logActivity('tax_rule_created', user.id, user.name, 'tax', null, body.name, `Nouvelle taxe créée: ${body.name} (${body.rate}%)`);
+        return sendJSON(res, { success: true });
+    }
+
+    // ═══ BROADCAST MESSAGING ═══
+    if (resource === 'broadcast' && req.method === 'POST') {
+        const body = await parseBody(req);
+        // Simulation d'envoi global (email ou notification in-app)
+        logActivity('system_broadcast', user.id, user.name, 'broadcast', null, 'global', `Message global envoyé: ${body.subject}`);
+        return sendJSON(res, { success: true, count: db.prepare("SELECT COUNT(*) as count FROM users").get().count });
+    }
+
+    // ═══ MAINTENANCE MODE ═══
+    if (resource === 'maintenance' && req.method === 'PUT') {
+        const body = await parseBody(req);
+        const status = body.enabled ? '1' : '0';
+        db.prepare("UPDATE system_config SET value = ? WHERE key = 'maintenance_mode'").run(status);
+        logActivity('maintenance_toggle', user.id, user.name, 'system', null, status, `Mode maintenance ${body.enabled ? 'activé' : 'désactivé'}`);
+        return sendJSON(res, { success: true });
+    }
+
+    // ═══ LICENCES SECTION ═══
+    if (resource === 'licences' && req.method === 'GET') {
+        const organizers = db.prepare(`
+            SELECT id, name, email, role, organizer_license, status, created_at 
+            FROM users 
+            WHERE role = 'organizer' 
+            ORDER BY created_at DESC
+        `).all();
+        const kyc = db.prepare(`
+            SELECT k.*, u.name as user_name, u.email as user_email 
+            FROM kyc_documents k 
+            JOIN users u ON k.user_id = u.id 
+            ORDER BY k.created_at DESC
+        `).all();
+        return sendJSON(res, { organizers, kyc });
+    }
+
+    if (resource === 'users' && id && action === 'update-license' && req.method === 'PUT') {
+        const body = await parseBody(req);
+        const oldU = db.prepare("SELECT organizer_license FROM users WHERE id = ?").get(id);
+        db.prepare("UPDATE users SET organizer_license = ? WHERE id = ?").run(body.license, id);
+        
+        db.prepare(`
+            INSERT INTO license_changes (user_id, old_value, new_value, changed_by, license_type, reason)
+            VALUES (?, ?, ?, ?, 'organizer', ?)
+        `).run(id, oldU.organizer_license, body.license, user.id, body.reason || 'Mise à jour admin');
+        
+        logActivity('license_updated', user.id, user.name, 'user', id, body.license, `Licence de l'organisateur mise à jour vers ${body.license}`);
+        return sendJSON(res, { success: true });
     }
 
     if (resource === 'invitations' && req.method === 'GET') {

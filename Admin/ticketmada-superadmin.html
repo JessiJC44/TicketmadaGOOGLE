@@ -291,11 +291,35 @@
                         <v-icon class="nav-item-icon">mdi-account-group</v-icon>
                         <span>Utilisateurs</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentTab === 'events' }" @click="currentTab = 'events'">
+                    <div class="nav-item" :class="{ active: currentTab === 'events' }" @click="currentTab = 'events' ">
                         <v-icon class="nav-item-icon">mdi-calendar-multiple</v-icon>
                         <span>Événements</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentTab === 'logs' }" @click="currentTab = 'logs'">
+                    <div class="nav-item" :class="{ active: currentTab === 'orders' }" @click="currentTab = 'orders' ">
+                        <v-icon class="nav-item-icon">mdi-receipt</v-icon>
+                        <span>Commandes</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentTab === 'marketing' }" @click="currentTab = 'marketing' ">
+                        <v-icon class="nav-item-icon">mdi-tag-multiple</v-icon>
+                        <span>Promo & Marketing</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentTab === 'licences' }" @click="currentTab = 'licences' ">
+                        <v-icon class="nav-item-icon">mdi-certificate</v-icon>
+                        <span>Licences & KYC</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentTab === 'finance' }" @click="currentTab = 'finance' ">
+                        <v-icon class="nav-item-icon">mdi-cash-multiple</v-icon>
+                        <span>Comptabilité & Taxes</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentTab === 'broadcast' }" @click="currentTab = 'broadcast' ">
+                        <v-icon class="nav-item-icon">mdi-email-newsletter</v-icon>
+                        <span>Communication</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentTab === 'config' }" @click="currentTab = 'config' ">
+                        <v-icon class="nav-item-icon">mdi-cog</v-icon>
+                        <span>Configuration</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentTab === 'logs' }" @click="currentTab = 'logs' ">
                         <v-icon class="nav-item-icon">mdi-history</v-icon>
                         <span>Logs & Audit</span>
                     </div>
@@ -371,21 +395,71 @@
                             </div>
                             <div class="bento-card">
                                 <div class="card-header">
-                                    <div class="card-title"><v-icon>mdi-fire</v-icon> Top Événements</div>
+                                    <div class="card-title"><v-icon>mdi-fire</v-icon> Performance Globale</div>
                                 </div>
                                 <div class="table-responsive">
                                     <table>
                                         <thead>
-                                            <tr><th>Événement</th><th>Ventes</th></tr>
+                                            <tr><th>Événement</th><th>Date</th><th>Ventes</th><th>Revenus</th></tr>
                                         </thead>
                                         <tbody>
-                                            <tr v-for="e in stats.topEvents" :key="e.id">
+                                            <tr v-for="e in stats.topEventsPerformance" :key="e.id">
                                                 <td><div style="font-weight: 700;">{{ e.name }}</div></td>
-                                                <td><div style="font-family: monospace; font-weight: 800;">{{ e.tickets_sold }}</div></td>
+                                                <td><div style="font-size: 0.8rem; color: #666;">{{ e.event_date }}</div></td>
+                                                <td><span class="badge">{{ e.tickets_sold }}</span></td>
+                                                <td><div style="font-family: monospace; font-weight: 800;">{{ formatMoney(e.revenue) }}</div></td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- TAB: LICENCES & KYC -->
+                    <template v-if="currentTab === 'licences'">
+                        <div class="bento-card" style="margin-bottom: 30px;">
+                            <div class="card-header">
+                                <div class="card-title"><v-icon>mdi-account-check</v-icon> Demandes de Vérification & Licences</div>
+                            </div>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Organisateur</th>
+                                            <th>Licence Actuelle</th>
+                                            <th>Statut KYC</th>
+                                            <th>Inscrit le</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="o in organizers" :key="o.id">
+                                            <td>
+                                                <div style="font-weight: 800;">{{ o.name }}</div>
+                                                <div style="font-size: 0.75rem; color: #666;">{{ o.email }}</div>
+                                            </td>
+                                            <td>
+                                                <span class="badge" :class="{ 
+                                                    'badge-approved': o.organizer_license === 'premium',
+                                                    'badge-pending': o.organizer_license === 'verified'
+                                                }">{{ o.organizer_license }}</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge" :class="o.status === 'active' ? 'badge-approved' : 'badge-pending'">
+                                                    {{ o.status === 'active' ? 'VÉRIFIÉ' : 'À VÉRIFIER' }}
+                                                </span>
+                                            </td>
+                                            <td>{{ formatDate(o.created_at) }}</td>
+                                            <td>
+                                                <div style="display: flex; gap: 5px;">
+                                                    <button class="btn-brutal sm primary" @click="upgradeLicense(o, 'verified')">VERIFIED</button>
+                                                    <button class="btn-brutal sm mint" @click="upgradeLicense(o, 'premium')">PREMIUM</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </template>
@@ -566,6 +640,243 @@
                         </div>
                     </template>
 
+                    <!-- TAB: ORDERS & ATTENDEES -->
+                    <template v-if="currentTab === 'orders'">
+                        <div class="bento-card">
+                            <div class="card-header">
+                                <div class="card-title"><v-icon>mdi-receipt</v-icon> Toutes les Commandes de la Plateforme</div>
+                                <div class="card-actions">
+                                    <button class="btn-brutal sm mint" @click="exportOrdersCSV">
+                                        <v-icon>mdi-file-export</v-icon> EXPORTER TOUT (CSV)
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Ticket ID</th>
+                                            <th>Événement</th>
+                                            <th>Acheteur</th>
+                                            <th>Prix</th>
+                                            <th>Statut</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="o in allOrders" :key="o.id">
+                                            <td>{{ formatDateShort(o.created_at) }}</td>
+                                            <td><span style="font-family: monospace; font-weight: 700;">#{{ o.id_code }}</span></td>
+                                            <td><div style="font-weight: 700;">{{ o.event_name }}</div></td>
+                                            <td>
+                                                <div style="font-weight: 700;">{{ o.buyer_name }}</div>
+                                                <div style="font-size: 0.7rem; color: #666;">{{ o.buyer_email }}</div>
+                                            </td>
+                                            <td>{{ formatMoney(o.price) }}</td>
+                                            <td><span class="badge" :class="'badge-' + (o.status || 'active')">{{ o.status }}</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- TAB: MARKETING -->
+                    <template v-if="currentTab === 'marketing'">
+                        <div class="bento-card">
+                            <div class="card-header">
+                                <div class="card-title"><v-icon>mdi-tag-multiple</v-icon> Codes Promotionnels System-wide</div>
+                            </div>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Code</th>
+                                            <th>Événement</th>
+                                            <th>Réduction</th>
+                                            <th>Utilisations</th>
+                                            <th>Validité</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="p in promoCodes" :key="p.id">
+                                            <td><span style="background: #000; color: #fff; padding: 4px 8px; font-weight: 900; font-family: monospace;">{{ p.code }}</span></td>
+                                            <td>{{ p.event_name || 'TOUS' }}</td>
+                                            <td>{{ p.discount_type === 'percentage' ? p.discount_value + '%' : formatMoney(p.discount_value) }}</td>
+                                            <td>{{ p.used_count }} / {{ p.usage_limit || '∞' }}</td>
+                                            <td>{{ formatDateShort(p.valid_until) }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- TAB: COMMUNICATION -->
+                    <template v-if="currentTab === 'broadcast'">
+                        <div class="grid-2">
+                            <div class="bento-card">
+                                <div class="card-header">
+                                    <div class="card-title"><v-icon>mdi-bullhorn</v-icon> Message Global</div>
+                                </div>
+                                <div class="card-content" style="padding: 25px;">
+                                    <div class="form-group">
+                                        <label>Sujet</label>
+                                        <input type="text" class="input-brutal" v-model="broadcast.subject" placeholder="Sujet du message...">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Cibles</label>
+                                        <select class="input-brutal" v-model="broadcast.target">
+                                            <option value="all">Tous les utilisateurs</option>
+                                            <option value="organizers">Organisateurs uniquement</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Message</label>
+                                        <textarea class="input-brutal" v-model="broadcast.content" rows="6"></textarea>
+                                    </div>
+                                    <button class="btn-brutal primary w-full" @click="sendBroadcast" :disabled="sendingBroadcast">
+                                        {{ sendingBroadcast ? 'ENVOI...' : 'ENVOYER LE MESSAGE' }}
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="bento-card">
+                                <div class="card-header">
+                                    <div class="card-title"><v-icon>mdi-history</v-icon> Historique Broadcast</div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table>
+                                        <thead>
+                                            <tr><th>Date</th><th>Sujet</th><th>Cible</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="log in broadcastLogs" :key="log.id">
+                                                <td>{{ formatDateShort(log.created_at) }}</td>
+                                                <td>{{ log.description.split(': ')[1] || 'Message Global' }}</td>
+                                                <td><span class="badge">GLOBAL</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- TAB: FINANCE -->
+                    <template v-if="currentTab === 'finance'">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-label">Volume Total</div>
+                                <div class="stat-value">{{ formatMoney(finance.stats.totalVolume) }}</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Commissions Collectées</div>
+                                <div class="stat-value" style="color: #ff5252">{{ formatMoney(finance.stats.totalCommissionCollected) }}</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Paiements en attente</div>
+                                <div class="stat-value" style="color: #fb8c00">{{ formatMoney(finance.stats.pendingPayouts) }}</div>
+                            </div>
+                        </div>
+
+                        <div class="bento-card">
+                            <div class="card-header">
+                                <div class="card-title">Flux de Versements (Payouts)</div>
+                            </div>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>ID Code</th>
+                                            <th>Organisateur</th>
+                                            <th>Montant Brut</th>
+                                            <th>Commission</th>
+                                            <th>Net à Verser</th>
+                                            <th>Statut</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="p in finance.payouts" :key="p.id">
+                                            <td>{{ formatDate(p.created_at) }}</td>
+                                            <td><span style="font-family: monospace; font-weight: 700;">{{ p.id_code }}</span></td>
+                                            <td>{{ p.organizer_name }}</td>
+                                            <td>{{ formatMoney(p.amount) }}</td>
+                                            <td>-{{ formatMoney(p.commission) }}</td>
+                                            <td><div style="font-weight: 800;">{{ formatMoney(p.net) }}</div></td>
+                                            <td><span class="badge" :class="'badge-' + (p.status || 'pending')">{{ p.status || 'pending' }}</span></td>
+                                            <td>
+                                                <button v-if="p.status === 'pending' || p.status === 'submitted'" class="btn-brutal sm mint" @click="approvePayout(p)">MARQUER PAYÉ</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="bento-card" style="margin-top: 30px;">
+                            <div class="card-header">
+                                <div class="card-title"><v-icon>mdi-percent</v-icon> Gestion des Taxes & Prélèvements</div>
+                            </div>
+                            <div class="grid-2" style="padding: 20px; gap: 20px;">
+                                <div class="table-responsive">
+                                    <table>
+                                        <thead>
+                                            <tr><th>Nom</th><th>Taux</th><th>Actif</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="t in finance.taxes" :key="t.id">
+                                                <td style="font-weight: 700;">{{ t.name }}</td>
+                                                <td>{{ t.rate }}%</td>
+                                                <td><span class="badge badge-approved">OUI</span></td>
+                                            </tr>
+                                            <tr v-if="!finance.taxes || finance.taxes.length === 0">
+                                                <td colspan="3" style="text-align: center; color: #999; padding: 20px;">Aucune règle de taxe définie</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div style="background: #fcfcfc; padding: 20px; border: 2px solid #000; box-shadow: 4px 4px 0 #000;">
+                                    <div style="font-weight: 900; margin-bottom: 20px; text-transform: uppercase;">Nouvelle Règle</div>
+                                    <div class="form-group">
+                                        <label>Nom de la taxe (ex: TVA)</label>
+                                        <input type="text" class="input-brutal" v-model="newTax.name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Taux (%)</label>
+                                        <input type="number" class="input-brutal" v-model="newTax.rate">
+                                    </div>
+                                    <button class="btn-brutal primary w-full" @click="addTaxRule">AJOUTER LA TAXE</button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- TAB: CONFIGURATION -->
+                    <template v-if="currentTab === 'config'">
+                        <div class="bento-card" style="max-width: 800px;">
+                            <div class="card-header">
+                                <div class="card-title">Paramètres Généraux du Système</div>
+                            </div>
+                            <div class="card-content" style="padding: 30px;">
+                                <div v-for="c in finance.config" :key="c.key" style="margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                                        <div>
+                                            <div style="font-weight: 800; font-family: 'Syne', sans-serif; text-transform: uppercase; font-size: 0.9rem;">{{ c.key }}</div>
+                                            <div style="font-size: 0.8rem; color: #666;">{{ c.description }}</div>
+                                        </div>
+                                        <div style="font-size: 0.7rem; color: #aaa; font-family: monospace;">Mis à jour: {{ c.updated_at }}</div>
+                                    </div>
+                                    <div style="display: flex; gap: 10px;">
+                                        <input type="text" class="input-brutal" v-model="c.value" style="margin-bottom: 0; padding: 8px 15px; flex: 1;">
+                                        <button class="btn-brutal mint sm" @click="updateConfig(c)">ENREGISTRER</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
                     <!-- TAB: LOGS -->
                     <template v-if="currentTab === 'logs'">
                         <div class="bento-card">
@@ -697,6 +1008,19 @@
                     events: [],
                     applications: [],
                     logs: [],
+                    finance: {
+                        stats: { totalVolume: 0, pendingPayouts: 0, completedPayouts: 0, totalCommissionCollected: 0 },
+                        payouts: [],
+                        config: [],
+                        taxes: []
+                    },
+                    newTax: { name: '', rate: 0 },
+                    kyc: [],
+                    allOrders: [],
+                    promoCodes: [],
+                    broadcast: { subject: '', content: '', target: 'all' },
+                    sendingBroadcast: false,
+                    broadcastLogs: [],
                     
                     showRejectModal: false,
                     rejectReason: '',
@@ -711,6 +1035,12 @@
                         applications: 'Candidatures Organisateur',
                         users: 'Gestion des Utilisateurs',
                         events: 'Surveillance des Événements',
+                        licences: 'Licences & Certifications',
+                        orders: 'Toutes les Commandes',
+                        marketing: 'Marketing & Codes Promo',
+                        broadcast: 'Communication & Diffusion',
+                        finance: 'Finance & Commissions',
+                        config: 'Configuration Système',
                         logs: 'Journal d\'Audit Système'
                     }
                 };
@@ -846,9 +1176,91 @@
                         const apps = await window.api.get('/organizer-applications');
                         if (Array.isArray(apps)) this.applications = apps;
                     } catch (e) { console.warn('[SuperAdmin] Applications fetch failed'); }
+
+                    try {
+                        const finance = await window.api.get('/superadmin/finance');
+                        if (finance && !finance.error) this.finance = finance;
+                    } catch (e) { console.warn('[SuperAdmin] Finance fetch failed'); }
+
+                    try {
+                        const orders = await window.api.get('/superadmin/orders');
+                        if (Array.isArray(orders)) this.allOrders = orders;
+                    } catch (e) { console.warn('[SuperAdmin] Orders fetch failed'); }
+
+                    try {
+                        const marketing = await window.api.get('/superadmin/marketing');
+                        if (Array.isArray(marketing)) this.promoCodes = marketing;
+                    } catch (e) { console.warn('[SuperAdmin] Marketing fetch failed'); }
+
+                    try {
+                        const logs = await window.api.get('/superadmin/invitations'); // Using invitations endpoint as a generic logs proxy for now
+                        if (Array.isArray(logs)) this.broadcastLogs = logs.filter(l => l.type === 'system_broadcast');
+                    } catch (e) { console.warn('[SuperAdmin] Broadcast logs fetch failed'); }
+                },
+                async sendBroadcast() {
+                    if (!this.broadcast.subject || !this.broadcast.content) return alert('Veuillez remplir le sujet et le message');
+                    this.sendingBroadcast = true;
+                    try {
+                        await window.api.post('/superadmin/broadcast', this.broadcast);
+                        alert('Message envoyé avec succès !');
+                        this.broadcast.subject = '';
+                        this.broadcast.content = '';
+                        this.fetchData();
+                    } catch (e) {
+                        alert('Erreur lors de l\'envoi du message');
+                    } finally {
+                        this.sendingBroadcast = false;
+                    }
+                },
+                async addTaxRule() {
+                    if (!this.newTax.name || this.newTax.rate < 0) return alert('Données invalides');
+                    try {
+                        await window.api.post('/superadmin/taxes', this.newTax);
+                        alert('Règle fiscale ajoutée !');
+                        this.newTax = { name: '', rate: 0 };
+                        this.fetchData();
+                    } catch (e) {
+                        alert('Erreur lors de l\'ajout de la taxe');
+                    }
+                },
+                async approvePayout(payout) {
+                    if (!confirm(`Confirmer le versement de ${this.formatMoney(payout.net)} à ${payout.organizer_name} ?`)) return;
+                    try {
+                        await window.api.put(`/superadmin/payouts/${payout.id}/approve`);
+                        alert('Versement marqué comme payé !');
+                        this.fetchData();
+                    } catch (e) {
+                        alert('Erreur lors de la validation du payout');
+                    }
+                },
+                async updateConfig(config) {
+                    try {
+                        await window.api.put('/superadmin/config', { key: config.key, value: config.value });
+                        alert(`Configuration ${config.key} mise à jour !`);
+                    } catch (e) {
+                        alert('Erreur lors de la mise à jour de la config');
+                    }
+                },
+                exportOrdersCSV() {
+                    const token = window.api.getToken();
+                    window.open(`${window.api.baseUrl}/superadmin/orders/export?token=${token}`, '_blank');
+                },
+                async upgradeLicense(org, tier) {
+                    if (!confirm(`Passer ${org.name} en licence ${tier.toUpperCase()} ?`)) return;
+                    try {
+                        await window.api.put(`/superadmin/users/${org.id}/update-license`, { license: tier, reason: 'Upgrade manuelle' });
+                        alert('Licence mise à jour !');
+                        this.fetchData();
+                    } catch (e) {
+                        alert('Erreur lors de la mise à jour de la licence');
+                    }
                 },
                 formatMoney(v) {
                     return new Intl.NumberFormat('fr-MG', { style: 'currency', currency: 'MGA', minimumFractionDigits: 0 }).format(v).replace('MGA', 'Ar');
+                },
+                formatDateShort(d) {
+                    if (!d) return '—';
+                    return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
                 },
                 formatNumber(v) {
                     return new Intl.NumberFormat('fr-FR').format(v);
