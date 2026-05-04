@@ -966,6 +966,13 @@ function initDB() {
         if (!colNames.includes('attendee_id')) db.exec("ALTER TABLE tickets ADD COLUMN attendee_id INTEGER");
     } catch(e) { console.warn('Migration tickets new cols:', e.message); }
 
+    try {
+        const cols = db.prepare("PRAGMA table_info(orders)").all();
+        const colNames = cols.map(c => c.name);
+        if (!colNames.includes('expires_at')) db.exec("ALTER TABLE orders ADD COLUMN expires_at DATETIME");
+        if (!colNames.includes('total_tax')) db.exec("ALTER TABLE orders ADD COLUMN total_tax INTEGER DEFAULT 0");
+    } catch(e) { console.warn('Migration orders new cols:', e.message); }
+
     const userCount = db.prepare("SELECT COUNT(*) as count FROM users").get().count;
     if (userCount === 0) {
         seedDB();
@@ -3027,13 +3034,14 @@ async function handleOrders(req, res, parts) {
             const totalGross = totalAfterDiscount + commission + totalTax;
 
             const shortId = 'ORD-' + crypto.randomBytes(4).toString('hex').toUpperCase();
+            const publicId = crypto.randomBytes(16).toString('hex');
             const orderResult = db.prepare(`
                 INSERT INTO orders (
-                    short_id, event_id, buyer_id, status, 
+                    short_id, public_id, event_id, buyer_id, email, status, 
                     total_before_fees, total_discount, total_fees, total_tax, total_gross, commission_amount,
                     currency, expires_at
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?, datetime('now', '+15 minutes'))
-            `).run(shortId, event_id, user.id, 'PENDING_PAYMENT', totalBeforeFees, discount, commission, totalTax, totalGross, commission, 'MGA');
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?, datetime('now', '+15 minutes'))
+            `).run(shortId, publicId, event_id, user.id, user.email, 'PENDING_PAYMENT', totalBeforeFees, discount, commission, totalTax, totalGross, commission, 'MGA');
 
             const orderId = orderResult.lastInsertRowid;
 
