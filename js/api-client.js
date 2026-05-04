@@ -53,166 +53,30 @@ const TicketMadaAPI = (() => {
     };
 
     const MOCK_SUPERADMIN_STATS = {
-        totalRevenue: 245000000,
-        totalTicketsSold: 12500,
-        activeEvents: 42,
-        totalUsers: 8500,
-        activeOrganizers: 156,
-        pendingApplications: 1,
-        totalEvents: 184,
-        blockedUsers: 8,
-        totalCommission: 7350000,
-        avgFillRate: 72,
-        monthlyRevenue: [
-            { month: '2025-06', revenue: 12000000 },
-            { month: '2025-07', revenue: 15000000 },
-            { month: '2025-08', revenue: 22000000 },
-            { month: '2025-09', revenue: 18000000 },
-            { month: '2025-10', revenue: 25000000 },
-            { month: '2025-11', revenue: 30000000 },
-            { month: '2025-12', revenue: 45000000 },
-            { month: '2026-01', revenue: 20000000 },
-            { month: '2026-02', revenue: 15000000 },
-            { month: '2026-03', revenue: 18000000 },
-            { month: '2026-04', revenue: 25000000 }
-        ],
-        categoryDistribution: [
-            { category: 'concerts', ticket_count: 5200 },
-            { category: 'festival', ticket_count: 4100 },
-            { category: 'sports', ticket_count: 2100 },
-            { category: 'theatre', ticket_count: 800 },
-            { category: 'exhibition', ticket_count: 300 }
-        ],
-        topEvents: [
-            { id: 1, name: "Dama Live — Tournée 2026", tickets_sold: 12500, revenue: 125000000 },
-            { id: 2, name: "Festival Donia 2026", tickets_sold: 14000, revenue: 85000000 },
-            { id: 8, name: "Makis vs Kenya", tickets_sold: 21000, revenue: 42000000 },
-            { id: 12, name: "AmbondronA Rock", tickets_sold: 35000, revenue: 70000000 },
-            { id: 15, name: "Rossy en Fête", tickets_sold: 30000, revenue: 60000000 }
-        ],
-        recentActivity: [
-            { id: 1, type: 'ticket_purchased', actor_name: 'Jean Rakoto', description: 'Jean Rakoto a acheté 2 billets pour Dama Live', created_at: new Date().toISOString() },
-            { id: 2, type: 'organizer_application_submitted', actor_name: 'Rakoto Jean', description: 'Nouvelle demande d\'organisateur de Rakoto Jean', created_at: new Date(Date.now() - 3600000).toISOString() },
-            { id: 3, type: 'event_created', actor_name: 'Samoela Ent.', description: 'Nouvel événement créé: Samoela Acoustic', created_at: new Date(Date.now() - 7200000).toISOString() },
-            { id: 4, type: 'user_registered', actor_name: 'Miora Soa', description: 'Nouvel utilisateur inscrit: Miora Soa', created_at: new Date(Date.now() - 86400000).toISOString() }
-        ]
+        totalRevenue: 0,
+        totalTicketsSold: 0,
+        activeEvents: 0,
+        totalUsers: 0,
+        activeOrganizers: 0,
+        pendingApplications: 0,
+        totalEvents: 0,
+        blockedUsers: 0,
+        totalCommission: 0,
+        avgFillRate: 0,
+        monthlyRevenue: [],
+        categoryDistribution: [],
+        topEvents: [],
+        recentActivity: []
     };
 
-    const MOCK_SUPERADMIN_ORGANIZERS = [
-        { id: 101, name: "Samoela Ent.", email: "samoela@ent.mg", status: "active", events_count: 12, total_revenue: 150000000, total_commission: 4500000, created_at: "2024-01-10" },
-        { id: 102, name: "Madagascar Events", email: "contact@madevents.com", status: "active", events_count: 8, total_revenue: 85000000, total_commission: 2550000, created_at: "2024-02-15" },
-        { id: 103, name: "Dago Productions", email: "prod@dago.mg", status: "suspended", events_count: 5, total_revenue: 42000000, total_commission: 1260000, created_at: "2024-03-20" }
-    ];
-
-    const MOCK_SUPERADMIN_USERS = [
-        { id: 201, name: "Jean Rakoto", email: "jean@gmail.com", status: "active", purchaseCount: 15, totalSpent: 450000, lastPurchase: "2026-04-20", created_at: "2025-05-10" },
-        { id: 202, name: "Miora Soa", email: "miora@yahoo.fr", status: "active", purchaseCount: 2, totalSpent: 80000, lastPurchase: "2026-04-25", created_at: "2026-04-01" },
-        { id: 203, name: "Fidy Antsa", email: "fidy@gmail.com", status: "blocked", purchaseCount: 0, totalSpent: 0, lastPurchase: null, created_at: "2026-04-10" }
-    ];
-    const MOCK_APPLICATIONS = [
-        { 
-            id: "app_1", 
-            uid: "buyer_01", 
-            fullName: "Rakoto Jean", 
-            email: "rakoto@gmail.com", 
-            phone: "034 00 123 45", 
-            city: "Antananarivo", 
-            organizationName: "Rakoto Events", 
-            organizationDescription: "Concerts de jazz et folk.", 
-            motivation: "Je souhaite professionaliser ma billetterie sur TicketMada.", 
-            status: "pending", 
-            createdAt: new Date(Date.now() - 86400000).toISOString() 
-        }
-    ];
-
-    const MOCK_EVENTS = [
-        { id: 1, name: "Dama Live — Tournée 2026", artist: "Dama (Mahaleo)", description: "Le légendaire Dama revient sur scène.", emoji: "🎤", category: "concerts", date_start: "2026-06-15", time: "19:00", venue: "Stade Barea", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800", capacity: 15000, tickets_sold: 12500, status: "active", hot: true, zones: ZONE_TEMPLATES.concert },
-        { id: 2, name: "Festival Donia 2026", artist: "Multiples", description: "Le plus grand festival de l'Océan Indien.", emoji: "🎪", category: "festival", date_start: "2026-07-20", time: "16:00", venue: "Plage Ambatoloaka", city: "Nosy Be", image_url: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800", capacity: 20000, tickets_sold: 14000, status: "active", hot: true, zones: ZONE_TEMPLATES.festival },
-        { id: 3, name: "Erick Manana Acoustic", artist: "Erick Manana", description: "Soirée acoustique intime.", emoji: "🎸", category: "concerts", date_start: "2026-05-28", time: "20:00", venue: "Alliance Française", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800", capacity: 800, tickets_sold: 650, status: "active", zones: ZONE_TEMPLATES.theatre },
-        { id: 4, name: "Samoela & Tence Mena", artist: "Samoela & Tence Mena", description: "Le choc des cultures malgaches.", emoji: "🎶", category: "concerts", date_start: "2026-08-05", time: "18:30", venue: "CCI Ivato", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800", capacity: 5000, tickets_sold: 3800, status: "active", zones: ZONE_TEMPLATES.concert },
-        { id: 5, name: "Baryon Metal Night", artist: "Baryon", description: "Le métal malgache dans toute sa splendeur.", emoji: "🎸", category: "concerts", date_start: "2026-09-12", time: "19:00", venue: "Palais des Sports", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1514320298324-41d40810167d?w=800", capacity: 6000, tickets_sold: 1200, status: "active", zones: ZONE_TEMPLATES.concert },
-        { id: 6, name: "Gasy Humour Show", artist: "GASY Team", description: "Rires garantis pour toute la famille.", emoji: "😂", category: "humour", date_start: "2026-05-15", venue: "IFM Tana", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=800", capacity: 1000, tickets_sold: 800, status: "active", zones: ZONE_TEMPLATES.theatre },
-        { id: 7, name: "Jaojoby au Glacier", artist: "Jaojoby", description: "Le Roi du Salegy vous fait danser.", emoji: "🎷", category: "concerts", date_start: "2026-08-20", venue: "Le Glacier", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800", capacity: 400, tickets_sold: 250, status: "active", zones: ZONE_TEMPLATES.theatre },
-        { id: 8, name: "Makis vs Kenya", artist: "XV de Madagascar", description: "Match international de rugby.", emoji: "🏉", category: "sports", date_start: "2026-05-20", venue: "Stade Mahamasina", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1544698310-74ea9d1c8288?w=800", capacity: 25000, tickets_sold: 21000, status: "active", hot: true, zones: ZONE_TEMPLATES.sports },
-        { id: 9, name: "Somaroho 2026", artist: "Wawa", description: "Le festival mythique de Nosy Be.", emoji: "💃", category: "festival", date_start: "2026-08-15", venue: "Nosy Be", city: "Nosy Be", image_url: "https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=800", capacity: 30000, tickets_sold: 22000, status: "active", zones: ZONE_TEMPLATES.festival },
-        { id: 10, name: "Francis Turbo Solo", artist: "Francis Turbo", description: "Humour décapant.", emoji: "🎤", category: "humour", date_start: "2026-03-30", venue: "Palais des Sports", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1541533232361-9c3f0f70e9a5?w=800", capacity: 6000, tickets_sold: 5800, status: "active", zones: ZONE_TEMPLATES.theatre },
-        { id: 11, name: "Bodo Diva — Live", artist: "Bodo", description: "La diva de Madagascar fête sa carrière.", emoji: "👗", category: "concerts", date_start: "2026-05-10", venue: "Palais des Sports", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=800", capacity: 6000, tickets_sold: 4500, status: "active", zones: ZONE_TEMPLATES.concert },
-        { id: 12, name: "AmbondronA Rock", artist: "AmbondronA", description: "Le rock n°1 de Madagascar.", emoji: "🤘", category: "concerts", date_start: "2026-09-05", venue: "Antsonjombe", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800", capacity: 50000, tickets_sold: 35000, status: "active", zones: ZONE_TEMPLATES.concert },
-        { id: 13, name: "Jazz à l'AFT", artist: "Jazz Collective", description: "Le renouveau du jazz malgache.", emoji: "🎷", category: "concerts", date_start: "2026-10-01", venue: "Jardin AFT", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=800", capacity: 1500, tickets_sold: 900, status: "active", zones: ZONE_TEMPLATES.theatre },
-        { id: 14, name: "Rugby: Gasy vs Namibie", artist: "Makis de Madagascar", description: "Qualificatif pour la Coupe du Monde.", emoji: "🏉", category: "sports", date_start: "2026-06-12", venue: "Stade Barea", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800", capacity: 40000, tickets_sold: 21000, status: "active", zones: ZONE_TEMPLATES.sports },
-        { id: 15, name: "Rossy en Fête", artist: "Rossy", description: "L'Avaradrano célèbre avec Rossy.", emoji: "🎶", category: "concerts", date_start: "2026-04-10", venue: "Antsonjombe", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=800", capacity: 40000, tickets_sold: 30000, status: "active", zones: ZONE_TEMPLATES.concert },
-        { id: 16, name: "Fiera Mada Expo", artist: "Exposants", description: "Grande foire économique.", emoji: "💼", category: "exhibition", date_start: "2026-06-01", venue: "Forello", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1531058020387-3be344556be6?w=800", capacity: 10000, tickets_sold: 4000, status: "active", zones: ZONE_TEMPLATES.exhibition },
-        { id: 17, name: "Night with Rim-Ka", artist: "Rim-Ka", description: "Le rap malgache à son sommet.", emoji: "🧢", category: "concerts", date_start: "2026-07-15", venue: "Palladium", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800", capacity: 1000, tickets_sold: 600, status: "active", zones: ZONE_TEMPLATES.theatre },
-        { id: 18, name: "Théâtre: Akory Iny !", artist: "Dago Théâtre", description: "Comédie satirique.", emoji: "🎭", category: "theatre", date_start: "2026-09-20", venue: "AFT", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=800", capacity: 500, tickets_sold: 300, status: "active", zones: ZONE_TEMPLATES.theatre },
-        { id: 21, name: "Mr Sayda — M'lay Be", artist: "Mr Sayda", description: "Concert intimiste.", emoji: "🎙️", category: "concerts", date_start: "2026-05-02", venue: "IFM", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=800", capacity: 600, tickets_sold: 550, status: "active", zones: ZONE_TEMPLATES.theatre },
-        { id: 22, name: "Rock Revival", artist: "Gasy Rocks", description: "Les années 70 revisitées.", emoji: "🎸", category: "concerts", date_start: "2026-11-20", venue: "Piment Café", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800", capacity: 200, tickets_sold: 150, status: "active", zones: ZONE_TEMPLATES.theatre },
-        { id: 23, name: "Marathon de Tana", artist: "Athlètes", description: "La course des mille collines.", emoji: "🏃", category: "sports", date_start: "2026-10-25", venue: "Analakely", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1530541930197-ff16ac917b0e?w=800", capacity: 5000, tickets_sold: 3000, status: "active", zones: ZONE_TEMPLATES.sports },
-        { id: 24, name: "Fashion Show 26", artist: "Stylistes Mada", description: "Défilé haute couture.", emoji: "👗", category: "theatre", date_start: "2026-04-15", venue: "Carlton", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=800", capacity: 500, tickets_sold: 450, status: "active", zones: ZONE_TEMPLATES.theatre },
-        { id: 25, name: "Opera: Traviata", artist: "Chœur Gasy", description: "Opéra au Palais.", emoji: "🎼", category: "theatre", date_start: "2026-03-12", venue: "Palais d'Ambohimanga", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=800", capacity: 300, tickets_sold: 250, status: "active", zones: ZONE_TEMPLATES.theatre },
-        { id: 26, name: "Electro Night", artist: "Digital Team", description: "Best DJs of the Island.", emoji: "🎧", category: "concerts", date_start: "2026-02-14", venue: "Le Six", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800", capacity: 800, tickets_sold: 700, status: "active", zones: ZONE_TEMPLATES.theatre },
-        { id: 28, name: "Rallye National", artist: "Pilotes Mada", description: "Sensations fortes sur les pistes.", emoji: "🏎️", category: "sports", date_start: "2026-11-12", venue: "Tana Pistes", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1533038590840-1cde6e668a91?w=800", capacity: 10000, tickets_sold: 5000, status: "active", zones: ZONE_TEMPLATES.sports },
-        { id: 29, name: "Samoela 25 ans", artist: "Samoela", description: "Le boss de la variété malgache.", emoji: "🎙️", category: "concerts", date_start: "2026-12-25", venue: "STADE", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800", capacity: 40000, tickets_sold: 35000, status: "active", zones: ZONE_TEMPLATES.concert },
-        { id: 31, name: "Art Contemporain", artist: "Peintres Malgaches", description: "Exhibition d'art moderne.", emoji: "🖼️", category: "exhibition", date_start: "2026-02-20", venue: "Maison Culture", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1531058020387-3be344556be6?w=800", capacity: 2000, tickets_sold: 400, status: "active", zones: ZONE_TEMPLATES.exhibition },
-        { id: 32, name: "DJ Seth World Tour", artist: "DJ Seth", description: "La légende de la nuit.", emoji: "📀", category: "concerts", date_start: "2026-06-20", venue: "Mojo", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800", capacity: 500, tickets_sold: 450, status: "active", zones: ZONE_TEMPLATES.theatre },
-        { id: 33, name: "Fou Hehy Team Live", artist: "Fou Hehy", description: "Le retour du duo mythique.", emoji: "😆", category: "humour", date_start: "2026-10-30", venue: "CCEsca", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1527224857853-eb3dc505f778?w=800", capacity: 1000, tickets_sold: 900, status: "active", zones: ZONE_TEMPLATES.theatre },
-        { id: 34, name: "Salegy Majunga", artist: "Artistes Locaux", description: "Ambiance tropicale garantie.", emoji: "💃", category: "concerts", date_start: "2026-07-12", venue: "Village Majunga", city: "Mahajanga", image_url: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800", capacity: 2000, tickets_sold: 1500, status: "active", zones: ZONE_TEMPLATES.concert },
-        { id: 37, name: "Shyn & Denise Live", artist: "Shyn & Denise", description: "Le duo glamour de Madagascar.", emoji: "💑", category: "concerts", date_start: "2026-11-15", venue: "Palais Sports", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1514320298324-41d40810167d?w=800", capacity: 6000, tickets_sold: 5000, status: "active", zones: ZONE_TEMPLATES.concert },
-        { id: 38, name: "Rugby: Finale Coupe", artist: "Finalistes", description: "Le choc des titans malgaches.", emoji: "🏉", category: "sports", date_start: "2026-12-05", venue: "Stade Barea", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1544698310-74ea9d1c8288?w=800", capacity: 40000, tickets_sold: 38000, status: "active", zones: ZONE_TEMPLATES.sports },
-        { id: 39, name: "Exposition Artisanale", artist: "Madagascar Crafts", description: "Le meilleur de l'artisanat local.", emoji: "🧶", category: "exhibition", date_start: "2026-08-01", venue: "Avenue Independance", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1531058020387-3be344556be6?w=800", capacity: 5000, tickets_sold: 1000, status: "active", zones: ZONE_TEMPLATES.exhibition },
-        { id: 40, name: "Basket: Play-offs", artist: "Elite Team", description: "La finale du championnat national.", emoji: "🏀", category: "sports", date_start: "2026-10-10", venue: "Palais Sports", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800", capacity: 6000, tickets_sold: 5500, status: "active", zones: ZONE_TEMPLATES.sports },
-        // Festival template additions
-        { id: 19, name: "Beach Party Foulpointe", artist: "DJ Rolly", description: "Pool & Beach party on the coast.", emoji: "🏖️", category: "festival", date_start: "2026-08-30", venue: "La Plage", city: "Toamasina", image_url: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800", capacity: 2000, tickets_sold: 1500, status: "active", zones: ZONE_TEMPLATES.festival },
-        { id: 27, name: "Loko Gasy 26", artist: "Groupes Locaux", description: "Saveurs et traditions.", emoji: "🎨", category: "festival", date_start: "2026-05-05", venue: "Coliseum", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800", capacity: 50000, tickets_sold: 20000, status: "active", zones: ZONE_TEMPLATES.festival },
-        { id: 30, name: "Fête de la Baleine", artist: "Sainte Marie", description: "Admirez les baleines à bosse.", emoji: "🐋", category: "festival", date_start: "2026-09-10", venue: "Port-Sainte-Marie", city: "Toamasina", image_url: "https://images.unsplash.com/photo-1550965316-28956973e4de?w=800", capacity: 5000, tickets_sold: 2500, status: "active", zones: ZONE_TEMPLATES.festival },
-        { id: 35, name: "Festival Tuléar", artist: "South Group", description: "Musique Tsapiky au bord de l'eau.", emoji: "🌵", category: "festival", date_start: "2026-12-01", venue: "Stade Tuléar", city: "Toliara", image_url: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800", capacity: 10000, tickets_sold: 6000, status: "active", zones: ZONE_TEMPLATES.festival },
-        { id: 36, name: "New Year Bash", artist: "All Stars", description: "Le réveillon géant.", emoji: "🎆", category: "festival", date_start: "2026-12-31", venue: "Palais Sports", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800", capacity: 6000, tickets_sold: 5000, status: "active", zones: ZONE_TEMPLATES.festival },
-        { id: 20, name: "Zamba Gospel Celebration", artist: "Chœur Zamba", description: "Une nuit de louange.", emoji: "🙏", category: "concerts", date_start: "2026-05-30", venue: "Ekar Antanimena", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=800", capacity: 1200, tickets_sold: 1000, status: "active", zones: ZONE_TEMPLATES.theatre },
-        { id: 41, name: "Gasy Gourmet Festival", artist: "Chefs Malgaches", description: "Le meilleur de la gastronomie.", emoji: "🍲", category: "festival", date_start: "2026-06-25", venue: "Jardin Mahamasina", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800", capacity: 3000, tickets_sold: 1500, status: "active", zones: ZONE_TEMPLATES.festival },
-        { id: 42, name: "Madagascar Tech Summit", artist: "Tech Leaders", description: "Le futur du numérique à Mada.", emoji: "💻", category: "exhibition", date_start: "2026-11-05", venue: "CCI Ivato", city: "Antananarivo", image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800", capacity: 2000, tickets_sold: 800, status: "active", zones: ZONE_TEMPLATES.exhibition }
-    ];
-
-    const MOCK_EVENTS_FINAL = MOCK_EVENTS.map(e => ({
-        ...e,
-        image_url: (e.image_url && e.image_url.trim() !== "") ? e.image_url : (CATEGORY_PLACEHOLDERS[e.category] || CATEGORY_PLACEHOLDERS.default)
-    }));
-
-    // Mock artists data
-    const MOCK_ARTISTS = [
-        { name: "Dama (Mahaleo)", genre: "Folk / Chanson", image: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200", bio: "Membre fondateur du groupe légendaire Mahaleo." },
-        { name: "Erick Manana", genre: "Guitare / Traditionnel", image: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200", bio: "Virtuose de la guitare malgache." }
-    ];
-
-    const MOCK_SCAN_LINKS = [
-        { 
-            token: 'sL_demo_concert_01', 
-            event_id: 1, 
-            label: 'Staff Entrée Principale',
-            link: window.location.origin + '/User/ticketmada-scanner.html?token=sL_demo_concert_01',
-            created_at: '2026-04-10',
-            expires_at: '2026-04-16',
-            is_active: true,
-            devicesCount: 3,
-            totalScans: 174
-        },
-        { 
-            token: 'sL_demo_concert_02', 
-            event_id: 1, 
-            label: 'Staff VIP',
-            link: window.location.origin + '/User/ticketmada-scanner.html?token=sL_demo_concert_02',
-            created_at: '2026-04-10',
-            expires_at: '2026-04-16',
-            is_active: true,
-            devicesCount: 1,
-            totalScans: 23
-        }
-    ];
-
-    const MOCK_SCAN_DEVICES = [
-        { id: 1, scan_link_id: 1, event_id: 1, device_name: 'Staff Entrée A', browser: 'Chrome Mobile 120', os: 'Android 14', device_model: 'Samsung Galaxy S24', ip_address: '192.168.1.45', is_blocked: false, scan_count: 87, last_activity: 'Il y a 2 min', first_connected: '2026-04-15T13:30:00', event_name: 'Dama Live — Tournée 2026' },
-        { id: 2, scan_link_id: 1, event_id: 1, device_name: 'Staff Entrée B', browser: 'Safari 17.4', os: 'iOS 17.4', device_model: 'iPhone 15 Pro', ip_address: '192.168.1.52', is_blocked: false, scan_count: 64, last_activity: 'Il y a 5 min', first_connected: '2026-04-15T13:35:00', event_name: 'Dama Live — Tournée 2026' },
-        { id: 3, scan_link_id: 2, event_id: 1, device_name: 'Staff VIP', browser: 'Chrome Mobile 119', os: 'Android 13', device_model: 'Xiaomi 13T', ip_address: '192.168.1.78', is_blocked: false, scan_count: 23, last_activity: 'Il y a 8 min', first_connected: '2026-04-15T14:00:00', event_name: 'Dama Live — Tournée 2026' },
-        { id: 4, scan_link_id: 1, event_id: 1, device_name: 'Appareil suspect', browser: 'Firefox 121', os: 'Android 12', device_model: 'Unknown', ip_address: '10.0.0.99', is_blocked: true, block_reason: 'Tentative non autorisée', blocked_at: '2026-04-15T15:42:00', scan_count: 2, last_activity: '2026-04-15T15:42:00', event_name: 'Dama Live — Tournée 2026' }
-    ];
+    const MOCK_SUPERADMIN_ORGANIZERS = [];
+    const MOCK_SUPERADMIN_USERS = [];
+    const MOCK_APPLICATIONS = [];
+    const MOCK_EVENTS = [];
+    const MOCK_EVENTS_FINAL = [];
+    const MOCK_ARTISTS = [];
+    const MOCK_SCAN_LINKS = [];
+    const MOCK_SCAN_DEVICES = [];
 
     // =========================================================================
     // MOCK API METHODS — Return mock data as if from a real API
@@ -706,6 +570,10 @@ const TicketMadaAPI = (() => {
             }
             this.clearAuth();
             return { success: true };
+        }
+
+        clearAuth() {
+            this.real.clearAuth();
         }
 
         // --- Auth ---

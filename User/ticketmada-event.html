@@ -719,6 +719,9 @@ const app = createApp({
         return {
             lang: localStorage.getItem('ticketmada-lang') || 'fr',
             loading: true,
+            // Real API data
+            eventProducts: [],
+            eventCategories: [],
             event: {},
             eventId: null,
             // Map state
@@ -892,8 +895,49 @@ const app = createApp({
                 this.pendingCheckout = true;
                 return;
             }
-            console.log('[TicketMada] confirmPurchase triggered. Selection:', this.canvasSelected.length);
-            // If user selected seats on canvas, build info from those
+            
+            let qty = this.qty;
+            let product_id = null;
+            let zoneId = '';
+            
+            if (this.canvasSelected.length > 0) {
+                const firstSeat = this.canvasSelected[0];
+                zoneId = firstSeat.id.split('-')[0];
+                const zone = this.getZone(zoneId);
+                product_id = zone?.product_id;
+                qty = this.canvasSelected.length;
+            } else if (this.qtyListing) {
+                zoneId = this.qtyListing.zoneId;
+                const zone = this.getZone(zoneId);
+                product_id = zone?.product_id;
+                qty = this.qty;
+            }
+
+            if (!product_id) {
+                // FALLBACK: If no product_id (mock mode), use old URL param method
+                this._confirmPurchaseOld();
+                return;
+            }
+
+            // REAL CHECKOUT: Create reservation on backend
+            this.loading = true;
+            window.api.post('/orders/checkout', {
+                event_id: this.event.id,
+                items: [{ product_id: product_id, quantity: qty }]
+            }).then(result => {
+                if (result.success && result.orderId) {
+                    window.location.href = `ticketmada-checkout.html?orderId=${result.orderId}`;
+                } else {
+                    alert(result.error || 'Erreur lors de la création de la commande');
+                }
+            }).catch(e => {
+                console.error(e);
+                alert('Erreur réseau');
+            }).finally(() => {
+                this.loading = false;
+            });
+        },
+        _confirmPurchaseOld() {
             let zoneName = '';
             let zoneColor = '';
             let price = 0;
@@ -902,11 +946,9 @@ const app = createApp({
             let zoneId = '';
             
             if (this.canvasSelected.length > 0) {
-                // Determine zone from the first selected seat
                 const firstSeat = this.canvasSelected[0];
                 zoneId = firstSeat.id.split('-')[0];
                 const zone = this.getZone(zoneId);
-                
                 zoneName = zone?.name || '';
                 zoneColor = zone?.color || '';
                 price = zone?.price || 0;
@@ -921,14 +963,11 @@ const app = createApp({
                 price = this.qtyListing.price;
                 zoneId = this.qtyListing.zoneId;
                 qty = this.qty;
-                // Generate random seats for listing purchase
                 const row = this.qtyListing.seatInfo.includes('Rang. ') ? this.qtyListing.seatInfo.split('Rang. ')[1].split(',')[0] : 'A';
                 const start = Math.floor(Math.random() * 20) + 1;
                 const seatsArr = [];
                 for(let i=0; i<qty; i++) seatsArr.push(row + (start + i));
                 seatNumbers = seatsArr.join(', ');
-            } else {
-                return;
             }
             
             const params = new URLSearchParams({
@@ -1052,15 +1091,27 @@ const app = createApp({
             }));
 
             // Populate mapZones for the filter chips and listings sidebar
-            this.mapZones = zones.map(z => ({
-                id: z.id,
-                name: z.name,
-                color: z.color,
-                price: z.price,
-                capacity: z.capacity,
-                available: Math.round(z.capacity * (remaining / capacity)),
-                shortName: z.id === 'pit' ? (this.lang === 'fr' ? 'Fosse' : 'Pit') : z.name
-            }));
+            this.mapZones = zones.map(z => {
+                // TRY to match with real product if available
+                let realProduct = null;
+                if (this.eventProducts && this.eventProducts.length > 0) {
+                    // Match by name (e.g. VIP, Standard)
+                    realProduct = this.eventProducts.find(p => p.title.toLowerCase() === z.id.toLowerCase() || p.title.toLowerCase() === z.name.toLowerCase());
+                    // Fallback to first if only one product
+                    if (!realProduct && this.eventProducts.length === 1) realProduct = this.eventProducts[0];
+                }
+
+                return {
+                    id: z.id,
+                    product_id: realProduct ? realProduct.id : null,
+                    name: realProduct ? realProduct.title : z.name,
+                    color: z.color,
+                    price: realProduct ? realProduct.price : z.price,
+                    capacity: z.capacity,
+                    available: Math.round(z.capacity * (remaining / capacity)),
+                    shortName: z.id === 'pit' ? (this.lang === 'fr' ? 'Fosse' : 'Pit') : (realProduct ? realProduct.title : z.name)
+                };
+            });
             this.venueZones = this.mapZones.filter(z => z.name && z.name.trim() !== "");
 
             // Generate ticket listings for the sidebar
@@ -1167,6 +1218,8 @@ const app = createApp({
             console.log('[TicketMada] API result:', result);
             if (result && result.event) {
                 this.event = result.event;
+                this.eventProducts = result.products || [];
+                this.eventCategories = result.categories || [];
             } else if (result && result.name) {
                 this.event = result;
             }

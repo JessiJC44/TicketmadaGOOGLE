@@ -486,6 +486,379 @@ function initDB() {
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
 
+        -- ═══ NEW TABLES : PRODUCTS & CATEGORIES ═══
+        CREATE TABLE IF NOT EXISTS product_categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            sort_order INTEGER DEFAULT 0,
+            is_collapsed INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT,
+            type TEXT NOT NULL DEFAULT 'TICKET', -- 'TICKET' or 'ADDON'
+            price INTEGER NOT NULL DEFAULT 0,
+            compare_price INTEGER,
+            sale_start DATETIME,
+            sale_end DATETIME,
+            min_per_order INTEGER DEFAULT 1,
+            max_per_order INTEGER DEFAULT 10,
+            quantity_available INTEGER, 
+            quantity_sold INTEGER DEFAULT 0,
+            is_hidden INTEGER DEFAULT 0,
+            is_hidden_without_promo INTEGER DEFAULT 0,
+            show_quantity_remaining INTEGER DEFAULT 0,
+            hide_when_sold_out INTEGER DEFAULT 0,
+            hide_before_sale_start INTEGER DEFAULT 0,
+            sort_order INTEGER DEFAULT 0,
+            category_id INTEGER,
+            status TEXT DEFAULT 'ACTIVE',
+            created_at DATETIME DEFAULT (datetime('now')),
+            updated_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+            FOREIGN KEY (category_id) REFERENCES product_categories(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS product_prices (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_id INTEGER NOT NULL,
+            label TEXT,
+            price INTEGER NOT NULL DEFAULT 0,
+            sale_start DATETIME,
+            sale_end DATETIME,
+            quantity_available INTEGER,
+            quantity_sold INTEGER DEFAULT 0,
+            is_hidden INTEGER DEFAULT 0,
+            sort_order INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+        );
+
+        -- ═══ NEW TABLES : ORDERS & ITEMS ═══
+        CREATE TABLE IF NOT EXISTS orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            short_id TEXT UNIQUE NOT NULL,
+            public_id TEXT UNIQUE NOT NULL,
+            event_id INTEGER NOT NULL,
+            buyer_id INTEGER,
+            first_name TEXT,
+            last_name TEXT,
+            email TEXT NOT NULL,
+            phone TEXT,
+            status TEXT NOT NULL DEFAULT 'RESERVED',
+            payment_status TEXT,
+            payment_method TEXT,
+            total_before_fees INTEGER DEFAULT 0,
+            total_fees INTEGER DEFAULT 0,
+            total_tax INTEGER DEFAULT 0,
+            total_discount INTEGER DEFAULT 0,
+            total_gross INTEGER DEFAULT 0,
+            commission_amount INTEGER DEFAULT 0,
+            commission_rate REAL DEFAULT 0.03,
+            currency TEXT DEFAULT 'MGA',
+            promo_code_id INTEGER,
+            promo_code TEXT,
+            affiliate_code TEXT,
+            session_id TEXT,
+            reserved_until DATETIME,
+            notes TEXT,
+            address_json TEXT,
+            point_in_time_data TEXT,
+            created_at DATETIME DEFAULT (datetime('now')),
+            updated_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (event_id) REFERENCES events(id),
+            FOREIGN KEY (buyer_id) REFERENCES users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS order_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER NOT NULL,
+            product_id INTEGER NOT NULL,
+            product_price_id INTEGER,
+            item_name TEXT NOT NULL,
+            quantity INTEGER NOT NULL DEFAULT 1,
+            unit_price INTEGER NOT NULL DEFAULT 0,
+            price_before_discount INTEGER,
+            total_before_fees INTEGER NOT NULL DEFAULT 0,
+            total_fees INTEGER DEFAULT 0,
+            total_tax INTEGER DEFAULT 0,
+            total_gross INTEGER NOT NULL DEFAULT 0,
+            fees_rollup TEXT,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+            FOREIGN KEY (product_id) REFERENCES products(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS attendees (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            short_id TEXT NOT NULL,
+            public_id TEXT UNIQUE NOT NULL,
+            order_id INTEGER NOT NULL,
+            product_id INTEGER NOT NULL,
+            product_price_id INTEGER,
+            event_id INTEGER NOT NULL,
+            first_name TEXT DEFAULT '',
+            last_name TEXT DEFAULT '',
+            email TEXT NOT NULL,
+            phone TEXT,
+            status TEXT NOT NULL DEFAULT 'ACTIVE',
+            checked_in_at DATETIME,
+            checked_in_by INTEGER,
+            qr_token TEXT UNIQUE,
+            notes TEXT,
+            locale TEXT DEFAULT 'fr',
+            created_at DATETIME DEFAULT (datetime('now')),
+            updated_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+            FOREIGN KEY (product_id) REFERENCES products(id),
+            FOREIGN KEY (event_id) REFERENCES events(id),
+            FOREIGN KEY (checked_in_by) REFERENCES users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS order_audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER NOT NULL,
+            action TEXT NOT NULL,
+            actor_id INTEGER,
+            details TEXT,
+            ip_address TEXT,
+            user_agent TEXT,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (order_id) REFERENCES orders(id),
+            FOREIGN KEY (actor_id) REFERENCES users(id)
+        );
+
+        -- ═══ NEW TABLES : SETTINGS & STATS ═══
+        CREATE TABLE IF NOT EXISTS event_settings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id INTEGER UNIQUE NOT NULL,
+            pre_checkout_message TEXT,
+            post_checkout_message TEXT,
+            ticket_page_message TEXT,
+            continue_button_text TEXT DEFAULT 'Continuer',
+            email_footer_message TEXT,
+            support_email TEXT,
+            order_timeout_minutes INTEGER DEFAULT 15,
+            require_attendee_details INTEGER DEFAULT 1,
+            show_share_buttons INTEGER DEFAULT 1,
+            show_quantity_remaining INTEGER DEFAULT 0,
+            price_display_mode TEXT DEFAULT 'INCLUSIVE',
+            seo_title TEXT,
+            seo_description TEXT,
+            website_url TEXT,
+            maps_url TEXT,
+            social_media TEXT,
+            notify_on_new_orders INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT (datetime('now')),
+            updated_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS event_statistics (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id INTEGER UNIQUE NOT NULL,
+            total_views INTEGER DEFAULT 0,
+            tickets_sold INTEGER DEFAULT 0,
+            orders_created INTEGER DEFAULT 0,
+            sales_total_gross INTEGER DEFAULT 0,
+            updated_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (event_id) REFERENCES events(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS event_daily_stats (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            tickets_sold INTEGER DEFAULT 0,
+            orders_created INTEGER DEFAULT 0,
+            sales_total INTEGER DEFAULT 0,
+            total_views INTEGER DEFAULT 0,
+            total_refunded INTEGER DEFAULT 0,
+            FOREIGN KEY (event_id) REFERENCES events(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS capacity_assignments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            capacity INTEGER NOT NULL,
+            used INTEGER DEFAULT 0,
+            applies_to TEXT DEFAULT 'PRODUCTS',
+            status TEXT DEFAULT 'ACTIVE',
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS product_capacity_assignments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_id INTEGER NOT NULL,
+            capacity_assignment_id INTEGER NOT NULL,
+            FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+            FOREIGN KEY (capacity_assignment_id) REFERENCES capacity_assignments(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS check_in_lists (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id INTEGER NOT NULL,
+            short_id TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            activates_at DATETIME,
+            expires_at DATETIME,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS product_check_in_lists (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_id INTEGER NOT NULL,
+            check_in_list_id INTEGER NOT NULL,
+            FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+            FOREIGN KEY (check_in_list_id) REFERENCES check_in_lists(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS attendee_check_ins (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            attendee_id INTEGER NOT NULL,
+            check_in_list_id INTEGER,
+            event_id INTEGER NOT NULL,
+            order_id INTEGER,
+            action TEXT NOT NULL DEFAULT 'CHECK_IN',
+            checked_by INTEGER,
+            ip_address TEXT,
+            user_agent TEXT,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (attendee_id) REFERENCES attendees(id),
+            FOREIGN KEY (check_in_list_id) REFERENCES check_in_lists(id),
+            FOREIGN KEY (event_id) REFERENCES events(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS order_refunds (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER NOT NULL,
+            amount INTEGER NOT NULL,
+            reason TEXT,
+            type TEXT NOT NULL DEFAULT 'FULL',
+            status TEXT DEFAULT 'COMPLETED',
+            refunded_by INTEGER,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (order_id) REFERENCES orders(id),
+            FOREIGN KEY (refunded_by) REFERENCES users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id INTEGER NOT NULL,
+            subject TEXT NOT NULL,
+            body TEXT NOT NULL,
+            type TEXT NOT NULL DEFAULT 'EVENT',
+            recipient_product_ids TEXT,
+            recipient_count INTEGER DEFAULT 0,
+            status TEXT NOT NULL DEFAULT 'DRAFT',
+            sent_by INTEGER NOT NULL,
+            sent_at DATETIME,
+            scheduled_at DATETIME,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (event_id) REFERENCES events(id),
+            FOREIGN KEY (sent_by) REFERENCES users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS affiliates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id INTEGER NOT NULL,
+            code TEXT NOT NULL,
+            name TEXT,
+            unique_visitors INTEGER DEFAULT 0,
+            sales_volume INTEGER DEFAULT 0,
+            orders_count INTEGER DEFAULT 0,
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS webhooks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            organizer_id INTEGER NOT NULL,
+            event_id INTEGER,
+            url TEXT NOT NULL,
+            events TEXT NOT NULL,
+            secret TEXT,
+            is_active INTEGER DEFAULT 1,
+            last_triggered_at DATETIME,
+            last_response_code INTEGER,
+            failure_count INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (organizer_id) REFERENCES users(id),
+            FOREIGN KEY (event_id) REFERENCES events(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS webhook_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            webhook_id INTEGER NOT NULL,
+            event_type TEXT NOT NULL,
+            payload TEXT,
+            response_code INTEGER,
+            response_body TEXT,
+            success INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (webhook_id) REFERENCES webhooks(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS invoices (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER NOT NULL,
+            invoice_number TEXT UNIQUE NOT NULL,
+            buyer_name TEXT,
+            buyer_email TEXT,
+            buyer_address TEXT,
+            items_json TEXT NOT NULL,
+            subtotal INTEGER NOT NULL,
+            tax_total INTEGER DEFAULT 0,
+            fees_total INTEGER DEFAULT 0,
+            discount_total INTEGER DEFAULT 0,
+            grand_total INTEGER NOT NULL,
+            status TEXT DEFAULT 'ISSUED',
+            issued_at DATETIME DEFAULT (datetime('now')),
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (order_id) REFERENCES orders(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS waitlist_entries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id INTEGER NOT NULL,
+            product_id INTEGER,
+            product_price_id INTEGER,
+            email TEXT NOT NULL,
+            first_name TEXT,
+            last_name TEXT,
+            phone TEXT,
+            status TEXT DEFAULT 'WAITING',
+            notified_at DATETIME,
+            converted_at DATETIME,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (event_id) REFERENCES events(id),
+            FOREIGN KEY (product_id) REFERENCES products(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS email_templates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            organizer_id INTEGER NOT NULL,
+            event_id INTEGER,
+            type TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            body_html TEXT NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (organizer_id) REFERENCES users(id),
+            FOREIGN KEY (event_id) REFERENCES events(id)
+        );
+
         -- Insérer les configs par défaut si elles n'existent pas
         INSERT OR IGNORE INTO system_config (key, value, description) VALUES ('commission_rate', '0.03', 'Taux de commission standard (ex: 0.03 pour 3%)');
         INSERT OR IGNORE INTO system_config (key, value, description) VALUES ('payout_minimum', '50000', 'Montant minimum pour un retrait en Ariary');
@@ -565,11 +938,40 @@ function initDB() {
         
     } catch(e) { console.warn('Migration events workflow:', e.message); }
 
+    // ═══ Migration : TicketMada Complete Features ═══
+    try {
+        const cols = db.prepare("PRAGMA table_info(events)").all();
+        const colNames = cols.map(c => c.name);
+        if (!colNames.includes('short_id')) db.exec("ALTER TABLE events ADD COLUMN short_id TEXT");
+        if (!colNames.includes('location_details')) db.exec("ALTER TABLE events ADD COLUMN location_details TEXT");
+        if (!colNames.includes('timezone')) db.exec("ALTER TABLE events ADD COLUMN timezone TEXT DEFAULT 'Indian/Antananarivo'");
+        if (!colNames.includes('is_online')) db.exec("ALTER TABLE events ADD COLUMN is_online INTEGER DEFAULT 0");
+        if (!colNames.includes('attributes')) db.exec("ALTER TABLE events ADD COLUMN attributes TEXT");
+        
+        // Fill short_ids
+        const eventsWithoutShortId = db.prepare("SELECT id FROM events WHERE short_id IS NULL").all();
+        eventsWithoutShortId.forEach(e => {
+            const sid = 'EVT-' + crypto.randomBytes(3).toString('hex').toUpperCase();
+            db.prepare("UPDATE events SET short_id = ? WHERE id = ?").run(sid, e.id);
+        });
+    } catch(e) { console.warn('Migration events new cols:', e.message); }
+
+    try {
+        const cols = db.prepare("PRAGMA table_info(tickets)").all();
+        const colNames = cols.map(c => c.name);
+        if (!colNames.includes('order_id')) db.exec("ALTER TABLE tickets ADD COLUMN order_id INTEGER");
+        if (!colNames.includes('product_id')) db.exec("ALTER TABLE tickets ADD COLUMN product_id INTEGER");
+        if (!colNames.includes('product_price_id')) db.exec("ALTER TABLE tickets ADD COLUMN product_price_id INTEGER");
+        if (!colNames.includes('qr_token')) db.exec("ALTER TABLE tickets ADD COLUMN qr_token TEXT UNIQUE");
+        if (!colNames.includes('attendee_id')) db.exec("ALTER TABLE tickets ADD COLUMN attendee_id INTEGER");
+    } catch(e) { console.warn('Migration tickets new cols:', e.message); }
+
     const userCount = db.prepare("SELECT COUNT(*) as count FROM users").get().count;
     if (userCount === 0) {
         seedDB();
         console.log('Database seeded.');
     }
+    seedProducts();
     console.log('Database initialized.');
 }
 
@@ -656,6 +1058,27 @@ function seedDB() {
     db.prepare('INSERT INTO activity_logs (type, icon, text, user_id, created_at) VALUES (?,?,?,?,?)').run(2, 'user', 'mdi-account-plus', 'Nouveau client: <strong>Event Pro</strong>', null, '2026-03-03 10:37:00');
     db.prepare('INSERT INTO activity_logs (type, icon, text, user_id, created_at) VALUES (?,?,?,?,?)').run(3, 'refund', 'mdi-cash-refund', 'Remboursement <strong>Rabe Faly</strong>', null, '2026-03-03 09:00:00');
     db.prepare('INSERT INTO activity_logs (type, icon, text, user_id, created_at) VALUES (?,?,?,?,?)').run(4, 'event', 'mdi-calendar-plus', 'Événement: <strong>Beach Party</strong>', null, '2026-03-03 08:00:00');
+}
+
+function seedProducts() {
+    // Check if products exist
+    const count = db.prepare("SELECT COUNT(*) as count FROM products").get().count;
+    if (count > 0) return;
+
+    const events = db.prepare("SELECT id FROM events").all();
+    const insertCat = db.prepare("INSERT INTO product_categories (event_id, name, sort_order) VALUES (?, ?, ?)");
+    const insertProd = db.prepare("INSERT INTO products (event_id, category_id, title, description, price, quantity_available, status, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+
+    events.forEach(event => {
+        // Create a category
+        const cat = insertCat.run(event.id, 'Billets', 0);
+        const catId = cat.lastInsertRowid;
+
+        // Create 3 products per event
+        insertProd.run(event.id, catId, 'Early Bird', 'Billets à tarif réduit', 30000, 100, 'ACTIVE', 0);
+        insertProd.run(event.id, catId, 'Standard', 'Accès général', 50000, 500, 'ACTIVE', 1);
+        insertProd.run(event.id, catId, 'VIP', 'Accès premium + Cocktails', 150000, 50, 'ACTIVE', 2);
+    });
 }
 
 // ============ HELPERS ============
@@ -1028,22 +1451,71 @@ async function handleEvents(req, res, parts) {
     }
 
     if (req.method === 'GET' && id) {
-        const event = db.prepare('SELECT e.*, u.name as organizer_name FROM events e LEFT JOIN users u ON e.organizer_id = u.id WHERE e.id = ?').get(id);
+        const event = db.prepare(`
+            SELECT e.*, u.name as organizer_name, u.avatar_initials as organizer_initials, u.organizer_license
+            FROM events e
+            LEFT JOIN users u ON e.organizer_id = u.id
+            WHERE e.id = ?
+        `).get(id);
         if (!event) return sendError(res, 'Événement non trouvé', 404);
-        return sendJSON(res, { event });
+        
+        // Fetch categories and products
+        const categories = db.prepare("SELECT * FROM product_categories WHERE event_id = ? ORDER BY sort_order ASC").all(id);
+        const products = db.prepare("SELECT * FROM products WHERE event_id = ? AND status = 'ACTIVE' ORDER BY sort_order ASC").all(id);
+        
+        return sendJSON(res, { event, categories, products });
     }
 
     if (req.method === 'GET') {
         const url = new URL(req.url, 'http://localhost');
         let where = ['e.trashed_at IS NULL', 'e.permanently_deleted = 0'], params = [];
-        if (url.searchParams.get('category') && url.searchParams.get('category') !== 'all') { where.push('e.category = ?'); params.push(url.searchParams.get('category')); }
-        if (url.searchParams.get('status')) { where.push('e.status = ?'); params.push(url.searchParams.get('status')); }
-        if (url.searchParams.get('search')) { where.push('(e.name LIKE ? OR e.venue LIKE ?)'); params.push(`%${url.searchParams.get('search')}%`, `%${url.searchParams.get('search')}%`); }
-        if (url.searchParams.get('organizer_id')) { where.push('e.organizer_id = ?'); params.push(parseInt(url.searchParams.get('organizer_id'))); }
+        const statusFilter = url.searchParams.get('status');
+        const categoryFilter = url.searchParams.get('category');
+        const searchFilter = url.searchParams.get('search');
+        const queryFilter = url.searchParams.get('q');
+        const organizerId = url.searchParams.get('organizer_id');
+
+        if (statusFilter && statusFilter !== 'all') {
+            where.push('e.status = ?');
+            params.push(statusFilter);
+        } else if (!organizerId) {
+            where.push("e.status = 'active'");
+        }
+
+        if (categoryFilter && categoryFilter !== 'all') {
+            where.push('e.category = ?');
+            params.push(categoryFilter);
+        }
+
+        if (searchFilter || queryFilter) {
+            const q = searchFilter || queryFilter;
+            where.push('(e.name LIKE ? OR e.venue LIKE ? OR e.description LIKE ?)');
+            params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+        }
+
+        if (organizerId) {
+            where.push('e.organizer_id = ?');
+            params.push(parseInt(organizerId));
+        }
+
         const limit = parseInt(url.searchParams.get('limit') || '50');
         const offset = parseInt(url.searchParams.get('offset') || '0');
-        const events = db.prepare(`SELECT e.*, u.name as organizer_name FROM events e LEFT JOIN users u ON e.organizer_id = u.id WHERE ${where.join(' AND ')} ORDER BY e.date_start ASC LIMIT ? OFFSET ?`).all(...params, limit, offset);
-        const total = db.prepare(`SELECT COUNT(*) as c FROM events e WHERE ${where.join(' AND ')}`).get(...params).c;
+
+        const events = db.prepare(`
+            SELECT e.*, u.name as organizer_name
+            FROM events e
+            LEFT JOIN users u ON e.organizer_id = u.id
+            WHERE ${where.join(' AND ')}
+            ORDER BY e.date_start ASC
+            LIMIT ? OFFSET ?
+        `).all(...params, limit, offset);
+
+        const total = db.prepare(`
+            SELECT COUNT(*) as c
+            FROM events e
+            WHERE ${where.join(' AND ')}
+        `).get(...params).c;
+
         return sendJSON(res, { events, total });
     }
 
@@ -1740,6 +2212,9 @@ const server = http.createServer(async (req, res) => {
                 case 'organizer-applications':
                 case 'my-application': return await handleOrganizerApplications(req, res, parts);
                 case 'superadmin': return await handleSuperAdmin(req, res, parts);
+                case 'orders': return await handleOrders(req, res, parts);
+                case 'products':
+                case 'product-categories': return await handleOrganizerProducts(req, res, parts);
                 case 'scan-access-requests':
                 case 'scan-links':
                 case 'scan-devices':
@@ -1917,14 +2392,19 @@ async function handleSuperAdmin(req, res, parts) {
         return sendJSON(res, logs);
     }
 
-    // ═══ FINANCE SECTION ═══
+    // ═══ FINANCE & ACCOUNTING SECTION ═══
     if (resource === 'finance' && req.method === 'GET') {
+        const commissionRate = parseFloat(db.prepare("SELECT value FROM system_config WHERE key = 'commission_rate'").get()?.value || '0.03');
+        
         const stats = {
-            totalVolume: db.prepare("SELECT COALESCE(SUM(price), 0) as total FROM tickets WHERE status IN ('active', 'scanned')").get()?.total || 0,
+            totalVolume: db.prepare("SELECT COALESCE(SUM(total_gross), 0) as total FROM orders WHERE status = 'COMPLETED'").get()?.total || 0,
+            totalNet: db.prepare("SELECT COALESCE(SUM(total_before_fees), 0) as total FROM orders WHERE status = 'COMPLETED'").get()?.total || 0,
+            totalCommissionCollected: db.prepare("SELECT COALESCE(SUM(commission_amount), 0) as total FROM orders WHERE status = 'COMPLETED'").get()?.total || 0,
+            totalTax: db.prepare("SELECT COALESCE(SUM(total_tax), 0) as total FROM orders WHERE status = 'COMPLETED'").get()?.total || 0,
             pendingPayouts: db.prepare("SELECT COALESCE(SUM(net), 0) as total FROM payouts WHERE status = 'pending'").get()?.total || 0,
-            completedPayouts: db.prepare("SELECT COALESCE(SUM(net), 0) as total FROM payouts WHERE status = 'completed'").get()?.total || 0,
-            totalCommissionCollected: db.prepare("SELECT COALESCE(SUM(commission), 0) as total FROM payouts WHERE status = 'completed'").get()?.total || 0
+            completedPayouts: db.prepare("SELECT COALESCE(SUM(net), 0) as total FROM payouts WHERE status = 'completed'").get()?.total || 0
         };
+
         const payouts = db.prepare(`
             SELECT p.*, u.name as organizer_name 
             FROM payouts p 
@@ -1932,9 +2412,19 @@ async function handleSuperAdmin(req, res, parts) {
             ORDER BY p.created_at DESC 
             LIMIT 50
         `).all();
+
+        const taxes = db.prepare("SELECT * FROM tax_rules ORDER BY created_at DESC").all();
         const config = db.prepare("SELECT * FROM system_config").all();
-        const taxes = db.prepare("SELECT * FROM tax_rules WHERE is_active = 1").all();
-        return sendJSON(res, { stats, payouts, config, taxes });
+
+        return sendJSON(res, { stats, payouts, taxes, config, commissionRate });
+    }
+
+    if (resource === 'taxes' && req.method === 'POST') {
+        const body = await parseBody(req);
+        if (!body.name || body.rate === undefined) return sendError(res, 'Nom et taux requis');
+        db.prepare("INSERT INTO tax_rules (name, rate, is_active) VALUES (?, ?, 1)").run(body.name, body.rate);
+        logActivity('tax_rule_created', user.id, user.name, 'tax', null, body.name, `Nouvelle taxe: ${body.name} (${body.rate}%)`);
+        return sendJSON(res, { success: true });
     }
 
     if (resource === 'payouts' && id && action === 'approve' && req.method === 'PUT') {
@@ -1954,17 +2444,37 @@ async function handleSuperAdmin(req, res, parts) {
         return sendError(res, 'Clé ou valeur absente');
     }
 
-    // ═══ ORDERS & ATTENDEES (Hi.Events Style) ═══
-    if (resource === 'orders' && req.method === 'GET') {
+    // ═══ ORDERS & ATTENDEES (Complete Management) ═══
+    if (resource === 'orders' && req.method === 'GET' && !action) {
         const orders = db.prepare(`
-            SELECT t.*, e.name as event_name, u.name as buyer_name, u.email as buyer_email
-            FROM tickets t
-            JOIN events e ON t.event_id = e.id
-            JOIN users u ON t.buyer_id = u.id
-            ORDER BY t.created_at DESC
+            SELECT o.*, e.name as event_name, u.name as buyer_name
+            FROM orders o
+            JOIN events e ON o.event_id = e.id
+            LEFT JOIN users u ON o.buyer_id = u.id
+            ORDER BY o.created_at DESC
             LIMIT 100
         `).all();
         return sendJSON(res, orders);
+    }
+
+    if (resource === 'orders' && id && !action && req.method === 'GET') {
+        const order = db.prepare("SELECT * FROM orders WHERE id = ?").get(id);
+        if (!order) return sendError(res, 'Commande non trouvée', 404);
+        const items = db.prepare("SELECT * FROM order_items WHERE order_id = ?").all(id);
+        const tickets = db.prepare("SELECT * FROM tickets WHERE order_id = ?").all(id);
+        return sendJSON(res, { order, items, tickets });
+    }
+
+    if (resource === 'attendees' && req.method === 'GET') {
+        const attendees = db.prepare(`
+            SELECT a.*, e.name as event_name, o.short_id as order_short_id
+            FROM attendees a
+            JOIN events e ON a.event_id = e.id
+            JOIN orders o ON a.order_id = o.id
+            ORDER BY a.created_at DESC
+            LIMIT 100
+        `).all();
+        return sendJSON(res, attendees);
     }
 
     if (resource === 'orders' && action === 'export' && req.method === 'GET') {
@@ -2432,6 +2942,241 @@ async function handleSuperAdmin(req, res, parts) {
 
     return sendError(res, 'Route superadmin non trouvée', 404);
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ORDERS & CHECKOUT HANDLER
+// ══════════════════════════════════════════════════════════════════════════════
+async function handleOrders(req, res, parts) {
+    const user = requireAuth(req);
+    if (!user) return sendError(res, 'Authentification requise', 401);
+
+    const action = parts[2];
+    const id = parts[2] && !isNaN(parts[2]) ? parseInt(parts[2]) : null;
+
+    if (req.method === 'GET' && !id && !action) {
+        const orders = db.prepare(`
+            SELECT o.*, e.name as event_name, e.date_start as event_date, e.venue as event_venue
+            FROM orders o
+            JOIN events e ON o.event_id = e.id
+            WHERE o.buyer_id = ?
+            ORDER BY o.created_at DESC
+        `).all(user.id);
+        return sendJSON(res, orders);
+    }
+
+    if (req.method === 'GET' && id && !parts[3]) {
+        const order = db.prepare(`
+            SELECT o.*, e.name as event_name, e.venue as event_venue, e.date_start as event_date, e.image_url as event_image
+            FROM orders o
+            JOIN events e ON o.event_id = e.id
+            WHERE o.id = ? AND (o.buyer_id = ? OR EXISTS(SELECT 1 FROM events WHERE id=o.event_id AND organizer_id=?))
+        `).get(id, user.id, user.id);
+        
+        if (!order) return sendError(res, 'Commande non trouvée', 404);
+        const items = db.prepare("SELECT * FROM order_items WHERE order_id = ?").all(id);
+        const tickets = db.prepare("SELECT * FROM tickets WHERE order_id = ?").all(id);
+        const attendees = db.prepare("SELECT * FROM attendees WHERE order_id = ?").all(id);
+        return sendJSON(res, { order, items, tickets, attendees });
+    }
+
+    if (action === 'checkout' && req.method === 'POST') {
+        const body = await parseBody(req);
+        const { event_id, items, promo_code } = body;
+
+        if (!event_id || !items || !items.length) return sendError(res, 'Données de commande invalides');
+
+        const event = db.prepare("SELECT * FROM events WHERE id = ?").get(event_id);
+        if (!event) return sendError(res, 'Événement non trouvé', 404);
+
+        let totalBeforeFees = 0;
+        const verifiedItems = [];
+
+        const tx = db.transaction(() => {
+            for (const item of items) {
+                const product = db.prepare("SELECT * FROM products WHERE id = ? AND event_id = ?").get(item.product_id, event_id);
+                if (!product) throw new Error(`Produit ${item.product_id} non trouvé`);
+                if (product.status !== 'ACTIVE') throw new Error(`Produit ${product.title} n'est plus disponible`);
+                
+                const sold = db.prepare("SELECT COUNT(*) as count FROM tickets WHERE product_id = ? AND status IN ('active', 'scanned', 'reserved')").get(item.product_id).count;
+                if (product.quantity_available && (sold + item.quantity) > product.quantity_available) {
+                    throw new Error(`Plus de places disponibles pour ${product.title}`);
+                }
+
+                totalBeforeFees += (product.price * item.quantity);
+                verifiedItems.push({ product, quantity: item.quantity, price: product.price });
+            }
+
+            let discount = 0;
+            if (promo_code) {
+                const promo = db.prepare("SELECT * FROM promo_codes WHERE code = ? AND (event_id = ? OR event_id IS NULL) AND is_active = 1").get(promo_code, event_id);
+                if (promo) {
+                    if (promo.type === 'PERCENTAGE') discount = (totalBeforeFees * promo.value / 100);
+                    else discount = promo.value;
+                }
+            }
+
+            const totalAfterDiscount = Math.max(0, totalBeforeFees - discount);
+            
+            // TAX CALCULATION
+            const activeTaxes = db.prepare("SELECT rate FROM tax_rules WHERE is_active = 1").all();
+            const taxRate = activeTaxes.reduce((sum, t) => sum + t.rate, 0) / 100;
+            const totalTax = Math.round(totalAfterDiscount * taxRate);
+            
+            const feePercent = 0.03;
+            const commission = Math.round(totalAfterDiscount * feePercent);
+            const totalGross = totalAfterDiscount + commission + totalTax;
+
+            const shortId = 'ORD-' + crypto.randomBytes(4).toString('hex').toUpperCase();
+            const orderResult = db.prepare(`
+                INSERT INTO orders (
+                    short_id, event_id, buyer_id, status, 
+                    total_before_fees, total_discount, total_fees, total_tax, total_gross, commission_amount,
+                    currency, expires_at
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?, datetime('now', '+15 minutes'))
+            `).run(shortId, event_id, user.id, 'PENDING_PAYMENT', totalBeforeFees, discount, commission, totalTax, totalGross, commission, 'MGA');
+
+            const orderId = orderResult.lastInsertRowid;
+
+            for (const v of verifiedItems) {
+                db.prepare(`
+                    INSERT INTO order_items (order_id, product_id, quantity, unit_price, total_price)
+                    VALUES (?, ?, ?, ?, ?)
+                `).run(orderId, v.product.id, v.quantity, v.price, v.price * v.quantity);
+
+                for (let i = 0; i < v.quantity; i++) {
+                    const qrToken = crypto.randomBytes(32).toString('hex');
+                    const idCode = 'TK-' + crypto.randomBytes(6).toString('hex').toUpperCase();
+                    db.prepare(`
+                        INSERT INTO tickets (order_id, event_id, buyer_id, id_code, qr_token, status, price, type, product_id)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    `).run(orderId, event_id, user.id, idCode, qrToken, 'reserved', v.price, v.product.title, v.product.id);
+                }
+            }
+            return orderId;
+        });
+
+        try {
+            const orderId = tx();
+            return sendJSON(res, { success: true, orderId, redirect: `/User/ticketmada-checkout.html?orderId=${orderId}` });
+        } catch (e) {
+            return sendError(res, e.message);
+        }
+    }
+
+    if (id && action === 'confirm' && req.method === 'POST') {
+        const order = db.prepare("SELECT * FROM orders WHERE id = ? AND buyer_id = ?").get(id, user.id);
+        if (!order) return sendError(res, 'Commande non trouvée', 404);
+        if (order.status !== 'PENDING_PAYMENT') return sendError(res, 'Statut invalide');
+
+        db.prepare("UPDATE orders SET status = 'COMPLETED', paid_at = datetime('now') WHERE id = ?").run(id);
+        db.prepare("UPDATE tickets SET status = 'active' WHERE order_id = ? AND status = 'reserved'").run(id);
+        
+        // Update stats
+        db.prepare(`
+            INSERT INTO event_statistics (event_id, tickets_sold, sales_total_gross)
+            VALUES (?, (SELECT COUNT(*) FROM tickets WHERE order_id = ?), ?)
+            ON CONFLICT(event_id) DO UPDATE SET
+                tickets_sold = tickets_sold + excluded.tickets_sold,
+                sales_total_gross = sales_total_gross + excluded.sales_total_gross
+        `).run(order.event_id, id, order.total_gross);
+        
+        logActivity('order_completed', user.id, user.name, 'order', id, order.short_id, `Commande ${order.short_id} confirmée`);
+        return sendJSON(res, { success: true });
+    }
+
+    sendError(res, 'Route orders non trouvée', 404);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CRON JOBS (Cleanup tasks)
+// ══════════════════════════════════════════════════════════════════════════════
+function runCronJobs() {
+    // 1. Cleanup expired reservations (Every 5 minutes)
+    setInterval(() => {
+        const expired = db.prepare("SELECT id FROM orders WHERE status = 'PENDING_PAYMENT' AND expires_at < datetime('now')").all();
+        for (const order of expired) {
+            db.transaction(() => {
+                db.prepare("UPDATE orders SET status = 'EXPIRED' WHERE id = ?").run(order.id);
+                db.prepare("DELETE FROM tickets WHERE order_id = ? AND status = 'reserved'").run(order.id);
+            })();
+            console.log(`[CRON] Expired order ${order.id} cleaned up.`);
+        }
+    }, 5 * 60 * 1000);
+
+    // 2. Daily Stats aggregation
+    setInterval(() => {
+        // Run daily at midnight ? Simplified: run every 24h
+    }, 24 * 60 * 60 * 1000);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ORGANIZER PRODUCTS & CATEGORIES HANDLER
+// ══════════════════════════════════════════════════════════════════════════════
+async function handleOrganizerProducts(req, res, parts) {
+    const user = requireAuth(req, ['organizer', 'admin']);
+    if (!user) return sendError(res, 'Accès non autorisé', 403);
+
+    const resource = parts[1]; // 'products' or 'product-categories'
+    const id = parts[2] && !isNaN(parts[2]) ? parseInt(parts[2]) : null;
+    const action = parts[3];
+
+    // --- PRODUCT CATEGORIES ---
+    if (resource === 'product-categories') {
+        if (req.method === 'GET') {
+            const eventId = new URL(req.url, 'http://localhost').searchParams.get('event_id');
+            if (eventId) {
+                const cats = db.prepare("SELECT * FROM product_categories WHERE event_id = ? ORDER BY sort_order ASC").all(eventId);
+                return sendJSON(res, cats);
+            }
+        }
+        if (req.method === 'POST') {
+            const body = await parseBody(req);
+            if (!body.name || !body.event_id) return sendError(res, 'Nom et event_id requis');
+            // Check ownership
+            const event = db.prepare("SELECT id FROM events WHERE id = ? AND organizer_id = ?").get(body.event_id, user.id);
+            if (!event) return sendError(res, 'Événement non trouvé ou non autorisé', 403);
+
+            const result = db.prepare("INSERT INTO product_categories (event_id, name, description, sort_order) VALUES (?, ?, ?, ?)").run(
+                body.event_id, body.name, body.description || null, body.sort_order || 0
+            );
+            return sendJSON(res, { success: true, id: result.lastInsertRowid }, 201);
+        }
+    }
+
+    // --- PRODUCTS ---
+    if (resource === 'products') {
+        if (req.method === 'GET' && !id) {
+            const eventId = new URL(req.url, 'http://localhost').searchParams.get('event_id');
+            if (eventId) {
+                const products = db.prepare("SELECT * FROM products WHERE event_id = ? ORDER BY sort_order ASC").all(eventId);
+                return sendJSON(res, products);
+            }
+        }
+        if (req.method === 'POST') {
+            const body = await parseBody(req);
+            if (!body.name || !body.event_id || body.price === undefined) return sendError(res, 'Champs requis manquants');
+            const event = db.prepare("SELECT id FROM events WHERE id = ? AND organizer_id = ?").get(body.event_id, user.id);
+            if (!event) return sendError(res, 'Événement non trouvé ou non autorisé', 403);
+
+            const result = db.prepare(`
+                INSERT INTO products (
+                    event_id, category_id, title, description, price, 
+                    quantity_available, quantity_per_order_min, quantity_per_order_max,
+                    status, sort_order
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).run(
+                body.event_id, body.category_id || null, body.title || body.name, body.description || null, 
+                body.price, body.quantity_available || body.quantity_total || null, body.quantity_per_order_min || 1, 
+                body.quantity_per_order_max || 10, 'ACTIVE', body.sort_order || 0
+            );
+            return sendJSON(res, { success: true, id: result.lastInsertRowid }, 201);
+        }
+    }
+
+    sendError(res, 'Route non trouvée', 404);
+}
+
+runCronJobs();
 
 server.listen(PORT, '0.0.0.0', () => {
     // Get local IP for LAN access
