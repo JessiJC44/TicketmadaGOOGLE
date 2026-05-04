@@ -5,33 +5,52 @@ import { getFirestore, doc, setDoc, serverTimestamp } from 'https://www.gstatic.
 // Configuration will be loaded from the config file via fetch to avoid static import issues
 // if we want to keep it simple and not use a bundler
 let app, auth, db;
+let initPromise = null;
 
 export async function initFirebase() {
-    try {
-        const response = await fetch('/firebase-applet-config.json');
-        const firebaseConfig = await response.json();
-        
-        app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-        
-        console.log('[Firebase] Initialized successfully');
-        return { app, auth, db };
-    } catch (error) {
-        console.error('[Firebase] Initialization failed:', error);
-        return null;
-    }
+    if (initPromise) return initPromise;
+    
+    initPromise = (async () => {
+        try {
+            const response = await fetch('/firebase-applet-config.json');
+            const firebaseConfig = await response.json();
+            
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            
+            console.log('[Firebase] Initialized successfully');
+            return { app, auth, db };
+        } catch (error) {
+            console.error('[Firebase] Initialization failed:', error);
+            initPromise = null; // Allow retry
+            return null;
+        }
+    })();
+    
+    return initPromise;
 }
+
+// Start initialization immediately when module is loaded
+initFirebase();
 
 export function getFirebaseAuth() { return auth; }
 export function getFirebaseDb() { return db; }
 
 export async function loginWithGoogle() {
     console.log('[Firebase] loginWithGoogle called');
+    
+    // Ensure initialization is complete but do NOT await if already done
+    // to preserve the "user gesture" chain as much as possible.
     if (!auth) {
-        console.log('[Firebase] Initializing before login...');
+        console.log('[Firebase] Waiting for initialization...');
         await initFirebase();
     }
+    
+    if (!auth) {
+        return { success: false, error: "Firebase n'a pas pu être initialisé. Veuillez rafraîchir la page." };
+    }
+
     const provider = new GoogleAuthProvider();
     console.log('[Firebase] Provider created, opening popup...');
     try {
@@ -49,13 +68,15 @@ export async function loginWithGoogle() {
         };
 
         // Sync to Firestore (non-blocking for login flow)
-        setDoc(doc(db, 'users', user.uid), {
-            ...userProfile,
-            createdAt: serverTimestamp()
-        }, { merge: true }).catch(err => {
-            console.error('[Firebase] Failed to sync profile:', err);
-            // We don't throw here to avoid blocking login if Firestore fails
-        });
+        if (db) {
+            setDoc(doc(db, 'users', user.uid), {
+                ...userProfile,
+                createdAt: serverTimestamp()
+            }, { merge: true }).catch(err => {
+                console.error('[Firebase] Failed to sync profile:', err);
+                // We don't throw here to avoid blocking login if Firestore fails
+            });
+        }
 
         console.log('[Firebase] Signed in user:', user.displayName);
         return {
@@ -67,6 +88,16 @@ export async function loginWithGoogle() {
         if (error.code === 'auth/popup-closed-by-user') {
             console.log('[Firebase] User closed the sign-in popup');
             return { success: false, canceled: true };
+        }
+        if (error.code === 'auth/popup-blocked') {
+            const msg = "La fenêtre de connexion a été bloquée. Veuillez autoriser les fenêtres surgissantes dans votre navigateur ou cliquer à nouveau sur le bouton.";
+            console.warn('[Firebase] Popup blocked:', error);
+            return { success: false, error: msg };
+        }
+        if (error.code === 'auth/cancelled-popup-request') {
+            const msg = "Une tentative de connexion est déjà en cours. Veuillez patienter ou fermer les autres fenêtres Google.";
+            console.warn('[Firebase] Cancelled popup request:', error);
+            return { success: false, error: msg, canceled: true };
         }
         console.error('[Firebase] Sign-in error:', error);
         return { success: false, error: error.message };

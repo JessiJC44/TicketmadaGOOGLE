@@ -753,6 +753,7 @@ const app = createApp({
             showAuth: false,
             pendingCheckout: false,
             authMode: 'login',
+            loadingAuth: false,
             authForm: { name: '', email: '', password: '' },
             showProfileMenu: false,
             userName: '',
@@ -947,6 +948,8 @@ const app = createApp({
         },
         openAuth(mode) { this.authMode = mode; this.showAuth = true; },
         async loginWithGoogle() {
+            if (this.loadingAuth) return;
+            this.loadingAuth = true;
             try {
                 const result = await window.api.loginWithGoogle();
                 if (result.success) {
@@ -958,11 +961,13 @@ const app = createApp({
                         this.pendingCheckout = false;
                         this.$nextTick(() => this.confirmPurchase());
                     }
-                } else {
-                    alert('Erreur Google: ' + result.error);
+                } else if (!result.canceled) {
+                    alert(result.error || 'Erreur Google');
                 }
             } catch (e) {
                 console.error(e);
+            } finally {
+                this.loadingAuth = false;
             }
         },
         async handleAuth() {

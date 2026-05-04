@@ -558,6 +558,7 @@
                     lang: localStorage.getItem('ticketmada-lang') || 'fr',
                     isLoggedIn: false, showProfileMenu: false,
                     showSearch: false, showAuth: false, authMode: 'login', searchQuery: '', activeCategory: 'all',
+                    loadingAuth: false,
                     suggestions: [],
                     currentPage: 1,
                     itemsPerPage: 20,
@@ -691,26 +692,27 @@
                 toggleLang() { this.lang = this.lang === 'fr' ? 'en' : 'fr'; localStorage.setItem('ticketmada-lang', this.lang); document.documentElement.lang = this.lang; },
                 openAuth(mode) { this.authMode = mode; this.showAuth = true; },
                 async loginWith(provider) {
+                    if (this.loadingAuth) return;
                     console.log('[UI] loginWith called for:', provider);
                     const prov = provider.toLowerCase();
+                    
+                    this.loadingAuth = true;
                     if (prov === 'google') {
-                        // Real Google Auth
                         try {
-                            console.log('[UI] Calling api.loginWithGoogle()...');
                             const result = await window.api.loginWithGoogle();
-                            console.log('[UI] api.loginWithGoogle() returned:', result);
                             if (result.success) {
-                                console.log('[UI] Login success, updating state');
                                 this.isLoggedIn = true;
                                 this.showAuth = false;
                             } else if (!result.canceled) {
-                                console.error('[UI] Login failed:', result.error);
-                                alert('Erreur de connexion Google: ' + (result.error || 'Inconnue'));
+                                alert(result.error || 'Erreur de connexion Google');
                             }
                         } catch (e) {
                             console.error('[UI] Google Auth exception:', e);
+                        } finally {
+                            this.loadingAuth = false;
                         }
                     } else {
+                        this.loadingAuth = false;
                         // Keep mock for others if not implemented
                         if (window.api.useMock && window.OAuthSim) {
                             window.OAuthSim.show(provider, (name, email) => {

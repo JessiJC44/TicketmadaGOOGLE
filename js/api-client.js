@@ -562,6 +562,10 @@ const TicketMadaAPI = (() => {
             this.real = new RealAPI();
             this.useMock = true; // Start with mock, switch if backend responds
             this._checkBackend();
+            // Pre-load firebase module to avoid delay during user-triggered login
+            if (typeof window !== 'undefined') {
+                import('./firebase-init.js').catch(e => console.warn('[SmartAPI] Firebase pre-load failed', e));
+            }
         }
 
         async _checkBackend() {
@@ -754,9 +758,8 @@ const TicketMadaAPI = (() => {
         async loginWithGoogle() {
             try {
                 console.log('[SmartAPI] Starting Firebase Google Login...');
-                const { loginWithGoogle: firebaseGoogleLogin } = await import('./firebase-init.js');
-                console.log('[SmartAPI] firebase-init.js imported');
-                const result = await firebaseGoogleLogin();
+                const firebaseMod = await import('./firebase-init.js');
+                const result = await firebaseMod.loginWithGoogle();
                 console.log('[SmartAPI] firebaseGoogleLogin result:', result);
                 
                 if (result && result.success) {
@@ -775,19 +778,14 @@ const TicketMadaAPI = (() => {
                             console.log('[SmartAPI] Backend sync successful, using backend user');
                             this.setAuth(syncResult.token, syncResult.user);
                             return { success: true, user: syncResult.user, token: syncResult.token };
-                        } else {
-                            console.warn('[SmartAPI] Backend sync returned no token, falling back to Firebase user');
                         }
                     } catch (err) {
                         console.warn('[SmartAPI] Backend sync error, but Firebase was successful. Using Firebase session.', err);
                     }
                     
                     // If sync fails or we're in mock mode, use the Firebase token as the session token
-                    console.log('[SmartAPI] Using Firebase session as fallback');
                     this.setAuth(result.token, result.user);
                     return result;
-                } else {
-                    console.warn('[SmartAPI] Firebase login success=false or result null');
                 }
                 return result || { success: false, error: 'Auth failed' };
             } catch (error) {
@@ -796,17 +794,15 @@ const TicketMadaAPI = (() => {
                 // Final fallback to simulation ONLY if everything else fails and we are likely in a restricted environment
                 if (window.OAuthSim) {
                     console.log('[SmartAPI] Falling back to OAuth simulation...');
-                    const simResult = await new Promise((resolve) => {
+                    return await new Promise((resolve) => {
                         window.OAuthSim.show('Google', (name, email) => {
                             const user = { name, email, role: 'buyer', id: Date.now() };
                             this.setAuth('mock-google-token', user);
                             resolve({ success: true, token: 'mock-google-token', user });
                         });
                     });
-                    console.log('[SmartAPI] OAuth simulation result:', simResult);
-                    return simResult;
                 }
-                return { success: false, error: error.message || 'Unknown error' };
+                return { success: false, error: error.message || 'Erreur inconnue' };
             }
         }
 

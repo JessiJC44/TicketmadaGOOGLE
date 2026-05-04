@@ -911,6 +911,7 @@
                     activeTab: 0,
                     showAuth: false,
                     authMode: 'login',
+                    loadingAuth: false,
                     authForm: { name: '', email: '', password: '' },
                     showOrganizerModal: false,
                     organizerForm: { fullName: '', phone: '', city: '', organizationName: '', organizationDescription: '', motivation: '' },
@@ -1054,8 +1055,12 @@
                     }
                 },
                 async loginWith(provider) {
+                    if (this.loadingAuth) return;
                     const prov = provider.toLowerCase();
+                    
+                    this.loadingAuth = true;
                     if (prov !== 'google') {
+                        this.loadingAuth = false;
                         // Mock for others
                         if (window.OAuthSim) {
                             window.OAuthSim.show(provider, (name, email) => {
@@ -1075,38 +1080,21 @@
                         console.log('[UI] Google Result:', result);
                         
                         if (result && result.success) {
-                            console.log('[UI] Login success, updating state');
                             this.isLoggedIn = true;
                             this.showAuth = false;
                             
-                            // If user is a buyer, show the organizer modal or redirect to specialized page
                             if (result.user.role === 'buyer') {
-                                console.log('[UI] User is buyer, triggering checkAndApply');
                                 this.checkAndApply();
                             } else {
-                                console.log('[UI] User is already organizer or admin, redirecting to dashboard');
                                 window.location.href = this.dashboardUrl;
                             }
                         } else if (result && !result.canceled) {
-                            console.error('[UI] Login failed:', result.error);
                             alert(result.error || (this.lang === 'fr' ? 'Erreur de connexion Google' : 'Google Login Error'));
-                        } else if (!result) {
-                            console.warn('[UI] No result from Google login, falling back to simulation');
-                            // Fallback if Firebase is not configured at all
-                            console.warn('[Auth] Google login failed to return result, trying simulation fallback');
-                            if (window.OAuthSim) {
-                                window.OAuthSim.show('Google', (name, email) => {
-                                    const user = { name, email, role: 'buyer' };
-                                    window.api.setAuth('mock-token', user);
-                                    this.isLoggedIn = true;
-                                    this.showAuth = false;
-                                    this.checkAndApply();
-                                });
-                            }
                         }
                     } catch (e) {
-                        console.error('[UI] Google Auth exception:', e);
-                        alert(this.lang === 'fr' ? 'Échec de la connexion Google.' : 'Google connection failed.');
+                        console.error('[UI] Google Login Exception:', e);
+                    } finally {
+                        this.loadingAuth = false;
                     }
                 }
             },

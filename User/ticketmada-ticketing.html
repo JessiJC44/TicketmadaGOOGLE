@@ -525,6 +525,7 @@
                     featureIcons: ['🔔', '📅', '🎨', '🔒', '📊', '💬'],
                     showAuth: false,
                     authMode: 'login',
+                    loadingAuth: false,
                     authForm: { name: '', email: '', password: '' },
                     isLoggedIn: false, showProfileMenu: false
                 };
@@ -559,6 +560,8 @@
                     }
                 },
                 async loginWith(provider) {
+                    if (this.loadingAuth) return;
+                    this.loadingAuth = true;
                     if (provider === 'Google') {
                         try {
                             const result = await window.api.loginWithGoogle();
@@ -566,11 +569,15 @@
                                 this.isLoggedIn = true;
                                 this.showAuth = false;
                             } else if (!result.canceled) {
-                                alert('Erreur Google: ' + result.error);
+                                alert(result.error || 'Erreur Google');
                             }
                         } catch (e) {
                             console.error('Google Auth Error', e);
+                        } finally {
+                            this.loadingAuth = false;
                         }
+                    } else {
+                        this.loadingAuth = false;
                     }
                 }
             },
