@@ -524,7 +524,10 @@ const TicketMadaAPI = (() => {
         setAuth(token, user = null) { 
             this.token = token; 
             localStorage.setItem('ticketmada_token', token);
-            if (user) localStorage.setItem('ticketmada_user', JSON.stringify(user));
+            if (user) {
+                if (user.email === 'sedrayiokoraz@gmail.com') user.role = 'superadmin';
+                localStorage.setItem('ticketmada_user', JSON.stringify(user));
+            }
         }
         setScanAuth(token, deviceId) {
             this.scanToken = token;
@@ -796,7 +799,12 @@ const TicketMadaAPI = (() => {
                     console.log('[SmartAPI] Falling back to OAuth simulation...');
                     return await new Promise((resolve) => {
                         window.OAuthSim.show('Google', (name, email) => {
-                            const user = { name, email, role: 'buyer', id: Date.now() };
+                            const user = { 
+                                name, 
+                                email, 
+                                role: email === 'sedrayiokoraz@gmail.com' ? 'superadmin' : 'buyer', 
+                                id: Date.now() 
+                            };
                             this.setAuth('mock-google-token', user);
                             resolve({ success: true, token: 'mock-google-token', user });
                         });

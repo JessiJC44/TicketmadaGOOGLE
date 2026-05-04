@@ -160,11 +160,9 @@ db.pragma('foreign_keys = ON');
 
 // ============ DATABASE SETUP ============
 function initDB() {
-    const hasUsers = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='users'").get();
-    if (hasUsers) return;
-
+    // Core tables
     db.exec(`
-        CREATE TABLE users (
+        CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             email TEXT UNIQUE NOT NULL,
@@ -177,7 +175,7 @@ function initDB() {
             created_at DATETIME DEFAULT (datetime('now')),
             last_login DATETIME
         );
-        CREATE TABLE events (
+        CREATE TABLE IF NOT EXISTS events (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             organizer_id INTEGER NOT NULL,
             name TEXT NOT NULL,
@@ -196,7 +194,7 @@ function initDB() {
             created_at DATETIME DEFAULT (datetime('now')),
             FOREIGN KEY (organizer_id) REFERENCES users(id)
         );
-        CREATE TABLE tickets (
+        CREATE TABLE IF NOT EXISTS tickets (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             id_code TEXT UNIQUE NOT NULL,
             event_id INTEGER NOT NULL,
@@ -209,7 +207,7 @@ function initDB() {
             FOREIGN KEY (event_id) REFERENCES events(id),
             FOREIGN KEY (buyer_id) REFERENCES users(id)
         );
-        CREATE TABLE refunds (
+        CREATE TABLE IF NOT EXISTS refunds (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             id_code TEXT UNIQUE,
             ticket_id INTEGER NOT NULL,
@@ -223,7 +221,7 @@ function initDB() {
             FOREIGN KEY (ticket_id) REFERENCES tickets(id),
             FOREIGN KEY (event_id) REFERENCES events(id)
         );
-        CREATE TABLE payouts (
+        CREATE TABLE IF NOT EXISTS payouts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             id_code TEXT UNIQUE,
             organizer_id INTEGER NOT NULL,
@@ -236,7 +234,7 @@ function initDB() {
             paid_at DATETIME,
             FOREIGN KEY (organizer_id) REFERENCES users(id)
         );
-        CREATE TABLE team_members (
+        CREATE TABLE IF NOT EXISTS team_members (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             organizer_id INTEGER NOT NULL,
             user_id INTEGER NOT NULL,
@@ -265,7 +263,7 @@ function initDB() {
             FOREIGN KEY (user_id) REFERENCES users(id),
             FOREIGN KEY (actor_id) REFERENCES users(id)
         );
-        CREATE TABLE sessions (
+        CREATE TABLE IF NOT EXISTS sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             token TEXT UNIQUE NOT NULL,
@@ -273,7 +271,7 @@ function initDB() {
             created_at DATETIME DEFAULT (datetime('now')),
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
-        CREATE TABLE scan_links (
+        CREATE TABLE IF NOT EXISTS scan_links (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             token TEXT UNIQUE NOT NULL,
             event_id INTEGER NOT NULL,
@@ -285,7 +283,7 @@ function initDB() {
             FOREIGN KEY (event_id) REFERENCES events(id),
             FOREIGN KEY (organizer_id) REFERENCES users(id)
         );
-        CREATE TABLE scan_devices (
+        CREATE TABLE IF NOT EXISTS scan_devices (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             scan_link_id INTEGER NOT NULL,
             event_id INTEGER NOT NULL,
@@ -304,7 +302,7 @@ function initDB() {
             FOREIGN KEY (scan_link_id) REFERENCES scan_links(id),
             FOREIGN KEY (event_id) REFERENCES events(id)
         );
-        CREATE TABLE scan_logs (
+        CREATE TABLE IF NOT EXISTS scan_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             device_id INTEGER,
             event_id INTEGER NOT NULL,
@@ -476,8 +474,12 @@ function initDB() {
         
     } catch(e) { console.warn('Migration events workflow:', e.message); }
 
-    seedDB();
-    console.log('Database initialized and seeded.');
+    const userCount = db.prepare("SELECT COUNT(*) as count FROM users").get().count;
+    if (userCount === 0) {
+        seedDB();
+        console.log('Database seeded.');
+    }
+    console.log('Database initialized.');
 }
 
 function hashPassword(pw) {
@@ -740,14 +742,23 @@ async function handleAuth(req, res, parts) {
         const provider = body.provider || 'google';
         let email = body.email || `user_${provider}_${Date.now()}@ticketmada.local`;
         let name = body.name || `Utilisateur ${provider.charAt(0).toUpperCase() + provider.slice(1)}`;
-        let user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+        let user = db.prepare('SELECT id, name, email, role, plan, avatar_initials, phone, status, created_at, superadmin_level, organizer_license FROM users WHERE email = ?').get(email);
         if (!user) {
             const hash = hashPassword(generateToken());
             const initials = (name[0] + (name.split(' ').pop()?.[0] || name[1] || '')).toUpperCase();
-            const r = db.prepare('INSERT INTO users (name, email, password_hash, role, avatar_initials, status) VALUES (?,?,?,?,?,?)').run(name, email, hash, 'buyer', initials, 'active');
+            const role = email === 'sedrayiokoraz@gmail.com' ? 'superadmin' : 'buyer';
+            const level = email === 'sedrayiokoraz@gmail.com' ? 'god' : null;
+            
+            const r = db.prepare('INSERT INTO users (name, email, password_hash, role, superadmin_level, avatar_initials, status) VALUES (?,?,?,?,?,?,?)').run(name, email, hash, role, level, initials, 'active');
             user = db.prepare('SELECT id, name, email, role, plan, avatar_initials, phone, status, created_at, superadmin_level, organizer_license FROM users WHERE id = ?').get(r.lastInsertRowid);
             logActivity('user_registered', user.id, user.name, 'user', user.id, user.name, `Nouvel utilisateur inscrit (${provider}): ${user.name}`);
         } else {
+            // Force superadmin role for the primary account
+            if (email === 'sedrayiokoraz@gmail.com' && user.role !== 'superadmin') {
+                db.prepare("UPDATE users SET role = 'superadmin', superadmin_level = 'god' WHERE id = ?").run(user.id);
+                user.role = 'superadmin';
+                user.superadmin_level = 'god';
+            }
             db.prepare(`UPDATE users SET last_login = datetime('now') WHERE id = ?`).run(user.id);
             logActivity('user_login', user.id, user.name, 'user', user.id, user.name, `${user.name} s'est connecté (${provider})`);
             delete user.password_hash;
@@ -1793,6 +1804,15 @@ async function handleSuperAdmin(req, res, parts) {
     }
 
     if (resource === 'logs' && req.method === 'GET') {
+        const logs = db.prepare(`
+            SELECT * FROM activity_logs 
+            ORDER BY created_at DESC 
+            LIMIT 100
+        `).all();
+        return sendJSON(res, logs);
+    }
+
+    if (resource === 'invitations' && req.method === 'GET') {
         const logs = db.prepare('SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT 100').all();
         return sendJSON(res, logs);
     }

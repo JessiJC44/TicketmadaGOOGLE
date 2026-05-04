@@ -225,24 +225,41 @@
 </head>
 <body v-cloak>
     <div id="app">
-        <!-- AUTH SCREEN -->
-        <div class="auth-screen" v-if="!isLoggedIn">
+        <div class="auth-screen" v-if="!isLoggedIn && !checkingAuth">
             <div class="auth-card">
                 <div class="auth-logo">
                     <div class="logo-box">👑</div>
                     <span class="logo-text" style="font-size: 2rem;">Portail<span>SuperAdmin</span></span>
                 </div>
-                <p style="margin-bottom: 30px; font-weight: 600; color: var(--text-light);">Accès réservé. Veuillez vous identifier.</p>
+                <p style="margin-bottom: 30px; font-weight: 600; color: var(--text-light);">Accès réservé au Super Administrateur.</p>
+                
+                <button @click="loginWithGoogle" class="btn-brutal primary" style="width: 100%; padding: 18px; font-size: 1.1rem; margin-bottom: 20px;" :disabled="loadingAuth">
+                    <v-icon>mdi-google</v-icon> {{ loadingAuth ? 'CONNEXION...' : 'SE CONNECTER AVEC GOOGLE' }}
+                </button>
+
+                <div style="display: flex; align-items: center; gap: 10px; margin: 20px 0; color: #ccc;">
+                    <div style="flex: 1; height: 1px; background: #eee;"></div>
+                    <span style="font-size: 0.8rem; font-weight: 800;">OU ACCÈS DIRECT</span>
+                    <div style="flex: 1; height: 1px; background: #eee;"></div>
+                </div>
+
                 <form @submit.prevent="handleLogin">
-                    <input type="email" class="input-brutal" v-model="loginForm.email" placeholder="Email (sedrayiokoraz@gmail.com)" required>
+                    <input type="email" class="input-brutal" v-model="loginForm.email" placeholder="Email (Admin)" required>
                     <input type="password" class="input-brutal" v-model="loginForm.password" placeholder="Mot de passe" required>
-                    <button type="submit" class="btn-brutal primary" style="width: 100%; padding: 18px; font-size: 1.1rem;">
-                        <v-icon>mdi-shield-lock</v-icon> SE CONNECTER
+                    <button type="submit" class="btn-brutal" style="width: 100%; padding: 15px;">
+                        <v-icon>mdi-shield-lock</v-icon> CONNEXION PAR MOT DE PASSE
                     </button>
                 </form>
                 <div v-if="loginError" style="margin-top: 20px; padding: 12px; background: #ffebee; border: 2px solid #c62828; color: #c62828; font-weight: 700; font-size: 0.85rem;">
                     {{ loginError }}
                 </div>
+            </div>
+        </div>
+
+        <div v-if="checkingAuth" class="auth-screen">
+            <div style="text-align: center;">
+                <v-progress-circular indeterminate color="var(--accent-coral)" size="64"></v-progress-circular>
+                <p style="margin-top: 20px; font-weight: 800; font-family: 'Syne', sans-serif;">VÉRIFICATION DES ACCÈS...</p>
             </div>
         </div>
 
@@ -660,6 +677,8 @@
             data() {
                 return {
                     isLoggedIn: false,
+                    checkingAuth: true,
+                    loadingAuth: false,
                     loginForm: { email: '', password: '' },
                     loginError: '',
                     user: null,
@@ -706,16 +725,60 @@
                 }
             },
             async mounted() {
-                const user = JSON.parse(localStorage.getItem('ticketmada_user') || 'null');
-                const token = localStorage.getItem('ticketmada_token');
-                
-                if (user && user.role === 'superadmin' && token) {
-                    this.user = user;
-                    this.isLoggedIn = true;
-                    this.fetchData();
+                try {
+                    this.checkingAuth = true;
+                    // Short delay to ensure API is ready
+                    await new Promise(r => setTimeout(r, 500));
+                    
+                    // Try to verify current session with server
+                    const res = await window.api.get('/auth/me');
+                    if (res && res.user && (res.user.email === 'sedrayiokoraz@gmail.com' || res.user.role === 'superadmin')) {
+                        this.user = res.user;
+                        this.isLoggedIn = true;
+                        // Update local storage with fresh data from server
+                        localStorage.setItem('ticketmada_user', JSON.stringify(res.user));
+                        this.fetchData();
+                        this.checkingAuth = false;
+                        return;
+                    }
+                    
+                    // Fallback to local storage if server check failed but data exists
+                    const localUser = JSON.parse(localStorage.getItem('ticketmada_user') || 'null');
+                    if (localUser && (localUser.email === 'sedrayiokoraz@gmail.com' || localUser.role === 'superadmin')) {
+                        this.user = localUser;
+                        this.isLoggedIn = true;
+                        this.fetchData();
+                    }
+                } catch (e) {
+                    console.error('Auth verify error', e);
+                } finally {
+                    this.checkingAuth = false;
                 }
             },
             methods: {
+                async loginWithGoogle() {
+                    if (this.loadingAuth) return;
+                    this.loadingAuth = true;
+                    try {
+                        const result = await window.api.loginWithGoogle();
+                        if (result.success) {
+                            if (result.user.email === 'sedrayiokoraz@gmail.com' || result.user.role === 'superadmin') {
+                                this.user = result.user;
+                                this.isLoggedIn = true;
+                                this.fetchData();
+                            } else {
+                                alert("Accès refusé. Ce compte n'a pas les privilèges SuperAdmin.");
+                                window.api.logout();
+                            }
+                        } else if (!result.canceled) {
+                            alert(result.error || 'Erreur Google Auth');
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    } finally {
+                        this.loadingAuth = false;
+                    }
+                },
                 async handleLogin() {
                     this.loginError = '';
                     try {

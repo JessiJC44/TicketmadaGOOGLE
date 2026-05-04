@@ -63,7 +63,7 @@ export async function loginWithGoogle() {
             email: user.email,
             photo: user.photoURL,
             uid: user.uid,
-            role: 'user',
+            role: user.email === 'sedrayiokoraz@gmail.com' ? 'superadmin' : 'user',
             updatedAt: serverTimestamp()
         };
 
