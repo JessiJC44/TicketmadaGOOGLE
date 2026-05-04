@@ -725,24 +725,40 @@
                 }
             },
             async mounted() {
+                this.checkingAuth = true;
                 try {
-                    this.checkingAuth = true;
-                    // Short delay to ensure API is ready
-                    await new Promise(r => setTimeout(r, 500));
+                    await new Promise(r => setTimeout(r, 300));
                     
-                    // Try to verify current session with server
-                    const res = await window.api.get('/auth/me');
-                    if (res && res.user && (res.user.email === 'sedrayiokoraz@gmail.com' || res.user.role === 'superadmin')) {
-                        this.user = res.user;
-                        this.isLoggedIn = true;
-                        // Update local storage with fresh data from server
-                        localStorage.setItem('ticketmada_user', JSON.stringify(res.user));
-                        this.fetchData();
+                    // Vérifier si le token existe en local
+                    const hasToken = window.api && window.api.isLoggedIn();
+                    if (!hasToken) {
+                        console.log('[SuperAdmin] Pas de token, afficher login');
                         this.checkingAuth = false;
                         return;
                     }
                     
-                    // Fallback to local storage if server check failed but data exists
+                    // Vérifier la session avec le serveur
+                    try {
+                        const res = await window.api.get('/auth/me');
+                        if (res && res.user && (res.user.email === 'sedrayiokoraz@gmail.com' || res.user.role === 'superadmin')) {
+                            this.user = res.user;
+                            this.isLoggedIn = true;
+                            localStorage.setItem('ticketmada_user', JSON.stringify(res.user));
+                            this.fetchData();
+                            this.checkingAuth = false;
+                            return;
+                        } else if (res && res.user) {
+                            // Connecté mais pas superadmin
+                            this.loginError = "Ce compte n'a pas les privilèges SuperAdmin.";
+                            this.checkingAuth = false;
+                            return;
+                        }
+                    } catch (apiError) {
+                        console.warn('[SuperAdmin] API /auth/me failed:', apiError);
+                        // API non disponible — essayer le localStorage comme fallback
+                    }
+                    
+                    // Fallback localStorage (si API down mais session locale existe)
                     const localUser = JSON.parse(localStorage.getItem('ticketmada_user') || 'null');
                     if (localUser && (localUser.email === 'sedrayiokoraz@gmail.com' || localUser.role === 'superadmin')) {
                         this.user = localUser;
@@ -750,7 +766,7 @@
                         this.fetchData();
                     }
                 } catch (e) {
-                    console.error('Auth verify error', e);
+                    console.error('[SuperAdmin] Auth error:', e);
                 } finally {
                     this.checkingAuth = false;
                 }
@@ -802,24 +818,34 @@
                 async fetchData() {
                     try {
                         const res = await window.api.get('/superadmin/dashboard');
-                        this.stats = res;
-                        this.logs = res.recentActivity;
-
-                        // Parallel fetch others
-                        const [orgs, users, events, apps] = await Promise.all([
-                            window.api.get('/superadmin/organizers'),
-                            window.api.get('/superadmin/users'),
-                            window.api.get('/superadmin/events'),
-                            window.api.get('/organizer-applications')
-                        ]);
-                        
-                        this.organizers = orgs;
-                        this.users = users;
-                        this.events = events;
-                        this.applications = apps;
+                        if (res && !res.error) {
+                            this.stats = res;
+                            this.logs = res.recentActivity || [];
+                        }
                     } catch (err) {
-                        console.error('Fetch error:', err);
+                        console.error('[SuperAdmin] Dashboard fetch error:', err);
                     }
+                    
+                    // Fetch chaque ressource individuellement pour éviter qu'un échec bloque tout
+                    try {
+                        const orgs = await window.api.get('/superadmin/organizers');
+                        if (Array.isArray(orgs)) this.organizers = orgs;
+                    } catch (e) { console.warn('[SuperAdmin] Organizers fetch failed'); }
+                    
+                    try {
+                        const users = await window.api.get('/superadmin/users');
+                        if (Array.isArray(users)) this.users = users;
+                    } catch (e) { console.warn('[SuperAdmin] Users fetch failed'); }
+                    
+                    try {
+                        const events = await window.api.get('/superadmin/events');
+                        if (Array.isArray(events)) this.events = events;
+                    } catch (e) { console.warn('[SuperAdmin] Events fetch failed'); }
+                    
+                    try {
+                        const apps = await window.api.get('/organizer-applications');
+                        if (Array.isArray(apps)) this.applications = apps;
+                    } catch (e) { console.warn('[SuperAdmin] Applications fetch failed'); }
                 },
                 formatMoney(v) {
                     return new Intl.NumberFormat('fr-MG', { style: 'currency', currency: 'MGA', minimumFractionDigits: 0 }).format(v).replace('MGA', 'Ar');
