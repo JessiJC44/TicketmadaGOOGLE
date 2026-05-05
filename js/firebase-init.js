@@ -22,9 +22,9 @@ export async function initFirebase() {
             
             app = initializeApp(firebaseConfig);
             auth = getAuth(app);
-            db = getFirestore(app);
+            db = getFirestore(app, firebaseConfig.firestoreDatabaseId || '(default)');
             
-            console.log('[Firebase] Initialized successfully');
+            console.log('[Firebase] Initialized with database:', firebaseConfig.firestoreDatabaseId || '(default)');
             return { app, auth, db };
         } catch (error) {
             console.error('[Firebase] Initialization failed or timed out:', error);

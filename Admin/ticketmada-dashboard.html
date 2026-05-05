@@ -1465,18 +1465,34 @@
                     
                     if (provider === 'google') {
                         this.loadingAuth = true;
+                        this.authError = '';
+                        this.authStartTime = Date.now();
+                        
+                        // Safety watchdog (40s like landing page)
+                        const watchdog = setTimeout(() => {
+                            if (this.loadingAuth) {
+                                console.warn('[Dashboard] Auth Watchdog triggered (40s)');
+                                this.loadingAuth = false;
+                                this.authError = 'La connexion a expiré. Veuillez réessayer.';
+                            }
+                        }, 40000);
+
                         try {
+                            console.log('[Dashboard] Calling window.api.loginWithGoogle()...');
                             const result = await window.api.loginWithGoogle();
+                            clearTimeout(watchdog);
+                            
+                            console.log('[Dashboard] Login result:', result);
                             if (result.success) {
                                 this.isLoggedIn = true;
                                 this.loadDashboard();
                             } else if (result.canceled) {
-                                // Silent reset for cancel
                                 this.loadingAuth = false;
                             } else {
                                 this.authError = result.error || 'Erreur de connexion Google';
                             }
                         } catch (e) {
+                            clearTimeout(watchdog);
                             console.error('[Dashboard] Google Auth exception:', e);
                             this.authError = 'Échec technique de la connexion Google';
                         } finally {
