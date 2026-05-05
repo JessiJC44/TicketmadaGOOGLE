@@ -567,6 +567,7 @@ function initDB() {
             affiliate_code TEXT,
             session_id TEXT,
             reserved_until DATETIME,
+            expires_at DATETIME,
             notes TEXT,
             address_json TEXT,
             point_in_time_data TEXT,
