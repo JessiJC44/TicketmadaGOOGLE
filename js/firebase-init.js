@@ -57,10 +57,10 @@ export async function loginWithGoogle() {
     }
 
     const provider = new GoogleAuthProvider();
-    console.log('[Firebase] Provider created, opening popup...');
+    console.log('[Firebase] Provider created, opening popup for auth instance:', !!auth);
     try {
         const result = await signInWithPopup(auth, provider);
-        console.log('[Firebase] Popup result received for:', result.user.email);
+        console.log('[Firebase] Popup returned successfully');
         const user = result.user;
         
         const userProfile = {

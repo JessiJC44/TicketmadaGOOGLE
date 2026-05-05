@@ -773,7 +773,6 @@
 
     <script src="../js/site-config.js"></script>
     <script src="../js/api-client.js"></script>
-    <script src="../js/oauth-simulation.js"></script>
     <script src="../js/profile-menu.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
@@ -1061,16 +1060,7 @@
                     this.loadingAuth = true;
                     if (prov !== 'google') {
                         this.loadingAuth = false;
-                        // Mock for others
-                        if (window.OAuthSim) {
-                            window.OAuthSim.show(provider, (name, email) => {
-                                const user = { name, email, role: 'buyer' };
-                                window.api.setAuth('mock-token', user);
-                                this.isLoggedIn = true;
-                                this.showAuth = false;
-                                this.checkAndApply();
-                            });
-                        }
+                        alert(this.lang === 'fr' ? "Ce service n'est pas encore disponible." : "Service not available yet.");
                         return;
                     }
 

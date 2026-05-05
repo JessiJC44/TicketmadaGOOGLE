@@ -505,7 +505,6 @@
     </div>
     
     <script src="../js/api-client.js"></script>
-    <script src="../js/oauth-simulation.js"></script>
     <script src="../js/profile-menu.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
@@ -704,8 +703,13 @@
                 openAuth(mode) { this.authMode = mode; this.showAuth = true; },
                 async loginWith(provider) {
                     if (this.loadingAuth) {
-                        if (Date.now() - this.authStartTime > 10000) { this.loadingAuth = false; }
-                        else return;
+                        if (Date.now() - this.authStartTime > 15000) { 
+                            console.warn('[UI] Force resetting loadingAuth after 15s');
+                            this.loadingAuth = false; 
+                        } else {
+                            console.log('[UI] Login already in progress...');
+                            return;
+                        }
                     }
                     console.log('[UI] loginWith called for:', provider);
                     const prov = provider.toLowerCase();
@@ -714,38 +718,38 @@
                     this.authStartTime = Date.now();
                     
                     if (prov === 'google') {
+                        // Watchdog to prevent permanent stuck state
+                        const watchdog = setTimeout(() => {
+                            if (this.loadingAuth) {
+                                console.warn('[UI] Auth Watchdog triggered (40s)');
+                                this.loadingAuth = false;
+                            }
+                        }, 40000);
+
                         try {
+                            console.log('[UI] Calling api.loginWithGoogle()...');
                             const result = await window.api.loginWithGoogle();
-                            if (result.success) {
+                            console.log('[UI] api.loginWithGoogle() returned:', result);
+                            
+                            if (result && result.success) {
                                 this.isLoggedIn = true;
                                 this.showAuth = false;
-                            } else if (result.canceled) {
+                            } else if (result && result.canceled) {
+                                console.log('[UI] Login was canceled by user/popup');
                                 this.loadingAuth = false;
                             } else {
-                                alert(result.error || 'Erreur de connexion Google');
+                                console.error('[UI] Login failed:', result?.error);
+                                alert(result?.error || 'Erreur de connexion Google');
                             }
                         } catch (e) {
                             console.error('[UI] Google Auth exception:', e);
                         } finally {
+                            clearTimeout(watchdog);
                             this.loadingAuth = false;
                         }
                     } else {
-                        // Keep mock for others if not implemented
-                        const vm = this;
-                        if (window.OAuthSim) {
-                            window.OAuthSim.show(provider, (name, email) => {
-                                const user = { name, email, role: 'user' };
-                                window.api.setAuth('mock-token', user);
-                                vm.isLoggedIn = true;
-                                vm.showAuth = false;
-                                vm.loadingAuth = false;
-                            }, () => {
-                                vm.loadingAuth = false;
-                            });
-                        } else {
-                            this.loadingAuth = false;
-                            alert("Ce service n'est pas encore disponible.");
-                        }
+                        this.loadingAuth = false;
+                        alert(this.lang === 'fr' ? "Ce service n'est pas encore disponible." : "Service not available yet.");
                     }
                 },
                 async handleAuth() {

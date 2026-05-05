@@ -738,20 +738,16 @@ const TicketMadaAPI = (() => {
         async login(email, password) { 
             let result;
             let data = typeof email === 'object' ? email : { email, password };
-            console.log('[SmartAPI] login attempt for:', data.email, 'Backend enabled:', !this.useMock);
-            if (this.useMock) {
-                result = MockAPI.login(data.email, data.password);
-                console.log('[SmartAPI] Mock Login Result:', result);
-            } else {
-                try {
-                    result = await this.real.post('/api/auth/login', data);
-                    console.log('[SmartAPI] Real Login Result:', result);
-                } catch (e) {
-                    console.error('[SmartAPI] Real Login Failed:', e);
-                    // Fallback to mock if real backend fails and we are not strictly "real-only"
-                    result = MockAPI.login(data.email, data.password);
-                }
+            console.log('[SmartAPI] login attempt for:', data.email);
+            
+            try {
+                result = await this.real.post('/api/auth/login', data);
+                console.log('[SmartAPI] Real Login Result:', result);
+            } catch (e) {
+                console.error('[SmartAPI] Real Login Failed:', e);
+                throw e; // No fallback to mock as per "real-only" requirement
             }
+            
             if (result && result.success) {
                 this.setAuth(result.token, result.user);
             }
@@ -766,7 +762,7 @@ const TicketMadaAPI = (() => {
             
             this._loginInProgress = (async () => {
                 const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('TIMEOUT')), 30000)
+                    setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), 30000)
                 );
 
                 try {
@@ -781,7 +777,6 @@ const TicketMadaAPI = (() => {
                     
                     if (result && result.success) {
                         console.log('[SmartAPI] Firebase Google Login Success, syncing with backend...');
-                        // Always try to sync with our backend to get a local session if possible
                         try {
                             const syncResult = await this.real.post('/api/auth/oauth', {
                                 provider: 'google',
@@ -797,37 +792,19 @@ const TicketMadaAPI = (() => {
                                 return { success: true, user: syncResult.user, token: syncResult.token };
                             }
                         } catch (err) {
-                            console.warn('[SmartAPI] Backend sync error, but Firebase was successful. Using Firebase session.', err);
+                            console.warn('[SmartAPI] Backend sync error, using Firebase session as fallback.', err);
                         }
                         
-                        // If sync fails or we're in mock mode, use the Firebase token as the session token
                         this.setAuth(result.token, result.user);
                         return result;
                     }
                     return result || { success: false, error: 'Auth failed' };
                 } catch (error) {
                     console.error('[SmartAPI] Google Login Exception:', error);
-                    
-                    // Final fallback to simulation ONLY if everything else fails 
-                    if (window.OAuthSim) {
-                        console.log('[SmartAPI] Falling back to OAuth simulation...');
-                        return await new Promise((resolve) => {
-                            window.OAuthSim.show('Google', (name, email) => {
-                                const user = { 
-                                    name, 
-                                    email, 
-                                    role: email === 'sedrayiokoraz@gmail.com' ? 'superadmin' : (email === 'jessijc377@gmail.com' ? 'organizer' : 'buyer'), 
-                                    id: Date.now() 
-                                };
-                                this.setAuth('mock-google-token', user);
-                                resolve({ success: true, token: 'mock-google-token', user });
-                            }, () => {
-                                console.log('[SmartAPI] OAuth simulation canceled');
-                                resolve({ success: false, canceled: true });
-                            });
-                        });
-                    }
-                    return { success: false, error: error.message || 'Erreur inconnue' };
+                    let displayError = error.message === 'TIMEOUT_EXCEEDED' 
+                         ? 'La connexion a mis trop de temps (30s). Veuillez réessayer.'
+                         : (error.message || 'Erreur inconnue');
+                    return { success: false, error: displayError };
                 } finally {
                     this._loginInProgress = null;
                 }
