@@ -395,6 +395,7 @@
                             <div class="user-name">{{ userName }}</div>
                             <div class="plan-badge">{{ userPlan }}</div>
                         </div>
+                        <v-icon style="cursor: pointer; opacity: 0.5; margin-right: 15px;" @click="toggleLang">{{ lang === 'fr' ? 'mdi-translate' : 'mdi-translate-variant' }}</v-icon>
                         <v-icon style="cursor: pointer; opacity: 0.5;" @click="handleLogout">mdi-logout</v-icon>
                     </div>
                 </div>
@@ -1365,8 +1366,16 @@
                 };
             },
             computed: {
-                currentDate() { return new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); },
-                pageTitle() { return { dashboard: 'Dashboard', events: 'Mes événements', tickets: 'Billets vendus', analytics: 'Analytics', finance: 'Mes revenus', payouts: 'Versements', scan: 'Contrôle d\'accès', team: 'Mon équipe', seatmap: 'Plan de salle', settings: 'Paramètres', help: 'Aide' }[this.currentPage] || 'Dashboard'; },
+                currentDate() { 
+                    return new Date().toLocaleDateString(this.lang === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); 
+                },
+                pageTitle() { 
+                    const t = {
+                        fr: { dashboard: 'Dashboard', events: 'Mes événements', tickets: 'Billets vendus', analytics: 'Analytics', finance: 'Mes revenus', payouts: 'Versements', scan: 'Contrôle d\'accès', team: 'Mon équipe', seatmap: 'Plan de salle', settings: 'Paramètres', help: 'Aide', products: 'Billets & Produits', orders: 'Commandes', 'promo-codes': 'Codes Promo', affiliates: 'Affiliés', attendees: 'Participants' },
+                        en: { dashboard: 'Dashboard', events: 'My Events', tickets: 'Tickets Sold', analytics: 'Analytics', finance: 'My Revenue', payouts: 'Payouts', scan: 'Access Control', team: 'My Team', seatmap: 'Seat Map', settings: 'Settings', help: 'Help', products: 'Tickets & Products', orders: 'Orders', 'promo-codes': 'Promo Codes', affiliates: 'Affiliates', attendees: 'Attendees' }
+                    };
+                    return t[this.lang][this.currentPage] || t[this.lang].dashboard;
+                },
                 seatmapTotalRevenue() {
                     let total = 0;
                     this.seatmapSeats.forEach(s => {
@@ -1408,9 +1417,13 @@
             methods: {
                 formatCurrency(v) { if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M Ar'; if (v >= 1000) return (v / 1000).toFixed(0) + 'K Ar'; return v.toLocaleString() + ' Ar'; },
                 async handleLogout() { 
-                    await window.api.logout(); 
-                    this.isLoggedIn = false; 
-                    window.location.reload();
+                    if (window.api) {
+                        try { await window.api.logout(); } catch(e){}
+                    }
+                    window.location.href = '../User/ticketmada-organisateur.html';
+                },
+                toggleLang() {
+                    this.lang = this.lang === 'fr' ? 'en' : 'fr';
                 },
                 exportSales() {
                     alert('L\'exportation de vos ventes (CSV) va commencer...');

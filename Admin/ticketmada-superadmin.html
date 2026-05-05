@@ -341,6 +341,9 @@
                         <p style="font-size: 0.85rem; color: var(--text-light); font-weight: 600;">{{ currentDate }}</p>
                     </div>
                     <div class="topbar-right">
+                        <button class="btn-brutal sm" @click="toggleLang" style="margin-right: 10px;">
+                            {{ lang === 'fr' ? 'EN' : 'FR' }}
+                        </button>
                         <button class="btn-brutal sm" @click="fetchData">
                             <v-icon size="16">mdi-refresh</v-icon> ACTUALISER
                         </button>
@@ -995,6 +998,7 @@
                     loginError: '',
                     user: null,
                     currentTab: 'dashboard',
+                    lang: 'fr',
                     stats: {
                         totalRevenue: 0,
                         totalTicketsSold: 0,
@@ -1029,26 +1033,44 @@
                     
                     showAppDetails: false,
                     activeApp: null,
-
-                    tabTitles: {
-                        dashboard: 'Tableau de bord Global',
-                        organizers: 'Gestion des Organisateurs',
-                        applications: 'Candidatures Organisateur',
-                        users: 'Gestion des Utilisateurs',
-                        events: 'Surveillance des Événements',
-                        licences: 'Licences & Certifications',
-                        orders: 'Toutes les Commandes',
-                        marketing: 'Marketing & Codes Promo',
-                        broadcast: 'Communication & Diffusion',
-                        finance: 'Finance & Commissions',
-                        config: 'Configuration Système',
-                        logs: 'Journal d\'Audit Système'
-                    }
                 };
             },
             computed: {
                 currentDate() {
-                    return new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    return new Date().toLocaleDateString(this.lang === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                },
+                tabTitles() {
+                    const t = {
+                        fr: { 
+                            dashboard: 'Tableau de Bord Global', 
+                            organizers: 'Gestion Organisateurs', 
+                            applications: 'Candidatures',
+                            users: 'Gestion Clients', 
+                            events: 'Supervision Événements', 
+                            licences: 'Licences & Certifications',
+                            orders: 'Commandes Globales',
+                            marketing: 'Marketing & Promos',
+                            finance: 'Comptabilité & Taxes', 
+                            broadcast: 'Communication Broadcast', 
+                            config: 'Configuration Système', 
+                            logs: 'Logs & Audit Sync' 
+                        },
+                        en: { 
+                            dashboard: 'Global Dashboard', 
+                            organizers: 'Organizer Management', 
+                            applications: 'Applications',
+                            users: 'User Management', 
+                            events: 'Event Oversight', 
+                            licences: 'Licenses & Certs',
+                            orders: 'Global Orders',
+                            marketing: 'Marketing & Promos',
+                            finance: 'Accounting & Taxes', 
+                            broadcast: 'Broadcast Center', 
+                            config: 'System Config', 
+                            logs: 'Audit Logs' 
+                        }
+                    };
+                    return t[this.lang] || t.fr;
                 },
                 maxMonthlyRevenue() {
                     if (!this.stats.monthlyRevenue.length) return 1;
@@ -1143,10 +1165,14 @@
                         this.loginError = "Identifiants invalides.";
                     }
                 },
-                handleLogout() {
-                    window.api.logout();
-                    this.isLoggedIn = false;
-                    this.user = null;
+                async handleLogout() {
+                    if (window.api) {
+                        try { await window.api.logout(); } catch(e){}
+                    }
+                    window.location.href = '../User/index.html';
+                },
+                toggleLang() {
+                    this.lang = this.lang === 'fr' ? 'en' : 'fr';
                 },
                 async fetchData() {
                     try {

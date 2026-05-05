@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link rel="modulepreload" href="/js/firebase-init.js">
     
     <style>
         :root {
@@ -776,7 +777,10 @@
     <script src="../js/profile-menu.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
-    <script>
+    <script type="module">
+        // Preload Firebase
+        import('/js/firebase-init.js').catch(() => {});
+
         const translations = {
             fr: {
                 nav: { features: 'Fonctionnalités', howItWorks: 'Comment ça marche', pricing: 'Tarifs', testimonials: 'Témoignages', login: 'Connexion', createEvent: 'Créer un événement' },
