@@ -1022,6 +1022,105 @@
                         </div>
                     </template>
 
+                    <!-- Getting Started -->
+                    <template v-if="currentPage === 'getting-started'">
+                        <div style="max-width:800px;margin:0 auto;">
+                            <h2 style="font-family:'Syne',sans-serif;font-size:1.8rem;margin-bottom:8px;">{{ lang === 'fr' ? 'Bienvenue sur TicketMada ! 🎉' : 'Welcome to TicketMada! 🎉' }}</h2>
+                            <p style="color:var(--text-light);margin-bottom:30px;">{{ lang === 'fr' ? 'Suivez ces étapes pour lancer votre premier événement.' : 'Follow these steps to launch your first event.' }}</p>
+                            <div v-for="(step, i) in onboardingSteps" :key="i" style="border:3px solid #1a1a1a;padding:20px;margin-bottom:16px;display:flex;align-items:center;gap:20px;" :style="step.done || step.completed ? 'background:#e8f5e9;box-shadow:4px 4px 0 #00D9A5;' : 'background:white;box-shadow:4px 4px 0 #1a1a1a;'">
+                                <div style="width:50px;height:50px;border:3px solid #1a1a1a;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;" :style="step.done || step.completed ? 'background:#00D9A5;color:white;' : 'background:#FFF8F0;'">
+                                    <v-icon v-if="step.done || step.completed" color="white">mdi-check-bold</v-icon>
+                                    <span v-else style="font-family:'Syne',sans-serif;font-weight:800;">{{ i + 1 }}</span>
+                                </div>
+                                <div style="flex:1;">
+                                    <div style="font-family:'Syne',sans-serif;font-weight:800;">{{ lang === 'fr' ? step.title : (step.titleEn || step.title) }}</div>
+                                    <div style="font-size:0.85rem;color:var(--text-light);margin-top:4px;">{{ lang === 'fr' ? step.desc : (step.descEn || step.desc) }}</div>
+                                </div>
+                                <button v-if="!(step.done || step.completed)" class="btn btn-primary btn-sm" @click="currentPage = step.action">{{ lang === 'fr' ? 'Commencer →' : 'Start →' }}</button>
+                                <span v-else style="color:#00D9A5;font-weight:700;">✓</span>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Reports -->
+                    <template v-if="currentPage === 'reports'">
+                        <div class="stats-grid">
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">📊</div></div><div class="stat-value">{{ formatCurrency(myRevenue) }}</div><div class="stat-label">{{ lang === 'fr' ? 'Revenus totaux' : 'Total Revenue' }}</div></div>
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">🎫</div></div><div class="stat-value">{{ myTicketsSold.toLocaleString() }}</div><div class="stat-label">{{ lang === 'fr' ? 'Billets vendus' : 'Tickets Sold' }}</div></div>
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">👥</div></div><div class="stat-value">{{ attendeesCount || 0 }}</div><div class="stat-label">{{ lang === 'fr' ? 'Participants' : 'Attendees' }}</div></div>
+                            <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">📋</div></div><div class="stat-value">{{ ordersCount || 0 }}</div><div class="stat-label">{{ lang === 'fr' ? 'Commandes' : 'Orders' }}</div></div>
+                        </div>
+                        <div class="section">
+                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-download</v-icon> {{ lang === 'fr' ? 'Exporter' : 'Export' }}</div></div>
+                            <div style="padding:20px;display:grid;grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));gap:16px;">
+                                <button v-for="rep in reportTypes" :key="rep.id" class="btn btn-secondary" style="padding:16px;display:flex;flex-direction:column;align-items:center;gap:8px;" @click="alert('Export (simulation)')">
+                                    <v-icon>{{ rep.icon }}</v-icon>
+                                    <strong style="font-size:0.85rem;">{{ rep.name }}</strong>
+                                    <span style="font-size:0.7rem;color:var(--text-light);">CSV / PDF</span>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Event Settings / Homepage Designer -->
+                    <template v-if="currentPage === 'event-settings' || currentPage === 'homepage-designer'">
+                        <div class="section">
+                            <div class="section-header">
+                                <div class="section-title"><v-icon size="small">mdi-palette</v-icon> {{ lang === 'fr' ? 'Personnalisation' : 'Customization' }}</div>
+                            </div>
+                            <div style="padding:20px;">
+                                <div class="form-group">
+                                    <label class="form-label">{{ lang === 'fr' ? 'Événement à personnaliser' : 'Event to customize' }}</label>
+                                    <select class="form-input" v-model="selectedEventForSettings">
+                                        <option v-for="e in myEvents" :key="e.id" :value="e">{{ e.name }}</option>
+                                    </select>
+                                </div>
+                                <div v-if="selectedEventForSettings">
+                                    <div class="form-group"><label class="form-label">{{ lang === 'fr' ? 'Image de couverture' : 'Cover Image' }}</label>
+                                        <div style="border:3px dashed #ccc;padding:40px;text-align:center;cursor:pointer;background:#fafafa;" @click="alert('Upload (simulation)')"><v-icon size="48" style="opacity:0.3;">mdi-image-plus</v-icon><div style="margin-top:8px;font-size:0.85rem;color:var(--text-light);">{{ lang === 'fr' ? 'Cliquez pour uploader (1200×600)' : 'Click to upload (1200×600)' }}</div></div>
+                                    </div>
+                                    <div class="form-group"><label class="form-label">{{ lang === 'fr' ? 'Couleur principale' : 'Primary Color' }}</label>
+                                        <div style="display:flex;gap:8px;">
+                                            <div v-for="c in ['#FF6B4A','#4A90FF','#00D9A5','#FECA57','#9B59B6','#1a1a1a']" :key="c" @click="eventPrimaryColor = c" style="width:40px;height:40px;border:3px solid #1a1a1a;cursor:pointer;" :style="{ background:c, boxShadow:eventPrimaryColor===c?'4px 4px 0 #1a1a1a':'none' }"></div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">{{ lang === 'fr' ? 'Visibilité' : 'Visibility' }}</label>
+                                        <select class="form-input" v-model="eventVisibility">
+                                            <option value="public">Public</option>
+                                            <option value="unlisted">Unlisted</option>
+                                            <option value="draft">Draft</option>
+                                        </select>
+                                    </div>
+                                    <button class="btn btn-primary" style="margin-top:20px;width:100%;padding:14px;" @click="alert(lang === 'fr' ? 'Sauvegardé (simulation)' : 'Saved (simulation)')">
+                                        <v-icon size="small" class="mr-2">mdi-content-save</v-icon> {{ lang === 'fr' ? 'Enregistrer les modifications' : 'Save Changes' }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Registration Questions -->
+                    <template v-if="currentPage === 'registration-questions'">
+                        <div class="section">
+                            <div class="section-header">
+                                <div class="section-title"><v-icon size="small">mdi-form-select</v-icon> {{ lang === 'fr' ? 'Questions formulaire' : 'Form Questions' }}</div>
+                                <button class="btn btn-primary btn-sm" @click="registrationQuestions.push({id: Date.now(), label:'',type:'text',required:false})"><v-icon size="x-small">mdi-plus</v-icon></button>
+                            </div>
+                            <div style="padding:20px;">
+                                <div v-for="(q, i) in registrationQuestions" :key="q.id" style="border:2px solid #eee;padding:12px;margin-bottom:12px;display:flex;gap:12px;align-items:flex-start;">
+                                    <div style="flex:1;">
+                                        <input type="text" class="form-input" v-model="q.label" :placeholder="lang === 'fr' ? 'Libellé question' : 'Question label'">
+                                        <div style="display:flex;gap:10px;margin-top:8px;">
+                                            <select class="form-input" v-model="q.type"><option value="text">Texte</option><option value="select">Select</option><option value="email">Email</option></select>
+                                            <label style="display:flex;align-items:center;gap:4px;font-size:0.8rem;"><input type="checkbox" v-model="q.required"> Requis</label>
+                                        </div>
+                                    </div>
+                                    <button class="action-btn" style="color:#e74c3c;" @click="registrationQuestions.splice(i,1)"><v-icon size="x-small">mdi-delete</v-icon></button>
+                                </div>
+                                <button class="btn btn-primary w-full" @click="alert('Enregistré')">Enregistrer</button>
+                            </div>
+                        </div>
                     </template>
 
                     <!-- Attendees -->
