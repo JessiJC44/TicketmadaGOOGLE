@@ -566,7 +566,7 @@
                     lang: localStorage.getItem('ticketmada-lang') || 'fr',
                     isLoggedIn: false, showProfileMenu: false,
                     showSearch: false, showAuth: false, authMode: 'login', searchQuery: '', activeCategory: 'all',
-                    loadingAuth: false,
+                    loadingAuth: false, authStartTime: 0,
                     suggestions: [],
                     currentPage: 1,
                     itemsPerPage: 20,
@@ -603,6 +603,9 @@
                 document.documentElement.lang = this.lang;
                 if (window.api && window.api.isLoggedIn()) { this.isLoggedIn = true; }
                 if (window.ProfileMenu) window.ProfileMenu.injectStyles();
+                
+                // Preload Firebase
+                import('/js/firebase-init.js').catch(() => {});
                 
                 await this.loadEvents();
                 animateCounters();
@@ -700,18 +703,25 @@
                 toggleLang() { this.lang = this.lang === 'fr' ? 'en' : 'fr'; localStorage.setItem('ticketmada-lang', this.lang); document.documentElement.lang = this.lang; },
                 openAuth(mode) { this.authMode = mode; this.showAuth = true; },
                 async loginWith(provider) {
-                    if (this.loadingAuth) return;
+                    if (this.loadingAuth) {
+                        if (Date.now() - this.authStartTime > 10000) { this.loadingAuth = false; }
+                        else return;
+                    }
                     console.log('[UI] loginWith called for:', provider);
                     const prov = provider.toLowerCase();
                     
                     this.loadingAuth = true;
+                    this.authStartTime = Date.now();
+                    
                     if (prov === 'google') {
                         try {
                             const result = await window.api.loginWithGoogle();
                             if (result.success) {
                                 this.isLoggedIn = true;
                                 this.showAuth = false;
-                            } else if (!result.canceled) {
+                            } else if (result.canceled) {
+                                this.loadingAuth = false;
+                            } else {
                                 alert(result.error || 'Erreur de connexion Google');
                             }
                         } catch (e) {
@@ -720,16 +730,20 @@
                             this.loadingAuth = false;
                         }
                     } else {
-                        this.loadingAuth = false;
                         // Keep mock for others if not implemented
-                        if (window.api.useMock && window.OAuthSim) {
+                        const vm = this;
+                        if (window.OAuthSim) {
                             window.OAuthSim.show(provider, (name, email) => {
                                 const user = { name, email, role: 'user' };
                                 window.api.setAuth('mock-token', user);
-                                this.isLoggedIn = true;
-                                this.showAuth = false;
+                                vm.isLoggedIn = true;
+                                vm.showAuth = false;
+                                vm.loadingAuth = false;
+                            }, () => {
+                                vm.loadingAuth = false;
                             });
                         } else {
+                            this.loadingAuth = false;
                             alert("Ce service n'est pas encore disponible.");
                         }
                     }

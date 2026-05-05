@@ -1057,6 +1057,8 @@
             },
             async mounted() {
                 this.checkingAuth = true;
+                // Preload Firebase
+                import('/js/firebase-init.js').catch(() => {});
                 try {
                     await new Promise(r => setTimeout(r, 300));
                     

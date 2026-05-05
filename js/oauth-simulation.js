@@ -16,7 +16,7 @@ window.OAuthSim = {
 
     _overlay: null,
 
-    show(provider, callback) {
+    show(provider, callback, cancelCallback) {
         if (this._overlay) this._overlay.remove();
 
         const isGoogle = provider.toLowerCase() === 'google';
@@ -24,6 +24,7 @@ window.OAuthSim = {
 
         const overlay = document.createElement('div');
         overlay.id = 'oauth-sim-overlay';
+        this._canceledAtClose = true; // Default to canceled unless selection made
         overlay.innerHTML = `
             <div class="oauth-sim-backdrop"></div>
             <div class="oauth-sim-window ${isGoogle ? 'google' : 'facebook'}">
@@ -114,12 +115,16 @@ window.OAuthSim = {
         this._overlay = overlay;
 
         // Event handlers
-        overlay.querySelector('.oauth-sim-backdrop').addEventListener('click', () => this.close());
+        overlay.querySelector('.oauth-sim-backdrop').addEventListener('click', () => {
+            if (cancelCallback) cancelCallback();
+            this.close();
+        });
 
         overlay.querySelectorAll('.oauth-sim-account:not(.oauth-sim-other)').forEach(el => {
             el.addEventListener('click', () => {
                 const idx = parseInt(el.dataset.index);
                 const account = accounts[idx];
+                this._canceledAtClose = false; // Selection made
                 this._showLoading(provider, account.name);
                 setTimeout(() => {
                     this.close();
@@ -151,6 +156,7 @@ window.OAuthSim = {
                 const email = emailInput.value.trim();
                 if (!name) { nameInput.style.borderColor = '#EA4335'; nameInput.placeholder = 'Veuillez entrer votre nom'; return; }
                 if (!email || !email.includes('@')) { emailInput.style.borderColor = '#EA4335'; emailInput.placeholder = 'Email invalide'; return; }
+                this._canceledAtClose = false; // Selection made
                 this._showLoading(provider, name);
                 setTimeout(() => { this.close(); callback(name, email); }, 1200);
             };
@@ -161,7 +167,11 @@ window.OAuthSim = {
 
         // Escape key
         const escHandler = (e) => {
-            if (e.key === 'Escape') { this.close(); document.removeEventListener('keydown', escHandler); }
+            if (e.key === 'Escape') { 
+                if (cancelCallback) cancelCallback();
+                this.close(); 
+                document.removeEventListener('keydown', escHandler); 
+            }
         };
         document.addEventListener('keydown', escHandler);
     },

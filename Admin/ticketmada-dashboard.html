@@ -1277,7 +1277,7 @@
         const app = createApp({
             data() {
                 return {
-                    isLoggedIn: false, loadingAuth: false, authMode: 'login', authForm: { name: '', email: '', password: '' }, authError: '',
+                    isLoggedIn: false, loadingAuth: false, authStartTime: 0, authMode: 'login', authForm: { name: '', email: '', password: '' }, authError: '',
                     currentPage: 'dashboard', showCreateModal: false, currentPlan: 'pro',
                     isSuperAdminViewing: false, viewingOrgName: '', viewingOrgLicense: 'PRO', lang: 'fr',
                     myRevenue: 0, myTicketsSold: 0, scanRate: 0, scannedTickets: 0, pendingTickets: 0, refundedTickets: 0,
@@ -1482,8 +1482,17 @@
                     } catch(e) { alert('Erreur de mise à jour'); }
                 },
                 async loginWith(provider) {
-                    if (this.loadingAuth) return;
+                    if (this.loadingAuth) {
+                        // Safety: if stuck for more than 10s, allow retry
+                        if (Date.now() - this.authStartTime > 10000) {
+                            this.loadingAuth = false;
+                        } else {
+                            return;
+                        }
+                    }
+                    
                     this.authError = '';
+                    this.authStartTime = Date.now();
                     
                     if (provider === 'google') {
                         this.loadingAuth = true;
@@ -1492,7 +1501,10 @@
                             if (result.success) {
                                 this.isLoggedIn = true;
                                 this.loadDashboard();
-                            } else if (!result.canceled) {
+                            } else if (result.canceled) {
+                                // Silent reset for cancel
+                                this.loadingAuth = false;
+                            } else {
                                 this.authError = result.error || 'Erreur de connexion Google';
                             }
                         } catch (e) {
@@ -1504,6 +1516,7 @@
                     } else {
                         // Fallback to simulation for other providers
                         const vm = this;
+                        this.loadingAuth = true; 
                         window.OAuthSim.show(provider, async (name, email) => {
                             try {
                                 const result = await window.api.oauthLogin(provider, name, email);
@@ -1517,7 +1530,11 @@
                                 window.api.setAuth('sim-' + Date.now(), { name: name, email: email, role: 'organizer' });
                                 vm.isLoggedIn = true;
                                 vm.loadDashboard();
+                            } finally {
+                                vm.loadingAuth = false;
                             }
+                        }, () => {
+                            vm.loadingAuth = false;
                         });
                     }
                 },
@@ -1839,6 +1856,10 @@
 
                 if (window.api && (window.api.isLoggedIn() || this.isSuperAdminViewing)) { this.isLoggedIn = true; this.loadDashboard(); }
                 if (window.ProfileMenu) window.ProfileMenu.injectStyles();
+                
+                // Preload Firebase
+                import('/js/firebase-init.js').catch(e => console.warn('Firebase preload failed', e));
+
                 this.loadSeatmapTemplates();
                 this.initSeatmapGrid();
                 

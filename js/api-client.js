@@ -765,11 +765,19 @@ const TicketMadaAPI = (() => {
             }
             
             this._loginInProgress = (async () => {
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('TIMEOUT')), 30000)
+                );
+
                 try {
                     console.log('[SmartAPI] Starting Firebase Google Login...');
-                    const firebaseMod = await import('/js/firebase-init.js');
-                    const result = await firebaseMod.loginWithGoogle();
-                    console.log('[SmartAPI] firebaseGoogleLogin result:', result);
+                    const loginPromise = (async () => {
+                        const firebaseMod = await import('/js/firebase-init.js');
+                        return await firebaseMod.loginWithGoogle();
+                    })();
+
+                    const result = await Promise.race([loginPromise, timeoutPromise]);
+                    console.log('[SmartAPI] Google Login result:', result);
                     
                     if (result && result.success) {
                         console.log('[SmartAPI] Firebase Google Login Success, syncing with backend...');
@@ -808,11 +816,14 @@ const TicketMadaAPI = (() => {
                                 const user = { 
                                     name, 
                                     email, 
-                                    role: email === 'sedrayiokoraz@gmail.com' ? 'superadmin' : 'buyer', 
+                                    role: email === 'sedrayiokoraz@gmail.com' ? 'superadmin' : (email === 'jessijc377@gmail.com' ? 'organizer' : 'buyer'), 
                                     id: Date.now() 
                                 };
                                 this.setAuth('mock-google-token', user);
                                 resolve({ success: true, token: 'mock-google-token', user });
+                            }, () => {
+                                console.log('[SmartAPI] OAuth simulation canceled');
+                                resolve({ success: false, canceled: true });
                             });
                         });
                     }

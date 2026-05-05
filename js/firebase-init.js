@@ -12,7 +12,12 @@ export async function initFirebase() {
     
     initPromise = (async () => {
         try {
-            const response = await fetch('/firebase-applet-config.json');
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
+            const response = await fetch('/firebase-applet-config.json', { signal: controller.signal });
+            clearTimeout(timeoutId);
+            
             const firebaseConfig = await response.json();
             
             app = initializeApp(firebaseConfig);
@@ -22,7 +27,7 @@ export async function initFirebase() {
             console.log('[Firebase] Initialized successfully');
             return { app, auth, db };
         } catch (error) {
-            console.error('[Firebase] Initialization failed:', error);
+            console.error('[Firebase] Initialization failed or timed out:', error);
             initPromise = null; // Allow retry
             return null;
         }
