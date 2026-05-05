@@ -489,7 +489,8 @@
                                             <td><div style="color: var(--accent-coral); font-weight: 700;">{{ formatMoney(o.total_commission) }}</div></td>
                                             <td><span class="badge" :class="'badge-' + o.status">{{ o.status }}</span></td>
                                             <td>
-                                                <button v-if="o.status === 'active'" class="btn-brutal sm" style="background: #ffebee; color: #c62828;" @click="suspendOrganizer(o)">
+                                                <button class="btn-brutal sm yellow" @click="viewAsOrganizer(o)">VOIR</button>
+                                                <button v-if="o.status === 'active'" class="btn-brutal sm" style="background: #ffebee; color: #c62828; margin-left: 5px;" @click="suspendOrganizer(o)">
                                                     SUSPENDRE
                                                 </button>
                                                 <button v-else class="btn-brutal sm mint" @click="reactivateOrganizer(o)">
@@ -1298,6 +1299,10 @@
                 viewAppDetails(app) {
                     this.activeApp = app;
                     this.showAppDetails = true;
+                },
+                viewAsOrganizer(organizer) {
+                    const url = `/Admin/ticketmada-dashboard.html?superadmin=1&orgName=${encodeURIComponent(organizer.name)}&license=${organizer.organizer_license || 'STANDARD'}`;
+                    window.open(url, '_blank');
                 },
                 async suspendOrganizer(org) {
                     if (!confirm(`Suspendre ${org.name} ? Ses événements ne seront plus visibles.`)) return;

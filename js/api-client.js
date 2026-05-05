@@ -759,59 +759,70 @@ const TicketMadaAPI = (() => {
         }
         
         async loginWithGoogle() {
-            try {
-                console.log('[SmartAPI] Starting Firebase Google Login...');
-                const firebaseMod = await import('/js/firebase-init.js');
-                const result = await firebaseMod.loginWithGoogle();
-                console.log('[SmartAPI] firebaseGoogleLogin result:', result);
-                
-                if (result && result.success) {
-                    console.log('[SmartAPI] Firebase Google Login Success, syncing with backend...');
-                    // Always try to sync with our backend to get a local session if possible
-                    try {
-                        const syncResult = await this.real.post('/api/auth/oauth', {
-                            provider: 'google',
-                            email: result.user.email,
-                            name: result.user.name,
-                            firebaseToken: result.token
-                        });
-                        
-                        console.log('[SmartAPI] Backend sync result:', syncResult);
-                        if (syncResult && syncResult.token) {
-                            console.log('[SmartAPI] Backend sync successful, using backend user');
-                            this.setAuth(syncResult.token, syncResult.user);
-                            return { success: true, user: syncResult.user, token: syncResult.token };
-                        }
-                    } catch (err) {
-                        console.warn('[SmartAPI] Backend sync error, but Firebase was successful. Using Firebase session.', err);
-                    }
-                    
-                    // If sync fails or we're in mock mode, use the Firebase token as the session token
-                    this.setAuth(result.token, result.user);
-                    return result;
-                }
-                return result || { success: false, error: 'Auth failed' };
-            } catch (error) {
-                console.error('[SmartAPI] Google Login Exception:', error);
-                
-                // Final fallback to simulation ONLY if everything else fails and we are likely in a restricted environment
-                if (window.OAuthSim) {
-                    console.log('[SmartAPI] Falling back to OAuth simulation...');
-                    return await new Promise((resolve) => {
-                        window.OAuthSim.show('Google', (name, email) => {
-                            const user = { 
-                                name, 
-                                email, 
-                                role: email === 'sedrayiokoraz@gmail.com' ? 'superadmin' : 'buyer', 
-                                id: Date.now() 
-                            };
-                            this.setAuth('mock-google-token', user);
-                            resolve({ success: true, token: 'mock-google-token', user });
-                        });
-                    });
-                }
-                return { success: false, error: error.message || 'Erreur inconnue' };
+            if (this._loginInProgress) {
+                console.warn('[SmartAPI] Google Login already in progress, returning current promise');
+                return this._loginInProgress;
             }
+            
+            this._loginInProgress = (async () => {
+                try {
+                    console.log('[SmartAPI] Starting Firebase Google Login...');
+                    const firebaseMod = await import('/js/firebase-init.js');
+                    const result = await firebaseMod.loginWithGoogle();
+                    console.log('[SmartAPI] firebaseGoogleLogin result:', result);
+                    
+                    if (result && result.success) {
+                        console.log('[SmartAPI] Firebase Google Login Success, syncing with backend...');
+                        // Always try to sync with our backend to get a local session if possible
+                        try {
+                            const syncResult = await this.real.post('/api/auth/oauth', {
+                                provider: 'google',
+                                email: result.user.email,
+                                name: result.user.name,
+                                firebaseToken: result.token
+                            });
+                            
+                            console.log('[SmartAPI] Backend sync result:', syncResult);
+                            if (syncResult && syncResult.token) {
+                                console.log('[SmartAPI] Backend sync successful, using backend user');
+                                this.setAuth(syncResult.token, syncResult.user);
+                                return { success: true, user: syncResult.user, token: syncResult.token };
+                            }
+                        } catch (err) {
+                            console.warn('[SmartAPI] Backend sync error, but Firebase was successful. Using Firebase session.', err);
+                        }
+                        
+                        // If sync fails or we're in mock mode, use the Firebase token as the session token
+                        this.setAuth(result.token, result.user);
+                        return result;
+                    }
+                    return result || { success: false, error: 'Auth failed' };
+                } catch (error) {
+                    console.error('[SmartAPI] Google Login Exception:', error);
+                    
+                    // Final fallback to simulation ONLY if everything else fails 
+                    if (window.OAuthSim) {
+                        console.log('[SmartAPI] Falling back to OAuth simulation...');
+                        return await new Promise((resolve) => {
+                            window.OAuthSim.show('Google', (name, email) => {
+                                const user = { 
+                                    name, 
+                                    email, 
+                                    role: email === 'sedrayiokoraz@gmail.com' ? 'superadmin' : 'buyer', 
+                                    id: Date.now() 
+                                };
+                                this.setAuth('mock-google-token', user);
+                                resolve({ success: true, token: 'mock-google-token', user });
+                            });
+                        });
+                    }
+                    return { success: false, error: error.message || 'Erreur inconnue' };
+                } finally {
+                    this._loginInProgress = null;
+                }
+            })();
+            
+            return this._loginInProgress;
         }
 
         async oauthLogin(data) { return this.real.post('/api/auth/oauth', data); }

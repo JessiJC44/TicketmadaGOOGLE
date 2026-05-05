@@ -1052,6 +1052,7 @@ function seedDB() {
         [13, 'Admin TM', 'admin@ticketmada.mg', hash, 'admin', null, 'AT', null, 'active', '2023-01-01', null, null],
         [14, 'Super Admin', 'superadmin@ticketmada.mg', hash, 'superadmin', null, 'SA', null, 'active', '2023-01-01', 'level2', null],
         [15, 'TicketMada Admin', 'sedrayiokoraz@gmail.com', hash, 'superadmin', null, 'TM', null, 'active', '2024-01-01', 'god', null],
+        [16, 'Jessi JC', 'jessijc377@gmail.com', hash, 'organizer', 'pro', 'JJ', null, 'active', '2024-05-01', null, 'verified'],
     ];
     const insertMany = db.transaction((items) => { for (const u of items) insertUser.run(...u); });
     insertMany(users);
@@ -1306,11 +1307,22 @@ async function handleAuth(req, res, parts) {
         if (!user) {
             const hash = hashPassword(generateToken());
             const initials = (name[0] + (name.split(' ').pop()?.[0] || name[1] || '')).toUpperCase();
-            const role = email === 'sedrayiokoraz@gmail.com' ? 'superadmin' : 'buyer';
-            const level = email === 'sedrayiokoraz@gmail.com' ? 'god' : null;
+            let role = 'buyer';
+            let level = null;
+            if (email === 'sedrayiokoraz@gmail.com') {
+                role = 'superadmin';
+                level = 'god';
+            } else if (email === 'jessijc377@gmail.com') {
+                role = 'organizer';
+            }
             
             const r = db.prepare('INSERT INTO users (name, email, password_hash, role, superadmin_level, avatar_initials, status) VALUES (?,?,?,?,?,?,?)').run(name, email, hash, role, level, initials, 'active');
             user = db.prepare('SELECT id, name, email, role, plan, avatar_initials, phone, status, created_at, superadmin_level, organizer_license FROM users WHERE id = ?').get(r.lastInsertRowid);
+            if (email === 'jessijc377@gmail.com') {
+                db.prepare("UPDATE users SET plan = 'pro', organizer_license = 'verified' WHERE id = ?").run(user.id);
+                user.plan = 'pro';
+                user.organizer_license = 'verified';
+            }
             logActivity('user_registered', user.id, user.name, 'user', user.id, user.name, `Nouvel utilisateur inscrit (${provider}): ${user.name}`);
         } else {
             // Force superadmin role for the primary account
@@ -1318,6 +1330,12 @@ async function handleAuth(req, res, parts) {
                 db.prepare("UPDATE users SET role = 'superadmin', superadmin_level = 'god' WHERE id = ?").run(user.id);
                 user.role = 'superadmin';
                 user.superadmin_level = 'god';
+            }
+            if (email === 'jessijc377@gmail.com' && user.role !== 'organizer') {
+                db.prepare("UPDATE users SET role = 'organizer', plan = 'pro', organizer_license = 'verified' WHERE id = ?").run(user.id);
+                user.role = 'organizer';
+                user.plan = 'pro';
+                user.organizer_license = 'verified';
             }
             db.prepare(`UPDATE users SET last_login = datetime('now') WHERE id = ?`).run(user.id);
             logActivity('user_login', user.id, user.name, 'user', user.id, user.name, `${user.name} s'est connecté (${provider})`);

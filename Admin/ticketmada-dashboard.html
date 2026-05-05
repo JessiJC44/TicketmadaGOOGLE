@@ -211,7 +211,19 @@
             <div class="auth-card">
                 <div class="auth-header"><h2>{{ authMode === 'login' ? 'Connexion Organisateur' : 'Créer un compte' }}</h2><p>{{ authMode === 'login' ? 'Accédez à votre tableau de bord' : 'Rejoignez TicketMada' }}</p></div>
                 <div class="social-auth">
-                    <button class="social-auth-btn google-btn" @click="loginWith('google')"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continuer avec Google</button>
+                    <button class="social-auth-btn google-btn" @click="loginWith('google')" :disabled="loadingAuth">
+                        <template v-if="loadingAuth">
+                            <v-progress-circular indeterminate size="20" width="2" class="mr-2"></v-progress-circular>
+                            Connexion...
+                        </template>
+                        <template v-else>
+                            <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                            Continuer avec Google
+                        </template>
+                    </button>
+                </div>
+                <div v-if="authError" style="background:#fff0f0; border:2px solid #e74c3c; padding:10px; margin-bottom:20px; color:#e74c3c; font-size:0.85rem; font-weight:600;">
+                    ⚠️ {{ authError }}
                 </div>
                 <div class="divider">ou</div>
                 <form class="auth-form" @submit.prevent="handleAuth">
@@ -230,29 +242,150 @@
                     <a href="../User/ticketmada-landing.html" class="sidebar-logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
                 </div>
                 <nav class="sidebar-nav">
+                    <!-- OVERVIEW -->
                     <div class="nav-section">
-                        <div class="nav-section-title">Principal</div>
-                        <div class="nav-item" :class="{ active: currentPage === 'dashboard' }" @click="currentPage = 'dashboard'"><v-icon class="nav-item-icon">mdi-view-dashboard</v-icon><span>Dashboard</span></div>
-                        <div class="nav-item" :class="{ active: currentPage === 'events' }" @click="currentPage = 'events'"><v-icon class="nav-item-icon">mdi-calendar-star</v-icon><span>Mes événements</span><span class="nav-item-badge">{{ myEvents.length }}</span></div>
-                        <div class="nav-item" :class="{ active: currentPage === 'create' }" @click="showCreateModal = true"><v-icon class="nav-item-icon">mdi-plus-circle</v-icon><span>Créer événement</span></div>
-                        <div class="nav-item" :class="{ active: currentPage === 'seatmap' }" @click="currentPage = 'seatmap'"><v-icon class="nav-item-icon">mdi-seat</v-icon><span>Plan de salle</span></div>
+                        <div class="nav-section-title">{{ lang === 'fr' ? 'VUE D\'ENSEMBLE' : 'OVERVIEW' }}</div>
+                        <div class="nav-item" :class="{ active: currentPage === 'getting-started' }" @click="currentPage = 'getting-started'">
+                            <v-icon class="nav-item-icon">mdi-rocket-launch</v-icon>
+                            <span>{{ lang === 'fr' ? 'Premiers pas' : 'Getting Started' }}</span>
+                        </div>
+                        <div class="nav-item" :class="{ active: currentPage === 'dashboard' }" @click="currentPage = 'dashboard'">
+                            <v-icon class="nav-item-icon">mdi-view-dashboard</v-icon>
+                            <span>Dashboard</span>
+                        </div>
+                        <div class="nav-item" :class="{ active: currentPage === 'reports' }" @click="currentPage = 'reports'">
+                            <v-icon class="nav-item-icon">mdi-file-chart</v-icon>
+                            <span>{{ lang === 'fr' ? 'Rapports' : 'Reports' }}</span>
+                        </div>
                     </div>
+
+                    <!-- SETUP & DESIGN -->
                     <div class="nav-section">
-                        <div class="nav-section-title">Ventes</div>
-                        <div class="nav-item" :class="{ active: currentPage === 'tickets' }" @click="currentPage = 'tickets'"><v-icon class="nav-item-icon">mdi-ticket</v-icon><span>Billets vendus</span></div>
-                        <div class="nav-item" :class="{ active: currentPage === 'analytics' }" @click="currentPage = 'analytics'"><v-icon class="nav-item-icon">mdi-chart-areaspline</v-icon><span>Analytics</span></div>
-                        <div class="nav-item" :class="{ active: currentPage === 'scan' }" @click="currentPage = 'scan'"><v-icon class="nav-item-icon">mdi-qrcode-scan</v-icon><span>Contrôle accès</span></div>
+                        <div class="nav-section-title">{{ lang === 'fr' ? 'PARAMÉTRAGE' : 'SETUP & DESIGN' }}</div>
+                        <div class="nav-item" :class="{ active: currentPage === 'events' }" @click="currentPage = 'events'">
+                            <v-icon class="nav-item-icon">mdi-calendar-star</v-icon>
+                            <span>{{ lang === 'fr' ? 'Mes événements' : 'My Events' }}</span>
+                            <span class="nav-item-badge" v-if="myEvents.length">{{ myEvents.length }}</span>
+                        </div>
+                        <div class="nav-item" :class="{ active: currentPage === 'event-settings' }" @click="currentPage = 'event-settings'">
+                            <v-icon class="nav-item-icon">mdi-cog</v-icon>
+                            <span>{{ lang === 'fr' ? 'Paramètres événement' : 'Event Settings' }}</span>
+                        </div>
+                        <div class="nav-item" :class="{ active: currentPage === 'homepage-designer' }" @click="currentPage = 'homepage-designer'">
+                            <v-icon class="nav-item-icon">mdi-palette</v-icon>
+                            <span>{{ lang === 'fr' ? 'Page événement' : 'Homepage Designer' }}</span>
+                        </div>
+                        <div class="nav-item" :class="{ active: currentPage === 'ticket-designer' }" @click="currentPage = 'ticket-designer'">
+                            <v-icon class="nav-item-icon">mdi-ticket-outline</v-icon>
+                            <span>{{ lang === 'fr' ? 'Design billet' : 'Ticket Designer' }}</span>
+                        </div>
+                        <div class="nav-item" :class="{ active: currentPage === 'seatmap' }" @click="currentPage = 'seatmap'">
+                            <v-icon class="nav-item-icon">mdi-seat</v-icon>
+                            <span>{{ lang === 'fr' ? 'Plan de salle' : 'Seat Map' }}</span>
+                        </div>
+                        <div class="nav-item" :class="{ active: currentPage === 'registration-questions' }" @click="currentPage = 'registration-questions'">
+                            <v-icon class="nav-item-icon">mdi-form-select</v-icon>
+                            <span>{{ lang === 'fr' ? 'Questions inscription' : 'Registration Questions' }}</span>
+                        </div>
                     </div>
+
+                    <!-- TICKETING & SALES -->
                     <div class="nav-section">
-                        <div class="nav-section-title">Finance</div>
-                        <div class="nav-item" :class="{ active: currentPage === 'finance' }" @click="currentPage = 'finance'"><v-icon class="nav-item-icon">mdi-cash-multiple</v-icon><span>Mes revenus</span></div>
-                        <div class="nav-item" :class="{ active: currentPage === 'payouts' }" @click="currentPage = 'payouts'"><v-icon class="nav-item-icon">mdi-bank-transfer</v-icon><span>Versements</span></div>
+                        <div class="nav-section-title">{{ lang === 'fr' ? 'BILLETTERIE & VENTES' : 'TICKETING & SALES' }}</div>
+                        <div class="nav-item" :class="{ active: currentPage === 'products' }" @click="currentPage = 'products'">
+                            <v-icon class="nav-item-icon">mdi-tag-multiple</v-icon>
+                            <span>{{ lang === 'fr' ? 'Billets & Produits' : 'Tickets & Products' }}</span>
+                        </div>
+                        <div class="nav-item" :class="{ active: currentPage === 'orders' }" @click="currentPage = 'orders'">
+                            <v-icon class="nav-item-icon">mdi-cart</v-icon>
+                            <span>{{ lang === 'fr' ? 'Commandes' : 'Orders' }}</span>
+                            <span class="nav-item-badge" v-if="ordersCount">{{ ordersCount }}</span>
+                        </div>
+                        <div class="nav-item" :class="{ active: currentPage === 'promo-codes' }" @click="currentPage = 'promo-codes'">
+                            <v-icon class="nav-item-icon">mdi-percent-circle</v-icon>
+                            <span>{{ lang === 'fr' ? 'Codes promo' : 'Promo Codes' }}</span>
+                        </div>
+                        <div class="nav-item" :class="{ active: currentPage === 'affiliates' }" @click="currentPage = 'affiliates'">
+                            <v-icon class="nav-item-icon">mdi-account-network</v-icon>
+                            <span>{{ lang === 'fr' ? 'Affiliés' : 'Affiliates' }}</span>
+                        </div>
                     </div>
+
+                    <!-- GUEST MANAGEMENT -->
                     <div class="nav-section">
-                        <div class="nav-section-title">Compte</div>
-                        <div class="nav-item" :class="{ active: currentPage === 'team' }" @click="currentPage = 'team'"><v-icon class="nav-item-icon">mdi-account-group</v-icon><span>Mon équipe</span></div>
-                        <div class="nav-item" :class="{ active: currentPage === 'settings' }" @click="currentPage = 'settings'"><v-icon class="nav-item-icon">mdi-cog</v-icon><span>Paramètres</span></div>
-                        <div class="nav-item" @click="currentPage = 'help'"><v-icon class="nav-item-icon">mdi-help-circle</v-icon><span>Aide</span></div>
+                        <div class="nav-section-title">{{ lang === 'fr' ? 'GESTION PARTICIPANTS' : 'GUEST MANAGEMENT' }}</div>
+                        <div class="nav-item" :class="{ active: currentPage === 'attendees' }" @click="currentPage = 'attendees'">
+                            <v-icon class="nav-item-icon">mdi-account-group</v-icon>
+                            <span>{{ lang === 'fr' ? 'Participants' : 'Attendees' }}</span>
+                            <span class="nav-item-badge" v-if="attendeesCount">{{ attendeesCount }}</span>
+                        </div>
+                        <div class="nav-item" :class="{ active: currentPage === 'checkin-lists' }" @click="currentPage = 'checkin-lists'">
+                            <v-icon class="nav-item-icon">mdi-clipboard-check</v-icon>
+                            <span>{{ lang === 'fr' ? 'Listes Check-In' : 'Check-In Lists' }}</span>
+                        </div>
+                        <div class="nav-item" :class="{ active: currentPage === 'scan' }" @click="currentPage = 'scan'">
+                            <v-icon class="nav-item-icon">mdi-qrcode-scan</v-icon>
+                            <span>{{ lang === 'fr' ? 'Contrôle accès' : 'Access Control' }}</span>
+                        </div>
+                        <div class="nav-item" :class="{ active: currentPage === 'messages' }" @click="currentPage = 'messages'">
+                            <v-icon class="nav-item-icon">mdi-email-fast</v-icon>
+                            <span>Messages</span>
+                        </div>
+                        <div class="nav-item" :class="{ active: currentPage === 'capacity' }" @click="currentPage = 'capacity'">
+                            <v-icon class="nav-item-icon">mdi-gauge</v-icon>
+                            <span>{{ lang === 'fr' ? 'Gestion capacité' : 'Capacity Management' }}</span>
+                        </div>
+                    </div>
+
+                    <!-- FINANCE -->
+                    <div class="nav-section">
+                        <div class="nav-section-title">FINANCE</div>
+                        <div class="nav-item" :class="{ active: currentPage === 'finance' }" @click="currentPage = 'finance'">
+                            <v-icon class="nav-item-icon">mdi-cash-multiple</v-icon>
+                            <span>{{ lang === 'fr' ? 'Mes revenus' : 'My Revenue' }}</span>
+                        </div>
+                        <div class="nav-item" :class="{ active: currentPage === 'accounting' }" @click="currentPage = 'accounting'">
+                            <v-icon class="nav-item-icon">mdi-calculator-variant</v-icon>
+                            <span>{{ lang === 'fr' ? 'Comptabilité & Taxes' : 'Accounting & Taxes' }}</span>
+                        </div>
+                        <div class="nav-item" :class="{ active: currentPage === 'payouts' }" @click="currentPage = 'payouts'">
+                            <v-icon class="nav-item-icon">mdi-bank-transfer</v-icon>
+                            <span>{{ lang === 'fr' ? 'Versements' : 'Payouts' }}</span>
+                        </div>
+                    </div>
+
+                    <!-- INTEGRATIONS -->
+                    <div class="nav-section">
+                        <div class="nav-section-title">{{ lang === 'fr' ? 'INTÉGRATIONS' : 'INTEGRATIONS' }}</div>
+                        <div class="nav-item" :class="{ active: currentPage === 'widget-embed' }" @click="currentPage = 'widget-embed'">
+                            <v-icon class="nav-item-icon">mdi-code-tags</v-icon>
+                            <span>{{ lang === 'fr' ? 'Widget intégré' : 'Widget Embed' }}</span>
+                        </div>
+                        <div class="nav-item" :class="{ active: currentPage === 'webhooks' }" @click="currentPage = 'webhooks'">
+                            <v-icon class="nav-item-icon">mdi-webhook</v-icon>
+                            <span>Webhooks</span>
+                        </div>
+                    </div>
+
+                    <!-- ACCOUNT -->
+                    <div class="nav-section">
+                        <div class="nav-section-title">{{ lang === 'fr' ? 'COMPTE' : 'ACCOUNT' }}</div>
+                        <div class="nav-item" :class="{ active: currentPage === 'team' }" @click="currentPage = 'team'">
+                            <v-icon class="nav-item-icon">mdi-account-multiple</v-icon>
+                            <span>{{ lang === 'fr' ? 'Mon équipe' : 'My Team' }}</span>
+                        </div>
+                        <div class="nav-item" :class="{ active: currentPage === 'analytics' }" @click="currentPage = 'analytics'">
+                            <v-icon class="nav-item-icon">mdi-chart-areaspline</v-icon>
+                            <span>Analytics</span>
+                        </div>
+                        <div class="nav-item" :class="{ active: currentPage === 'settings' }" @click="currentPage = 'settings'">
+                            <v-icon class="nav-item-icon">mdi-cog-outline</v-icon>
+                            <span>{{ lang === 'fr' ? 'Paramètres' : 'Settings' }}</span>
+                        </div>
+                        <div class="nav-item" @click="currentPage = 'help'">
+                            <v-icon class="nav-item-icon">mdi-help-circle</v-icon>
+                            <span>{{ lang === 'fr' ? 'Aide' : 'Help' }}</span>
+                        </div>
                     </div>
                 </nav>
                 <div class="sidebar-footer">
@@ -268,6 +401,17 @@
             </aside>
             
             <main class="main-content">
+                <div v-if="isSuperAdminViewing" style="background: #1a1a1a; color: white; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1000;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <v-icon color="white">mdi-shield-account</v-icon>
+                        <div>
+                            <span style="font-weight: 800; font-family: 'Syne'; letter-spacing: 1px;">MODE SUPERADMIN</span>
+                            <span style="opacity: 0.7; margin-left: 10px;">Vue sur : <strong>{{ viewingOrgName }}</strong> (Licence {{ viewingOrgLicense }})</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="window.close()">RETOURNER AU PANEL</button>
+                </div>
+
                 <header class="topbar">
                     <div class="topbar-left"><h1>{{ pageTitle }}</h1><p>{{ currentDate }}</p></div>
                     <div class="topbar-right">
@@ -772,8 +916,201 @@
                         </div>
                     </template>
 
-                    <!-- Settings & other pages -->
-                    <template v-if="['settings', 'payouts', 'help'].includes(currentPage)">
+                    <!-- Products & Tickets -->
+                    <template v-if="currentPage === 'products'">
+                        <div class="section">
+                            <div class="section-header">
+                                <div class="section-title"><v-icon size="small">mdi-tag-multiple</v-icon> Billets & Produits</div>
+                                <button class="btn btn-primary btn-sm" @click="showAddProductModal = true"><v-icon size="x-small">mdi-plus</v-icon> Ajouter</button>
+                            </div>
+                            <div class="table-container">
+                                <table>
+                                    <thead><tr><th>Nom</th><th>Type</th><th>Prix</th><th>Stock</th><th>Vendus</th><th>Status</th><th>Actions</th></tr></thead>
+                                    <tbody>
+                                        <tr v-for="p in mockProducts" :key="p.id">
+                                            <td><strong>{{ p.name }}</strong></td>
+                                            <td><span class="status-badge" style="background:#f0f0f0;color:#666;">{{ p.type === 'ticket' ? 'Billet' : 'Add-on' }}</span></td>
+                                            <td style="font-weight:700;">{{ formatCurrency(p.price) }}</td>
+                                            <td>{{ p.stock }}</td>
+                                            <td>{{ p.sold }}</td>
+                                            <td><span class="status-badge status-active">Actif</span></td>
+                                            <td><div style="display:flex;gap:4px;"><button class="action-btn"><v-icon size="x-small">mdi-pencil</v-icon></button><button class="action-btn"><v-icon size="x-small">mdi-delete</v-icon></button></div></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Orders -->
+                    <template v-if="currentPage === 'orders'">
+                        <div class="section">
+                            <div class="section-header">
+                                <div class="section-title"><v-icon size="small">mdi-cart</v-icon> Commandes</div>
+                                <div style="display:flex;gap:10px;">
+                                    <select class="filter-select" v-model="orderStatusFilter"><option value="all">Tous</option><option value="paid">Payés</option><option value="pending">En attente</option></select>
+                                    <input type="text" class="search-input" placeholder="Rechercher #..." style="width:180px;">
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table>
+                                    <thead><tr><th>ID</th><th>Client</th><th>Articles</th><th>Date</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
+                                    <tbody>
+                                        <tr v-for="o in mockOrders" :key="o.id">
+                                            <td style="font-family:monospace;font-weight:700;">{{ o.id }}</td>
+                                            <td>{{ o.customer }}</td>
+                                            <td style="font-size:0.75rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ o.items }}</td>
+                                            <td>{{ o.date }}</td>
+                                            <td style="font-weight:700;">{{ formatCurrency(o.total) }}</td>
+                                            <td><span class="status-badge" :class="'status-' + o.status">{{ o.status === 'paid' ? 'Payé' : 'En attente' }}</span></td>
+                                            <td><button class="action-btn"><v-icon size="x-small">mdi-eye</v-icon></button></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Promo Codes -->
+                    <template v-if="currentPage === 'promo-codes'">
+                        <div class="section">
+                            <div class="section-header">
+                                <div class="section-title"><v-icon size="small">mdi-percent-circle</v-icon> Codes Promotionnels</div>
+                                <button class="btn btn-primary btn-sm" @click="showAddPromoModal = true"><v-icon size="x-small">mdi-plus</v-icon> Créer un code</button>
+                            </div>
+                            <div class="table-container">
+                                <table>
+                                    <thead><tr><th>Code</th><th>Remise</th><th>Utilisés</th><th>Limite</th><th>Status</th><th>Actions</th></tr></thead>
+                                    <tbody>
+                                        <tr v-for="c in mockPromoCodes" :key="c.id">
+                                            <td style="font-family:monospace;font-weight:800;color:var(--primary);">{{ c.code }}</td>
+                                            <td>{{ c.discount }}</td>
+                                            <td>{{ c.used }}</td>
+                                            <td>{{ c.limit }}</td>
+                                            <td><span class="status-badge" :class="c.active ? 'status-active' : 'status-cancelled'">{{ c.active ? 'Actif' : 'Désactivé' }}</span></td>
+                                            <td><div style="display:flex;gap:4px;"><button class="action-btn"><v-icon size="x-small">mdi-pencil</v-icon></button><button class="action-btn"><v-icon size="x-small">mdi-power</v-icon></button></div></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Affiliates -->
+                    <template v-if="currentPage === 'affiliates'">
+                        <div class="section">
+                            <div class="section-header">
+                                <div class="section-title"><v-icon size="small">mdi-account-network</v-icon> Affiliés</div>
+                                <button class="btn btn-primary btn-sm"><v-icon size="x-small">mdi-plus</v-icon> Nouveau partenaire</button>
+                            </div>
+                            <div class="table-container">
+                                <table>
+                                    <thead><tr><th>Partenaire</th><th>Clics</th><th>Ventes</th><th>Commissions</th><th>Status</th><th>Actions</th></tr></thead>
+                                    <tbody>
+                                        <tr v-for="a in mockAffiliates" :key="a.id">
+                                            <td><strong>@{{ a.name }}</strong></td>
+                                            <td>{{ a.clicks }}</td>
+                                            <td>{{ a.sales }}</td>
+                                            <td style="font-weight:700;">{{ formatCurrency(a.commission) }}</td>
+                                            <td><span class="status-badge status-active">Actif</span></td>
+                                            <td><button class="action-btn"><v-icon size="x-small">mdi-chart-line</v-icon></button></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    </template>
+
+                    <!-- Attendees -->
+                    <template v-if="currentPage === 'attendees'">
+                        <div class="section">
+                            <div class="section-header">
+                                <div class="section-title"><v-icon size="small">mdi-account-group</v-icon> Participants ({{ attendeesCount }})</div>
+                                <div style="display:flex;gap:10px;">
+                                    <input type="text" class="search-input" v-model="attendeeSearch" placeholder="Nom, email, siège..." style="width:250px;">
+                                    <button class="btn btn-secondary btn-sm"><v-icon size="x-small">mdi-download</v-icon> Export CSV</button>
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table>
+                                    <thead><tr><th>Participant</th><th>Billet</th><th>Siège</th><th>Check-In</th><th>Actions</th></tr></thead>
+                                    <tbody>
+                                        <tr v-for="a in mockAttendees" :key="a.id">
+                                            <td><div><div style="font-weight:700;">{{ a.name }}</div><div style="font-size:0.7rem;color:#999;">{{ a.email }}</div></div></td>
+                                            <td><span class="status-badge" style="background:#f5f5f5;color:#333;">{{ a.ticket }}</span></td>
+                                            <td style="font-family:monospace;">{{ a.seat }}</td>
+                                            <td>
+                                                <div v-if="a.checkedIn" style="color:#00D9A5;font-size:0.8rem;font-weight:700;"><v-icon size="x-small" color="#00D9A5">mdi-check-circle</v-icon> {{ a.time }}</div>
+                                                <div v-else style="color:#999;font-size:0.8rem;">Non scanné</div>
+                                            </td>
+                                            <td><button class="action-btn"><v-icon size="x-small">mdi-pencil</v-icon></button></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Payouts -->
+                    <template v-if="currentPage === 'payouts'">
+                        <div class="stats-grid" style="margin-bottom:20px;">
+                            <div class="stat-card">
+                                <div class="stat-label">Solde disponible</div>
+                                <div class="stat-value" style="color:var(--primary);">{{ formatCurrency(availableBalance) }}</div>
+                                <button class="btn btn-primary btn-sm mt-3 w-full" @click="showPayoutModal = true">Demander un versement</button>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">En attente</div>
+                                <div class="stat-value" style="opacity:0.6;">{{ formatCurrency(pendingBalance) }}</div>
+                                <div style="font-size:0.7rem;color:#999;margin-top:8px;">Ventes des 7 derniers jours</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Total reversé</div>
+                                <div class="stat-value">{{ formatCurrency(paidOut) }}</div>
+                                <div style="font-size:0.7rem;color:#999;margin-top:8px;">{{ myPayouts.length }} versements effectués</div>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-history</v-icon> Historique des versements</div></div>
+                            <div class="table-container">
+                                <table>
+                                    <thead><tr><th>ID</th><th>Date</th><th>Montant</th><th>Méthode</th><th>Status</th></tr></thead>
+                                    <tbody>
+                                        <tr v-for="p in myPayouts" :key="p.id">
+                                            <td style="font-family:monospace;">{{ p.id_code }}</td>
+                                            <td>{{ p.date }}</td>
+                                            <td style="font-weight:700;">{{ formatCurrency(p.amount) }}</td>
+                                            <td>{{ p.method }}</td>
+                                            <td><span class="status-badge" :class="'status-' + p.status">{{ p.statusLabel }}</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Settings -->
+                    <template v-if="currentPage === 'settings'">
+                        <div class="section" style="max-width:800px;">
+                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-account-cog</v-icon> Paramètres du compte</div></div>
+                            <div style="padding:20px;">
+                                <div class="form-grid">
+                                    <div class="form-group"><label>Nom de l'organisation</label><input type="text" value="Festival Donia" class="form-input"></div>
+                                    <div class="form-group"><label>Email de contact</label><input type="email" value="contact@donia.mg" class="form-input"></div>
+                                    <div class="form-group"><label>Téléphone</label><input type="text" value="+261 34 00 000 01" class="form-input"></div>
+                                    <div class="form-group"><label>Langue par défaut</label><select class="form-input" v-model="lang"><option value="fr">Français</option><option value="en">English</option></select></div>
+                                </div>
+                                <div style="margin-top:24px;padding-top:24px;border-top:2px solid #f0f0f0;">
+                                    <button class="btn btn-primary">Enregistrer les modifications</button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Help & Support -->
+                    <template v-if="currentPage === 'help'">
                         <div class="section"><div class="section-header"><div class="section-title"><v-icon size="small">mdi-cog</v-icon> {{ pageTitle }}</div></div><div style="padding: 50px; text-align: center; color: var(--text-light);"><v-icon size="48" style="opacity: 0.3; margin-bottom: 15px;">mdi-hammer-wrench</v-icon><h3 style="font-family: 'Syne', sans-serif; margin-bottom: 8px;">En développement</h3><p>Cette fonctionnalité sera bientôt disponible.</p></div></div>
                     </template>
                 </div>
@@ -940,12 +1277,78 @@
         const app = createApp({
             data() {
                 return {
-                    isLoggedIn: false, authMode: 'login', authForm: { name: '', email: '', password: '' }, authError: '',
+                    isLoggedIn: false, loadingAuth: false, authMode: 'login', authForm: { name: '', email: '', password: '' }, authError: '',
                     currentPage: 'dashboard', showCreateModal: false, currentPlan: 'pro',
+                    isSuperAdminViewing: false, viewingOrgName: '', viewingOrgLicense: 'PRO', lang: 'fr',
                     myRevenue: 0, myTicketsSold: 0, scanRate: 0, scannedTickets: 0, pendingTickets: 0, refundedTickets: 0,
                     availableBalance: 0, pendingBalance: 0, monthRevenue: 0, totalRevenue: 0, paidOut: 0,
                     myEvents: [], myTickets: [], myPayouts: [], teamMembers: [],
                     scanLinksList: [], scanArrivals: [], scanDevices: [],
+                    onboardingSteps: [
+                        { id: 1, title: 'Créer votre premier événement', completed: true, icon: 'mdi-calendar-plus' },
+                        { id: 2, title: 'Configurer vos billets', completed: false, icon: 'mdi-ticket-percent' },
+                        { id: 3, title: 'Personnaliser votre page', completed: false, icon: 'mdi-palette' },
+                        { id: 4, title: 'Lancer la billetterie', completed: false, icon: 'mdi-rocket-launch' }
+                    ],
+                    reportTypes: [
+                        { id: 'sales', name: 'Ventes détaillées', icon: 'mdi-cart' },
+                        { id: 'attendance', name: 'Fréquentation & Check-In', icon: 'mdi-account-check' },
+                        { id: 'marketing', name: 'Performance Marketing', icon: 'mdi-bullhorn' },
+                        { id: 'finance', name: 'Rapport Comptable', icon: 'mdi-calculator' }
+                    ],
+                    dailySalesChart: [45, 52, 38, 24, 33, 26, 21, 30, 45, 55, 60, 40, 35, 30],
+                    selectedEventForSettings: null,
+                    eventVisibility: 'public',
+                    eventPrimaryColor: '#4A90FF',
+                    registrationQuestions: [
+                        { id: 1, label: 'Comment avez-vous connu l\'événement ?', type: 'select', options: ['Réseaux Sociaux', 'Affiche', 'Bouche à oreille'], required: true },
+                        { id: 2, label: 'Numéro de téléphone', type: 'text', required: true }
+                    ],
+                    mockProducts: [
+                        { id: 1, name: 'Billet Standard', price: 40000, stock: 500, sold: 120, type: 'ticket' },
+                        { id: 2, name: 'Billet VIP', price: 150000, stock: 50, sold: 45, type: 'ticket' },
+                        { id: 3, name: 'T-shirt Événement', price: 25000, stock: 100, sold: 12, type: 'addon' }
+                    ],
+                    ordersCount: 156,
+                    orderStatusFilter: 'all',
+                    mockOrders: [
+                        { id: 'ORD-8821', customer: 'Andry Nirina', total: 80000, date: '05/03/2026', status: 'paid', items: '2x Billet Standard' },
+                        { id: 'ORD-8820', customer: 'Fanja Harisoa', total: 150000, date: '05/03/2026', status: 'paid', items: '1x Billet VIP' },
+                        { id: 'ORD-8819', customer: 'Rakoto Jean', total: 40000, date: '04/03/2026', status: 'pending', items: '1x Billet Standard' }
+                    ],
+                    mockPromoCodes: [
+                        { id: 1, code: 'EARLYBIRD', discount: '15%', used: 24, limit: 50, active: true },
+                        { id: 2, code: 'WELCOME2026', discount: '5000 Ar', used: 12, limit: 100, active: true }
+                    ],
+                    mockAffiliates: [
+                        { id: 1, name: 'Influenceur_Mada', clicks: 1240, sales: 56, commission: 84000, status: 'active' },
+                        { id: 2, name: 'Radio_One', clicks: 850, sales: 23, commission: 34500, status: 'active' }
+                    ],
+                    attendeesCount: 1240,
+                    attendeeSearch: '',
+                    mockAttendees: [
+                        { id: 101, name: 'Andry Nirina', email: 'andry@gmail.com', ticket: 'Standard', seat: 'B12', checkedIn: true, time: '18:45' },
+                        { id: 102, name: 'Fanja Harisoa', email: 'fanja@yahoo.fr', ticket: 'VIP', seat: 'VIP-04', checkedIn: true, time: '19:12' },
+                        { id: 103, name: 'Rakoto Jean', email: 'rakoto@moov.mg', ticket: 'Standard', seat: 'E08', checkedIn: false, time: '-' }
+                    ],
+                    mockCheckinLists: [
+                        { id: 1, name: 'Liste Principale', attendees: 500, checkedIn: 342, devices: 4 },
+                        { id: 2, name: 'Liste Guest / VIP', attendees: 50, checkedIn: 45, devices: 1 }
+                    ],
+                    mockSentMessages: [
+                        { id: 1, subject: 'Rappel J-1: Concert Mogambo', recipients: 450, sentAt: '05/03/2026 10:00', type: 'email' },
+                        { id: 2, subject: 'Changement de lieu', recipients: 450, sentAt: '01/03/2026 14:30', type: 'sms' }
+                    ],
+                    mockCapacities: [
+                        { id: 1, name: 'Zone Fosse', limit: 800, current: 642, status: 'warning' },
+                        { id: 2, name: 'Tribune A', limit: 200, current: 54, status: 'safe' }
+                    ],
+                    mockWebhooks: [
+                        { id: 1, url: 'https://mon-crm.com/api/tickets', events: 'order.completed', active: true },
+                        { id: 2, url: 'https://zapier.com/hooks/...', events: 'attendee.checkin', active: false }
+                    ],
+                    showAddProductModal: false,
+                    showAddPromoModal: false,
                     newEvent: { name: '', date_start: '', date_end: '', venue: '', category: 'concerts', capacity: '', description: '', seatChoice: 'free', seatmapPlan: '' },
                     // Seat map editor
                     seatmapEvent: '',
@@ -1078,35 +1481,44 @@
                         }
                     } catch(e) { alert('Erreur de mise à jour'); }
                 },
-                loginWith(provider) {
-                    const vm = this;
-                    window.OAuthSim.show(provider, async (name, email) => {
-                        try {
-                            const result = await window.api.oauthLogin(provider, name, email);
-                            if (!result.error) { vm.isLoggedIn = true; vm.loadDashboard(); }
-                            else {
-                                window.api.setAuth('sim-' + Date.now(), { name: name, email: email, role: 'organizer' });
-                                vm.isLoggedIn = true;
-                            }
-                        } catch(e) {
-                            window.api.setAuth('sim-' + Date.now(), { name: name, email: email, role: 'organizer' });
-                            vm.isLoggedIn = true;
-                        }
-                    });
-                },
                 async loginWith(provider) {
+                    if (this.loadingAuth) return;
+                    this.authError = '';
+                    
                     if (provider === 'google') {
+                        this.loadingAuth = true;
                         try {
                             const result = await window.api.loginWithGoogle();
                             if (result.success) {
                                 this.isLoggedIn = true;
                                 this.loadDashboard();
                             } else if (!result.canceled) {
-                                alert('Erreur Google: ' + (result.error || 'Inconnue'));
+                                this.authError = result.error || 'Erreur de connexion Google';
                             }
                         } catch (e) {
-                            console.error('Google Auth Error', e);
+                            console.error('[Dashboard] Google Auth exception:', e);
+                            this.authError = 'Échec technique de la connexion Google';
+                        } finally {
+                            this.loadingAuth = false;
                         }
+                    } else {
+                        // Fallback to simulation for other providers
+                        const vm = this;
+                        window.OAuthSim.show(provider, async (name, email) => {
+                            try {
+                                const result = await window.api.oauthLogin(provider, name, email);
+                                if (!result.error) { vm.isLoggedIn = true; vm.loadDashboard(); }
+                                else {
+                                    window.api.setAuth('sim-' + Date.now(), { name: name, email: email, role: 'organizer' });
+                                    vm.isLoggedIn = true;
+                                    vm.loadDashboard();
+                                }
+                            } catch (e) {
+                                window.api.setAuth('sim-' + Date.now(), { name: name, email: email, role: 'organizer' });
+                                vm.isLoggedIn = true;
+                                vm.loadDashboard();
+                            }
+                        });
                     }
                 },
                 async handleAuth() {
@@ -1418,7 +1830,14 @@
                 }
             },
             mounted() {
-                if (window.api && window.api.isLoggedIn()) { this.isLoggedIn = true; this.loadDashboard(); }
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('superadmin') === '1') {
+                    this.isSuperAdminViewing = true;
+                    this.viewingOrgName = urlParams.get('orgName') || 'Organisateur Test';
+                    this.viewingOrgLicense = urlParams.get('license') || 'PRO';
+                }
+
+                if (window.api && (window.api.isLoggedIn() || this.isSuperAdminViewing)) { this.isLoggedIn = true; this.loadDashboard(); }
                 if (window.ProfileMenu) window.ProfileMenu.injectStyles();
                 this.loadSeatmapTemplates();
                 this.initSeatmapGrid();
