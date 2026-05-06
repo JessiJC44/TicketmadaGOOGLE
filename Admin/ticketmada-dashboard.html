@@ -12,6 +12,13 @@
     <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
     
+    <script src="../js/site-config.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/profile-menu.js"></script>
+    <script src="../js/seatmap-engine.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
+    
     <style>
         :root { --bg-cream: #FAF7F2; --bg-dark: #1a1a1a; --bg-sidebar: #0f0f0f; --accent-coral: #FF6B4A; --accent-yellow: #FECA57; --accent-mint: #00D9A5; --accent-blue: #4A90FF; --accent-purple: #9B59B6; --accent-red: #E74C3C; --text-dark: #1a1a1a; --text-light: #666; --border-dark: #1a1a1a; --shadow-brutal: 4px 4px 0px #1a1a1a; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1140,10 +1147,190 @@
                                             <td><span class="status-badge" style="background:#f5f5f5;color:#333;">{{ a.ticket }}</span></td>
                                             <td style="font-family:monospace;">{{ a.seat }}</td>
                                             <td>
-                                                <div v-if="a.checkedIn" style="color:#00D9A5;font-size:0.8rem;font-weight:700;"><v-icon size="x-small" color="#00D9A5">mdi-check-circle</v-icon> {{ a.time }}</div>
-                                                <div v-else style="color:#999;font-size:0.8rem;">Non scanné</div>
+                                                <div v-if="a.status === 'checked-in'" style="color:#00D9A5;font-size:0.8rem;font-weight:700;"><v-icon size="x-small" color="#00D9A5">mdi-check-circle</v-icon> {{ a.time || '18:45' }}</div>
+                                                <button v-else class="btn btn-secondary btn-sm" @click="a.status = 'checked-in'; a.time = '19:02'">Check-In</button>
                                             </td>
-                                            <td><button class="action-btn"><v-icon size="x-small">mdi-pencil</v-icon></button></td>
+                                            <td><div style="display:flex;gap:4px;"><button class="action-btn"><v-icon size="x-small">mdi-eye</v-icon></button><button class="action-btn" style="color:#e74c3c;" @click="mockAttendees.splice(mockAttendees.indexOf(a), 1)"><v-icon size="x-small">mdi-delete</v-icon></button></div></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Check-In Lists -->
+                    <template v-if="currentPage === 'checkin-lists'">
+                       <div class="section">
+                           <div class="section-header">
+                               <div class="section-title"><v-icon size="small">mdi-clipboard-check</v-icon> Listes de Check-In</div>
+                               <button class="btn btn-primary btn-sm"><v-icon size="x-small">mdi-plus</v-icon> Créer une liste</button>
+                           </div>
+                           <div style="padding:20px;display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:20px;">
+                               <div v-for="list in mockCheckinLists" :key="list.id" class="brutal-card" style="padding:20px;">
+                                   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px;">
+                                       <div>
+                                           <h3 style="font-family:'Syne';font-weight:800;font-size:1.1rem;">{{ list.name }}</h3>
+                                           <div style="font-size:0.8rem;color:#666;">ID: CHK-{{ list.id }}</div>
+                                       </div>
+                                       <div style="background:#f5f5f5;padding:4px 8px;font-size:0.7rem;font-weight:800;border:2px solid #1a1a1a;">{{ Math.round(list.scanned/list.total*100) }}%</div>
+                                   </div>
+                                   <v-progress-linear :model-value="list.scanned" :max="list.total" color="var(--accent-coral)" height="8" rounded></v-progress-linear>
+                                   <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:0.85rem;font-weight:700;">
+                                       <span>{{ list.scanned }} scannés</span>
+                                       <span>{{ list.total }} total</span>
+                                   </div>
+                                   <div style="display:flex;gap:10px;margin-top:20px;">
+                                       <button class="btn btn-secondary btn-sm" style="flex:1;">Paramètres</button>
+                                       <button class="btn btn-primary btn-sm" style="flex:1;">Ouvrir</button>
+                                   </div>
+                               </div>
+                           </div>
+                       </div>
+                    </template>
+
+                    <!-- Messages -->
+                    <template v-if="currentPage === 'messages'">
+                       <div class="section">
+                           <div class="section-header">
+                               <div class="section-title"><v-icon size="small">mdi-email-fast</v-icon> Communication Participants</div>
+                               <button class="btn btn-primary btn-sm" @click="alert('Nouveau message (simulation)')">Envoyer un mail</button>
+                           </div>
+                           <div style="padding:40px;text-align:center;color:#666;">
+                               <v-icon size="64" style="opacity:0.2;">mdi-message-processing-outline</v-icon>
+                               <h3 style="margin-top:20px;font-family:'Syne';">Envoyez des messages importants</h3>
+                               <p style="max-width:400px;margin:10px auto;">Informez vos participants des changements de dernière minute ou des détails pratiques.</p>
+                           </div>
+                       </div>
+                    </template>
+
+                    <!-- Capacity -->
+                    <template v-if="currentPage === 'capacity'">
+                       <div class="section">
+                           <div class="section-header">
+                               <div class="section-title"><v-icon size="small">mdi-gauge</v-icon> Gestion Capacité & Flux</div>
+                           </div>
+                           <div style="padding:20px;">
+                               <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                                   <div class="stats-grid" style="grid-template-columns:1fr;">
+                                       <div class="stat-card" style="background:#1a1a1a;color:white;">
+                                           <div class="stat-label" style="color:#aaa;">Personnes sur site actuellement</div>
+                                           <div class="stat-value" style="font-size:3rem;margin:10px 0;">452</div>
+                                           <div style="display:flex;align-items:center;gap:10px;">
+                                               <v-progress-linear model-value="45" color="#00D9A5" height="10" rounded style="flex:1;"></v-progress-linear>
+                                               <span style="font-weight:800;">45%</span>
+                                           </div>
+                                       </div>
+                                   </div>
+                                   <div style="border:3px solid #1a1a1a;padding:20px;background:white;">
+                                       <h3 style="font-family:'Syne';margin-bottom:15px;">Détails par entrée</h3>
+                                       <div v-for="e in [{n:'Entrée A',c:320,m:500},{n:'Entrée B',c:110,m:500},{n:'VIP',c:22,m:100}]" :key="e.n" style="margin-bottom:15px;">
+                                           <div style="display:flex;justify-content:space-between;font-size:0.85rem;font-weight:700;margin-bottom:5px;">
+                                               <span>{{ e.n }}</span>
+                                               <span>{{ e.c }}/{{ e.m }}</span>
+                                           </div>
+                                           <v-progress-linear :model-value="e.c" :max="e.m" color="var(--accent-blue)" height="6" rounded></v-progress-linear>
+                                       </div>
+                                   </div>
+                               </div>
+                           </div>
+                       </div>
+                    </template>
+
+                    <!-- Accounting -->
+                    <template v-if="currentPage === 'accounting'">
+                       <div class="section">
+                           <div class="section-header">
+                               <div class="section-title"><v-icon size="small">mdi-calculator-variant</v-icon> Comptabilité & Taxes</div>
+                               <button class="btn btn-secondary btn-sm"><v-icon size="x-small">mdi-download</v-icon> Rapport fiscal</button>
+                           </div>
+                           <div class="table-container">
+                               <table>
+                                   <thead><tr><th>Période</th><th>Ventes Brutes</th><th>Commissions TicketMada</th><th>Taxes (TVA)</th><th>Revenu Net</th></tr></thead>
+                                   <tbody>
+                                       <tr><td>Mai 2026</td><td>{{ formatCurrency(8820000) }}</td><td>{{ formatCurrency(441000) }}</td><td>{{ formatCurrency(1764000) }}</td><td style="font-weight:800;">{{ formatCurrency(6615000) }}</td></tr>
+                                       <tr><td>Avril 2026</td><td>{{ formatCurrency(12400000) }}</td><td>{{ formatCurrency(620000) }}</td><td>{{ formatCurrency(2480000) }}</td><td style="font-weight:800;">{{ formatCurrency(9300000) }}</td></tr>
+                                   </tbody>
+                               </table>
+                           </div>
+                       </div>
+                    </template>
+
+                    <!-- Payouts Detail -->
+                    <template v-if="currentPage === 'payouts'">
+                       <div class="stats-grid">
+                           <div class="stat-card" style="background:var(--accent-mint);"><div class="stat-label">Disponible</div><div class="stat-value">{{ formatCurrency(availableBalance) }}</div></div>
+                           <div class="stat-card"><div class="stat-label">En attente</div><div class="stat-value">{{ formatCurrency(pendingBalance) }}</div></div>
+                           <div class="stat-card"><div class="stat-label">Déjà versé</div><div class="stat-value">{{ formatCurrency(paidOut) }}</div></div>
+                       </div>
+                       <div class="section" style="margin-top:25px;">
+                           <div class="section-header"><div class="section-title">Demander un virement</div></div>
+                           <div style="padding:20px;display:flex;gap:20px;align-items:flex-end;">
+                               <div style="flex:1;">
+                                   <label class="form-label">Montant à retirer (Max: {{ formatCurrency(availableBalance) }})</label>
+                                   <input type="number" class="form-input" :max="availableBalance" value="1000000">
+                               </div>
+                               <div style="flex:1;">
+                                   <label class="form-label">Méthode</label>
+                                   <select class="form-input"><option>Virement Bancaire (BNI)</option><option>Mobile Money (MVola)</option></select>
+                               </div>
+                               <button class="btn btn-primary" style="padding:14px 30px;" @click="alert('Demande de virement envoyée !')">Confirmer le retrait</button>
+                           </div>
+                       </div>
+                       <div class="section">
+                           <div class="section-header"><div class="section-title">Historique des versements</div></div>
+                           <div class="table-container">
+                               <table>
+                                   <thead><tr><th>ID</th><th>Date</th><th>Montant</th><th>Méthode</th><th>Statut</th></tr></thead>
+                                   <tbody>
+                                       <tr v-for="p in myPayouts" :key="p.id">
+                                           <td style="font-family:monospace;">{{ p.id }}</td>
+                                           <td>{{ p.date }}</td>
+                                           <td style="font-weight:800;">{{ formatCurrency(p.amount) }}</td>
+                                           <td>{{ p.method }}</td>
+                                           <td><span class="status-badge" :class="'status-' + p.status">{{ p.statusLabel }}</span></td>
+                                       </tr>
+                                   </tbody>
+                               </table>
+                           </div>
+                       </div>
+                    </template>
+
+                    <!-- Integrations -->
+                    <template v-if="currentPage === 'widget-embed'">
+                       <div class="section">
+                           <div class="section-header"><div class="section-title"><v-icon size="small">mdi-code-tags</v-icon> Intégration Widget</div></div>
+                           <div style="padding:20px;">
+                               <p style="margin-bottom:20px;">Copiez ce code pour afficher la billetterie directement sur votre site web.</p>
+                               <div style="background:#1a1a1a;color:#00D9A5;padding:20px;font-family:monospace;font-size:0.85rem;border-radius:4px;position:relative;">
+                                   <pre>&lt;script src="https://cdn.ticketmada.mg/widget.js"&gt;&lt;/script&gt;
+&lt;div id="tm-widget" data-org="org_123"&gt;&lt;/div&gt;
+&lt;script&gt;TicketMada.init("#tm-widget");&lt;/script&gt;</pre>
+                                   <button class="action-btn" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.1);color:white;" @click="alert('Copié !')"><v-icon size="x-small">mdi-content-copy</v-icon></button>
+                               </div>
+                           </div>
+                       </div>
+                    </template>
+
+                    <!-- Help -->
+                    <template v-if="currentPage === 'help'">
+                       <div class="section" style="max-width:800px;margin:0 auto;">
+                           <div class="section-header"><div class="section-title">Centre d'aide</div></div>
+                           <div style="padding:20px;">
+                               <div v-for="h in [{q:'Comment créer un plan de salle ?',a:'Utilisez l\'onglet Plans de salle dans le menu de gauche...'},{q:'Quels sont les frais de service ?',a:'TicketMada prélève une commission de 5% sur chaque billet vendu.'}]" :key="h.q" style="margin-bottom:20px;">
+                                   <h4 style="font-family:'Syne';font-weight:800;margin-bottom:8px;">{{ h.q }}</h4>
+                                   <p style="font-size:0.9rem;color:#666;">{{ h.a }}</p>
+                               </div>
+                               <div style="margin-top:40px;background:var(--bg-cream);padding:20px;border:2px solid #1a1a1a;display:flex;align-items:center;gap:20px;">
+                                   <v-icon size="40">mdi-headset</v-icon>
+                                   <div>
+                                       <div style="font-weight:800;">Besoin d'assistance directe ?</div>
+                                       <div style="font-size:0.85rem;">Contactez-nous sur WhatsApp au +261 34 00 000 00</div>
+                                   </div>
+                                   <button class="btn btn-primary" style="margin-left:auto;">Chat Direct</button>
+                               </div>
+                           </div>
+                       </div>
+                    </template>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -1363,12 +1550,6 @@
 
     </div>
     
-    <script src="../js/site-config.js"></script>
-    <script src="../js/api-client.js"></script>
-    <script src="../js/profile-menu.js"></script>
-    <script src="../js/seatmap-engine.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
     <script>
         const { createApp } = Vue;
         const app = createApp({
@@ -1468,8 +1649,8 @@
                 },
                 pageTitle() { 
                     const t = {
-                        fr: { dashboard: 'Dashboard', events: 'Mes événements', tickets: 'Billets vendus', analytics: 'Analytics', finance: 'Mes revenus', payouts: 'Versements', scan: 'Contrôle d\'accès', team: 'Mon équipe', seatmap: 'Plan de salle', settings: 'Paramètres', help: 'Aide', products: 'Billets & Produits', orders: 'Commandes', 'promo-codes': 'Codes Promo', affiliates: 'Affiliés', attendees: 'Participants' },
-                        en: { dashboard: 'Dashboard', events: 'My Events', tickets: 'Tickets Sold', analytics: 'Analytics', finance: 'My Revenue', payouts: 'Payouts', scan: 'Access Control', team: 'My Team', seatmap: 'Seat Map', settings: 'Settings', help: 'Help', products: 'Tickets & Products', orders: 'Orders', 'promo-codes': 'Promo Codes', affiliates: 'Affiliates', attendees: 'Attendees' }
+                        fr: { dashboard: 'Dashboard', events: 'Mes événements', tickets: 'Billets vendus', analytics: 'Analytics', finance: 'Mes revenus', payouts: 'Versements', scan: 'Contrôle d\'accès', team: 'Mon équipe', seatmap: 'Plan de salle', settings: 'Paramètres', help: 'Aide', products: 'Billets & Produits', orders: 'Commandes', 'promo-codes': 'Codes Promo', affiliates: 'Affiliés', attendees: 'Participants', 'checkin-lists': 'Listes Check-In', messages: 'Communication', capacity: 'Capacité', accounting: 'Comptabilité', 'widget-embed': 'Intégration', webhooks: 'Webhooks' },
+                        en: { dashboard: 'Dashboard', events: 'My Events', tickets: 'Tickets Sold', analytics: 'Analytics', finance: 'My Revenue', payouts: 'Payouts', scan: 'Access Control', team: 'My Team', seatmap: 'Seat Map', settings: 'Settings', help: 'Help', products: 'Tickets & Products', orders: 'Orders', 'promo-codes': 'Promo Codes', affiliates: 'Affiliates', attendees: 'Attendees', 'checkin-lists': 'Check-In Lists', messages: 'Communication', capacity: 'Capacity', accounting: 'Accounting', 'widget-embed': 'Embed Widget', webhooks: 'Webhooks' }
                     };
                     return t[this.lang][this.currentPage] || t[this.lang].dashboard;
                 },
@@ -1642,6 +1823,37 @@
                             const tLabels = { active: 'Validé', scanned: 'Scanné', refunded: 'Remboursé' };
                             this.myTickets = (data.myTickets || []).map(t => ({ id: t.id_code || 'TKT-' + t.id, event: t.event_name, buyer: t.buyer_name || 'Client', type: t.type, price: t.price, status: t.status === 'scanned' ? 'completed' : t.status, statusLabel: tLabels[t.status] || t.status, date: new Date(t.created_at).toLocaleDateString('fr-FR') }));
                             this.myPayouts = (data.myPayouts || []).map(p => ({ id: p.id_code || 'PAY-' + p.id, amount: p.amount, commission: p.commission, net: p.net, method: p.method, status: p.status, statusLabel: p.status === 'completed' ? 'Effectué' : 'En cours', date: new Date(p.created_at).toLocaleDateString('fr-FR') }));
+                            
+                            // Load additional mock data for specialized pages
+                            this.mockProducts = [
+                                { id: 1, name: 'Pass VIP 2 Jours', type: 'ticket', price: 250000, sold: 45, stock: 100 },
+                                { id: 2, name: 'Billet Standard', type: 'ticket', price: 40000, sold: 342, stock: 1000 },
+                                { id: 3, name: 'T-shirt Officiel', type: 'addon', price: 35000, sold: 88, stock: 200 }
+                            ];
+                            this.mockOrders = [
+                                { id: 'ORD-8821', customer: 'Andry Nirina', items: '2x Billet Standard, 1x T-shirt', total: 115000, status: 'paid', date: '06/05/2026' },
+                                { id: 'ORD-8822', customer: 'Lova Rakoto', items: '1x Pass VIP', total: 250000, status: 'paid', date: '06/05/2026' },
+                                { id: 'ORD-8823', customer: 'Fanja Rao', items: '4x Billet Standard', total: 160000, status: 'pending', date: '06/05/2026' }
+                            ];
+                            this.ordersCount = 124;
+                            this.mockPromoCodes = [
+                                { id: 1, code: 'EARLYBIRD', discount: '15%', used: 52, limit: 100, active: true },
+                                { id: 2, code: 'MAHALEO2026', discount: '10,000 Ar', used: 124, limit: 500, active: true }
+                            ];
+                            this.mockAttendees = [
+                                { id: 1, name: 'Rakoto Jean', email: 'jean@gmail.com', phone: '034 00 000 01', ticket: 'VIP #A1', status: 'checked-in' },
+                                { id: 2, name: 'Rasoa Marie', email: 'rasoa@yahoo.fr', phone: '032 11 222 33', ticket: 'Standard #B42', status: 'pending' },
+                                { id: 3, name: 'Andry Nirina', email: 'andry.nirina@moov.mg', phone: '033 44 555 66', ticket: 'Standard #C12', status: 'checked-in' }
+                            ];
+                            this.attendeesCount = 542;
+                            this.mockAffiliates = [
+                                { id: 1, name: 'InfluencerMG', clicks: 1450, sales: 88, commission: 880000, active: true },
+                                { id: 2, name: 'CultureMada', clicks: 820, sales: 42, commission: 420000, active: true }
+                            ];
+                            this.mockCheckinLists = [
+                                { id: 1, name: 'Entrée Principale', event_id: 1, scanned: 452, total: 800 },
+                                { id: 2, name: 'Accès VIP / Loges', event_id: 1, scanned: 45, total: 100 }
+                            ];
                         }
                         const team = await window.api.get('/team');
                         if (team && !team.error) {

@@ -286,35 +286,69 @@ const TicketMadaAPI = (() => {
             }
         }
 
-        /**
-         * Generic GET method
-         */
         async get(path) {
             console.log('[SmartAPI] GET', path);
             const isEventPath = path.includes('/events') || path.includes('/search') || path.includes('/artists/');
             
-            if (this.useMock && isEventPath) {
-                // Route mock responses based on path
-                if (path.match(/\/events\/(\d+)\/seats/)) {
-                    const id = path.match(/\/events\/(\d+)\/seats/)[1];
-                    return MockAPI.getEventSeats(id);
+            if (this.useMock) {
+                // Dashboard organizer mock routes
+                if (path === '/dashboard' || path === '/organizer/dashboard' || path.includes('/stats')) {
+                    return { 
+                        success: true, 
+                        events: MockAPI.getEvents().events.slice(0, 5),
+                        stats: { totalRevenue: 12500000, ticketsSold: 456, activeEvents: 5, conversionRate: 3.2 }, 
+                        recentOrders: [], 
+                        recentActivity: [] 
+                    };
                 }
-                if (path.match(/\/events\/(\d+)\/related/)) {
-                    const id = path.match(/\/events\/(\d+)\/related/)[1];
-                    return MockAPI.getRelatedEvents(id);
+                if (path === '/orders' || path.startsWith('/organizer/orders')) {
+                    return { success: true, orders: [] };
                 }
-                if (path.match(/\/events\/(\d+)/)) {
-                    const id = path.match(/\/events\/(\d+)/)[1];
-                    return MockAPI.getEvent(id);
+                if (path === '/tickets' || path.startsWith('/organizer/tickets')) {
+                    return { success: true, tickets: [] };
                 }
-                if (path.includes('/events')) return MockAPI.getEvents();
-                if (path.includes('/search')) {
-                    const q = new URL('http://x' + path).searchParams.get('q');
-                    return MockAPI.searchEvents(q || '');
+                if (path.startsWith('/organizer/payouts') || path.includes('/payouts')) {
+                    return { success: true, payouts: [] };
                 }
-                if (path.includes('/artists/')) {
-                    const name = path.split('/artists/')[1];
-                    return MockAPI.getArtist(decodeURIComponent(name));
+                if (path.startsWith('/organizer/team') || path.includes('/team')) {
+                    return { success: true, members: [] };
+                }
+                if (path.startsWith('/scan') || path.includes('/scanner')) {
+                    return { success: true, data: [], links: [] };
+                }
+                if (path.startsWith('/superadmin/')) {
+                    return { success: true, data: [] };
+                }
+                if (path.includes('/promo') || path.includes('/marketing')) {
+                    return { success: true, promoCodes: [] };
+                }
+                if (path.includes('/attendee') || path.includes('/checkin')) {
+                    return { success: true, attendees: [], checkinLists: [] };
+                }
+
+                if (isEventPath) {
+                    // Route mock responses based on path
+                    if (path.match(/\/events\/(\d+)\/seats/)) {
+                        const id = path.match(/\/events\/(\d+)\/seats/)[1];
+                        return MockAPI.getEventSeats(id);
+                    }
+                    if (path.match(/\/events\/(\d+)\/related/)) {
+                        const id = path.match(/\/events\/(\d+)\/related/)[1];
+                        return MockAPI.getRelatedEvents(id);
+                    }
+                    if (path.match(/\/events\/(\d+)/)) {
+                        const id = path.match(/\/events\/(\d+)/)[1];
+                        return MockAPI.getEvent(id);
+                    }
+                    if (path.includes('/events')) return MockAPI.getEvents();
+                    if (path.includes('/search')) {
+                        const q = new URL('http://x' + path).searchParams.get('q');
+                        return MockAPI.searchEvents(q || '');
+                    }
+                    if (path.includes('/artists/')) {
+                        const name = path.split('/artists/')[1];
+                        return MockAPI.getArtist(decodeURIComponent(name));
+                    }
                 }
             }
 
@@ -326,7 +360,10 @@ const TicketMadaAPI = (() => {
                     if (u) return { user: u };
                     throw { status: 401, error: 'Not logged in' };
                 }
-                // No more mock fallback for other paths (stats, admin, etc.)
+                
+                // Fallback for any unknown route in mock
+                console.warn('[SmartAPI] No specific mock route for:', path);
+                return { success: true, data: [] };
             }
 
             return this.real.get(path);
