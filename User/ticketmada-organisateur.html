@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
-    <link rel="modulepreload" href="/js/firebase-init.js">
+    <link rel="modulepreload" href="../js/firebase-init.js">
     
     <style>
         :root {
@@ -343,8 +343,6 @@
     </style>
 </head>
 <body>
-<script src="../js/site-config.js"></script>
-
     <div id="app" v-cloak>
         <v-app>
             <nav class="navbar">
@@ -779,7 +777,7 @@
     <script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
     <script type="module">
         // Preload Firebase
-        import('/js/firebase-init.js').catch(() => {});
+        import('../js/firebase-init.js').catch(e => console.warn('[Firebase] Preload failed:', e));
 
         const translations = {
             fr: {

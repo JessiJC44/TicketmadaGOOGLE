@@ -263,7 +263,7 @@ const TicketMadaAPI = (() => {
             this._checkBackend();
             // Pre-load firebase module to avoid delay during user-triggered login
             if (typeof window !== 'undefined') {
-                import('/js/firebase-init.js').catch(e => console.warn('[SmartAPI] Firebase pre-load failed', e));
+                import('./firebase-init.js').catch(e => console.warn('[SmartAPI] Firebase pre-load failed', e));
             }
         }
 
@@ -361,7 +361,7 @@ const TicketMadaAPI = (() => {
 
         async logout() {
             try {
-                const { logout: firebaseLogout } = await import('/js/firebase-init.js');
+                const { logout: firebaseLogout } = await import('./firebase-init.js');
                 await firebaseLogout();
             } catch (e) {
                 console.warn('[SmartAPI] Firebase logout skipped or failed');
@@ -418,7 +418,7 @@ const TicketMadaAPI = (() => {
                 try {
                     console.log('[SmartAPI] Starting Firebase Google Login...');
                     const loginPromise = (async () => {
-                        const firebaseMod = await import('/js/firebase-init.js');
+                        const firebaseMod = await import('./firebase-init.js');
                         return await firebaseMod.loginWithGoogle();
                     })();
 

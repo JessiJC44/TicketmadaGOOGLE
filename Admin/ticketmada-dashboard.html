@@ -204,8 +204,6 @@
     </style>
 </head>
 <body>
-<script src="../js/site-config.js"></script>
-
     <div id="app">
         <div class="auth-overlay" v-if="!isLoggedIn">
             <div class="auth-card">
@@ -1934,7 +1932,7 @@
                 if (window.ProfileMenu) window.ProfileMenu.injectStyles();
                 
                 // Preload Firebase
-                import('/js/firebase-init.js').catch(e => console.warn('Firebase preload failed', e));
+                import('../js/firebase-init.js').catch(e => console.warn('Firebase preload failed', e));
 
                 this.loadSeatmapTemplates();
                 this.initSeatmapGrid();

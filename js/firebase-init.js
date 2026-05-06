@@ -1,146 +1,102 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+// js/firebase-init.js — VERSION CORRIGÉE COMPLÈTE
 
-// Configuration will be loaded from the config file via fetch to avoid static import issues
-// if we want to keep it simple and not use a bundler
-let app, auth, db;
-let initPromise = null;
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+// Config hardcodé — plus de fetch() qui échoue sur GitHub Pages
+const firebaseConfig = {
+    apiKey: "AIzaSyCbI7swghOahNGD45a0_nWdISfqRXSVeow",
+    authDomain: "gen-lang-client-0272660678.firebaseapp.com",
+    projectId: "gen-lang-client-0272660678",
+    storageBucket: "gen-lang-client-0272660678.firebasestorage.app",
+    messagingSenderId: "1031314955224",
+    appId: "1:1031314955224:web:f00213e4a7ef20e689f0ad"
+};
+
+let app = null;
+let auth = null;
+let db = null;
+let initialized = false;
 
 export async function initFirebase() {
-    if (initPromise) return initPromise;
-    
-    initPromise = (async () => {
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
-
-            const response = await fetch('/firebase-applet-config.json', { signal: controller.signal });
-            clearTimeout(timeoutId);
-            
-            const firebaseConfig = await response.json();
-            
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app, firebaseConfig.firestoreDatabaseId || '(default)');
-            
-            console.log('[Firebase] Initialized with database:', firebaseConfig.firestoreDatabaseId || '(default)');
-            return { app, auth, db };
-        } catch (error) {
-            console.error('[Firebase] Initialization failed or timed out:', error);
-            initPromise = null; // Allow retry
-            return null;
-        }
-    })();
-    
-    return initPromise;
+    if (initialized && app) return { app, auth, db };
+    try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        initialized = true;
+        console.log('[Firebase] Initialisé avec succès');
+        return { app, auth, db };
+    } catch (e) {
+        console.error('[Firebase] Erreur initialisation:', e);
+        return null;
+    }
 }
-
-// Start initialization immediately when module is loaded
-initFirebase();
 
 export function getFirebaseAuth() { return auth; }
 export function getFirebaseDb() { return db; }
 
 export async function loginWithGoogle() {
-    console.log('[Firebase] loginWithGoogle called');
-    
-    // Ensure initialization is complete but do NOT await if already done
-    // to preserve the "user gesture" chain as much as possible.
-    if (!auth) {
-        console.log('[Firebase] Waiting for initialization...');
-        await initFirebase();
-    }
-    
-    if (!auth) {
-        return { success: false, error: "Firebase n'a pas pu être initialisé. Veuillez rafraîchir la page." };
-    }
-
-    const provider = new GoogleAuthProvider();
-    console.log('[Firebase] Provider created, opening popup for auth instance:', !!auth);
     try {
+        if (!initialized) {
+            const result = await initFirebase();
+            if (!result) throw new Error('Firebase non initialisé');
+        }
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        
         const result = await signInWithPopup(auth, provider);
-        console.log('[Firebase] Popup returned successfully');
         const user = result.user;
         
         const userProfile = {
-            name: user.displayName,
-            email: user.email,
-            photo: user.photoURL,
             uid: user.uid,
+            email: user.email,
+            name: user.displayName || user.email.split('@')[0],
+            photo: user.photoURL || '',
             role: user.email === 'sedrayiokoraz@gmail.com' ? 'superadmin' : 'buyer',
-            updatedAt: serverTimestamp()
+            provider: 'google'
         };
-
-        // Sync to Firestore (non-blocking for login flow)
-        if (db) {
-            setDoc(doc(db, 'users', user.uid), {
+        
+        // Sauvegarder dans Firestore
+        try {
+            await setDoc(doc(db, 'users', user.uid), {
                 ...userProfile,
-                createdAt: serverTimestamp()
-            }, { merge: true }).catch(err => {
-                console.error('[Firebase] Failed to sync profile:', err);
-                // We don't throw here to avoid blocking login if Firestore fails
-            });
+                lastLogin: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+        } catch (firestoreError) {
+            console.warn('[Firebase] Firestore save skipped:', firestoreError.message);
+            // Continuer même si Firestore échoue — l'auth est OK
         }
-
-        console.log('[Firebase] Signed in user:', user.displayName);
-        return {
-            success: true,
-            user: userProfile,
-            token: await user.getIdToken()
-        };
+        
+        const token = await user.getIdToken();
+        return { success: true, user: userProfile, token };
+        
     } catch (error) {
+        console.error('[Firebase] Login Google échoué:', error);
+        
         if (error.code === 'auth/popup-closed-by-user') {
-            console.log('[Firebase] User closed the sign-in popup');
-            return { success: false, canceled: true };
+            return { success: false, error: 'Popup fermé par l\'utilisateur', cancelled: true };
+        }
+        if (error.code === 'auth/unauthorized-domain') {
+            return { success: false, error: 'Domaine non autorisé. Ajoutez ce domaine dans Firebase Console → Authentication → Settings → Authorized domains.' };
         }
         if (error.code === 'auth/popup-blocked') {
-            const msg = "La fenêtre de connexion a été bloquée. Veuillez autoriser les fenêtres surgissantes dans votre navigateur ou cliquer à nouveau sur le bouton.";
-            console.warn('[Firebase] Popup blocked:', error);
-            return { success: false, error: msg };
+            return { success: false, error: 'Popup bloqué par le navigateur. Autorisez les popups pour ce site.' };
         }
-        if (error.code === 'auth/cancelled-popup-request') {
-            const msg = "Une tentative de connexion est déjà en cours. Veuillez patienter ou fermer les autres fenêtres Google.";
-            console.warn('[Firebase] Cancelled popup request:', error);
-            return { success: false, error: msg, canceled: true };
-        }
-        console.error('[Firebase] Sign-in error:', error);
-        return { success: false, error: error.message };
+        
+        return { success: false, error: error.message || 'Erreur de connexion Google' };
     }
-}
-
-/**
- * Handle Firestore errors as per requirement
- */
-function handleFirestoreError(error, operationType, path) {
-    const auth = getAuth();
-    const errInfo = {
-        error: error instanceof Error ? error.message : String(error),
-        authInfo: {
-            userId: auth.currentUser?.uid,
-            email: auth.currentUser?.email,
-            emailVerified: auth.currentUser?.emailVerified,
-            isAnonymous: auth.currentUser?.isAnonymous,
-            providerInfo: auth.currentUser?.providerData?.map(p => ({
-                providerId: p.providerId,
-                email: p.email,
-            })) || []
-        },
-        operationType,
-        path
-    };
-    console.error('Firestore Error: ', JSON.stringify(errInfo));
-    throw new Error(JSON.stringify(errInfo));
 }
 
 export async function logout() {
-    if (!auth) return;
     try {
-        await signOut(auth);
-        console.log('[Firebase] Signed out');
-        return { success: true };
-    } catch (error) {
-        console.error('[Firebase] Sign-out error:', error);
-        return { success: false, error: error.message };
+        if (auth) await signOut(auth);
+    } catch (e) {
+        console.warn('[Firebase] Logout error:', e);
     }
 }
+
+// Auto-init au chargement du module
+initFirebase();
