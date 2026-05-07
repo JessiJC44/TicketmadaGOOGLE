@@ -225,10 +225,14 @@ const TicketMadaAPI = (() => {
 
         setAuth(token, user = null) { 
             this.token = token; 
-            localStorage.setItem('ticketmada_token', token);
+            if (token) localStorage.setItem('ticketmada_token', token);
+            else localStorage.removeItem('ticketmada_token');
+            
             if (user) {
                 if (user.email === 'sedrayiokoraz@gmail.com') user.role = 'superadmin';
                 localStorage.setItem('ticketmada_user', JSON.stringify(user));
+            } else {
+                localStorage.removeItem('ticketmada_user');
             }
         }
         setScanAuth(token, deviceId) {
@@ -268,10 +272,6 @@ const TicketMadaAPI = (() => {
             this.real = new RealAPI();
             this.useMock = true; // Start with mock, switch if backend responds
             this._checkBackend();
-            // Pre-load firebase module to avoid delay during user-triggered login
-            if (typeof window !== 'undefined') {
-                import('./firebase-init.js').catch(e => console.warn('[SmartAPI] Firebase pre-load failed', e));
-            }
         }
 
         async _checkBackend() {
@@ -409,13 +409,30 @@ const TicketMadaAPI = (() => {
         }
 
         async logout() {
-            try {
-                const { logout: firebaseLogout } = await import('./firebase-init.js');
-                await firebaseLogout();
-            } catch (e) {
-                console.warn('[SmartAPI] Firebase logout skipped or failed');
+            console.log('[SmartAPI] logout() called');
+            
+            // 1. Déconnecter de Google
+            if (typeof GoogleAuth !== 'undefined') {
+                GoogleAuth.signOut();
             }
-            this.clearAuth();
+
+            // 2. Nettoyer localStorage
+            try {
+                localStorage.removeItem('ticketmada_token');
+                localStorage.removeItem('ticketmada_user');
+                localStorage.removeItem('ticketmada_device_id');
+            } catch(e) {}
+
+            // 3. Notifier le backend (si disponible)
+            if (!this.useMock) {
+                try {
+                    await this.real.post('/auth/logout', {});
+                } catch(e) {
+                    console.warn('[SmartAPI] Backend logout failed:', e.message);
+                }
+            }
+
+            console.log('[SmartAPI] Logout complete');
             return { success: true };
         }
 
@@ -454,72 +471,80 @@ const TicketMadaAPI = (() => {
         }
         
         async loginWithGoogle() {
-            if (this._loginInProgress) {
-                console.warn('[SmartAPI] Google Login already in progress, returning current promise');
-                return this._loginInProgress;
-            }
+            console.log('[SmartAPI] loginWithGoogle() called — using Google Identity Services');
             
-            this._loginInProgress = (async () => {
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), 30000)
-                );
-
-                try {
-                    console.log('[SmartAPI] Starting Firebase Google Login...');
-                    const loginPromise = (async () => {
-                        const firebaseMod = await import('./firebase-init.js');
-                        return await firebaseMod.loginWithGoogle();
-                    })();
-
-                    const result = await Promise.race([loginPromise, timeoutPromise]);
-                    console.log('[SmartAPI] Google Login result:', result);
-                    
-                    if (result && result.success) {
-                        console.log('[SmartAPI] Firebase Google Login Success');
-                        const user = result.user;
-                        
-                        // Force superadmin for SPECIFIC user
-                        if (user.email === 'sedrayiokoraz@gmail.com') {
-                            user.role = 'superadmin';
-                        }
-
-                        // Sync with backend only if NOT in mock mode and backend is detected
-                        if (!this.useMock) {
-                            try {
-                                console.log('[SmartAPI] Syncing with backend...');
-                                const syncResult = await this.real.post('/api/auth/oauth', {
-                                    provider: 'google',
-                                    email: user.email,
-                                    name: user.name,
-                                    firebaseToken: result.token
-                                });
-                                
-                                if (syncResult && syncResult.token) {
-                                    console.log('[SmartAPI] Backend sync successful');
-                                    this.setAuth(syncResult.token, syncResult.user);
-                                    return { success: true, user: syncResult.user, token: syncResult.token };
-                                }
-                            } catch (err) {
-                                console.warn('[SmartAPI] Backend sync failed, proceeding with Firebase session only');
-                            }
-                        }
-                        
-                        this.setAuth(result.token, user);
-                        return { success: true, user, token: result.token };
-                    }
-                    return result || { success: false, error: 'Auth failed' };
-                } catch (error) {
-                    console.error('[SmartAPI] Google Login Exception:', error);
-                    let displayError = error.message === 'TIMEOUT_EXCEEDED' 
-                         ? 'La connexion a mis trop de temps (30s). Veuillez réessayer.'
-                         : (error.message || 'Erreur inconnue');
-                    return { success: false, error: displayError };
-                } finally {
-                    this._loginInProgress = null;
+            try {
+                // Utiliser GoogleAuth (chargé depuis google-auth.js)
+                if (typeof GoogleAuth === 'undefined') {
+                    throw new Error('GoogleAuth not loaded. Vérifiez que google-auth.js est inclus.');
                 }
-            })();
-            
-            return this._loginInProgress;
+
+                const user = await GoogleAuth.signIn();
+
+                if (!user || !user.email) {
+                    return { success: false, error: 'Aucune information utilisateur reçue' };
+                }
+
+                // Essayer de synchroniser avec le backend (si disponible)
+                let role = 'buyer';
+                let backendUser = null;
+
+                if (!this.useMock) {
+                    try {
+                        const syncResult = await this.real.post('/api/auth/oauth', {
+                            token: user.token,
+                            email: user.email,
+                            name: user.name,
+                            picture: user.picture,
+                            provider: 'google',
+                            google_id: user.id
+                        });
+                        if (syncResult && syncResult.success && syncResult.user) {
+                            backendUser = syncResult.user;
+                            role = syncResult.user.role || 'buyer';
+                        }
+                    } catch (e) {
+                        console.warn('[SmartAPI] Backend sync failed (mode mock?):', e.message);
+                    }
+                }
+
+                // Déterminer le rôle
+                // SuperAdmin hardcodé
+                if (user.email === 'sedrayiokoraz@gmail.com') {
+                    role = 'superadmin';
+                }
+
+                // Stocker le token
+                try {
+                    localStorage.setItem('ticketmada_token', user.token);
+                } catch(e) {}
+
+                const result = {
+                    success: true,
+                    user: {
+                        id: backendUser?.id || user.id,
+                        email: user.email,
+                        name: user.name,
+                        picture: user.picture,
+                        photo: user.picture, // Alias for backward compatibility
+                        role: backendUser?.role || role,
+                        provider: 'google'
+                    }
+                };
+
+                // Persister la session via RealAPI
+                this.real.setAuth(user.token, result.user);
+
+                console.log('[SmartAPI] Google login success:', result.user.email, 'role:', result.user.role);
+                return result;
+
+            } catch (e) {
+                console.error('[SmartAPI] Google login failed:', e);
+                return { 
+                    success: false, 
+                    error: e.message || 'Échec de connexion Google'
+                };
+            }
         }
 
         async oauthLogin(data) { return this.real.post('/api/auth/oauth', data); }

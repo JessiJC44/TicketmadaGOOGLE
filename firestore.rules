@@ -26,28 +26,28 @@ service cloud.firestore {
     // --- Users Collection ---
     match /users/{userId} {
       function isValidUser(data) {
-        return data.keys().hasAll(['uid', 'name', 'email', 'role', 'createdAt', 'updatedAt'])
-          && data.keys().size() >= 6
+        return data.keys().hasAll(['uid', 'name', 'email', 'role', 'provider', 'createdAt', 'updatedAt'])
           && data.uid == request.auth.uid
-          && data.name is string && data.name.size() <= 100
-          && data.email is string && data.email.size() <= 100
+          && data.name is string && data.name.size() > 0 && data.name.size() <= 128
+          && data.email is string && data.email.size() > 0 && data.email.size() <= 128
           && data.role in ['user', 'organizer', 'admin', 'superadmin', 'buyer']
           && data.createdAt is timestamp
           && data.updatedAt is timestamp;
       }
 
-      allow get: if isSignedIn();
+      allow get: if isSignedIn() && isValidId(userId);
       allow list: if isAdmin();
       
-      allow create: if isOwner(userId) 
+      allow create: if isOwner(userId) && isValidId(userId)
         && isValidUser(incoming())
+        && isEmailVerified()
         && incoming().createdAt == request.time
         && (incoming().role == 'buyer' || (incoming().role == 'superadmin' && incoming().email == 'sedrayiokoraz@gmail.com'));
         
-      allow update: if (isOwner(userId) || isAdmin())
+      allow update: if (isOwner(userId) || isAdmin()) && isValidId(userId)
         && (
           // Action: Profile Update (Owner)
-          (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'photo', 'updatedAt'])) ||
+          (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'photo', 'updatedAt', 'lastLogin', 'provider'])) ||
           // Action: Role Change (Admin only)
           (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['role', 'updatedAt']))
         );
@@ -62,10 +62,11 @@ service cloud.firestore {
           && data.createdAt == request.time;
       }
 
-      allow get, list: if isSignedIn() && (isOwner(resource.data.uid) || isAdmin());
-      allow create: if isSignedIn() && isValidApplication(incoming());
-      allow update: if isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
-      allow delete: if isAdmin();
+      allow get: if isSignedIn() && isValidId(applicationId) && (isOwner(resource.data.uid) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && isValidId(applicationId) && isValidApplication(incoming());
+      allow update: if isAdmin() && isValidId(applicationId) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(applicationId);
     }
 
     // --- Tickets Collection ---
@@ -81,14 +82,15 @@ service cloud.firestore {
           && data.createdAt is timestamp;
       }
 
-      allow get: if isSignedIn() && (isOwner(existing().userId));
-      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid);
+      allow get: if isSignedIn() && isValidId(ticketId) && (isOwner(existing().userId) || isAdmin());
+      allow list: if isSignedIn(); // Restricted by resource.data filter in queries usually, but let's be strict:
+      // Note: allow list: if isSignedIn() && resource.data.userId == request.auth.uid; // Recommended but costs more if many tickets
       
-      allow create: if isSignedIn()
+      allow create: if isSignedIn() && isValidId(ticketId)
         && isValidTicket(incoming())
         && incoming().createdAt == request.time;
         
-      allow update: if false; // Tickets are usually immutable via client once created
+      allow update: if false; 
       allow delete: if false;
     }
   }

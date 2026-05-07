@@ -489,6 +489,9 @@
                         </template>
                         {{ loadingAuth ? 'Connexion...' : t.auth.continueGoogle }}
                     </button>
+                    <div v-if="authError" style="color: #FF6B4A; text-align: center; margin-top: 12px; padding: 12px; background: #fff0ee; border: 2px solid #FF6B4A; border-radius: 8px; font-size: 14px;">
+                        {{ authError }}
+                    </div>
                 </div>
                 <div class="divider">{{ t.auth.or }}</div>
                 <form class="auth-form" @submit.prevent="handleAuth">
@@ -503,6 +506,8 @@
     </div>
     
     <script src="../js/site-config.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="../js/google-auth.js"></script>
     <script src="../js/api-client.js"></script>
     <script src="../js/profile-menu.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
@@ -565,6 +570,7 @@
                     isLoggedIn: false, showProfileMenu: false,
                     showSearch: false, showAuth: false, authMode: 'login', searchQuery: '', activeCategory: 'all',
                     loadingAuth: false, authStartTime: 0,
+                    authError: '',
                     suggestions: [],
                     currentPage: 1,
                     itemsPerPage: 20,
@@ -602,11 +608,14 @@
                 if (window.api && window.api.isLoggedIn()) { this.isLoggedIn = true; }
                 if (window.ProfileMenu) window.ProfileMenu.injectStyles();
                 
-                // Preload Firebase
-                import('../js/firebase-init.js').catch(e => console.warn('[Firebase] Preload failed:', e));
-                
                 await this.loadEvents();
                 animateCounters();
+
+                // Check for login query param
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('login')) {
+                    this.openAuth('login');
+                }
 
                 document.addEventListener('click', (e) => { if (this.showProfileMenu && !e.target.closest('.nav-cta')) this.showProfileMenu = false; });
                 document.addEventListener('keydown', e => { if (e.key === 'Escape') { this.showSearch = false; this.showAuth = false; this.showProfileMenu = false; } if (e.key === 'k' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); this.showSearch = true; } });
@@ -715,6 +724,7 @@
                     
                     this.loadingAuth = true;
                     this.authStartTime = Date.now();
+                    this.authError = '';
                     
                     if (prov === 'google') {
                         // Watchdog to prevent permanent stuck state
@@ -733,6 +743,13 @@
                             if (result && result.success) {
                                 this.isLoggedIn = true;
                                 this.showAuth = false;
+
+                                // Si une redirection est demandée
+                                const urlParams = new URLSearchParams(window.location.search);
+                                if (urlParams.get('redirect')) {
+                                    window.location.href = urlParams.get('redirect');
+                                    return;
+                                }
                                 
                                 // Redirection conditionnelle pour admin/organisateur
                                 const role = window.api.getUserRole();
@@ -746,10 +763,11 @@
                                 this.loadingAuth = false;
                             } else {
                                 console.error('[UI] Login failed:', result?.error);
-                                alert(result?.error || 'Erreur de connexion Google');
+                                this.authError = result?.error || 'Erreur de connexion Google';
                             }
                         } catch (e) {
                             console.error('[UI] Google Auth exception:', e);
+                            this.authError = 'Une erreur est survenue lors de l’authentification.';
                         } finally {
                             clearTimeout(watchdog);
                             this.loadingAuth = false;

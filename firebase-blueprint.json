@@ -9,7 +9,9 @@
         "name": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "photo": { "type": "string", "format": "uri" },
-        "role": { "type": "string", "enum": ["user", "organizer", "admin", "superadmin"] },
+        "role": { "type": "string", "enum": ["user", "organizer", "admin", "superadmin", "buyer"] },
+        "provider": { "type": "string" },
+        "lastLogin": { "type": "string", "format": "date-time" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },

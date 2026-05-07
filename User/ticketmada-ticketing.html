@@ -432,6 +432,8 @@
     </div>
 
     <script src="../js/site-config.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="../js/google-auth.js"></script>
     <script src="../js/api-client.js"></script>
     <script src="../js/profile-menu.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
@@ -526,6 +528,7 @@
                     authMode: 'login',
                     loadingAuth: false,
                     authForm: { name: '', email: '', password: '' },
+                    authError: '',
                     isLoggedIn: false, showProfileMenu: false
                 };
             },
@@ -561,6 +564,7 @@
                 async loginWith(provider) {
                     if (this.loadingAuth) return;
                     this.loadingAuth = true;
+                    this.authError = '';
                     if (provider.toLowerCase() === 'google') {
                         try {
                             const result = await window.api.loginWithGoogle();
@@ -576,10 +580,11 @@
                                     window.location.href = '../Admin/ticketmada-dashboard.html';
                                 }
                             } else if (!result.canceled) {
-                                alert(result.error || 'Erreur Google');
+                                this.authError = result.error || 'Erreur Google';
                             }
                         } catch (e) {
                             console.error('Google Auth Error', e);
+                            this.authError = 'Une erreur est survenue lors de l’authentification.';
                         } finally {
                             this.loadingAuth = false;
                         }
