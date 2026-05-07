@@ -2,9 +2,9 @@
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getFirestore, doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-// Config hardcodé — plus de fetch() qui échoue sur GitHub Pages
+// Config hardcodé
 const firebaseConfig = {
     apiKey: "AIzaSyCbI7swghOahNGD45a0_nWdISfqRXSVeow",
     authDomain: "gen-lang-client-0272660678.firebaseapp.com",
@@ -40,12 +40,13 @@ export function getFirebaseDb() { return db; }
 export async function loginWithGoogle() {
     try {
         if (!initialized) {
-            const result = await initFirebase();
-            if (!result) throw new Error('Firebase non initialisé');
+            const resInit = await initFirebase();
+            if (!resInit) throw new Error('Firebase non initialisé');
         }
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
         
+        console.log('[Firebase] Ouvrant le popup Google...');
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
         
@@ -60,14 +61,16 @@ export async function loginWithGoogle() {
         
         // Sauvegarder dans Firestore
         try {
+            console.log('[Firebase] Mise à jour du profil Firestore...', user.uid);
             await setDoc(doc(db, 'users', user.uid), {
                 ...userProfile,
-                lastLogin: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
+                lastLogin: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                createdAt: serverTimestamp() // merge: true handles this if it exists
             }, { merge: true });
+            console.log('[Firebase] Profil Firestore mis à jour.');
         } catch (firestoreError) {
-            console.warn('[Firebase] Firestore save skipped:', firestoreError.message);
-            // Continuer même si Firestore échoue — l'auth est OK
+            console.warn('[Firebase] Firestore update failed (it is okay if logic continues):', firestoreError.message);
         }
         
         const token = await user.getIdToken();
@@ -77,16 +80,16 @@ export async function loginWithGoogle() {
         console.error('[Firebase] Login Google échoué:', error);
         
         if (error.code === 'auth/popup-closed-by-user') {
-            return { success: false, error: 'Popup fermé par l\'utilisateur', cancelled: true };
+            return { success: false, error: 'Popup fermé par l\'utilisateur', canceled: true };
         }
         if (error.code === 'auth/unauthorized-domain') {
-            return { success: false, error: 'Domaine non autorisé. Ajoutez ce domaine dans Firebase Console → Authentication → Settings → Authorized domains.' };
+            return { success: false, error: 'Domaine non autorisé dans Firebase Console.' };
         }
         if (error.code === 'auth/popup-blocked') {
-            return { success: false, error: 'Popup bloqué par le navigateur. Autorisez les popups pour ce site.' };
+            return { success: false, error: 'Popup bloqué.' };
         }
         
-        return { success: false, error: error.message || 'Erreur de connexion Google' };
+        return { success: false, error: error.message || 'Erreur de connexion' };
     }
 }
 

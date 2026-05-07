@@ -733,6 +733,14 @@
                             if (result && result.success) {
                                 this.isLoggedIn = true;
                                 this.showAuth = false;
+                                
+                                // Redirection conditionnelle pour admin/organisateur
+                                const role = window.api.getUserRole();
+                                if (role === 'superadmin' || role === 'admin') {
+                                    window.location.href = '../Admin/ticketmada-superadmin.html';
+                                } else if (role === 'organizer') {
+                                    window.location.href = '../Admin/ticketmada-dashboard.html';
+                                }
                             } else if (result && result.canceled) {
                                 console.log('[UI] Login was canceled by user/popup');
                                 this.loadingAuth = false;

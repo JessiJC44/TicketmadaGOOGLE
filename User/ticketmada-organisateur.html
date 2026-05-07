@@ -391,7 +391,7 @@
                                 </div>
                             </div>
                             <div class="profile-dropdown-items">
-                                <a class="profile-dropdown-item" :href="profileRole === 'superadmin' ? '/Admin/ticketmada-superadmin.html' : dashboardUrl"><v-icon icon="mdi-view-dashboard" size="small"></v-icon> {{ lang === 'fr' ? 'Mon Dashboard' : 'My Dashboard' }}</a>
+                                <a class="profile-dropdown-item" :href="profileRole === 'superadmin' ? '../Admin/ticketmada-superadmin.html' : dashboardUrl"><v-icon icon="mdi-view-dashboard" size="small"></v-icon> {{ lang === 'fr' ? 'Mon Dashboard' : 'My Dashboard' }}</a>
                                 <a v-if="profileRole !== 'superadmin'" class="profile-dropdown-item" :href="dashboardUrl + '?page=events'"><v-icon icon="mdi-calendar-plus" size="small"></v-icon> {{ lang === 'fr' ? 'Créer un événement' : 'Create event' }}</a>
                                 <div class="profile-dropdown-divider"></div>
                                 <button class="profile-dropdown-item logout" @click="handleLogout"><v-icon icon="mdi-logout" size="small"></v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Logout' }}</button>
@@ -937,7 +937,7 @@
                 profileRole() { return window.api?.getUserRole() || 'buyer'; },
                 profileRoleLabel() { return { superadmin: 'Super Admin', admin: 'Admin', organizer: 'Organisateur', buyer: 'Membre' }[this.profileRole] || 'Membre'; },
                 profileAvatar() { const g = window.ProfileMenu?.detectGender(this.profileName) || 'neutral'; return window.ProfileMenu?.getAvatarSVG(this.profileName, g) || ''; },
-                dashboardUrl() { return (this.profileRole === 'superadmin' || this.profileRole === 'admin') ? '/Admin/ticketmada-superadmin.html' : '/Admin/ticketmada-dashboard.html'; },
+                dashboardUrl() { return (this.profileRole === 'superadmin' || this.profileRole === 'admin') ? '../Admin/ticketmada-superadmin.html' : '../Admin/ticketmada-dashboard.html'; },
                 isOrganizerFormValid() {
                     return this.organizerForm.fullName && this.organizerForm.phone && this.organizerForm.city && 
                            this.organizerForm.organizationName && this.organizerForm.organizationDescription && 
@@ -1060,8 +1060,17 @@
                     const prov = provider.toLowerCase();
                     
                     this.loadingAuth = true;
+                    // Watchdog to prevent permanent stuck state
+                    const watchdog = setTimeout(() => {
+                        if (this.loadingAuth) {
+                            console.warn('[UI] Auth Watchdog triggered (35s)');
+                            this.loadingAuth = false;
+                        }
+                    }, 35000);
+
                     if (prov !== 'google') {
                         this.loadingAuth = false;
+                        clearTimeout(watchdog);
                         alert(this.lang === 'fr' ? "Ce service n'est pas encore disponible." : "Service not available yet.");
                         return;
                     }
@@ -1075,17 +1084,28 @@
                             this.isLoggedIn = true;
                             this.showAuth = false;
                             
-                            if (result.user.role === 'buyer') {
-                                this.checkAndApply();
+                            // Re-get the role to be absolutely sure we have the latest
+                            const role = window.api.getUserRole();
+                            const user = window.api.getUser();
+                            console.log('[UI] User detected:', user?.email, 'Role:', role);
+
+                            if (role === 'superadmin' || role === 'admin') {
+                                console.log('[UI] FORCING Redirect to SuperAdmin:', '../Admin/ticketmada-superadmin.html');
+                                window.location.href = '../Admin/ticketmada-superadmin.html';
+                            } else if (role === 'organizer') {
+                                console.log('[UI] Redirecting to Organizer Dashboard:', '../Admin/ticketmada-dashboard.html');
+                                window.location.href = '../Admin/ticketmada-dashboard.html';
                             } else {
-                                window.location.href = this.dashboardUrl;
+                                this.checkAndApply();
                             }
                         } else if (result && !result.canceled) {
                             alert(result.error || (this.lang === 'fr' ? 'Erreur de connexion Google' : 'Google Login Error'));
                         }
                     } catch (e) {
                         console.error('[UI] Google Login Exception:', e);
+                        alert(this.lang === 'fr' ? 'Une erreur est survenue lors de la connexion Google.' : 'An error occurred during Google Login.');
                     } finally {
+                        clearTimeout(watchdog);
                         this.loadingAuth = false;
                     }
                 }

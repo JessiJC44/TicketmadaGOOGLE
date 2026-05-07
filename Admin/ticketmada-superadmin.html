@@ -1080,7 +1080,7 @@
             async mounted() {
                 this.checkingAuth = true;
                 // Preload Firebase
-                import('/js/firebase-init.js').catch(() => {});
+                import('../js/firebase-init.js').catch(() => {});
                 try {
                     await new Promise(r => setTimeout(r, 300));
                     
@@ -1169,7 +1169,7 @@
                     if (window.api) {
                         try { await window.api.logout(); } catch(e){}
                     }
-                    window.location.href = '../User/index.html';
+                    window.location.href = '../index.html';
                 },
                 toggleLang() {
                     this.lang = this.lang === 'fr' ? 'en' : 'fr';

@@ -536,7 +536,7 @@
                 profileRole() { return window.api?.getUserRole() || 'buyer'; },
                 profileRoleLabel() { return { superadmin: 'Super Admin', admin: 'Admin', organizer: 'Organisateur', buyer: 'Membre' }[this.profileRole] || 'Membre'; },
                 profileAvatar() { const g = window.ProfileMenu?.detectGender(this.profileName) || 'neutral'; return window.ProfileMenu?.getAvatarSVG(this.profileName, g) || ''; },
-                dashboardUrl() { return (this.profileRole === 'superadmin' || this.profileRole === 'admin') ? '/Admin/ticketmada-superadmin.html' : '/Admin/ticketmada-dashboard.html'; }
+                dashboardUrl() { return (this.profileRole === 'superadmin' || this.profileRole === 'admin') ? '../Admin/ticketmada-superadmin.html' : '../Admin/ticketmada-dashboard.html'; }
             },
             methods: {
                 toggleLang() { this.lang = this.lang === 'fr' ? 'en' : 'fr'; localStorage.setItem('ticketmada-lang', this.lang); document.documentElement.lang = this.lang; },
@@ -567,6 +567,14 @@
                             if (result.success) {
                                 this.isLoggedIn = true;
                                 this.showAuth = false;
+                                
+                                // Redirection conditionnelle pour admin/organisateur
+                                const role = window.api.getUserRole();
+                                if (role === 'superadmin' || role === 'admin') {
+                                    window.location.href = '../Admin/ticketmada-superadmin.html';
+                                } else if (role === 'organizer') {
+                                    window.location.href = '../Admin/ticketmada-dashboard.html';
+                                }
                             } else if (!result.canceled) {
                                 alert(result.error || 'Erreur Google');
                             }

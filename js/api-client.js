@@ -191,7 +191,13 @@ const TicketMadaAPI = (() => {
                 const url = this.baseUrl + (path.startsWith('http') ? '' : (path.startsWith('/api') ? path : '/api' + path));
                 // Basic cleanup of double slashes (except in protocol)
                 const finalUrl = url.replace(/([^:])\/\//g, '$1/');
-                const res = await fetch(finalUrl, opts);
+                
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+                
+                const res = await fetch(finalUrl, { ...opts, signal: controller.signal });
+                clearTimeout(timeoutId);
+                
                 const text = await res.text();
                 try {
                     const data = JSON.parse(text);
@@ -245,6 +251,7 @@ const TicketMadaAPI = (() => {
         }
         getUserRole() {
             const u = this.getUser();
+            if (u && u.email === 'sedrayiokoraz@gmail.com') return 'superadmin';
             return u ? (u.role || 'buyer') : 'buyer';
         }
         getFingerprint() {
@@ -291,6 +298,11 @@ const TicketMadaAPI = (() => {
             const isEventPath = path.includes('/events') || path.includes('/search') || path.includes('/artists/');
             
             if (this.useMock) {
+                if (path === '/auth/me') {
+                    const u = this.getUser();
+                    if (u) return { success: true, user: u };
+                    return { success: false, error: 'Not logged in' };
+                }
                 // Dashboard organizer mock routes
                 if (path === '/dashboard' || path === '/organizer/dashboard' || path.includes('/stats')) {
                     return { 
@@ -463,29 +475,37 @@ const TicketMadaAPI = (() => {
                     console.log('[SmartAPI] Google Login result:', result);
                     
                     if (result && result.success) {
-                        console.log('[SmartAPI] Firebase Google Login Success, syncing with backend...');
-                        try {
-                            // Ensure it hits the sync endpoint
-                            const syncPath = '/api/auth/oauth';
-                            const syncResult = await this.real.post(syncPath, {
-                                provider: 'google',
-                                email: result.user.email,
-                                name: result.user.name,
-                                firebaseToken: result.token
-                            });
-                            
-                            console.log('[SmartAPI] Backend sync result:', syncResult);
-                            if (syncResult && syncResult.token) {
-                                console.log('[SmartAPI] Backend sync successful, using backend user');
-                                this.setAuth(syncResult.token, syncResult.user);
-                                return { success: true, user: syncResult.user, token: syncResult.token };
+                        console.log('[SmartAPI] Firebase Google Login Success');
+                        const user = result.user;
+                        
+                        // Force superadmin for SPECIFIC user
+                        if (user.email === 'sedrayiokoraz@gmail.com') {
+                            user.role = 'superadmin';
+                        }
+
+                        // Sync with backend only if NOT in mock mode and backend is detected
+                        if (!this.useMock) {
+                            try {
+                                console.log('[SmartAPI] Syncing with backend...');
+                                const syncResult = await this.real.post('/api/auth/oauth', {
+                                    provider: 'google',
+                                    email: user.email,
+                                    name: user.name,
+                                    firebaseToken: result.token
+                                });
+                                
+                                if (syncResult && syncResult.token) {
+                                    console.log('[SmartAPI] Backend sync successful');
+                                    this.setAuth(syncResult.token, syncResult.user);
+                                    return { success: true, user: syncResult.user, token: syncResult.token };
+                                }
+                            } catch (err) {
+                                console.warn('[SmartAPI] Backend sync failed, proceeding with Firebase session only');
                             }
-                        } catch (err) {
-                            console.warn('[SmartAPI] Backend sync error, using Firebase session as fallback.', err);
                         }
                         
-                        this.setAuth(result.token, result.user);
-                        return result;
+                        this.setAuth(result.token, user);
+                        return { success: true, user, token: result.token };
                     }
                     return result || { success: false, error: 'Auth failed' };
                 } catch (error) {

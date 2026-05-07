@@ -31,7 +31,7 @@ service cloud.firestore {
           && data.uid == request.auth.uid
           && data.name is string && data.name.size() <= 100
           && data.email is string && data.email.size() <= 100
-          && data.role in ['user', 'organizer', 'admin', 'superadmin']
+          && data.role in ['user', 'organizer', 'admin', 'superadmin', 'buyer']
           && data.createdAt is timestamp
           && data.updatedAt is timestamp;
       }
@@ -42,7 +42,7 @@ service cloud.firestore {
       allow create: if isOwner(userId) 
         && isValidUser(incoming())
         && incoming().createdAt == request.time
-        && incoming().role == 'user'; // Users can't create themselves as admin
+        && (incoming().role == 'buyer' || (incoming().role == 'superadmin' && incoming().email == 'sedrayiokoraz@gmail.com'));
         
       allow update: if (isOwner(userId) || isAdmin())
         && (
