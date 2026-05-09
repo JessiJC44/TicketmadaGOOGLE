@@ -121,6 +121,12 @@ const GoogleAuth = (() => {
                 _resolveSignIn = resolve;
                 _rejectSignIn = reject;
 
+                // Watchdog per-signIn call
+                const signInTimeout = setTimeout(() => {
+                    console.error('[GoogleAuth] SignIn watchdog triggered (60s)');
+                    reject(new Error('Le délai de connexion Google est dépassé. Veuillez réessayer.'));
+                }, 60000);
+
                 console.log('[GoogleAuth] Launching Google Auth popup...');
                 try {
                     const tokenClient = google.accounts.oauth2.initTokenClient({
@@ -128,7 +134,9 @@ const GoogleAuth = (() => {
                         scope: 'email profile openid',
                         ux_mode: 'popup',
                         callback: async (tokenResponse) => {
+                            clearTimeout(signInTimeout);
                             console.log('[GoogleAuth] Token response received', tokenResponse.error ? 'ERROR' : 'SUCCESS');
+                            
                             if (tokenResponse.error) {
                                 console.error('[GoogleAuth] OAuth error:', tokenResponse.error);
                                 reject(new Error(tokenResponse.error_description || tokenResponse.error));
@@ -136,15 +144,22 @@ const GoogleAuth = (() => {
                             }
 
                             if (tokenResponse.access_token) {
-                                console.log('[GoogleAuth] Access token obtained, fetching user info...');
+                                console.log('[GoogleAuth] Access token obtained (ends in ...' + tokenResponse.access_token.substring(tokenResponse.access_token.length - 10) + ')');
+                                console.log('[GoogleAuth] Fetching user info...');
                                 try {
                                     const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                                         headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-                                        // Signal basique (timeout de 10s)
-                                        signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : null
+                                        signal: AbortSignal.timeout ? AbortSignal.timeout(8000) : null
                                     });
                                     
-                                    if (!res.ok) throw new Error('User info fetch failed: ' + res.status);
+                                    console.log('[GoogleAuth] Userinfo fetch status:', res.status);
+                                    if (!res.ok) {
+                                        const errText = await res.text();
+                                        console.error('[GoogleAuth] Userinfo fetch failed details:', errText);
+                                        // On essaie de continuer quand même si on a un token ? 
+                                        // Non, on a besoin de l'email pour s'identifier.
+                                        throw new Error('Impossible de récupérer votre profil Google (Status ' + res.status + ')');
+                                    }
                                     
                                     const payload = await res.json();
                                     console.log('[GoogleAuth] User identified:', payload.email);
@@ -165,32 +180,37 @@ const GoogleAuth = (() => {
                                         localStorage.setItem(USER_KEY, JSON.stringify(user));
                                         console.log('[GoogleAuth] Session saved to localStorage');
                                     } catch (e) {
-                                        console.warn('[GoogleAuth] localStorage save failed:', e);
+                                        console.warn('[GoogleAuth] localStorage error:', e);
                                     }
 
-                                    console.log('[GoogleAuth] Resolving signIn with user data');
+                                    console.log('[GoogleAuth] Resolving signIn promise with:', user.email);
                                     resolve(user);
                                 } catch (e) {
-                                    console.error('[GoogleAuth] Failed to fetch user info:', e);
+                                    console.error('[GoogleAuth] Process error after token:', e);
                                     reject(e);
                                 }
+                            } else {
+                                console.error('[GoogleAuth] No access_token in response');
+                                reject(new Error('Aucun jeton d\'accès reçu de Google.'));
                             }
                         },
                         error_callback: (error) => {
-                            console.error('[GoogleAuth] Token client error:', error);
-                            // L'utilisateur a fermé le popup — ne pas traiter comme erreur fatale
+                            clearTimeout(signInTimeout);
+                            console.error('[GoogleAuth] GIS Internal error callback:', error);
                             if (error.type === 'popup_closed') {
-                                reject(new Error('Popup fermé par l\'utilisateur'));
+                                reject(new Error('La fenêtre de connexion a été fermée.'));
                             } else {
-                                reject(new Error(error.message || 'Google login error'));
+                                reject(new Error('Erreur Google Identity Services: ' + (error.message || 'vitesse interrompue')));
                             }
                         }
                     });
 
                     // Ouvrir le popup
-                    tokenClient.requestAccessToken({ prompt: 'consent' });
+                    console.log('[GoogleAuth] Calling requestAccessToken()');
+                    tokenClient.requestAccessToken();
                 } catch (e) {
-                    console.error('[GoogleAuth] Runtime error in signIn:', e);
+                    clearTimeout(signInTimeout);
+                    console.error('[GoogleAuth] Runtime error in signIn() body:', e);
                     reject(e);
                 }
             });

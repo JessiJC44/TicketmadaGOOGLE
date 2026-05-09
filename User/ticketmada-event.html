@@ -310,6 +310,8 @@
         color: #FF6B4A;
         font-weight: 600;
     }
+        .search-modal, .auth-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26, 26, 26, 0.95); z-index: 2500; display: none; align-items: center; justify-content: center; }
+        .search-modal.active, .auth-modal.active { display: flex !important; }
     </style>
 </head>
 <body>
@@ -358,9 +360,8 @@
         </div>
     </nav>
 
-    <!-- Auth Modal copied from landing -->
-    <div class="auth-modal" :class="{ active: showAuth }" @click.self="showAuth = false" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26, 26, 26, 0.95); z-index: 2500; display: none; align-items: center; justify-content: center;">
-        <div class="auth-modal.active" style="display: flex;"></div>
+    <!-- Auth Modal -->
+    <div class="auth-modal" :class="{ active: showAuth }" @click.self="showAuth = false">
         <div class="auth-card brutal-card" style="background: white; border: 3px solid #1a1a1a; box-shadow: 10px 10px 0 #1a1a1a; padding: 40px; max-width: 440px; width: 90%; position: relative;">
             <div class="auth-close" @click="showAuth = false" style="position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; background: white; border: 3px solid #1a1a1a; display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: 'Syne'; font-weight: 700;">✕</div>
             <div class="auth-header" style="text-align: center; margin-bottom: 30px;">
@@ -757,6 +758,7 @@ const app = createApp({
             pendingCheckout: false,
             authMode: 'login',
             loadingAuth: false,
+            authStartTime: 0,
             authForm: { name: '', email: '', password: '' },
             showProfileMenu: false,
             userName: '',
@@ -987,33 +989,61 @@ const app = createApp({
         },
         openAuth(mode) { this.authMode = mode; this.showAuth = true; },
         async loginWithGoogle() {
-            if (this.loadingAuth) return;
+            if (this.loadingAuth) {
+                if (Date.now() - this.authStartTime > 15000) { 
+                    console.warn('[UI] Force resetting loadingAuth after 15s');
+                    this.loadingAuth = false; 
+                } else {
+                    console.log('[UI] Login already in progress...');
+                    return;
+                }
+            }
+            console.log('[UI] loginWithGoogle called');
+            
             this.loadingAuth = true;
+            this.authStartTime = Date.now();
+            
+            const watchdog = setTimeout(() => {
+                if (this.loadingAuth) {
+                    console.warn('[UI] Auth Watchdog triggered (40s)');
+                    this.loadingAuth = false;
+                }
+            }, 40000);
+
             try {
                 const result = await window.api.loginWithGoogle();
-                if (result.success) {
+                console.log('[UI] loginWithGoogle result:', result);
+                
+                if (result && result.success) {
+                    console.log('[UI] Auth success! Closing modal...');
                     this.isLoggedIn = true;
                     this.showAuth = false;
                     this.userName = result.user.name;
                     this.userPhoto = result.user.picture || result.user.photo;
-
-                    // Redirection si admin
+                    
                     const role = window.api.getUserRole();
+                    console.log('[UI] User role detected:', role);
+
                     if (role === 'superadmin' || role === 'admin') {
-                        window.location.href = '../Admin/ticketmada-superadmin.html';
+                        console.log('[UI] Redirecting to SuperAdmin...');
+                        window.location.assign('../Admin/ticketmada-superadmin.html');
                         return;
                     }
                     
                     if (this.pendingCheckout) {
+                        console.log('[UI] Pending checkout detected, proceeding...');
                         this.pendingCheckout = false;
                         this.$nextTick(() => this.confirmPurchase());
                     }
-                } else if (!result.canceled) {
-                    alert(result.error || 'Erreur Google');
+                } else if (result && !result.canceled) {
+                    console.error('[UI] Login failed:', result?.error);
+                    alert(result?.error || 'Erreur Google');
                 }
             } catch (e) {
-                console.error(e);
+                console.error('[UI] Google Login Exception:', e);
+                alert('Une erreur est survenue lors de l’authentification.');
             } finally {
+                clearTimeout(watchdog);
                 this.loadingAuth = false;
             }
         },

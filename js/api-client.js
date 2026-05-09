@@ -471,25 +471,37 @@ const TicketMadaAPI = (() => {
         }
         
         async loginWithGoogle() {
-            console.log('[SmartAPI] loginWithGoogle() called — using Google Identity Services');
+            console.log('[SmartAPI] loginWithGoogle() started');
             
             try {
-                // Utiliser GoogleAuth (chargé depuis google-auth.js)
                 if (typeof GoogleAuth === 'undefined') {
-                    throw new Error('GoogleAuth not loaded. Vérifiez que google-auth.js est inclus.');
+                    console.error('[SmartAPI] GoogleAuth helper missing!');
+                    throw new Error('Le module d\'authentification Google n\'est pas chargé.');
                 }
 
+                console.log('[SmartAPI] Awaiting GoogleAuth.signIn()...');
                 const user = await GoogleAuth.signIn();
+                console.log('[SmartAPI] GoogleAuth.signIn() resolved for:', user?.email);
 
                 if (!user || !user.email) {
-                    return { success: false, error: 'Aucune information utilisateur reçue' };
+                    throw new Error('Aucune information utilisateur reçue de Google.');
                 }
 
-                // Essayer de synchroniser avec le backend (si disponible)
+                // Flush immediately to localStorage
+                try {
+                    localStorage.setItem('ticketmada_token', user.token);
+                    localStorage.setItem('ticketmada_user', JSON.stringify(user));
+                    console.log('[SmartAPI] Local storage updated');
+                } catch(e) {
+                    console.warn('[SmartAPI] LocalStorage error:', e);
+                }
+
                 let role = 'buyer';
                 let backendUser = null;
 
+                // Sync with backend with its own timeout
                 if (!this.useMock) {
+                    console.log('[SmartAPI] Syncing with backend...');
                     try {
                         const syncResult = await this.real.post('/api/auth/oauth', {
                             token: user.token,
@@ -499,25 +511,21 @@ const TicketMadaAPI = (() => {
                             provider: 'google',
                             google_id: user.id
                         });
+                        console.log('[SmartAPI] Backend sync result:', syncResult);
                         if (syncResult && syncResult.success && syncResult.user) {
                             backendUser = syncResult.user;
-                            role = syncResult.user.role || 'buyer';
+                            role = syncResult.user.role || role;
                         }
                     } catch (e) {
-                        console.warn('[SmartAPI] Backend sync failed (mode mock?):', e.message);
+                        console.warn('[SmartAPI] Backend sync skipped/failed:', e.message);
                     }
                 }
 
-                // Déterminer le rôle
-                // SuperAdmin hardcodé
+                // SuperAdmin override
                 if (user.email === 'sedrayiokoraz@gmail.com') {
+                    console.log('[SmartAPI] SuperAdmin identity detected');
                     role = 'superadmin';
                 }
-
-                // Stocker le token
-                try {
-                    localStorage.setItem('ticketmada_token', user.token);
-                } catch(e) {}
 
                 const result = {
                     success: true,
@@ -526,23 +534,23 @@ const TicketMadaAPI = (() => {
                         email: user.email,
                         name: user.name,
                         picture: user.picture,
-                        photo: user.picture, // Alias for backward compatibility
+                        photo: user.picture,
                         role: backendUser?.role || role,
                         provider: 'google'
                     }
                 };
 
-                // Persister la session via RealAPI
+                // Update RealAPI context
                 this.real.setAuth(user.token, result.user);
-
-                console.log('[SmartAPI] Google login success:', result.user.email, 'role:', result.user.role);
+                
+                console.log('[SmartAPI] loginWithGoogle success final:', result.user.email, 'role:', result.user.role);
                 return result;
 
             } catch (e) {
-                console.error('[SmartAPI] Google login failed:', e);
+                console.error('[SmartAPI] loginWithGoogle caught error:', e);
                 return { 
                     success: false, 
-                    error: e.message || 'Échec de connexion Google'
+                    error: e.message || 'Erreur lors de la connexion Google'
                 };
             }
         }

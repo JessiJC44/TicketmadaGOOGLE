@@ -311,7 +311,7 @@
         }
 
         .auth-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26, 26, 26, 0.95); z-index: 2000; display: none; align-items: center; justify-content: center; }
-        .auth-modal.active { display: flex; }
+        .auth-modal.active { display: flex !important; }
         .auth-close { position: absolute; top: -60px; right: 0; width: 50px; height: 50px; background: white; border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.5rem; font-family: 'Syne', sans-serif; }
         .auth-card { width: 100%; max-width: 480px; padding: 50px; position: relative; }
         .auth-header { text-align: center; margin-bottom: 40px; }
@@ -914,6 +914,7 @@
                     showAuth: false,
                     authMode: 'login',
                     loadingAuth: false,
+                    authStartTime: 0,
                     authForm: { name: '', email: '', password: '' },
                     authError: '',
                     showOrganizerModal: false,
@@ -950,17 +951,18 @@
                 toggleLang() { this.lang = this.lang === 'fr' ? 'en' : 'fr'; localStorage.setItem('ticketmada-lang', this.lang); document.documentElement.lang = this.lang; },
                 openAuth(mode) { this.authMode = mode; this.showAuth = true; },
                 async checkAndApply() {
-                    console.log('[Auth] Check and Apply... isLoggedIn:', this.isLoggedIn, 'Role:', this.profileRole);
+                    const role = window.api?.getUserRole() || 'buyer';
+                    console.log('[Auth] Check and Apply... isLoggedIn:', this.isLoggedIn, 'Role:', role);
                     if (!this.isLoggedIn) {
                         this.openAuth('login');
                         return;
                     }
                     
-                    const role = this.profileRole;
                     if (role === 'organizer' || role === 'admin' || role === 'superadmin') {
                         console.log('[Auth] Redirecting to dashboard...');
-                        window.location.href = this.dashboardUrl;
-                    } else {
+                        window.location.assign(this.dashboardUrl);
+                        return;
+                    }
                         // Check if already applied
                         try {
                             console.log('[Auth] Checking existing applications...');
@@ -1058,59 +1060,74 @@
                     }
                 },
                 async loginWith(provider) {
-                    if (this.loadingAuth) return;
-                    this.authError = '';
+                    if (this.loadingAuth) {
+                        if (Date.now() - this.authStartTime > 15000) { 
+                            console.warn('[UI] Force resetting loadingAuth after 15s');
+                            this.loadingAuth = false; 
+                        } else {
+                            console.log('[UI] Login already in progress...');
+                            return;
+                        }
+                    }
+                    console.log('[UI] loginWith called for:', provider);
                     const prov = provider.toLowerCase();
                     
                     this.loadingAuth = true;
-                    // Watchdog to prevent permanent stuck state
-                    const watchdog = setTimeout(() => {
-                        if (this.loadingAuth) {
-                            console.warn('[UI] Auth Watchdog triggered (35s)');
+                    this.authStartTime = Date.now();
+                    this.authError = '';
+                    
+                    if (prov === 'google') {
+                        // Watchdog to prevent permanent stuck state
+                        const watchdog = setTimeout(() => {
+                            if (this.loadingAuth) {
+                                console.warn('[UI] Auth Watchdog triggered (40s)');
+                                this.loadingAuth = false;
+                            }
+                        }, 40000);
+
+                        try {
+                            console.log('[UI] Calling api.loginWithGoogle()...');
+                            const result = await window.api.loginWithGoogle();
+                            console.log('[UI] api.loginWithGoogle() returned:', result);
+                            
+                            if (result && result.success) {
+                                console.log('[UI] Auth success! Closing modal...');
+                                this.isLoggedIn = true;
+                                this.showAuth = false;
+                                this.authError = '';
+                                
+                                // FORCE refresh of internal state
+                                const role = window.api.getUserRole();
+                                const user = window.api.getUser();
+                                console.log('[UI] User role detected:', role);
+
+                                if (role === 'superadmin' || role === 'admin') {
+                                    console.log('[UI] Redirecting to SuperAdmin...');
+                                    window.location.assign('../Admin/ticketmada-superadmin.html');
+                                } else if (role === 'organizer') {
+                                    console.log('[UI] Redirecting to Organizer Dashboard...');
+                                    window.location.assign('../Admin/ticketmada-dashboard.html');
+                                } else {
+                                    console.log('[UI] Buyer role, checking applications...');
+                                    this.checkAndApply();
+                                }
+                            } else if (result && result.canceled) {
+                                console.log('[UI] Login was canceled by user');
+                                this.loadingAuth = false;
+                            } else {
+                                console.error('[UI] Login failed with error:', result?.error);
+                                this.authError = result?.error || 'Erreur de connexion Google';
+                            }
+                        } catch (e) {
+                            console.error('[UI] Google Login Exception:', e);
+                            this.authError = this.lang === 'fr' ? 'Une erreur est survenue lors de la connexion Google.' : 'An error occurred during Google Login.';
+                        } finally {
+                            clearTimeout(watchdog);
                             this.loadingAuth = false;
                         }
-                    }, 35000);
-
-                    if (prov !== 'google') {
+                    } else {
                         this.loadingAuth = false;
-                        clearTimeout(watchdog);
                         alert(this.lang === 'fr' ? "Ce service n'est pas encore disponible." : "Service not available yet.");
-                        return;
-                    }
-
-                    try {
-                        console.log('[UI] Google Login requested');
-                        const result = await window.api.loginWithGoogle();
-                        console.log('[UI] Google Result:', result);
-                        
-                        if (result && result.success) {
-                            this.isLoggedIn = true;
-                            this.showAuth = false;
-                            this.authError = '';
-                            
-                            // Re-get the role to be absolutely sure we have the latest
-                            const role = window.api.getUserRole();
-                            const user = window.api.getUser();
-                            console.log('[UI] User detected:', user?.email, 'Role:', role);
-
-                            if (role === 'superadmin' || role === 'admin') {
-                                console.log('[UI] FORCING Redirect to SuperAdmin:', '../Admin/ticketmada-superadmin.html');
-                                window.location.href = '../Admin/ticketmada-superadmin.html';
-                            } else if (role === 'organizer') {
-                                console.log('[UI] Redirecting to Organizer Dashboard:', '../Admin/ticketmada-dashboard.html');
-                                window.location.href = '../Admin/ticketmada-dashboard.html';
-                            } else {
-                                this.checkAndApply();
-                            }
-                        } else if (result && !result.canceled) {
-                            this.authError = result.error || (this.lang === 'fr' ? 'Erreur de connexion Google' : 'Google Login Error');
-                        }
-                    } catch (e) {
-                        console.error('[UI] Google Login Exception:', e);
-                        this.authError = this.lang === 'fr' ? 'Une erreur est survenue lors de la connexion Google.' : 'An error occurred during Google Login.';
-                    } finally {
-                        clearTimeout(watchdog);
-                        this.loadingAuth = false;
                     }
                 }
             },
