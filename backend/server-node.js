@@ -1347,6 +1347,34 @@ async function handleAuth(req, res, parts) {
         return sendJSON(res, { user, token });
     }
 
+    if (action === 'profile' && req.method === 'PUT') {
+        const user = requireAuth(req);
+        if (!user) return sendError(res, 'Authentification requise', 401);
+        const body = await parseBody(req);
+        
+        // Anti-Ghost Fields & Strict Keys
+        const allowed = ['name', 'phone'];
+        const sets = [], vals = [];
+        for (const f of allowed) {
+            if (body[f] !== undefined) {
+                // Size enforcements (Denial of Wallet guard)
+                if (typeof body[f] === 'string' && body[f].length > 500) {
+                    return sendError(res, `Champ ${f} trop long`);
+                }
+                sets.push(`${f} = ?`);
+                vals.push(body[f]);
+            }
+        }
+        
+        if (sets.length === 0) return sendError(res, 'Aucune modification valide');
+        
+        vals.push(user.id);
+        db.prepare(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`).run(...vals);
+        
+        const updated = db.prepare('SELECT id, name, email, role, plan, avatar_initials, phone, status, created_at, superadmin_level, organizer_license FROM users WHERE id = ?').get(user.id);
+        return sendJSON(res, { success: true, user: updated });
+    }
+
     if (action === 'me' && req.method === 'GET') {
         const user = requireAuth(req);
         if (!user) return sendError(res, 'Non authentifié', 401);
@@ -1783,12 +1811,53 @@ async function handleTickets(req, res, parts) {
     }
 
     if (req.method === 'GET') {
+        const user = requireAuth(req);
+        if (!user) return sendError(res, 'Authentification requise', 401);
+
+        if (id) {
+            // Single ticket
+            const ticket = db.prepare(`
+                SELECT t.*, e.name as event_name, e.organizer_id, u.name as buyer_name 
+                FROM tickets t 
+                LEFT JOIN events e ON t.event_id = e.id 
+                LEFT JOIN users u ON t.buyer_id = u.id 
+                WHERE t.id = ?
+            `).get(id);
+            
+            if (!ticket) return sendError(res, 'Billet non trouvé', 404);
+            
+            // Security: Only buyer, event organizer, or superadmin can see details
+            const isOwner = ticket.buyer_id === user.id;
+            const isOrganizer = user.role === 'organizer' && ticket.organizer_id === user.id;
+            const isAdmin = user.role === 'admin' || user.role === 'superadmin';
+            
+            if (!isOwner && !isOrganizer && !isAdmin) {
+                return sendError(res, 'Accès refusé à ce billet', 403);
+            }
+            
+            return sendJSON(res, { ticket });
+        }
+
+        // Listing
         const url = new URL(req.url, 'http://localhost');
         let where = ['1=1'], params = [];
+        
+        // Security: Non-admins can only see their own tickets or tickets for their events
+        if (user.role !== 'admin' && user.role !== 'superadmin') {
+            if (user.role === 'organizer') {
+                where.push('(t.buyer_id = ? OR e.organizer_id = ?)');
+                params.push(user.id, user.id);
+            } else {
+                where.push('t.buyer_id = ?');
+                params.push(user.id);
+            }
+        }
+
         if (url.searchParams.get('event_id')) { where.push('t.event_id = ?'); params.push(parseInt(url.searchParams.get('event_id'))); }
         if (url.searchParams.get('buyer_id')) { where.push('t.buyer_id = ?'); params.push(parseInt(url.searchParams.get('buyer_id'))); }
         if (url.searchParams.get('status')) { where.push('t.status = ?'); params.push(url.searchParams.get('status')); }
         if (url.searchParams.get('organizer_id')) { where.push('e.organizer_id = ?'); params.push(parseInt(url.searchParams.get('organizer_id'))); }
+        
         const limit = parseInt(url.searchParams.get('limit') || '50');
         const tickets = db.prepare(`SELECT t.*, e.name as event_name, u.name as buyer_name FROM tickets t LEFT JOIN events e ON t.event_id = e.id LEFT JOIN users u ON t.buyer_id = u.id WHERE ${where.join(' AND ')} ORDER BY t.created_at DESC LIMIT ?`).all(...params, limit);
         return sendJSON(res, { tickets });
@@ -1822,8 +1891,23 @@ async function handleRefunds(req, res, parts) {
     }
 
     if (req.method === 'GET') {
+        const user = requireAuth(req);
+        if (!user) return sendError(res, 'Authentification requise', 401);
+
         const url = new URL(req.url, 'http://localhost');
         let where = ['1=1'], params = [];
+
+        // Security: Non-admins can only see their own refunds or refunds for their events
+        if (user.role !== 'admin' && user.role !== 'superadmin') {
+            if (user.role === 'organizer') {
+                where.push('(t.buyer_id = ? OR e.organizer_id = ?)');
+                params.push(user.id, user.id);
+            } else {
+                where.push('t.buyer_id = ?');
+                params.push(user.id);
+            }
+        }
+
         if (url.searchParams.get('status')) { where.push('r.status = ?'); params.push(url.searchParams.get('status')); }
         const refunds = db.prepare(`SELECT r.*, e.name as event_name, t.id_code as ticket_code FROM refunds r LEFT JOIN events e ON r.event_id = e.id LEFT JOIN tickets t ON r.ticket_id = t.id WHERE ${where.join(' AND ')} ORDER BY r.created_at DESC`).all(...params);
         const pending = db.prepare("SELECT COUNT(*) as c FROM refunds WHERE status = 'pending'").get().c;
@@ -1835,8 +1919,15 @@ async function handleRefunds(req, res, parts) {
         if (!user) return sendError(res, 'Non authentifié', 401);
         const body = await parseBody(req);
         if (!body.ticket_id) return sendError(res, 'ticket_id requis');
+        
         const ticket = db.prepare('SELECT t.*, e.name as event_name FROM tickets t LEFT JOIN events e ON t.event_id = e.id WHERE t.id = ?').get(body.ticket_id);
         if (!ticket) return sendError(res, 'Billet non trouvé', 404);
+        
+        // Security: Can only request refund for OWN ticket
+        if (ticket.buyer_id !== user.id && user.role !== 'admin' && user.role !== 'superadmin') {
+            return sendError(res, 'Vous ne pouvez demander un remboursement que pour vos propres billets', 403);
+        }
+        
         const code = 'REF-' + String(Math.floor(Math.random() * 999999)).padStart(6, '0');
         db.prepare('INSERT INTO refunds (id_code, ticket_id, event_id, client_name, amount, reason, status) VALUES (?,?,?,?,?,?,?)').run(code, body.ticket_id, ticket.event_id, user.name, ticket.price, body.reason || '', 'pending');
         return sendJSON(res, { refund: { id_code: code, status: 'pending' } }, 201);

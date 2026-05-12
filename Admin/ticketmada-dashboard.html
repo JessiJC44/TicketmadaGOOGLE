@@ -13,7 +13,7 @@
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
     
     <script src="../js/site-config.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer onload="if(window._initGoogleAuth) _initGoogleAuth()"></script>
     <script src="../js/google-auth.js"></script>
     <script src="../js/api-client.js"></script>
     <script src="../js/profile-menu.js"></script>
@@ -213,8 +213,10 @@
     </style>
 </head>
 <body>
-    <div id="app">
-        <div class="auth-overlay" v-if="!isLoggedIn">
+    <div id="app" v-cloak>
+        <v-app>
+            <!-- Auth Overlay (only shown if not logged in) -->
+            <div class="auth-overlay" v-if="!isLoggedIn && !isSuperAdminViewing">
             <div class="auth-card">
                 <div class="auth-header"><h2>{{ authMode === 'login' ? 'Connexion Organisateur' : 'Créer un compte' }}</h2><p>{{ authMode === 'login' ? 'Accédez à votre tableau de bord' : 'Rejoignez TicketMada' }}</p></div>
                 <div class="social-auth">
@@ -243,7 +245,9 @@
                 <a href="../User/ticketmada-landing.html" class="auth-back">← Retour à l'accueil</a>
             </div>
         </div>
-        <div class="dashboard-layout">
+
+        <template v-if="isLoggedIn || isSuperAdminViewing">
+            <div class="dashboard-layout">
             <aside class="sidebar">
                 <div class="sidebar-header">
                     <a href="../User/ticketmada-landing.html" class="sidebar-logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
@@ -1402,7 +1406,7 @@
                     </template>
                 </div>
             </main>
-        </div>
+        </template>
         
         <!-- Create Event Modal -->
         <div class="modal-overlay" :class="{ active: showCreateModal }">
@@ -1550,6 +1554,7 @@
             </div>
         </v-dialog>
 
+        </v-app>
     </div>
     
     <script>

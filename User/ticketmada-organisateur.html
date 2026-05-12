@@ -774,7 +774,7 @@
     </div>
 
     <script src="../js/site-config.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer onload="if(window._initGoogleAuth) _initGoogleAuth()"></script>
     <script src="../js/google-auth.js"></script>
     <script src="../js/api-client.js"></script>
     <script src="../js/profile-menu.js"></script>
@@ -985,7 +985,7 @@
                             this.showOrganizerModal = true;
                         }
                     }
-                },
+                ,
                 async submitOrganizerForm() {
                     if (!this.isOrganizerFormValid) {
                         this.showFormErrors = true;
@@ -1146,7 +1146,7 @@
                     if (window.api && window.api.isLoggedIn()) { 
                         this.isLoggedIn = true; 
                         this.user = window.api.getUser();
-                        // this.checkAndApply(); // Disable auto-redirect on mount
+                        this.checkAndApply(); 
                     }
                     
                     if (window.ProfileMenu) {

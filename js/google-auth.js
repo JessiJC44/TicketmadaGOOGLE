@@ -79,44 +79,47 @@ const GoogleAuth = (() => {
          * La librairie GIS doit être chargée via <script> AVANT d'appeler init().
          */
         init() {
-            if (_initialized) return;
+            if (_initialized) return Promise.resolve();
             
-            if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
-                console.warn('[GoogleAuth] GIS library not loaded yet. Retrying in 1s...');
-                setTimeout(() => this.init(), 1000);
-                return;
-            }
+            return new Promise((resolve) => {
+                const check = () => {
+                    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                        try {
+                            google.accounts.id.initialize({
+                                client_id: CLIENT_ID,
+                                callback: _handleCredentialResponse,
+                                auto_select: false,
+                                cancel_on_tap_outside: true,
+                                itp_support: true
+                            });
 
-            try {
-                google.accounts.id.initialize({
-                    client_id: CLIENT_ID,
-                    callback: _handleCredentialResponse,
-                    auto_select: false,
-                    cancel_on_tap_outside: true,
-                    itp_support: true
-                });
-
-                _initialized = true;
-                console.log('[GoogleAuth] Initialized with client:', CLIENT_ID.substring(0, 20) + '...');
-                window.dispatchEvent(new CustomEvent('google-auth-initialized'));
-            } catch (e) {
-                console.error('[GoogleAuth] Initialization error:', e);
-            }
+                            _initialized = true;
+                            console.log('[GoogleAuth] Initialized successfully');
+                            window.dispatchEvent(new CustomEvent('google-auth-initialized'));
+                            resolve();
+                        } catch (e) {
+                            console.error('[GoogleAuth] Initialization error:', e);
+                            resolve(); // resolve anyway to stop loop
+                        }
+                    } else {
+                        console.warn('[GoogleAuth] GIS library not loaded yet, retrying...');
+                        setTimeout(check, 500);
+                    }
+                };
+                check();
+            });
         },
 
         /**
          * Lancer le popup de connexion Google.
          * Retourne une Promise qui résout avec l'objet user.
          */
-        signIn() {
+        async signIn() {
+            if (!_initialized) {
+                await this.init();
+            }
+
             return new Promise((resolve, reject) => {
-                if (!_initialized) {
-                    this.init();
-                    if (!_initialized) {
-                        reject(new Error('Google Identity Services not loaded'));
-                        return;
-                    }
-                }
 
                 _resolveSignIn = resolve;
                 _rejectSignIn = reject;

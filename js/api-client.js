@@ -487,6 +487,11 @@ const TicketMadaAPI = (() => {
                     return { success: false, canceled: true };
                 }
 
+                if (user && user.error) {
+                    console.error('[SmartAPI] Google Auth error:', user.error);
+                    return { success: false, error: user.error };
+                }
+
                 console.log('[SmartAPI] GoogleAuth.signIn() resolved for:', user?.email);
 
                 if (!user || !user.email) {

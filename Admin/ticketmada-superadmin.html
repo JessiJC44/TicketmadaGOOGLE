@@ -225,7 +225,8 @@
 </head>
 <body>
     <div id="app" v-cloak>
-        <div class="auth-screen" v-if="!isLoggedIn && !checkingAuth">
+        <v-app>
+            <div class="auth-screen" v-if="!isLoggedIn && !checkingAuth">
             <div class="auth-card">
                 <div class="auth-logo">
                     <div class="logo-box">👑</div>
@@ -256,7 +257,8 @@
             </div>
         </div>
 
-        <div v-if="checkingAuth" class="auth-screen">
+        <template v-if="isLoggedIn || checkingAuth">
+            <div v-if="checkingAuth" class="auth-screen">
             <div style="text-align: center;">
                 <v-progress-circular indeterminate color="var(--accent-coral)" size="64"></v-progress-circular>
                 <p style="margin-top: 20px; font-weight: 800; font-family: 'Syne', sans-serif;">VÉRIFICATION DES ACCÈS...</p>
@@ -976,10 +978,12 @@
                 </div>
             </div>
         </div>
+        </template>
+        </v-app>
     </div>
 
     <script src="../js/site-config.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer onload="if(window._initGoogleAuth) _initGoogleAuth()"></script>
     <script src="../js/google-auth.js"></script>
     <script src="../js/api-client.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
@@ -1125,8 +1129,8 @@
                 } finally {
                     this.checkingAuth = false;
                 }
-            },
-            methods: {
+        },
+        methods: {
                 async loginWithGoogle() {
                     if (this.loadingAuth) return;
                     this.loadingAuth = true;

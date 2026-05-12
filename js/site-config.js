@@ -30,9 +30,9 @@ window.TICKETMADA_CONFIG = {
         // Dev-only pages (hidden in production)
         devOnly: ['index.html'],
         // Admin pages (PIN-protected in production)
-        admin: ['ticketmada-dashboard.html', 'ticketmada-superadmin.html'],
+        admin: ['ticketmada-dashboard.html', 'ticketmada-superadmin.html', 'ticketmada-organisateur.html'],
         // Unfinished pages (hidden in production)
-        unfinished: ['ticketmada-ticketing.html', 'ticketmada-organisateur.html'],
+        unfinished: ['ticketmada-ticketing.html'],
         // Public landing page (redirect target)
         landing: 'ticketmada-landing.html'
     }
