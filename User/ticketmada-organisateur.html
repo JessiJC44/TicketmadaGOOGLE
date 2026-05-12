@@ -691,7 +691,23 @@
                 <div class="auth-close" @click="showAuth = false">✕</div>
                 <div class="auth-header"><h2>{{ authMode === 'login' ? (lang === 'fr' ? 'Connexion' : 'Login') : (lang === 'fr' ? 'Créer un compte' : 'Create account') }}</h2><p>{{ authMode === 'login' ? (lang === 'fr' ? 'Heureux de vous revoir !' : 'Welcome back!') : (lang === 'fr' ? 'Rejoignez TicketMada' : 'Join TicketMada') }}</p></div>
                 <div class="social-auth">
-                    <button class="social-auth-btn google-btn" @click.prevent="loginWith('Google')"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>{{ lang === 'fr' ? 'Continuer avec Google' : 'Continue with Google' }}</button>
+                    <div id="google-button-container" style="display: flex; justify-content: center; margin-bottom: 10px;"></div>
+                    
+                    <div v-if="loadingAuth" style="text-align: center; margin-bottom: 10px;">
+                        <v-progress-circular indeterminate color="var(--accent-coral)" size="24"></v-progress-circular>
+                        <p style="font-size: 0.8rem; margin-top: 5px;">{{ lang === 'fr' ? 'Connexion...' : 'Connecting...' }}</p>
+                    </div>
+
+                    <div style="font-size: 0.8rem; color: #666; text-align: center; border-top: 1px dashed #ccc; padding-top: 10px;">
+                        <p v-if="navigator.userAgent.includes('Brave')">
+                            <v-icon icon="mdi-shield-alert-outline" size="extra-small"></v-icon>
+                            <strong>Brave :</strong> Si bloqué, désactivez les Shields ou <a href="#" @click.prevent="loginWith('google-redirect')" style="color: var(--accent-coral); text-decoration: underline;">utilisez le mode redirection</a>.
+                        </p>
+                        <p v-else>
+                            Un souci ? <a href="#" @click.prevent="loginWith('google-redirect')" style="color: var(--accent-coral); text-decoration: underline;">Essayer le mode redirection</a>.
+                        </p>
+                    </div>
+                    
                     <div v-if="authError" style="color: #FF6B4A; text-align: center; margin-top: 12px; padding: 12px; background: #fff0ee; border: 2px solid #FF6B4A; border-radius: 8px; font-size: 14px;">
                         {{ authError }}
                     </div>
@@ -924,6 +940,8 @@
                     organizerFormSubmitted: false,
                     showFormErrors: false,
                     isLoggedIn: false, user: null, showProfileMenu: false,
+                    authStartTime: 0,
+                    navigator: window.navigator,
                     keyFeatureIcons: ['🔐', '💵', '🇲🇬', '☁️'],
                     useCaseIcons: ['🎸', '🎭', '⚽', '🎤'],
                     testimonials: [
@@ -1046,89 +1064,91 @@
                         }
                         
                         console.log('[Auth] API response received:', result);
-                        if (!result || result.success === false || result.error) {
-                            console.error('[Auth] Login failed:', result);
-                            alert(result?.error || (this.lang === 'fr' ? 'Échec de l\'authentification.' : 'Authentication failed.'));
-                        } else { 
-                            console.log('[Auth] Login success! Redirecting or applying state...');
+                        if (result && result.success) {
                             this.isLoggedIn = true; 
                             this.showAuth = false; 
                             this.checkAndApply();
+                        } else { 
+                            alert(result?.error || 'Authentication failed.');
                         }
                     } catch(e) { 
-                        console.error('[Auth] Caught error in handleAuth:', e);
-                        alert(this.lang === 'fr' ? 'Une erreur est survenue lors de l\'authentification.' : 'An error occurred during authentication.');
+                        alert('Error during authentication.');
                     }
                 },
                 async loginWith(provider) {
-                    if (this.loadingAuth) {
-                        if (Date.now() - this.authStartTime > 15000) { 
-                            console.warn('[UI] Force resetting loadingAuth after 15s');
-                            this.loadingAuth = false; 
-                        } else {
-                            console.log('[UI] Login already in progress...');
-                            return;
-                        }
-                    }
+                    if (this.loadingAuth) return;
                     console.log('[UI] loginWith called for:', provider);
                     const prov = provider.toLowerCase();
                     
                     this.loadingAuth = true;
-                    this.authStartTime = Date.now();
                     this.authError = '';
                     
-                    if (prov === 'google') {
-                        // Watchdog to prevent permanent stuck state
-                        const watchdog = setTimeout(() => {
-                            if (this.loadingAuth) {
-                                console.warn('[UI] Auth Watchdog triggered (40s)');
-                                this.loadingAuth = false;
-                            }
-                        }, 40000);
+                    // Polling for Brave users: Check if logged in every 2 seconds while auth is pending
+                    const authCheckInterval = setInterval(() => {
+                        if (window.api && window.api.isLoggedIn()) {
+                            console.log('[UI] Polling detected login success!');
+                            this.isLoggedIn = true;
+                            this.showAuth = false;
+                            this.loadingAuth = false;
+                            clearInterval(authCheckInterval);
+                            const role = window.api.getUserRole();
+                            if (role === 'superadmin' || role === 'admin') window.location.assign('../Admin/ticketmada-superadmin.html');
+                            else if (role === 'organizer') window.location.assign('../Admin/ticketmada-dashboard.html');
+                            else this.checkAndApply();
+                        }
+                    }, 2000);
 
+                    if (prov === 'google' || prov === 'google-redirect') {
                         try {
-                            console.log('[UI] Calling api.loginWithGoogle()...');
-                            const result = await window.api.loginWithGoogle();
-                            console.log('[UI] api.loginWithGoogle() returned:', result);
+                            const uxMode = (prov === 'google-redirect') ? 'redirect' : 'popup';
+                            const result = await window.api.loginWithGoogle(uxMode);
                             
                             if (result && result.success) {
-                                console.log('[UI] Auth success! Closing modal...');
+                                clearInterval(authCheckInterval);
                                 this.isLoggedIn = true;
                                 this.showAuth = false;
-                                this.authError = '';
-                                
-                                // FORCE refresh of internal state
                                 const role = window.api.getUserRole();
-                                const user = window.api.getUser();
-                                console.log('[UI] User role detected:', role);
-
-                                if (role === 'superadmin' || role === 'admin') {
-                                    console.log('[UI] Redirecting to SuperAdmin...');
-                                    window.location.assign('../Admin/ticketmada-superadmin.html');
-                                } else if (role === 'organizer') {
-                                    console.log('[UI] Redirecting to Organizer Dashboard...');
-                                    window.location.assign('../Admin/ticketmada-dashboard.html');
-                                } else {
-                                    console.log('[UI] Buyer role, checking applications...');
-                                    this.checkAndApply();
-                                }
+                                if (role === 'superadmin' || role === 'admin') window.location.assign('../Admin/ticketmada-superadmin.html');
+                                else if (role === 'organizer') window.location.assign('../Admin/ticketmada-dashboard.html');
+                                else this.checkAndApply();
                             } else if (result && result.canceled) {
-                                console.log('[UI] Login was canceled by user');
+                                clearInterval(authCheckInterval);
                                 this.loadingAuth = false;
                             } else {
-                                console.error('[UI] Login failed with error:', result?.error);
-                                this.authError = result?.error || 'Erreur de connexion Google';
+                                // Don't clear interval immediately, maybe it's just a communication error
+                                setTimeout(() => {
+                                    if (!this.isLoggedIn) {
+                                        clearInterval(authCheckInterval);
+                                        this.authError = result?.error || 'Erreur Google';
+                                        this.loadingAuth = false;
+                                    }
+                                }, 5000);
                             }
                         } catch (e) {
-                            console.error('[UI] Google Login Exception:', e);
-                            this.authError = this.lang === 'fr' ? 'Une erreur est survenue lors de la connexion Google.' : 'An error occurred during Google Login.';
-                        } finally {
-                            clearTimeout(watchdog);
+                            console.error('[UI] Google Login Error:', e);
+                            clearInterval(authCheckInterval);
+                            this.authError = 'Une erreur est survenue.';
                             this.loadingAuth = false;
                         }
                     } else {
+                        clearInterval(authCheckInterval);
                         this.loadingAuth = false;
-                        alert(this.lang === 'fr' ? "Ce service n'est pas encore disponible." : "Service not available yet.");
+                        alert("Bientôt disponible");
+                    }
+                }
+            },
+            watch: {
+                showAuth(val) {
+                    if (val) {
+                        setTimeout(() => {
+                            if (window.GoogleAuth) {
+                                window.GoogleAuth.renderButton('google-button-container', { 
+                                    width: 320, 
+                                    theme: 'outline',
+                                    text: 'continue_with'
+                                });
+                            }
+                        }, 150);
                     }
                 }
             },

@@ -470,8 +470,8 @@ const TicketMadaAPI = (() => {
             return result; 
         }
         
-        async loginWithGoogle() {
-            console.log('[SmartAPI] loginWithGoogle() started');
+        async loginWithGoogle(uxMode = 'popup') {
+            console.log('[SmartAPI] loginWithGoogle() started with mode:', uxMode);
             
             try {
                 if (typeof GoogleAuth === 'undefined') {
@@ -480,7 +480,7 @@ const TicketMadaAPI = (() => {
                 }
 
                 console.log('[SmartAPI] Awaiting GoogleAuth.signIn()...');
-                const user = await GoogleAuth.signIn();
+                const user = await GoogleAuth.signIn(uxMode);
                 
                 if (user && user.canceled) {
                     console.log('[SmartAPI] Google Auth was canceled by user');

@@ -1391,6 +1391,7 @@ async function handleAuth(req, res, parts) {
     if (action === 'url' && req.method === 'GET') {
         const url = new URL(req.url, 'http://localhost');
         const provider = url.searchParams.get('provider');
+        const returnTo = url.searchParams.get('return_to') || '/';
         const redirectUri = `${APP_URL}/api/auth/callback/${provider}`;
 
         if (provider === 'google') {
@@ -1400,7 +1401,8 @@ async function handleAuth(req, res, parts) {
                 response_type: 'code',
                 scope: 'openid email profile',
                 access_type: 'offline',
-                prompt: 'select_account'
+                prompt: 'select_account',
+                state: Buffer.from(JSON.stringify({ returnTo })).toString('base64')
             });
             return sendJSON(res, { url: `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}` });
         }
@@ -1415,6 +1417,15 @@ async function handleOAuthCallback(req, res, parts) {
     const provider = parts[3];
     const url = new URL(req.url, 'http://localhost');
     const code = url.searchParams.get('code');
+    const stateStr = url.searchParams.get('state');
+    let returnTo = '/';
+
+    if (stateStr) {
+        try {
+            const state = JSON.parse(Buffer.from(stateStr, 'base64').toString());
+            returnTo = state.returnTo || '/';
+        } catch (e) {}
+    }
 
     if (!code) {
         return res.end('Authentication failed: no code');
@@ -1471,22 +1482,50 @@ async function handleOAuthCallback(req, res, parts) {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(`
         <html>
+        <head>
+            <style>
+                body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #FFF8F0; text-align: center; }
+                .card { background: white; padding: 40px; border: 3px solid #1a1a1a; box-shadow: 8px 8px 0 #1a1a1a; max-width: 400px; }
+                h1 { color: #2e7d32; margin-top: 0; }
+                .btn { display: inline-block; background: #FF6B4A; color: white; padding: 12px 24px; text-decoration: none; font-weight: 700; border: 3px solid #1a1a1a; box-shadow: 4px 4px 0 #1a1a1a; cursor: pointer; margin-top: 20px; }
+            </style>
+        </head>
         <body>
+            <div class="card">
+                <h1>✅ Succès !</h1>
+                <p>Connexion réussie pour <strong>${email}</strong>.</p>
+                <div id="status">Redirection en cours...</div>
+                <button onclick="window.close()" class="btn" id="closeBtn" style="display:none">Fermer la fenêtre</button>
+                <a href="${returnTo}" class="btn" id="redirectBtn" style="display:none">Retourner au site</a>
+            </div>
             <script>
+                const token = '${token}';
+                const user = ${JSON.stringify(user)};
+                const returnTo = '${returnTo}';
+                
+                localStorage.setItem('ticketmada_token', token);
+                localStorage.setItem('ticketmada_user', JSON.stringify(user));
+
                 if (window.opener) {
-                    window.opener.postMessage({ 
-                        type: 'TICKETMADA_AUTH_SUCCESS', 
-                        token: '${token}', 
-                        user: ${JSON.stringify(user)} 
-                    }, '*');
-                    window.close();
+                    try {
+                        window.opener.postMessage({ type: 'TICKETMADA_AUTH_SUCCESS', token, user }, '*');
+                        document.getElementById('status').innerText = 'Transmission des données...';
+                        setTimeout(() => {
+                           if (!window.closed) window.close();
+                           document.getElementById('closeBtn').style.display = 'inline-block';
+                        }, 1000);
+                    } catch (e) {
+                        console.error('postMessage failed', e);
+                        document.getElementById('status').innerText = 'Erreur Brave/Iframe détectée.';
+                        document.getElementById('redirectBtn').style.display = 'inline-block';
+                    }
                 } else {
-                    localStorage.setItem('ticketmada_token', '${token}');
-                    localStorage.setItem('ticketmada_user', '${JSON.stringify(user).replace(/'/g, "\\'")}');
-                    window.location.href = '/';
+                    document.getElementById('status').innerText = 'Redirection vers le site...';
+                    setTimeout(() => {
+                        window.location.href = returnTo;
+                    }, 1500);
                 }
             </script>
-            <p>Authentification réussie. Vous pouvez fermer cette fenêtre.</p>
         </body>
         </html>
     `);

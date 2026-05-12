@@ -72,11 +72,11 @@ const GoogleAuth = (() => {
         if (_resolveSignIn) _resolveSignIn(user);
     }
 
-    // ── API publique ──
-    return {
+    // ── Public API ──
+    const api = {
         /**
-         * Initialiser GIS. Appeler UNE FOIS au chargement de la page.
-         * La librairie GIS doit être chargée via <script> AVANT d'appeler init().
+         * Initialize GIS. Call ONCE on page load.
+         * The GIS library should be loaded via <script> BEFORE calling init().
          */
         init() {
             if (_initialized) return Promise.resolve();
@@ -85,12 +85,16 @@ const GoogleAuth = (() => {
                 const check = () => {
                     if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
                         try {
+                            const isDashboard = window.location.pathname.includes('dashboard') || window.location.pathname.includes('superadmin');
+                            
                             google.accounts.id.initialize({
                                 client_id: CLIENT_ID,
                                 callback: _handleCredentialResponse,
                                 auto_select: false,
+                                ux_mode: 'popup', // Default to popup
                                 cancel_on_tap_outside: true,
-                                itp_support: true
+                                itp_support: true,
+                                context: isDashboard ? 'use' : 'signup'
                             });
 
                             _initialized = true;
@@ -99,7 +103,7 @@ const GoogleAuth = (() => {
                             resolve();
                         } catch (e) {
                             console.error('[GoogleAuth] Initialization error:', e);
-                            resolve(); // resolve anyway to stop loop
+                            resolve(); 
                         }
                     } else {
                         console.warn('[GoogleAuth] GIS library not loaded yet, retrying...');
@@ -111,98 +115,121 @@ const GoogleAuth = (() => {
         },
 
         /**
-         * Lancer le popup de connexion Google.
-         * Retourne une Promise qui résout avec l'objet user.
+         * Render the official Google button. 
+         * Much more robust than custom buttons in browsers like Brave.
          */
-        async signIn() {
+        renderButton(elementId, options = {}) {
             if (!_initialized) {
-                await this.init();
+                console.warn('[GoogleAuth] Not initialized yet, waiting...');
+                window.addEventListener('google-auth-initialized', () => this.renderButton(elementId, options), { once: true });
+                return;
+            }
+            
+            const el = document.getElementById(elementId);
+            if (!el) return;
+
+            google.accounts.id.renderButton(el, {
+                theme: options.theme || 'outline',
+                size: options.size || 'large',
+                text: options.text || 'continue_with',
+                shape: options.shape || 'rectangular',
+                width: options.width || el.offsetWidth || 250,
+                logo_alignment: 'left'
+            });
+            
+            console.log('[GoogleAuth] Button rendered in:', elementId);
+        },
+
+        /**
+         * Start Google login.
+         */
+        async signIn(uxMode = 'popup') {
+            if (!_initialized) await this.init();
+
+            console.log('[GoogleAuth] signIn() requested with mode:', uxMode);
+
+            if (uxMode === 'redirect') {
+                // For a true redirect flow that bypasses popup issues, 
+                // we use the backend auth URL which is much more reliable.
+                try {
+                    const returnTo = encodeURIComponent(window.location.href);
+                    const res = await fetch(`/api/auth/url?provider=google&return_to=${returnTo}`);
+                    const data = await res.json();
+                    if (data.url) {
+                        window.location.href = data.url;
+                        return new Promise(() => {}); // Stop execution
+                    }
+                } catch (e) {
+                    console.error('[GoogleAuth] Failed to get redirect URL:', e);
+                }
+                
+                // Fallback: try GSI redirect to current page
+                google.accounts.id.initialize({
+                    client_id: CLIENT_ID,
+                    callback: _handleCredentialResponse,
+                    ux_mode: 'redirect',
+                    login_uri: window.location.origin + window.location.pathname,
+                    itp_support: true
+                });
+                google.accounts.id.prompt();
+                return new Promise(() => {}); 
             }
 
             return new Promise((resolve, reject) => {
-
                 _resolveSignIn = resolve;
                 _rejectSignIn = reject;
 
                 // Watchdog per-signIn call
                 const signInTimeout = setTimeout(() => {
                     console.error('[GoogleAuth] SignIn watchdog triggered (60s)');
-                    reject(new Error('Le délai de connexion Google est dépassé. Veuillez réessayer.'));
+                    const isBrave = navigator.userAgent.includes('Brave');
+                    let msg = 'Délai de connexion dépassé.';
+                    if (isBrave) msg += ' Sur Brave, désactivez les "Shields" (l\'icône lion) pour autoriser le popup, ou utilisez le mode redirection.';
+                    reject(new Error(msg));
                 }, 60000);
 
-                console.log('[GoogleAuth] Launching Google Auth popup...');
                 try {
+                    // Try the Access Token flow (standard)
                     const tokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: CLIENT_ID,
                         scope: 'email profile openid',
                         ux_mode: 'popup',
                         callback: async (tokenResponse) => {
                             clearTimeout(signInTimeout);
-                            console.log('[GoogleAuth] Token response received', tokenResponse.error ? 'ERROR' : 'SUCCESS');
-                            
                             if (tokenResponse.error) {
-                                console.error('[GoogleAuth] OAuth error:', tokenResponse.error);
-                                // Check if user canceled
-                                if (tokenResponse.error === 'access_denied') {
-                                    resolve({ canceled: true });
-                                } else {
-                                    reject(new Error(tokenResponse.error_description || tokenResponse.error));
-                                }
+                                if (tokenResponse.error === 'access_denied') resolve({ canceled: true });
+                                else reject(new Error(tokenResponse.error));
                                 return;
                             }
-
-                            if (tokenResponse.access_token) {
-                                console.log('[GoogleAuth] Access token obtained');
-                                try {
-                                    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                                        headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-                                        signal: AbortSignal.timeout ? AbortSignal.timeout(8000) : null
-                                    });
-                                    
-                                    if (!res.ok) {
-                                        throw new Error('Impossible de récupérer le profil (HTTP ' + res.status + ')');
-                                    }
-                                    
-                                    const payload = await res.json();
+                            
+                            // Try to get userinfo with the token
+                            try {
+                                const infoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                                    headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                                });
+                                if (infoRes.ok) {
+                                    const payload = await infoRes.json();
                                     const user = {
                                         id: payload.sub,
                                         email: payload.email,
-                                        name: payload.name || payload.email.split('@')[0],
-                                        picture: payload.picture || '',
-                                        emailVerified: payload.email_verified || false,
-                                        provider: 'google',
+                                        name: payload.name,
+                                        picture: payload.picture,
                                         token: tokenResponse.access_token
                                     };
-
-                                    localStorage.setItem(TOKEN_KEY, tokenResponse.access_token);
+                                    localStorage.setItem(TOKEN_KEY, user.token);
                                     localStorage.setItem(USER_KEY, JSON.stringify(user));
                                     resolve(user);
-                                } catch (e) {
-                                    console.error('[GoogleAuth] fetch userinfo error:', e);
-                                    // Extreme fallback: create a dummy user with the token if fetch fails
-                                    const fallbackUser = { id: 'ext-' + Date.now(), email: 'google-user@gmail.com', name: 'Google User', provider: 'google', token: tokenResponse.access_token };
-                                    resolve(fallbackUser);
+                                } else {
+                                    resolve({ token: tokenResponse.access_token, email: 'pending@google.com', needsSync: true });
                                 }
-                            } else {
-                                reject(new Error('Aucun jeton reçu.'));
-                            }
-                        },
-                        error_callback: (error) => {
-                            clearTimeout(signInTimeout);
-                            console.warn('[GoogleAuth] GIS non-fatal error:', error);
-                            if (error.type === 'popup_closed') {
-                                resolve({ canceled: true });
-                            } else {
-                                reject(new Error(error.message || 'Erreur Google Popup'));
+                            } catch (e) {
+                                resolve({ token: tokenResponse.access_token, email: 'pending@google.com', needsSync: true });
                             }
                         }
                     });
-
-                    // Ouvrir le popup
                     tokenClient.requestAccessToken();
                 } catch (e) {
                     clearTimeout(signInTimeout);
-                    console.error('[GoogleAuth] Runtime error in signIn() body:', e);
                     reject(e);
                 }
             });
@@ -259,12 +286,10 @@ const GoogleAuth = (() => {
             return null;
         }
     };
+
+    // Expose globally
+    window._initGoogleAuth = () => api.init();
+    return api;
 })();
 
-// Auto-init quand GIS est prêt
-if (typeof google !== 'undefined' && google.accounts) {
-    GoogleAuth.init();
-} else {
-    // GIS pas encore chargé — attendre l'événement load du script
-    window._initGoogleAuth = () => GoogleAuth.init();
-}
+window.GoogleAuth = GoogleAuth;
