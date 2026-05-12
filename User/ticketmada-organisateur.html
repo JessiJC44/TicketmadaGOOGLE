@@ -339,6 +339,7 @@
         .auth-submit { margin-top: 10px; width: 100%; justify-content: center; }
         .auth-footer { text-align: center; margin-top: 24px; color: var(--text-light); }
         .auth-footer a { color: var(--accent-coral); text-decoration: none; font-weight: 600; }
+        [v-cloak] { display: none !important; }
     </style>
 </head>
 <body>
@@ -922,7 +923,7 @@
                     isSubmittingOrganizer: false,
                     organizerFormSubmitted: false,
                     showFormErrors: false,
-                    isLoggedIn: false, showProfileMenu: false,
+                    isLoggedIn: false, user: null, showProfileMenu: false,
                     keyFeatureIcons: ['🔐', '💵', '🇲🇬', '☁️'],
                     useCaseIcons: ['🎸', '🎭', '⚽', '🎤'],
                     testimonials: [
@@ -1132,11 +1133,31 @@
                 }
             },
             mounted() {
-                document.documentElement.lang = this.lang; animateCounters(); animateChart();
-                if (window.api && window.api.isLoggedIn()) { this.isLoggedIn = true; }
-                if (window.ProfileMenu) window.ProfileMenu.injectStyles();
-                document.addEventListener('click', e => { if (!e.target.closest('.profile-wrapper')) this.showProfileMenu = false; });
-                document.addEventListener('keydown', e => { if (e.key === 'Escape') { this.showAuth = false; this.showProfileMenu = false; } });
+                try {
+                    document.documentElement.lang = this.lang;
+                    // Safety for DOM animations
+                    setTimeout(() => {
+                        try {
+                            if (typeof animateCounters === 'function') animateCounters();
+                            if (typeof animateChart === 'function') animateChart();
+                        } catch (e) { console.warn('[UI] Animation error:', e); }
+                    }, 500);
+
+                    if (window.api && window.api.isLoggedIn()) { 
+                        this.isLoggedIn = true; 
+                        this.user = window.api.getUser();
+                        this.checkAndApply();
+                    }
+                    
+                    if (window.ProfileMenu) {
+                        try { window.ProfileMenu.injectStyles(); } catch (e) {}
+                    }
+                    
+                    document.addEventListener('click', e => { if (!e.target.closest('.profile-wrapper')) this.showProfileMenu = false; });
+                    document.addEventListener('keydown', e => { if (e.key === 'Escape') { this.showAuth = false; this.showProfileMenu = false; } });
+                } catch (mountErr) {
+                    console.error('[Vue] Mount error:', mountErr);
+                }
             }
         });
         app.use(vuetify);

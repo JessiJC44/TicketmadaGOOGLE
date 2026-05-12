@@ -481,6 +481,12 @@ const TicketMadaAPI = (() => {
 
                 console.log('[SmartAPI] Awaiting GoogleAuth.signIn()...');
                 const user = await GoogleAuth.signIn();
+                
+                if (user && user.canceled) {
+                    console.log('[SmartAPI] Google Auth was canceled by user');
+                    return { success: false, canceled: true };
+                }
+
                 console.log('[SmartAPI] GoogleAuth.signIn() resolved for:', user?.email);
 
                 if (!user || !user.email) {
