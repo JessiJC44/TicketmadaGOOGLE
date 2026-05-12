@@ -1146,7 +1146,7 @@
                     if (window.api && window.api.isLoggedIn()) { 
                         this.isLoggedIn = true; 
                         this.user = window.api.getUser();
-                        this.checkAndApply();
+                        // this.checkAndApply(); // Disable auto-redirect on mount
                     }
                     
                     if (window.ProfileMenu) {
