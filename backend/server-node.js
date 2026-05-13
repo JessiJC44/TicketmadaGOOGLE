@@ -2414,7 +2414,11 @@ const MIME_TYPES = {
 
 function serveStatic(req, res) {
     let urlPath = req.url.split('?')[0];
-    if (urlPath === '/' || urlPath === '') urlPath = '/User/ticketmada-landing.html';
+    if (urlPath === '/' || urlPath === '') {
+        res.writeHead(302, { 'Location': '/User/ticketmada-landing.html' });
+        res.end();
+        return true;
+    }
     
     // Potential search paths
     const searchPaths = [
