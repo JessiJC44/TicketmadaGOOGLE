@@ -691,23 +691,13 @@
                 <div class="auth-close" @click="showAuth = false">✕</div>
                 <div class="auth-header"><h2>{{ authMode === 'login' ? (lang === 'fr' ? 'Connexion' : 'Login') : (lang === 'fr' ? 'Créer un compte' : 'Create account') }}</h2><p>{{ authMode === 'login' ? (lang === 'fr' ? 'Heureux de vous revoir !' : 'Welcome back!') : (lang === 'fr' ? 'Rejoignez TicketMada' : 'Join TicketMada') }}</p></div>
                 <div class="social-auth">
-                    <div id="google-button-container" style="display: flex; justify-content: center; margin-bottom: 10px;"></div>
+                    <div id="google-button-container" style="display: flex; justify-content: center; margin-bottom: 20px;"></div>
                     
                     <div v-if="loadingAuth" style="text-align: center; margin-bottom: 10px;">
                         <v-progress-circular indeterminate color="var(--accent-coral)" size="24"></v-progress-circular>
                         <p style="font-size: 0.8rem; margin-top: 5px;">{{ lang === 'fr' ? 'Connexion...' : 'Connecting...' }}</p>
                     </div>
 
-                    <div style="font-size: 0.8rem; color: #666; text-align: center; border-top: 1px dashed #ccc; padding-top: 10px;">
-                        <p v-if="navigator.userAgent.includes('Brave')">
-                            <v-icon icon="mdi-shield-alert-outline" size="extra-small"></v-icon>
-                            <strong>Brave :</strong> Si bloqué, désactivez les Shields ou <a href="#" @click.prevent="loginWith('google-redirect')" style="color: var(--accent-coral); text-decoration: underline;">utilisez le mode redirection</a>.
-                        </p>
-                        <p v-else>
-                            Un souci ? <a href="#" @click.prevent="loginWith('google-redirect')" style="color: var(--accent-coral); text-decoration: underline;">Essayer le mode redirection</a>.
-                        </p>
-                    </div>
-                    
                     <div v-if="authError" style="color: #FF6B4A; text-align: center; margin-top: 12px; padding: 12px; background: #fff0ee; border: 2px solid #FF6B4A; border-radius: 8px; font-size: 14px;">
                         {{ authError }}
                     </div>
@@ -969,19 +959,21 @@
             methods: {
                 toggleLang() { this.lang = this.lang === 'fr' ? 'en' : 'fr'; localStorage.setItem('ticketmada-lang', this.lang); document.documentElement.lang = this.lang; },
                 openAuth(mode) { this.authMode = mode; this.showAuth = true; },
-                async checkAndApply() {
-                    const role = window.api?.getUserRole() || 'buyer';
-                    console.log('[Auth] Check and Apply... isLoggedIn:', this.isLoggedIn, 'Role:', role);
-                    if (!this.isLoggedIn) {
-                        this.openAuth('login');
-                        return;
-                    }
-                    
-                    if (role === 'organizer' || role === 'admin' || role === 'superadmin') {
-                        console.log('[Auth] Redirecting to dashboard...');
-                        window.location.assign(this.dashboardUrl);
-                        return;
-                    }
+                    async checkAndApply() {
+                        const role = window.api?.getUserRole() || 'buyer';
+                        console.log('[Auth] Check and Apply... isLoggedIn:', this.isLoggedIn, 'Role:', role);
+                        
+                        if (!this.isLoggedIn) {
+                            this.openAuth('login');
+                            return;
+                        }
+                        
+                        // Si l'utilisateur est déjà organisateur ou admin, on le redirige vers sa console
+                        if (role === 'organizer' || role === 'admin' || role === 'superadmin') {
+                            console.log('[Auth] Redirecting to console:', this.dashboardUrl);
+                            window.location.assign(this.dashboardUrl);
+                            return;
+                        }
                         // Check if already applied
                         try {
                             console.log('[Auth] Checking existing applications...');
@@ -1083,7 +1075,6 @@
                     this.loadingAuth = true;
                     this.authError = '';
                     
-                    // Polling for Brave users: Check if logged in every 2 seconds while auth is pending
                     const authCheckInterval = setInterval(() => {
                         if (window.api && window.api.isLoggedIn()) {
                             console.log('[UI] Polling detected login success!');
@@ -1091,43 +1082,38 @@
                             this.showAuth = false;
                             this.loadingAuth = false;
                             clearInterval(authCheckInterval);
-                            const role = window.api.getUserRole();
-                            if (role === 'superadmin' || role === 'admin') window.location.assign('../Admin/ticketmada-superadmin.html');
-                            else if (role === 'organizer') window.location.assign('../Admin/ticketmada-dashboard.html');
-                            else this.checkAndApply();
+                            this.checkAndApply();
                         }
-                    }, 2000);
+                    }, 1000);
+
+                    // Nettoyage si on quitte
+                    window.addEventListener('beforeunload', () => clearInterval(authCheckInterval));
 
                     if (prov === 'google' || prov === 'google-redirect') {
                         try {
                             const uxMode = (prov === 'google-redirect') ? 'redirect' : 'popup';
+                            
+                            if (uxMode === 'redirect') {
+                                window.api.loginWithGoogle(uxMode);
+                                return; 
+                            }
+
                             const result = await window.api.loginWithGoogle(uxMode);
                             
                             if (result && result.success) {
                                 clearInterval(authCheckInterval);
                                 this.isLoggedIn = true;
                                 this.showAuth = false;
-                                const role = window.api.getUserRole();
-                                if (role === 'superadmin' || role === 'admin') window.location.assign('../Admin/ticketmada-superadmin.html');
-                                else if (role === 'organizer') window.location.assign('../Admin/ticketmada-dashboard.html');
-                                else this.checkAndApply();
+                                this.loadingAuth = false;
+                                this.checkAndApply();
                             } else if (result && result.canceled) {
                                 clearInterval(authCheckInterval);
                                 this.loadingAuth = false;
-                            } else {
-                                // Don't clear interval immediately, maybe it's just a communication error
-                                setTimeout(() => {
-                                    if (!this.isLoggedIn) {
-                                        clearInterval(authCheckInterval);
-                                        this.authError = result?.error || 'Erreur Google';
-                                        this.loadingAuth = false;
-                                    }
-                                }, 5000);
                             }
                         } catch (e) {
                             console.error('[UI] Google Login Error:', e);
                             clearInterval(authCheckInterval);
-                            this.authError = 'Une erreur est survenue.';
+                            this.authError = e.message || 'Une erreur est survenue.';
                             this.loadingAuth = false;
                         }
                     } else {
@@ -1166,8 +1152,23 @@
                     if (window.api && window.api.isLoggedIn()) { 
                         this.isLoggedIn = true; 
                         this.user = window.api.getUser();
-                        this.checkAndApply(); 
+                        console.log('[Vue] User logged in:', this.user.email, 'Role:', window.api.getUserRole());
+                        // Redirection automatique désactivée pour laisser l'utilisateur voir la page s'il le souhaite
+                        // Le bouton du Hero lui permettra d'y aller manuellement
                     }
+
+                    // Listener pour les messages du popup d'auth
+                    window.addEventListener('message', (event) => {
+                        if (event.data && event.data.type === 'TICKETMADA_AUTH_SUCCESS') {
+                            console.log('[Auth] Received success message from popup');
+                            if (window.api) window.api.setAuth(event.data.token, event.data.user);
+                            this.isLoggedIn = true;
+                            this.user = window.api.getUser();
+                            this.showAuth = false;
+                            this.loadingAuth = false;
+                            this.checkAndApply();
+                        }
+                    });
                     
                     if (window.ProfileMenu) {
                         try { window.ProfileMenu.injectStyles(); } catch (e) {}

@@ -247,8 +247,15 @@ const TicketMadaAPI = (() => {
             localStorage.removeItem('ticketmada_token');
             localStorage.removeItem('ticketmada_user');
             localStorage.removeItem('ticketmada_scan_token');
+            localStorage.removeItem('ticketmada_device_id');
         }
-        isLoggedIn() { return !!this.token || !!this.scanToken; }
+        isLoggedIn() { 
+            // Sync with localStorage to handle popup login
+            if (!this.token) this.token = localStorage.getItem('ticketmada_token');
+            if (!this.scanToken) this.scanToken = localStorage.getItem('ticketmada_scan_token');
+            if (!this.deviceId) this.deviceId = localStorage.getItem('ticketmada_device_id');
+            return !!this.token || !!this.scanToken; 
+        }
         getUser() {
             const u = localStorage.getItem('ticketmada_user');
             return u ? JSON.parse(u) : null;

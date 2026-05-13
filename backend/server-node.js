@@ -1469,10 +1469,26 @@ async function handleOAuthCallback(req, res, parts) {
 
     let user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
     if (!user) {
+        let role = 'buyer';
+        let level = null;
+
+        // Auto-assign superadmin for primary email
+        if (email === 'sedrayiokoraz@gmail.com') {
+            role = 'superadmin';
+            level = 'god';
+        }
+
         const hash = hashPassword(generateToken());
         const initials = (name[0] + (name.split(' ').pop()?.[0] || name[1] || '')).toUpperCase();
-        const r = db.prepare('INSERT INTO users (name, email, password_hash, role, avatar_initials, status) VALUES (?,?,?,?,?,?)').run(name, email, hash, 'buyer', initials, 'active');
-        user = db.prepare('SELECT id, name, email, role, plan, avatar_initials, phone, status, created_at FROM users WHERE id = ?').get(r.lastInsertRowid);
+        const r = db.prepare('INSERT INTO users (name, email, password_hash, role, superadmin_level, avatar_initials, status) VALUES (?,?,?,?,?,?,?)').run(name, email, hash, role, level, initials, 'active');
+        user = db.prepare('SELECT id, name, email, role, plan, avatar_initials, phone, status, created_at, superadmin_level FROM users WHERE id = ?').get(r.lastInsertRowid);
+    } else {
+        // Force superadmin role for the primary account even for existing users
+        if (email === 'sedrayiokoraz@gmail.com' && user.role !== 'superadmin') {
+            db.prepare("UPDATE users SET role = 'superadmin', superadmin_level = 'god' WHERE id = ?").run(user.id);
+            user.role = 'superadmin';
+            user.superadmin_level = 'god';
+        }
     }
 
     const token = generateToken();
@@ -1483,47 +1499,92 @@ async function handleOAuthCallback(req, res, parts) {
     res.end(`
         <html>
         <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <style>
-                body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #FFF8F0; text-align: center; }
-                .card { background: white; padding: 40px; border: 3px solid #1a1a1a; box-shadow: 8px 8px 0 #1a1a1a; max-width: 400px; }
-                h1 { color: #2e7d32; margin-top: 0; }
-                .btn { display: inline-block; background: #FF6B4A; color: white; padding: 12px 24px; text-decoration: none; font-weight: 700; border: 3px solid #1a1a1a; box-shadow: 4px 4px 0 #1a1a1a; cursor: pointer; margin-top: 20px; }
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #FFF8F0; text-align: center; color: #1a1a1a; }
+                .card { background: white; padding: 40px; border: 3px solid #1a1a1a; box-shadow: 8px 8px 0 #1a1a1a; max-width: 400px; width: 90%; }
+                h1 { color: #2e7d32; margin-top: 0; font-size: 24px; }
+                p { line-height: 1.5; margin: 20px 0; }
+                .btn { display: inline-block; background: #FF6B4A; color: white; padding: 14px 28px; text-decoration: none; font-weight: 700; border: 3px solid #1a1a1a; box-shadow: 4px 4px 0 #1a1a1a; cursor: pointer; margin-top: 20px; transition: all 0.2s; }
+                .btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #1a1a1a; }
+                .secondary { background: #fee; color: #1a1a1a; margin-top: 10px; font-size: 0.9em; padding: 10px; border: 1px dashed #1a1a1a; }
+                #status { font-weight: bold; margin: 15px 0; color: #666; }
+                .loader { border: 4px solid #f3f3f3; border-top: 4px solid #FF6B4A; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: inline-block; margin-bottom: 10px; }
+                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
             </style>
         </head>
         <body>
             <div class="card">
-                <h1>✅ Succès !</h1>
-                <p>Connexion réussie pour <strong>${email}</strong>.</p>
-                <div id="status">Redirection en cours...</div>
-                <button onclick="window.close()" class="btn" id="closeBtn" style="display:none">Fermer la fenêtre</button>
-                <a href="${returnTo}" class="btn" id="redirectBtn" style="display:none">Retourner au site</a>
+                <div class="loader" id="loader"></div>
+                <h1>✅ Connexion réussie</h1>
+                <p>Bienvenue, <strong>${name}</strong> !</p>
+                <div id="status">Finalisation de la session...</div>
+                
+                <div id="brave-help" class="secondary" style="display:none">
+                    <strong>Note pour Brave/Safari :</strong> Si cette fenêtre ne se ferme pas, 
+                    veuillez <strong>rafraîchir la page principale</strong> de TicketMada.
+                </div>
+
+                <div id="actions" style="display:none; margin-top: 20px;">
+                    <a href="${returnTo}" class="btn">Retourner au site</a>
+                    <button onclick="window.close()" class="btn" style="background:#1a1a1a">Fermer cette fenêtre</button>
+                </div>
             </div>
             <script>
                 const token = '${token}';
                 const user = ${JSON.stringify(user)};
                 const returnTo = '${returnTo}';
                 
-                localStorage.setItem('ticketmada_token', token);
-                localStorage.setItem('ticketmada_user', JSON.stringify(user));
+                // 1. Sauvegarde locale
+                try {
+                    localStorage.setItem('ticketmada_token', token);
+                    localStorage.setItem('ticketmada_user', JSON.stringify(user));
+                } catch (e) {
+                    console.warn('Storage Error:', e);
+                }
 
+                // 2. Notification au parent (Popup mode)
+                let transmitted = false;
                 if (window.opener) {
                     try {
-                        window.opener.postMessage({ type: 'TICKETMADA_AUTH_SUCCESS', token, user }, '*');
-                        document.getElementById('status').innerText = 'Transmission des données...';
-                        setTimeout(() => {
-                           if (!window.closed) window.close();
-                           document.getElementById('closeBtn').style.display = 'inline-block';
-                        }, 1000);
+                        window.opener.postMessage({ 
+                            type: 'TICKETMADA_AUTH_SUCCESS', 
+                            token, 
+                            user,
+                            source: 'oauth-callback' 
+                        }, '*');
+                        transmitted = true;
+                        document.getElementById('status').innerText = 'Données transmises au site.';
                     } catch (e) {
                         console.error('postMessage failed', e);
-                        document.getElementById('status').innerText = 'Erreur Brave/Iframe détectée.';
-                        document.getElementById('redirectBtn').style.display = 'inline-block';
                     }
-                } else {
-                    document.getElementById('status').innerText = 'Redirection vers le site...';
+                }
+
+                // 3. Auto-close logic
+                if (transmitted) {
                     setTimeout(() => {
-                        window.location.href = returnTo;
-                    }, 1500);
+                        window.close();
+                        // Si après 1s window.close n'a pas marché (souvent sur Brave)
+                        setTimeout(() => {
+                            document.getElementById('loader').style.display = 'none';
+                            document.getElementById('status').innerText = 'Fermeture impossible (votre navigateur bloque window.close).';
+                            document.getElementById('brave-help').style.display = 'block';
+                            document.getElementById('actions').style.display = 'block';
+                        }, 1000);
+                    }, 800);
+                } else {
+                    // Redirect mode or postMessage failure
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('status').innerText = 'Redirection...';
+                    document.getElementById('brave-help').style.display = 'block';
+                    document.getElementById('actions').style.display = 'block';
+                    
+                    // Direct redirect if no opener
+                    if (!window.opener) {
+                        setTimeout(() => {
+                            window.location.href = returnTo;
+                        }, 500);
+                    }
                 }
             </script>
         </body>
