@@ -34,6 +34,46 @@ const GoogleAuth = (() => {
         }
     }
 
+    // ── Détection automatique du navigateur ──
+    function _detectBrowser() {
+        const ua = navigator.userAgent;
+        if (navigator.brave && typeof navigator.brave.isBrave === 'function') {
+            return { name: 'brave', label: 'Brave' };
+        }
+        if (/Safari/.test(ua) && !/Chrome/.test(ua) && !/Chromium/.test(ua)) {
+            return { name: 'safari', label: 'Safari' };
+        }
+        if (/Firefox/.test(ua)) {
+            return { name: 'firefox', label: 'Firefox' };
+        }
+        if (/Edg\//.test(ua)) {
+            return { name: 'edge', label: 'Edge' };
+        }
+        if (/Chrome/.test(ua)) {
+            return { name: 'chrome', label: 'Chrome' };
+        }
+        return { name: 'other', label: 'votre navigateur' };
+    }
+
+    // ── Message d'aide adapté au navigateur ──
+    function _getBrowserTip() {
+        const browser = _detectBrowser();
+        switch (browser.name) {
+            case 'brave':
+                return 'sur Brave, désactiver les Shields (icône lion) pour cette page';
+            case 'safari':
+                return 'sur Safari, aller dans Préférences → Confidentialité → décocher « Empêcher le suivi intersite »';
+            case 'firefox':
+                return 'sur Firefox, vérifier que la Protection renforcée contre le pistage n\'est pas en mode Strict';
+            case 'chrome':
+                return 'sur Chrome, désactiver les extensions de privacy (uBlock, Privacy Badger) temporairement';
+            case 'edge':
+                return 'sur Edge, vérifier les paramètres de prévention du suivi dans edge://settings/privacy';
+            default:
+                return 'vérifier les paramètres de confidentialité de votre navigateur';
+        }
+    }
+
     // ── Callback appelé par Google après login ──
     function _handleCredentialResponse(response) {
         console.log('[GoogleAuth] Credential response received');
@@ -144,48 +184,121 @@ const GoogleAuth = (() => {
          * Start Google login.
          * Enforced POPUP mode as requested.
          */
-        async signIn() {
+        async signIn(uxMode = 'popup') {
             if (!_initialized) await this.init();
+            console.log('[GoogleAuth] signIn() requested with mode:', uxMode);
 
-            console.log('[GoogleAuth] signIn() requested');
-
-            return new Promise((resolve, reject) => {
-                _resolveSignIn = resolve;
-                _rejectSignIn = reject;
-
-                // Watchdog to detect blocked popups or library issues
-                const signInTimeout = setTimeout(() => {
-                    const isBrave = navigator.userAgent.includes('Brave');
-                    console.error('[GoogleAuth] SignIn timeout (60s)');
-                    let msg = isBrave 
-                        ? 'Connexion bloquée par Brave. Veuillez désactiver les "Shields" (icône lion) pour ce site.'
-                        : 'Délai de connexion dépassé. Vérifiez vos bloqueurs de publicité.';
-                    reject(new Error(msg));
-                }, 60000);
-
+            // ── Mode redirect ──
+            if (uxMode === 'redirect') {
                 try {
-                    // Using the more robust Token flow which works better with standard buttons
+                    const returnTo = encodeURIComponent(window.location.href);
+                    const res = await fetch(`/api/auth/url?provider=google&return_to=${returnTo}`);
+                    const data = await res.json();
+                    if (data.url) {
+                        window.location.href = data.url;
+                        return new Promise(() => {});
+                    }
+                } catch (e) {
+                    console.error('[GoogleAuth] Failed to get redirect URL:', e);
+                }
+                google.accounts.id.initialize({
+                    client_id: CLIENT_ID,
+                    callback: _handleCredentialResponse,
+                    ux_mode: 'redirect',
+                    login_uri: window.location.origin + window.location.pathname,
+                    itp_support: true
+                });
+                google.accounts.id.prompt();
+                return new Promise(() => {});
+            }
+
+            // ── Mode popup (standard) ──
+            // On utilise DEUX mécanismes en parallèle :
+            // A) Le callback de initTokenClient (fonctionne sur Chrome/Safari)
+            // B) Un polling de localStorage (backup pour tout cas où le callback ne fire pas)
+            
+            return new Promise((resolve, reject) => {
+                let resolved = false;
+                
+                // Sauvegarder l'état AVANT le popup pour détecter les changements
+                const userBefore = localStorage.getItem(USER_KEY);
+                
+                // ── Watchdog global : 45 secondes max ──
+                const globalTimeout = setTimeout(() => {
+                    if (!resolved) {
+                        resolved = true;
+                        clearInterval(pollingInterval);
+                        const browserTip = _getBrowserTip();
+                        reject(new Error(
+                            'La connexion Google a pris trop de temps. ' +
+                            'Essayez : (1) recharger la page et réessayer, ' +
+                            '(2) utiliser email/mot de passe' +
+                            (browserTip ? ', (3) ' + browserTip : '') + '.'
+                        ));
+                    }
+                }, 45000);
+                
+                // ── Mécanisme B : POLLING de localStorage ──
+                // Si _handleCredentialResponse (du google.accounts.id.initialize) 
+                // écrit dans localStorage AVANT que le callback tokenClient ne fire,
+                // on détecte le login ici.
+                const pollingInterval = setInterval(() => {
+                    if (resolved) { clearInterval(pollingInterval); return; }
+                    
+                    const currentUser = localStorage.getItem(USER_KEY);
+                    if (currentUser && currentUser !== userBefore) {
+                        console.log('[GoogleAuth] Polling detected login in localStorage!');
+                        try {
+                            const user = JSON.parse(currentUser);
+                            if (user && user.email) {
+                                resolved = true;
+                                clearInterval(pollingInterval);
+                                clearTimeout(globalTimeout);
+                                resolve(user);
+                            }
+                        } catch (e) {}
+                    }
+                }, 500); // Check toutes les 500ms
+                
+                // ── Mécanisme A : tokenClient callback (standard) ──
+                _resolveSignIn = (user) => {
+                    if (!resolved) {
+                        resolved = true;
+                        clearInterval(pollingInterval);
+                        clearTimeout(globalTimeout);
+                        resolve(user);
+                    }
+                };
+                _rejectSignIn = (err) => {
+                    if (!resolved) {
+                        resolved = true;
+                        clearInterval(pollingInterval);
+                        clearTimeout(globalTimeout);
+                        reject(err);
+                    }
+                };
+                
+                try {
                     const tokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: CLIENT_ID,
                         scope: 'email profile openid',
                         ux_mode: 'popup',
                         callback: async (tokenResponse) => {
-                            clearTimeout(signInTimeout);
+                            if (resolved) return; // Déjà résolu par le polling
+                            
                             if (tokenResponse.error) {
-                                if (tokenResponse.error === 'access_denied') {
-                                    resolve({ canceled: true });
-                                } else {
-                                    reject(new Error(`Google Error: ${tokenResponse.error}`));
-                                }
+                                resolved = true;
+                                clearInterval(pollingInterval);
+                                clearTimeout(globalTimeout);
+                                if (tokenResponse.error === 'access_denied') resolve({ canceled: true });
+                                else reject(new Error(tokenResponse.error));
                                 return;
                             }
                             
-                            // Immediately fetch user info with the access token
                             try {
                                 const infoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                                     headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
                                 });
-                                
                                 if (infoRes.ok) {
                                     const payload = await infoRes.json();
                                     const user = {
@@ -196,29 +309,40 @@ const GoogleAuth = (() => {
                                         token: tokenResponse.access_token,
                                         provider: 'google'
                                     };
-                                    
                                     localStorage.setItem(TOKEN_KEY, user.token);
                                     localStorage.setItem(USER_KEY, JSON.stringify(user));
-                                    console.log('[GoogleAuth] Success:', user.email);
-                                    resolve(user);
+                                    if (!resolved) {
+                                        resolved = true;
+                                        clearInterval(pollingInterval);
+                                        clearTimeout(globalTimeout);
+                                        resolve(user);
+                                    }
                                 } else {
-                                    // Fallback if userinfo fails but token is valid
-                                    resolve({ token: tokenResponse.access_token, email: 'user@google.com', needsSync: true });
+                                    if (!resolved) {
+                                        resolved = true;
+                                        clearInterval(pollingInterval);
+                                        clearTimeout(globalTimeout);
+                                        resolve({ token: tokenResponse.access_token, email: 'pending@google.com', needsSync: true });
+                                    }
                                 }
                             } catch (e) {
-                                console.error('[GoogleAuth] UserInfo fetch failed:', e);
-                                resolve({ token: tokenResponse.access_token, email: 'user@google.com', needsSync: true });
+                                if (!resolved) {
+                                    resolved = true;
+                                    clearInterval(pollingInterval);
+                                    clearTimeout(globalTimeout);
+                                    resolve({ token: tokenResponse.access_token, email: 'pending@google.com', needsSync: true });
+                                }
                             }
                         }
                     });
-
-                    // Trigger the popup
                     tokenClient.requestAccessToken();
-                    
                 } catch (e) {
-                    clearTimeout(signInTimeout);
-                    console.error('[GoogleAuth] Exception during signIn:', e);
-                    reject(e);
+                    if (!resolved) {
+                        resolved = true;
+                        clearInterval(pollingInterval);
+                        clearTimeout(globalTimeout);
+                        reject(e);
+                    }
                 }
             });
         },
@@ -272,7 +396,10 @@ const GoogleAuth = (() => {
                 return localStorage.getItem(TOKEN_KEY);
             } catch (e) {}
             return null;
-        }
+        },
+
+        detectBrowser: _detectBrowser,
+        getBrowserTip: _getBrowserTip
     };
 
     // Expose globally

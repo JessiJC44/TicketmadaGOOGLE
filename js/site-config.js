@@ -22,7 +22,11 @@ window.TICKETMADA_CONFIG = {
     // Format price helper
     formatPrice(amount) {
         if (amount === undefined || amount === null) return '0 Ar';
-        return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' Ar';
+        try {
+            return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' Ar';
+        } catch (e) {
+            return (amount || 0) + ' Ar';
+        }
     },
 
     // Pages config

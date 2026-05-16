@@ -188,7 +188,19 @@ const TicketMadaAPI = (() => {
             if (body) opts.body = JSON.stringify(body);
             
             try {
-                const url = this.baseUrl + (path.startsWith('http') ? '' : (path.startsWith('/api') ? path : '/api' + path));
+                // Determine if we need to prefix with /api
+                let finalPath = path;
+                if (!path.startsWith('http') && !path.startsWith('/api')) {
+                    finalPath = '/api' + (path.startsWith('/') ? '' : '/') + path;
+                }
+                
+                // If baseUrl already ends with /api, and path starts with /api, remove one /api
+                let url = this.baseUrl;
+                if (url.endsWith('/api') && finalPath.startsWith('/api')) {
+                    url = url.slice(0, -4);
+                }
+                url += finalPath;
+                
                 // Basic cleanup of double slashes (except in protocol)
                 const finalUrl = url.replace(/([^:])\/\//g, '$1/');
                 
@@ -278,6 +290,7 @@ const TicketMadaAPI = (() => {
         constructor() {
             this.real = new RealAPI();
             this.useMock = true; // Start with mock, switch if backend responds
+            this.isReady = false;
             this._checkBackend();
         }
 
@@ -287,7 +300,7 @@ const TicketMadaAPI = (() => {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 2000);
                 
-                const res = await fetch(apiBase + '/api/health', { signal: controller.signal });
+                const res = await fetch((apiBase || '') + '/api/health', { signal: controller.signal });
                 clearTimeout(timeoutId);
                 
                 if (res.ok) {
@@ -297,6 +310,9 @@ const TicketMadaAPI = (() => {
             } catch (e) {
                 this.useMock = true;
                 console.log('[TicketMada] No backend — using mock data');
+            } finally {
+                this.isReady = true;
+                window.dispatchEvent(new CustomEvent('api-ready'));
             }
         }
 
@@ -451,12 +467,29 @@ const TicketMadaAPI = (() => {
         async register(name, email, password) { 
             let data = typeof name === 'object' ? name : { name, email, password };
             console.log('[SmartAPI] register attempt for:', data.email, 'Backend enabled:', !this.useMock);
+            
             if (this.useMock) {
                 const result = { success: true, token: 'mock-reg-token', user: { name: data.name, email: data.email, role: 'buyer' } };
                 this.setAuth(result.token, result.user);
                 return result;
             }
-            return this.real.post('/api/auth/register', data); 
+            
+            try {
+                const result = await this.real.post('/api/auth/register', data);
+                if (result && result.success !== false) {
+                    this.setAuth(result.token, result.user);
+                }
+                return result;
+            } catch (e) {
+                console.error('[SmartAPI] Register Failed:', e);
+                if (e.error && e.error.includes('déjà utilisé')) {
+                    throw { error: 'Cet email est déjà utilisé. Connectez-vous ou utilisez un autre email.' };
+                } else if (e.error && e.error.includes('Network')) {
+                    throw { error: 'Le serveur n\'est pas accessible. Essayez Google pour créer votre compte.' };
+                } else {
+                    throw { error: e.error || 'Erreur lors de l\'inscription.' };
+                }
+            }
         }
         async login(email, password) { 
             let result;
@@ -468,10 +501,17 @@ const TicketMadaAPI = (() => {
                 console.log('[SmartAPI] Real Login Result:', result);
             } catch (e) {
                 console.error('[SmartAPI] Real Login Failed:', e);
-                throw e; // No fallback to mock as per "real-only" requirement
+                // Message d'erreur clair selon le type d'erreur
+                if (e.status === 401) {
+                    throw { error: 'Email ou mot de passe incorrect.' };
+                } else if (e.error && e.error.includes('Network')) {
+                    throw { error: 'Le serveur n\'est pas accessible. Vérifiez votre connexion ou utilisez Google.' };
+                } else {
+                    throw { error: e.error || 'Erreur de connexion au serveur.' };
+                }
             }
             
-            if (result && result.success) {
+            if (result && result.success !== false) {
                 this.setAuth(result.token, result.user);
             }
             return result; 
