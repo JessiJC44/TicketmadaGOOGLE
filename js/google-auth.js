@@ -188,7 +188,7 @@ const GoogleAuth = (() => {
             if (!_initialized) await this.init();
             console.log('[GoogleAuth] signIn() requested with mode:', uxMode);
 
-            // ── Mode redirect ──
+            // ── Mode redirect (inchangé) ──
             if (uxMode === 'redirect') {
                 try {
                     const returnTo = encodeURIComponent(window.location.href);
@@ -212,89 +212,141 @@ const GoogleAuth = (() => {
                 return new Promise(() => {});
             }
 
-            // ── Mode popup (standard) ──
-            // On utilise DEUX mécanismes en parallèle :
-            // A) Le callback de initTokenClient (fonctionne sur Chrome/Safari)
-            // B) Un polling de localStorage (backup pour tout cas où le callback ne fire pas)
-            
+            // ══════════════════════════════════════════════════════════
+            // MODE POPUP — FIX DÉFINITIF (3 MÉCANISMES EN PARALLÈLE)
+            // ══════════════════════════════════════════════════════════
+
             return new Promise((resolve, reject) => {
                 let resolved = false;
-                
-                // Sauvegarder l'état AVANT le popup pour détecter les changements
-                const userBefore = localStorage.getItem(USER_KEY);
-                
-                // ── Watchdog global : 45 secondes max ──
-                const globalTimeout = setTimeout(() => {
+
+                // ── Fonctions utilitaires de résolution ──
+                const cleanup = () => {
+                    clearInterval(pollingInterval);
+                    clearTimeout(globalTimeout);
+                    window.removeEventListener('focus', onFocusBack);
+                    document.removeEventListener('visibilitychange', onVisChange);
+                };
+
+                const doResolve = (user) => {
                     if (!resolved) {
                         resolved = true;
-                        clearInterval(pollingInterval);
-                        const browserTip = _getBrowserTip();
-                        reject(new Error(
-                            'La connexion Google a pris trop de temps. ' +
-                            'Essayez : (1) recharger la page et réessayer, ' +
-                            '(2) utiliser email/mot de passe' +
-                            (browserTip ? ', (3) ' + browserTip : '') + '.'
-                        ));
-                    }
-                }, 45000);
-                
-                // ── Mécanisme B : POLLING de localStorage ──
-                // Si _handleCredentialResponse (du google.accounts.id.initialize) 
-                // écrit dans localStorage AVANT que le callback tokenClient ne fire,
-                // on détecte le login ici.
-                const pollingInterval = setInterval(() => {
-                    if (resolved) { clearInterval(pollingInterval); return; }
-                    
-                    const currentUser = localStorage.getItem(USER_KEY);
-                    if (currentUser && currentUser !== userBefore) {
-                        console.log('[GoogleAuth] Polling detected login in localStorage!');
-                        try {
-                            const user = JSON.parse(currentUser);
-                            if (user && user.email) {
-                                resolved = true;
-                                clearInterval(pollingInterval);
-                                clearTimeout(globalTimeout);
-                                resolve(user);
-                            }
-                        } catch (e) {}
-                    }
-                }, 500); // Check toutes les 500ms
-                
-                // ── Mécanisme A : tokenClient callback (standard) ──
-                _resolveSignIn = (user) => {
-                    if (!resolved) {
-                        resolved = true;
-                        clearInterval(pollingInterval);
-                        clearTimeout(globalTimeout);
+                        cleanup();
+                        console.log('[GoogleAuth] Login resolved for:', user?.email || 'unknown');
                         resolve(user);
                     }
                 };
-                _rejectSignIn = (err) => {
+
+                const doReject = (err) => {
                     if (!resolved) {
                         resolved = true;
-                        clearInterval(pollingInterval);
-                        clearTimeout(globalTimeout);
+                        cleanup();
                         reject(err);
                     }
                 };
-                
+
+                // Snapshot localStorage AVANT le popup
+                const userBefore = localStorage.getItem(USER_KEY);
+
+                // ── Watchdog global : 45s max ──
+                const globalTimeout = setTimeout(() => {
+                    const browserTip = _getBrowserTip();
+                    doReject(new Error(
+                        'La connexion Google a pris trop de temps. ' +
+                        'Essayez : (1) recharger la page, ' +
+                        '(2) utiliser email/mot de passe' +
+                        (browserTip ? ', (3) ' + browserTip : '') + '.'
+                    ));
+                }, 45000);
+
+                // ══ MÉCANISME B : Polling localStorage toutes les 500ms ══
+                // Attrape toute écriture — que ce soit par tokenClient callback,
+                // par _handleCredentialResponse, ou par tout autre chemin.
+                const pollingInterval = setInterval(() => {
+                    if (resolved) return;
+                    const currentUser = localStorage.getItem(USER_KEY);
+                    if (currentUser && currentUser !== userBefore) {
+                        try {
+                            const user = JSON.parse(currentUser);
+                            if (user && user.email) {
+                                console.log('[GoogleAuth] POLLING detected login:', user.email);
+                                doResolve(user);
+                            }
+                        } catch (e) { /* JSON invalide, on ignore */ }
+                    }
+                }, 500);
+
+                // ══ MÉCANISME C : Focus/Visibility fallback ══
+                // Quand le popup se ferme → le focus revient sur la page.
+                // On attend 2s (le temps que les cookies se propagent),
+                // puis on re-initialise google.accounts.id avec auto_select:true
+                // et on appelle prompt(). GIS détecte la session Google
+                // (cookie posé par le popup) et fire _handleCredentialResponse
+                // → écriture localStorage → le polling B le détecte → résolu.
+                const triggerPromptFallback = () => {
+                    if (resolved) return;
+                    console.log('[GoogleAuth] Focus returned. Triggering prompt() fallback in 2s...');
+                    setTimeout(() => {
+                        if (resolved) return;
+                        try {
+                            // Re-initialize avec auto_select pour sélection silencieuse
+                            google.accounts.id.initialize({
+                                client_id: CLIENT_ID,
+                                callback: _handleCredentialResponse,
+                                auto_select: true,
+                                cancel_on_tap_outside: false,
+                                itp_support: true,
+                                context: 'use'
+                            });
+                            google.accounts.id.prompt((notification) => {
+                                console.log('[GoogleAuth] Fallback prompt:', notification.getMomentType());
+                                // Si prompt affiche One Tap → user clique → _handleCredentialResponse
+                                // Si auto_select fonctionne → _handleCredentialResponse fire automatiquement
+                                // Si prompt supprimé → on attend le timeout de 45s
+                            });
+                        } catch (e) {
+                            console.warn('[GoogleAuth] Prompt fallback error:', e);
+                        }
+                    }, 2000);
+                };
+
+                const onFocusBack = () => {
+                    window.removeEventListener('focus', onFocusBack);
+                    document.removeEventListener('visibilitychange', onVisChange);
+                    triggerPromptFallback();
+                };
+                const onVisChange = () => {
+                    if (document.visibilityState === 'visible' && !resolved) {
+                        window.removeEventListener('focus', onFocusBack);
+                        document.removeEventListener('visibilitychange', onVisChange);
+                        triggerPromptFallback();
+                    }
+                };
+                window.addEventListener('focus', onFocusBack);
+                document.addEventListener('visibilitychange', onVisChange);
+
+                // ══ MÉCANISME A : tokenClient callback (standard) ══
+                // On le garde — quand il marche, c'est le plus rapide.
+                _resolveSignIn = doResolve;
+                _rejectSignIn = doReject;
+
                 try {
                     const tokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: CLIENT_ID,
                         scope: 'email profile openid',
                         ux_mode: 'popup',
                         callback: async (tokenResponse) => {
-                            if (resolved) return; // Déjà résolu par le polling
-                            
+                            if (resolved) return;
+
                             if (tokenResponse.error) {
-                                resolved = true;
-                                clearInterval(pollingInterval);
-                                clearTimeout(globalTimeout);
-                                if (tokenResponse.error === 'access_denied') resolve({ canceled: true });
-                                else reject(new Error(tokenResponse.error));
+                                if (tokenResponse.error === 'access_denied') {
+                                    doResolve({ canceled: true });
+                                } else {
+                                    doReject(new Error(tokenResponse.error));
+                                }
                                 return;
                             }
-                            
+
+                            // Token recu — fetch user info
                             try {
                                 const infoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                                     headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
@@ -311,38 +363,26 @@ const GoogleAuth = (() => {
                                     };
                                     localStorage.setItem(TOKEN_KEY, user.token);
                                     localStorage.setItem(USER_KEY, JSON.stringify(user));
-                                    if (!resolved) {
-                                        resolved = true;
-                                        clearInterval(pollingInterval);
-                                        clearTimeout(globalTimeout);
-                                        resolve(user);
-                                    }
+                                    doResolve(user);
                                 } else {
-                                    if (!resolved) {
-                                        resolved = true;
-                                        clearInterval(pollingInterval);
-                                        clearTimeout(globalTimeout);
-                                        resolve({ token: tokenResponse.access_token, email: 'pending@google.com', needsSync: true });
-                                    }
+                                    doResolve({
+                                        token: tokenResponse.access_token,
+                                        email: 'pending@google.com',
+                                        needsSync: true
+                                    });
                                 }
                             } catch (e) {
-                                if (!resolved) {
-                                    resolved = true;
-                                    clearInterval(pollingInterval);
-                                    clearTimeout(globalTimeout);
-                                    resolve({ token: tokenResponse.access_token, email: 'pending@google.com', needsSync: true });
-                                }
+                                doResolve({
+                                    token: tokenResponse.access_token,
+                                    email: 'pending@google.com',
+                                    needsSync: true
+                                });
                             }
                         }
                     });
                     tokenClient.requestAccessToken();
                 } catch (e) {
-                    if (!resolved) {
-                        resolved = true;
-                        clearInterval(pollingInterval);
-                        clearTimeout(globalTimeout);
-                        reject(e);
-                    }
+                    doReject(e);
                 }
             });
         },

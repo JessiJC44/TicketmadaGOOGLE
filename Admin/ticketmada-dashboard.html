@@ -192,29 +192,33 @@
             .charts-grid { grid-template-columns: 1fr !important; } 
         }
         @media (max-width: 1024px) { 
-            .sidebar { transform: translateX(-100%); width: 280px; } 
-            .sidebar.active { transform: translateX(0); box-shadow: 20px 0 0 rgba(0,0,0,0.2); }
+            .sidebar { transform: translateX(-100%); width: 280px; z-index: 1000; } 
+            .sidebar.open { transform: translateX(0); box-shadow: 20px 0 0 rgba(0,0,0,0.2); }
             .main-content { margin-left: 0 !important; width: 100%; } 
             .menu-toggle { display: flex !important; align-items: center; }
-            .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 90; }
-            .sidebar-overlay.active { display: block; }
+            .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 950; }
+            .sidebar-overlay.open { display: block; }
         }
         @media (max-width: 768px) { 
             .stats-grid, .quick-actions { grid-template-columns: 1fr !important; } 
             .welcome-banner { flex-direction: column; text-align: center; gap: 20px; padding: 25px; } 
+            .welcome-banner::after { display: none; }
             .topbar { padding: 10px 15px; gap: 10px; }
-            .topbar-left h1 { font-size: 0.9rem; max-width: 120px; }
+            .topbar-left h1 { font-size: 0.9rem; max-width: 120px; line-height: 1.2; }
             .topbar-left p { display: none; }
             .dashboard-content { padding: 15px; }
-            .event-card { flex-direction: column; align-items: flex-start; } 
+            .event-card { flex-direction: column; align-items: flex-start; padding: 15px; } 
             .event-image { width: 100%; height: 160px; }
-            .event-actions { flex-direction: row; width: 100%; gap: 10px; flex-wrap: wrap; }
-            .event-actions .btn { flex: 1; min-width: 100px; justify-content: center; font-size: 0.75rem; padding: 8px; }
+            .event-actions { flex-direction: row; width: 100%; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+            .event-actions .btn { flex: 1; min-width: 120px; justify-content: center; font-size: 0.75rem; padding: 10px; }
+            .event-meta { flex-direction: column; gap: 5px; }
             .form-row { grid-template-columns: 1fr; } 
             .stat-value { font-size: 1.4rem; }
             .balance-card .balance-amount { font-size: 1.8rem; }
-            .auth-card { padding: 30px 20px; }
+            .auth-card { padding: 30px 20px; border-width: 2px; box-shadow: 6px 6px 0 #1a1a1a; }
             .btn { font-size: 0.8rem; padding: 10px 15px; }
+            .charts-grid { gap: 15px; }
+            .modal { margin: 10px; max-width: calc(100% - 20px); }
         }
 
         .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26, 26, 26, 0.95); z-index: 2000; display: flex; align-items: center; justify-content: center; }
@@ -271,6 +275,9 @@
                             </template>
                         </button>
                         
+                        <!-- Bouton Google officiel (fallback fiable) -->
+                        <div id="google-button-container" style="margin-top: 12px; display: flex; justify-content: center;"></div>
+                        
                         <div v-if="loadingAuth" style="margin-top:15px; padding:10px; background:#fff8e1; border:3px solid #1a1a1a; box-shadow:3px 3px 0 #1a1a1a; font-size:0.75rem; color:#856404; font-weight:700; text-align:center;">
                              💡 Brave ? Désactivez les "Shields" (icône lion) si la popup de connexion ne s'affiche pas.
                         </div>
@@ -310,9 +317,9 @@
         </div>
 
         <template v-if="isLoggedIn || isSuperAdminViewing">
-            <div class="sidebar-overlay" :class="{ active: sidebarOpen }" @click="sidebarOpen = false"></div>
+            <div class="sidebar-overlay" :class="{ open: sidebarOpen }" @click="sidebarOpen = false"></div>
             <div class="dashboard-layout">
-            <aside class="sidebar" :class="{ active: sidebarOpen }">
+            <aside class="sidebar" :class="{ open: sidebarOpen }">
                 <div class="sidebar-header">
                     <a href="../User/ticketmada-landing.html" class="sidebar-logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
                 </div>
@@ -320,15 +327,15 @@
                     <!-- OVERVIEW -->
                     <div class="nav-section">
                         <div class="nav-section-title">{{ lang === 'fr' ? 'VUE D\'ENSEMBLE' : 'OVERVIEW' }}</div>
-                        <div class="nav-item" :class="{ active: currentPage === 'getting-started' }" @click="currentPage = 'getting-started'">
+                        <div class="nav-item" :class="{ active: currentPage === 'getting-started' }" @click="currentPage = 'getting-started'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-rocket-launch</v-icon>
                             <span>{{ lang === 'fr' ? 'Premiers pas' : 'Getting Started' }}</span>
                         </div>
-                        <div class="nav-item" :class="{ active: currentPage === 'dashboard' }" @click="currentPage = 'dashboard'">
+                        <div class="nav-item" :class="{ active: currentPage === 'dashboard' }" @click="currentPage = 'dashboard'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-view-dashboard</v-icon>
                             <span>Dashboard</span>
                         </div>
-                        <div class="nav-item" :class="{ active: currentPage === 'reports' }" @click="currentPage = 'reports'">
+                        <div class="nav-item" :class="{ active: currentPage === 'reports' }" @click="currentPage = 'reports'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-file-chart</v-icon>
                             <span>{{ lang === 'fr' ? 'Rapports' : 'Reports' }}</span>
                         </div>
@@ -337,28 +344,28 @@
                     <!-- SETUP & DESIGN -->
                     <div class="nav-section">
                         <div class="nav-section-title">{{ lang === 'fr' ? 'PARAMÉTRAGE' : 'SETUP & DESIGN' }}</div>
-                        <div class="nav-item" :class="{ active: currentPage === 'events' }" @click="currentPage = 'events'">
+                        <div class="nav-item" :class="{ active: currentPage === 'events' }" @click="currentPage = 'events'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-calendar-star</v-icon>
                             <span>{{ lang === 'fr' ? 'Mes événements' : 'My Events' }}</span>
                             <span class="nav-item-badge" v-if="myEvents.length">{{ myEvents.length }}</span>
                         </div>
-                        <div class="nav-item" :class="{ active: currentPage === 'event-settings' }" @click="currentPage = 'event-settings'">
+                        <div class="nav-item" :class="{ active: currentPage === 'event-settings' }" @click="currentPage = 'event-settings'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-cog</v-icon>
                             <span>{{ lang === 'fr' ? 'Paramètres événement' : 'Event Settings' }}</span>
                         </div>
-                        <div class="nav-item" :class="{ active: currentPage === 'homepage-designer' }" @click="currentPage = 'homepage-designer'">
+                        <div class="nav-item" :class="{ active: currentPage === 'homepage-designer' }" @click="currentPage = 'homepage-designer'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-palette</v-icon>
                             <span>{{ lang === 'fr' ? 'Page événement' : 'Homepage Designer' }}</span>
                         </div>
-                        <div class="nav-item" :class="{ active: currentPage === 'ticket-designer' }" @click="currentPage = 'ticket-designer'">
+                        <div class="nav-item" :class="{ active: currentPage === 'ticket-designer' }" @click="currentPage = 'ticket-designer'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-ticket-outline</v-icon>
                             <span>{{ lang === 'fr' ? 'Design billet' : 'Ticket Designer' }}</span>
                         </div>
-                        <div class="nav-item" :class="{ active: currentPage === 'seatmap' }" @click="currentPage = 'seatmap'">
+                        <div class="nav-item" :class="{ active: currentPage === 'seatmap' }" @click="currentPage = 'seatmap'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-seat</v-icon>
                             <span>{{ lang === 'fr' ? 'Plan de salle' : 'Seat Map' }}</span>
                         </div>
-                        <div class="nav-item" :class="{ active: currentPage === 'registration-questions' }" @click="currentPage = 'registration-questions'">
+                        <div class="nav-item" :class="{ active: currentPage === 'registration-questions' }" @click="currentPage = 'registration-questions'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-form-select</v-icon>
                             <span>{{ lang === 'fr' ? 'Questions inscription' : 'Registration Questions' }}</span>
                         </div>
@@ -367,20 +374,20 @@
                     <!-- TICKETING & SALES -->
                     <div class="nav-section">
                         <div class="nav-section-title">{{ lang === 'fr' ? 'BILLETTERIE & VENTES' : 'TICKETING & SALES' }}</div>
-                        <div class="nav-item" :class="{ active: currentPage === 'products' }" @click="currentPage = 'products'">
+                        <div class="nav-item" :class="{ active: currentPage === 'products' }" @click="currentPage = 'products'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-tag-multiple</v-icon>
                             <span>{{ lang === 'fr' ? 'Billets & Produits' : 'Tickets & Products' }}</span>
                         </div>
-                        <div class="nav-item" :class="{ active: currentPage === 'orders' }" @click="currentPage = 'orders'">
+                        <div class="nav-item" :class="{ active: currentPage === 'orders' }" @click="currentPage = 'orders'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-cart</v-icon>
                             <span>{{ lang === 'fr' ? 'Commandes' : 'Orders' }}</span>
                             <span class="nav-item-badge" v-if="ordersCount">{{ ordersCount }}</span>
                         </div>
-                        <div class="nav-item" :class="{ active: currentPage === 'promo-codes' }" @click="currentPage = 'promo-codes'">
+                        <div class="nav-item" :class="{ active: currentPage === 'promo-codes' }" @click="currentPage = 'promo-codes'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-percent-circle</v-icon>
                             <span>{{ lang === 'fr' ? 'Codes promo' : 'Promo Codes' }}</span>
                         </div>
-                        <div class="nav-item" :class="{ active: currentPage === 'affiliates' }" @click="currentPage = 'affiliates'">
+                        <div class="nav-item" :class="{ active: currentPage === 'affiliates' }" @click="currentPage = 'affiliates'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-account-network</v-icon>
                             <span>{{ lang === 'fr' ? 'Affiliés' : 'Affiliates' }}</span>
                         </div>
@@ -389,24 +396,24 @@
                     <!-- GUEST MANAGEMENT -->
                     <div class="nav-section">
                         <div class="nav-section-title">{{ lang === 'fr' ? 'GESTION PARTICIPANTS' : 'GUEST MANAGEMENT' }}</div>
-                        <div class="nav-item" :class="{ active: currentPage === 'attendees' }" @click="currentPage = 'attendees'">
+                        <div class="nav-item" :class="{ active: currentPage === 'attendees' }" @click="currentPage = 'attendees'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-account-group</v-icon>
                             <span>{{ lang === 'fr' ? 'Participants' : 'Attendees' }}</span>
                             <span class="nav-item-badge" v-if="attendeesCount">{{ attendeesCount }}</span>
                         </div>
-                        <div class="nav-item" :class="{ active: currentPage === 'checkin-lists' }" @click="currentPage = 'checkin-lists'">
+                        <div class="nav-item" :class="{ active: currentPage === 'checkin-lists' }" @click="currentPage = 'checkin-lists'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-clipboard-check</v-icon>
                             <span>{{ lang === 'fr' ? 'Listes Check-In' : 'Check-In Lists' }}</span>
                         </div>
-                        <div class="nav-item" :class="{ active: currentPage === 'scan' }" @click="currentPage = 'scan'">
+                        <div class="nav-item" :class="{ active: currentPage === 'scan' }" @click="currentPage = 'scan'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-qrcode-scan</v-icon>
                             <span>{{ lang === 'fr' ? 'Contrôle accès' : 'Access Control' }}</span>
                         </div>
-                        <div class="nav-item" :class="{ active: currentPage === 'messages' }" @click="currentPage = 'messages'">
+                        <div class="nav-item" :class="{ active: currentPage === 'messages' }" @click="currentPage = 'messages'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-email-fast</v-icon>
                             <span>Messages</span>
                         </div>
-                        <div class="nav-item" :class="{ active: currentPage === 'capacity' }" @click="currentPage = 'capacity'">
+                        <div class="nav-item" :class="{ active: currentPage === 'capacity' }" @click="currentPage = 'capacity'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-gauge</v-icon>
                             <span>{{ lang === 'fr' ? 'Gestion capacité' : 'Capacity Management' }}</span>
                         </div>
@@ -415,15 +422,15 @@
                     <!-- FINANCE -->
                     <div class="nav-section">
                         <div class="nav-section-title">FINANCE</div>
-                        <div class="nav-item" :class="{ active: currentPage === 'finance' }" @click="currentPage = 'finance'">
+                        <div class="nav-item" :class="{ active: currentPage === 'finance' }" @click="currentPage = 'finance'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-cash-multiple</v-icon>
                             <span>{{ lang === 'fr' ? 'Mes revenus' : 'My Revenue' }}</span>
                         </div>
-                        <div class="nav-item" :class="{ active: currentPage === 'accounting' }" @click="currentPage = 'accounting'">
+                        <div class="nav-item" :class="{ active: currentPage === 'accounting' }" @click="currentPage = 'accounting'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-calculator-variant</v-icon>
                             <span>{{ lang === 'fr' ? 'Comptabilité & Taxes' : 'Accounting & Taxes' }}</span>
                         </div>
-                        <div class="nav-item" :class="{ active: currentPage === 'payouts' }" @click="currentPage = 'payouts'">
+                        <div class="nav-item" :class="{ active: currentPage === 'payouts' }" @click="currentPage = 'payouts'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-bank-transfer</v-icon>
                             <span>{{ lang === 'fr' ? 'Versements' : 'Payouts' }}</span>
                         </div>
@@ -432,11 +439,11 @@
                     <!-- INTEGRATIONS -->
                     <div class="nav-section">
                         <div class="nav-section-title">{{ lang === 'fr' ? 'INTÉGRATIONS' : 'INTEGRATIONS' }}</div>
-                        <div class="nav-item" :class="{ active: currentPage === 'widget-embed' }" @click="currentPage = 'widget-embed'">
+                        <div class="nav-item" :class="{ active: currentPage === 'widget-embed' }" @click="currentPage = 'widget-embed'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-code-tags</v-icon>
                             <span>{{ lang === 'fr' ? 'Widget intégré' : 'Widget Embed' }}</span>
                         </div>
-                        <div class="nav-item" :class="{ active: currentPage === 'webhooks' }" @click="currentPage = 'webhooks'">
+                        <div class="nav-item" :class="{ active: currentPage === 'webhooks' }" @click="currentPage = 'webhooks'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-webhook</v-icon>
                             <span>Webhooks</span>
                         </div>
@@ -445,19 +452,19 @@
                     <!-- ACCOUNT -->
                     <div class="nav-section">
                         <div class="nav-section-title">{{ lang === 'fr' ? 'COMPTE' : 'ACCOUNT' }}</div>
-                        <div class="nav-item" :class="{ active: currentPage === 'team' }" @click="currentPage = 'team'">
+                        <div class="nav-item" :class="{ active: currentPage === 'team' }" @click="currentPage = 'team'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-account-multiple</v-icon>
                             <span>{{ lang === 'fr' ? 'Mon équipe' : 'My Team' }}</span>
                         </div>
-                        <div class="nav-item" :class="{ active: currentPage === 'analytics' }" @click="currentPage = 'analytics'">
+                        <div class="nav-item" :class="{ active: currentPage === 'analytics' }" @click="currentPage = 'analytics'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-chart-areaspline</v-icon>
                             <span>Analytics</span>
                         </div>
-                        <div class="nav-item" :class="{ active: currentPage === 'settings' }" @click="currentPage = 'settings'">
+                        <div class="nav-item" :class="{ active: currentPage === 'settings' }" @click="currentPage = 'settings'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-cog-outline</v-icon>
                             <span>{{ lang === 'fr' ? 'Paramètres' : 'Settings' }}</span>
                         </div>
-                        <div class="nav-item" @click="currentPage = 'help'">
+                        <div class="nav-item" @click="currentPage = 'help'; sidebarOpen = false">
                             <v-icon class="nav-item-icon">mdi-help-circle</v-icon>
                             <span>{{ lang === 'fr' ? 'Aide' : 'Help' }}</span>
                         </div>
@@ -1821,17 +1828,22 @@
                     } catch(e) { alert('Erreur de mise à jour'); }
                 },
                 async loginWith(provider) {
-                    if (this.loadingAuth) {
-                        // Safety: if stuck for more than 10s, allow retry
-                        if (Date.now() - this.authStartTime > 10000) {
-                            this.loadingAuth = false;
-                        } else {
-                            return;
-                        }
-                    }
-                    
+                    this.loadingAuth = true;
                     this.authError = '';
                     this.authStartTime = Date.now();
+
+                    // ══ POLLING UI — détecte le login même si la Promise ne résout pas ══
+                    const authCheckInterval = setInterval(() => {
+                        if (window.api && window.api.isLoggedIn() && !this.isLoggedIn) {
+                            console.log('[Dashboard] Polling detected login success!');
+                            clearInterval(authCheckInterval);
+                            this.isLoggedIn = true;
+                            this.loadingAuth = false;
+                            this.loadDashboard();
+                        }
+                    }, 1000);
+                    // Stop polling après 60s
+                    setTimeout(() => clearInterval(authCheckInterval), 60000);
                     
                     if (provider === 'google') {
                         this.loadingAuth = true;
@@ -1991,6 +2003,20 @@
                             this.pendingScanRequests = requests;
                         }
                     } catch(e) { console.error('Error refreshing scan requests', e); }
+                },
+                renderGoogleButton(show) {
+                    if (show) {
+                        setTimeout(() => {
+                            const btnBox = document.getElementById('google-button-container');
+                            if (btnBox && window.GoogleAuth && window.GoogleAuth.renderButton) {
+                                window.GoogleAuth.renderButton('google-button-container', {
+                                    width: 320,
+                                    theme: 'outline',
+                                    text: 'continue_with'
+                                });
+                            }
+                        }, 200);
+                    }
                 },
                 async approveScanRequest(request) {
                     try {
@@ -2211,6 +2237,11 @@
                     alert('Plan de salle sauvegardé ! ' + totalSeats + ' sièges dans ' + zones + ' zones.');
                 }
             },
+            watch: {
+                isLoggedIn(val) { if (val) this.loadDashboard(); },
+                currentPage(newVal) { this.sidebarOpen = false; },
+                showAuth(val) { this.renderGoogleButton(val); }
+            },
             mounted() {
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.get('superadmin') === '1') {
@@ -2219,7 +2250,15 @@
                     this.viewingOrgLicense = urlParams.get('license') || 'PRO';
                 }
 
-                if (window.api && (window.api.isLoggedIn() || this.isSuperAdminViewing)) { this.isLoggedIn = true; this.loadDashboard(); }
+                // Render Google button if not logged in
+                if (!this.isLoggedIn && !this.isSuperAdminViewing) {
+                    this.renderGoogleButton(true);
+                }
+
+                if (window.api && (window.api.isLoggedIn() || this.isSuperAdminViewing)) { 
+                    this.isLoggedIn = true; 
+                    this.loadDashboard(); 
+                }
                 if (window.ProfileMenu) window.ProfileMenu.injectStyles();
                 
                 this.loadSeatmapTemplates();

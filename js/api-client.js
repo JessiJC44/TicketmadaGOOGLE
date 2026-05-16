@@ -352,7 +352,49 @@ const TicketMadaAPI = (() => {
                     return { success: true, data: [], links: [] };
                 }
                 if (path.startsWith('/superadmin/')) {
+                    if (path.includes('/dashboard')) {
+                        return {
+                            totalRevenue: 125450000,
+                            totalTicketsSold: 8420,
+                            totalCommission: 3763500,
+                            activeOrganizers: 42,
+                            recentActivity: [
+                                { id: 1, type: 'order', title: 'Nouvelle commande #TR-5421', user: 'Jean Dupon', time: new Date().toISOString() },
+                                { id: 2, type: 'org', title: 'Nouvel organisateur inscrit', user: 'FestivMada', time: new Date(Date.now() - 3600000).toISOString() },
+                                { id: 3, type: 'event', title: 'Événement validé: Somaroho', user: 'Admin', time: new Date(Date.now() - 7200000).toISOString() }
+                            ]
+                        };
+                    }
+                    if (path.includes('/organizers')) {
+                        return [
+                            { id: 1, name: 'Festival Donia', email: 'donia@nosybe.mg', status: 'active', eventCount: 12, revenue: 45000000, license: 'premium', created_at: '2025-01-15' },
+                            { id: 2, name: 'Alliance Française', email: 'culture@aft.mg', status: 'active', eventCount: 45, revenue: 12500000, license: 'standard', created_at: '2025-02-10' },
+                            { id: 3, name: 'Sports Mada', email: 'contact@sportsmada.mg', status: 'suspended', eventCount: 3, revenue: 500000, license: 'free', created_at: '2025-03-05' }
+                        ];
+                    }
+                    if (path.includes('/users')) {
+                        return [
+                            { id: 101, name: 'Andry R.', email: 'andry.r@gmail.com', status: 'verified', purchaseCount: 15, totalSpent: 1250000, created_at: '2025-01-20' },
+                            { id: 102, name: 'Sarah M.', email: 'sarah.m@gmail.com', status: 'verified', purchaseCount: 2, totalSpent: 80000, created_at: '2025-02-15' }
+                        ];
+                    }
+                    if (path.includes('/finance')) {
+                        return {
+                            stats: { totalVolume: 125450000, pendingPayouts: 15400000, completedPayouts: 85200000, totalCommissionCollected: 3763500 },
+                            payouts: [
+                                { id: 'p_1', organizer_name: 'Donia', net: 1500000, status: 'pending', created_at: new Date().toISOString() },
+                                { id: 'p_2', organizer_name: 'AFT', net: 450000, status: 'completed', created_at: new Date(Date.now() - 86400000).toISOString() }
+                            ],
+                            config: [ { key: 'commission_rate', value: '3%' }, { key: 'payout_delay', value: '48h' } ]
+                        };
+                    }
                     return { success: true, data: [] };
+                }
+                if (path.includes('/organizer-applications')) {
+                    return [
+                        { id: 501, name: 'Concert Pro MG', email: 'pro@concert.mg', type: 'Entreprise', motivation: 'Nous organisons des événements depuis 10 ans...', status: 'pending', created_at: new Date().toISOString() },
+                        { id: 502, name: 'Mada Show', email: 'mada@show.mg', type: 'Individuel', motivation: 'Passionné de musique.', status: 'pending', created_at: new Date(Date.now() - 172800000).toISOString() }
+                    ];
                 }
                 if (path.includes('/promo') || path.includes('/marketing')) {
                     return { success: true, promoCodes: [] };

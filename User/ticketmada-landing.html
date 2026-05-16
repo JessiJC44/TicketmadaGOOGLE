@@ -68,78 +68,119 @@
         .lang-toggle:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0px #1a1a1a; }
         
         .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 15px 20px; background: var(--bg-cream); border-bottom: 3px solid var(--border-dark); }
-        .navbar-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap; }
+        .navbar-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: nowrap; }
         .logo { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text-dark); flex-shrink: 0; }
         .logo-box { width: 42px; height: 42px; background: var(--accent-coral); border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; transform: rotate(-3deg); }
         .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; white-space: nowrap; }
         .logo-text span { color: var(--accent-coral); }
-        .nav-links { display: flex; gap: 12px; list-style: none; align-items: center; }
-        .nav-links.mobile-active { display: flex !important; flex-direction: column; width: 100%; position: absolute; top: 100%; left: 0; background: var(--bg-cream); border-bottom: 3px solid var(--border-dark); padding: 20px; box-shadow: 0 10px 0 rgba(0,0,0,0.1); }
+        .nav-links { display: flex; gap: 8px; list-style: none; align-items: center; flex-shrink: 1; min-width: 0; }
         .nav-links li { width: auto; }
-        .nav-links.mobile-active li { width: 100%; }
-        .nav-links.mobile-active a { width: 100%; text-align: center; }
         .nav-links a { 
             font-family: 'Syne', sans-serif; 
             font-weight: 700; 
             color: var(--text-dark); 
             text-decoration: none; 
-            padding: 8px 16px; 
+            padding: 7px 12px; 
             border: 3px solid var(--border-dark);
             background: white;
             box-shadow: 3px 3px 0px var(--border-dark);
             text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
+            font-size: 0.7rem;
+            letter-spacing: 0.3px;
             transition: all 0.15s ease;
             white-space: nowrap;
             display: inline-block;
         }
         .nav-links a:hover { 
+            transform: translate(-2px, -2px); 
+            box-shadow: 5px 5px 0 var(--border-dark); 
             background: var(--accent-yellow);
-            transform: translate(-1px, -1px);
-            box-shadow: 4px 4px 0px var(--border-dark);
         }
         .nav-links a.active {
             background: var(--accent-coral);
             color: white;
-            box-shadow: 3px 3px 0px var(--border-dark);
         }
-        .nav-cta { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
-        
-        /* Mobile Menu Toggle */
-        .mobile-menu-toggle {
+
+        /* ═══ NOUVEAU BREAKPOINT — empêcher le wrap de la navbar ═══ */
+        @media (max-width: 1350px) {
+            .nav-links { display: none !important; }
+            .mobile-menu-btn { display: flex !important; }
+        }
+
+        /* MOBILE NAV */
+        .mobile-menu-btn {
             display: none;
-            width: 45px;
-            height: 45px;
-            background: white;
+            width: 45px; height: 45px;
+            background: white; color: var(--text-dark);
             border: 3px solid var(--border-dark);
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 3px 3px 0px var(--border-dark);
+            box-shadow: 4px 4px 0 var(--border-dark);
+            font-size: 1.3rem; cursor: pointer;
+            align-items: center; justify-content: center;
         }
-        
-        @media (max-width: 1024px) {
-            .nav-links { display: none; }
-            .nav-links.mobile-active {
-                display: flex;
-                flex-direction: column;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                background: var(--bg-cream);
-                padding: 20px;
-                border: 3px solid var(--border-dark);
-                gap: 15px;
-                z-index: 999;
-                box-shadow: 0 10px 0 rgba(0,0,0,0.1);
-            }
-            .nav-links.mobile-active a { width: 100%; text-align: center; font-size: 0.9rem; padding: 12px; }
-            .mobile-menu-toggle { display: flex; }
+        .mobile-menu-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0; }
+
+        .mobile-drawer-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.8); z-index: 1500;
+        }
+        .mobile-drawer-overlay.active { display: block; }
+
+        .mobile-drawer {
+            position: fixed; top: 0; left: 0; bottom: 0;
+            width: 280px; background: var(--bg-cream);
+            border-right: 3px solid var(--border-dark);
+            z-index: 1600; transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding: 25px; overflow-y: auto;
+        }
+        .mobile-drawer.open { transform: translateX(0); }
+
+        .mobile-drawer-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 30px; padding-bottom: 20px;
+            border-bottom: 3px solid var(--border-dark);
+        }
+        .mobile-drawer-close {
+            width: 40px; height: 40px;
+            background: white; border: 3px solid var(--border-dark);
+            box-shadow: 3px 3px 0 var(--border-dark);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 1.2rem;
+        }
+
+        .mobile-nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 14px 18px; margin-bottom: 8px;
+            font-family: 'Syne', sans-serif; font-weight: 700;
+            font-size: 1rem; color: var(--text-dark);
+            background: white; border: 3px solid var(--border-dark);
+            box-shadow: 4px 4px 0 var(--border-dark);
+            cursor: pointer; text-decoration: none;
+            transition: all 0.15s;
+        }
+        .mobile-nav-item:hover, .mobile-nav-item:active {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 var(--border-dark);
+        }
+        .mobile-nav-item.primary {
+            background: var(--accent-coral); color: white;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn { display: flex; }
             .nav-cta { gap: 8px; }
-            .brutal-btn-small { padding: 8px 10px; font-size: 0.7rem; }
-            .lang-toggle, .nav-search { width: 40px; height: 40px; font-size: 1.1rem; }
+            .nav-cta .brutal-btn { display: none; } /* Cacher les boutons desktop, ils sont dans le drawer */
+            .nav-cta .lang-toggle { order: -1; }
+            .navbar { padding: 12px 20px; }
+            .nav-links { display: none !important; }
+        }
+
+        @media (max-width: 480px) {
+            .hero { padding: 100px 20px 60px; }
+            .hero-title { font-size: 2rem; }
+            .section-title { font-size: 1.8rem; }
+            .section-header { margin-bottom: 40px; }
+            .navbar { padding: 10px 15px; }
         }
         .nav-search { width: 45px; height: 45px; background: white; border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; }
         .nav-search:hover { background: var(--accent-yellow); transform: translate(-2px, -2px); box-shadow: 4px 4px 0px #1a1a1a; }
@@ -338,17 +379,17 @@
                     <div class="logo-box">🎫</div>
                     <span class="logo-text">Ticket<span>Mada</span></span>
                 </a>
-                <button class="mobile-menu-toggle" @click="showMobileMenu = !showMobileMenu">
-                    <v-icon :icon="showMobileMenu ? 'mdi-close' : 'mdi-menu'"></v-icon>
-                </button>
-                <ul class="nav-links" :class="{ 'mobile-active': showMobileMenu }">
-                    <li><a href="#events" :class="{ active: activeCategory === 'all' }" @click.prevent="activeCategory = 'all'; scrollToEvents(); showMobileMenu = false">{{ t.nav.events }}</a></li>
-                    <li><a href="#events" :class="{ active: activeCategory === 'concerts' }" @click.prevent="activeCategory = 'concerts'; scrollToEvents(); showMobileMenu = false">{{ t.nav.concerts }}</a></li>
-                    <li><a href="#events" :class="{ active: activeCategory === 'festivals' }" @click.prevent="activeCategory = 'festivals'; scrollToEvents(); showMobileMenu = false">{{ t.nav.festivals }}</a></li>
-                    <li><a href="#events" :class="{ active: activeCategory === 'sports' }" @click.prevent="activeCategory = 'sports'; scrollToEvents(); showMobileMenu = false">{{ t.nav.sports }}</a></li>
-                    <li><a href="ticketmada-organisateur.html" @click="showMobileMenu = false">{{ t.nav.organizers }}</a></li>
+                <ul class="nav-links">
+                    <li><a href="#events" :class="{ active: activeCategory === 'all' }" @click.prevent="activeCategory = 'all'; scrollToEvents();">{{ t.nav.events }}</a></li>
+                    <li><a href="#events" :class="{ active: activeCategory === 'concerts' }" @click.prevent="activeCategory = 'concerts'; scrollToEvents();">{{ t.nav.concerts }}</a></li>
+                    <li><a href="#events" :class="{ active: activeCategory === 'festivals' }" @click.prevent="activeCategory = 'festivals'; scrollToEvents();">{{ t.nav.festivals }}</a></li>
+                    <li><a href="#events" :class="{ active: activeCategory === 'sports' }" @click.prevent="activeCategory = 'sports'; scrollToEvents();">{{ t.nav.sports }}</a></li>
+                    <li><a href="ticketmada-organisateur.html">{{ t.nav.organizers }}</a></li>
                 </ul>
                 <div class="nav-cta">
+                    <button class="mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen">
+                        <v-icon>mdi-menu</v-icon>
+                    </button>
                     <button class="lang-toggle" @click="toggleLang" :title="lang === 'fr' ? 'Switch to English' : 'Passer en Français'">{{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}</button>
                     <button class="nav-search" @click="showSearch = true"><v-icon icon="mdi-magnify"></v-icon></button>
                     <template v-if="!isLoggedIn">
@@ -370,6 +411,45 @@
                 </div>
             </div>
         </nav>
+
+        <!-- Mobile Drawer -->
+        <div class="mobile-drawer-overlay" :class="{ active: mobileMenuOpen }" @click="mobileMenuOpen = false"></div>
+        <div class="mobile-drawer" :class="{ open: mobileMenuOpen }">
+            <div class="mobile-drawer-header">
+                <a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
+                <div class="mobile-drawer-close" @click="mobileMenuOpen = false">✕</div>
+            </div>
+            <a href="#events" class="mobile-nav-item" @click.prevent="activeCategory = 'all'; scrollToEvents(); mobileMenuOpen = false">
+                <v-icon>mdi-calendar-star</v-icon> {{ t.nav.events }}
+            </a>
+            <a href="#events" class="mobile-nav-item" @click.prevent="activeCategory = 'concerts'; scrollToEvents(); mobileMenuOpen = false">
+                <v-icon>mdi-music</v-icon> {{ t.nav.concerts }}
+            </a>
+            <a href="#events" class="mobile-nav-item" @click.prevent="activeCategory = 'festivals'; scrollToEvents(); mobileMenuOpen = false">
+                <v-icon>mdi-party-popper</v-icon> {{ t.nav.festivals }}
+            </a>
+            <a href="#events" class="mobile-nav-item" @click.prevent="activeCategory = 'sports'; scrollToEvents(); mobileMenuOpen = false">
+                <v-icon>mdi-trophy</v-icon> {{ t.nav.sports }}
+            </a>
+            <a href="ticketmada-organisateur.html" class="mobile-nav-item">
+                <v-icon>mdi-account-star</v-icon> {{ t.nav.organizers }}
+            </a>
+            <div style="margin-top: 20px; border-top: 3px solid var(--border-dark); padding-top: 20px;">
+                <template v-if="!isLoggedIn">
+                    <div class="mobile-nav-item" @click="openAuth('login'); mobileMenuOpen = false">
+                        <v-icon>mdi-login</v-icon> {{ t.nav.login }}
+                    </div>
+                    <div class="mobile-nav-item primary" @click="openAuth('register'); mobileMenuOpen = false">
+                        <v-icon>mdi-account-plus</v-icon> {{ t.nav.signup }}
+                    </div>
+                </template>
+                <template v-else>
+                    <div class="mobile-nav-item" @click="handleLogout(); mobileMenuOpen = false" style="color: #e74c3c;">
+                        <v-icon>mdi-logout</v-icon> Déconnexion
+                    </div>
+                </template>
+            </div>
+        </div>
         
         <v-main>
         
@@ -574,6 +654,11 @@
                         </template>
                         {{ loadingAuth ? 'Connexion...' : t.auth.continueGoogle }}
                     </button>
+                    <!-- Bouton Google officiel (fallback fiable) -->
+                    <div id="google-button-container" style="margin-top: 12px; display: flex; justify-content: center;"></div>
+                    <p style="font-size: 0.75rem; color: #999; text-align: center; margin-top: 6px;">
+                        Si le bouton ci-dessus ne fonctionne pas, utilisez celui-ci :
+                    </p>
                     <div v-if="authError" style="color: #FF6B4A; text-align: center; margin-top: 12px; padding: 12px; background: #fff0ee; border: 2px solid #FF6B4A; border-radius: 8px; font-size: 14px;">
                         {{ authError }}
                     </div>
@@ -654,7 +739,7 @@
                     lang: localStorage.getItem('ticketmada-lang') || 'fr',
                     isLoggedIn: false, showProfileMenu: false,
                     showSearch: false, showAuth: false, authMode: 'login', searchQuery: '', activeCategory: 'all',
-                    showMobileMenu: false,
+                    showMobileMenu: false, mobileMenuOpen: false,
                     loadingAuth: false, authStartTime: 0,
                     authError: '',
                     suggestions: [],
@@ -811,6 +896,28 @@
                     this.loadingAuth = true;
                     this.authStartTime = Date.now();
                     this.authError = '';
+
+                    // ══ POLLING UI — détecte le login même si la Promise ne résout pas ══
+                    const authCheckInterval = setInterval(() => {
+                        if (window.api && window.api.isLoggedIn() && !this.isLoggedIn) {
+                            console.log('[Landing] Polling detected login success!');
+                            clearInterval(authCheckInterval);
+                            this.isLoggedIn = true;
+                            this.showAuth = false;
+                            this.loadingAuth = false;
+
+                            // Redirect basé sur le rôle
+                            const role = window.api.getUserRole();
+                            if (role === 'superadmin' || role === 'admin') {
+                                window.location.assign('../Admin/ticketmada-superadmin.html');
+                            } else if (role === 'organizer') {
+                                window.location.assign('../Admin/ticketmada-dashboard.html');
+                            }
+                            // Si buyer : rester sur la landing (déjà logué)
+                        }
+                    }, 1000);
+                    // Stop polling après 60s
+                    setTimeout(() => clearInterval(authCheckInterval), 60000);
                     
                     if (prov === 'google') {
                         // Watchdog to prevent permanent stuck state
@@ -858,6 +965,7 @@
                             this.authError = 'Une erreur est survenue lors de l’authentification.';
                         } finally {
                             clearTimeout(watchdog);
+                            clearInterval(authCheckInterval);
                             this.loadingAuth = false;
                         }
                     } else {
@@ -893,6 +1001,19 @@
             },
             watch: { 
                 showSearch(val) { if (val) this.$nextTick(() => this.$refs.searchInput?.focus()); },
+                showAuth(val) {
+                    if (val) {
+                        setTimeout(() => {
+                            if (window.GoogleAuth && window.GoogleAuth.renderButton) {
+                                window.GoogleAuth.renderButton('google-button-container', {
+                                    width: 300,
+                                    theme: 'outline',
+                                    text: 'continue_with'
+                                });
+                            }
+                        }, 200);
+                    }
+                },
                 activeCategory() { this.currentPage = 1; }
             }
         });

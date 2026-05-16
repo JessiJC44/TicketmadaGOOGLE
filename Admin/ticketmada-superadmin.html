@@ -220,6 +220,70 @@
         }
         .input-brutal:focus { box-shadow: 5px 5px 0 var(--accent-coral); transform: translate(-2px, -2px); }
 
+        /* RESPONSIVE & LAYOUT */
+        @media (max-width: 1024px) {
+            .sidebar { transform: translateX(-100%); z-index: 1000; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
+            .sidebar.active { transform: translateX(0); }
+            .sidebar-overlay { 
+                display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); 
+                z-index: 950; backdrop-filter: blur(2px); 
+            }
+            .sidebar-overlay.active { display: block; }
+            .main-content { margin-left: 0 !important; width: 100%; transition: margin 0.3s ease; }
+            .topbar { padding: 10px 15px; }
+            .menu-toggle { display: flex !important; }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 15px; }
+            .topbar-left h1 { font-size: 1.1rem; }
+            .admin-header { padding: 20px; flex-direction: column; gap: 15px; text-align: center; }
+            .auth-card { padding: 30px 20px; box-shadow: 8px 8px 0 var(--accent-coral); }
+            .bento-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .topbar-right button span { display: none; }
+        }
+
+        /* NEW DASHBOARD ELEMENTS */
+        .quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .action-card { 
+            background: white; border: 3px solid var(--border-dark); padding: 15px; 
+            text-align: center; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 4px 4px 0 var(--border-dark);
+        }
+        .action-card:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--border-dark); background: var(--accent-yellow); }
+        .action-card v-icon { margin-bottom: 8px; }
+        .action-card span { display: block; font-family: 'Syne'; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; }
+
+        .bento-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; margin-bottom: 25px; }
+        .bento-item { background: white; border: 3px solid var(--border-dark); box-shadow: var(--shadow-brutal); }
+        .bento-header { padding: 15px 20px; border-bottom: 2px solid var(--border-dark); display: flex; align-items: center; justify-content: space-between; background: #fafafa; }
+        .bento-title { font-family: 'Syne'; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; }
+
+        .live-indicator { 
+            width: 8px; height: 8px; border-radius: 50%; background: var(--accent-mint); 
+            display: inline-block; margin-right: 8px; 
+            box-shadow: 0 0 10px var(--accent-mint);
+            animation: pulse-live 2s infinite;
+        }
+        @keyframes pulse-live { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
+
+        .status-pill { 
+            padding: 4px 10px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
+            border: 2px solid var(--border-dark); box-shadow: 2px 2px 0 var(--border-dark);
+        }
+        .status-pill.up { background: var(--accent-mint); }
+        .status-pill.down { background: var(--accent-red); color: white; }
+
+        .brutal-snackbar .v-snack__wrapper {
+            border: 3px solid var(--border-dark) !important;
+            box-shadow: 6px 6px 0 var(--border-dark) !important;
+            border-radius: 0 !important;
+        }
+
         [v-cloak] { display: none; }
     </style>
 </head>
@@ -237,6 +301,13 @@
                 <button @click="loginWithGoogle" class="btn-brutal primary" style="width: 100%; padding: 18px; font-size: 1.1rem; margin-bottom: 20px;" :disabled="loadingAuth">
                     <v-icon>mdi-google</v-icon> {{ loadingAuth ? 'CONNEXION...' : 'SE CONNECTER AVEC GOOGLE' }}
                 </button>
+                
+                <!-- Bouton Google Officiel (Fallback) -->
+                <div id="superadmin-google-button" style="margin-top: 10px; display: flex; justify-content: center;"></div>
+
+                <div v-if="loadingAuth" style="margin-top:15px; padding:10px; background:#fff8e1; border:3px solid #1a1a1a; box-shadow:3px 3px 0 #1a1a1a; font-size:0.75rem; color:#856404; font-weight:700; text-align:center;">
+                     Utilisez la popup ou le bouton Google officiel ci-dessus.
+                </div>
 
                 <div style="display: flex; align-items: center; gap: 10px; margin: 20px 0; color: #ccc;">
                     <div style="flex: 1; height: 1px; background: #eee;"></div>
@@ -266,8 +337,10 @@
         </div>
 
         <div class="dashboard-layout" v-if="isLoggedIn">
+            <div class="sidebar-overlay" :class="{ active: sidebarOpen }" @click="sidebarOpen = false"></div>
+            
             <!-- SIDEBAR -->
-            <aside class="sidebar">
+            <aside class="sidebar" :class="{ active: sidebarOpen }">
                 <div class="sidebar-header">
                     <div class="sidebar-logo">
                         <div class="logo-box">🎫</div>
@@ -276,52 +349,52 @@
                     <div class="admin-badge">SuperAdmin</div>
                 </div>
                 <div class="sidebar-nav">
-                    <div class="nav-item" :class="{ active: currentTab === 'dashboard' }" @click="currentTab = 'dashboard'">
+                    <div class="nav-item" :class="{ active: currentTab === 'dashboard' }" @click="currentTab = 'dashboard'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-view-dashboard-variant</v-icon>
                         <span>Tableau de bord</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentTab === 'organizers' }" @click="currentTab = 'organizers'">
+                    <div class="nav-item" :class="{ active: currentTab === 'organizers' }" @click="currentTab = 'organizers'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-account-star</v-icon>
                         <span>Organisateurs</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentTab === 'applications' }" @click="currentTab = 'applications'">
+                    <div class="nav-item" :class="{ active: currentTab === 'applications' }" @click="currentTab = 'applications'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-file-account</v-icon>
                         <span>Demandes</span>
                         <span class="nav-item-badge" v-if="stats.pendingApplications > 0">{{ stats.pendingApplications }}</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentTab === 'users' }" @click="currentTab = 'users'">
+                    <div class="nav-item" :class="{ active: currentTab === 'users' }" @click="currentTab = 'users'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-account-group</v-icon>
                         <span>Utilisateurs</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentTab === 'events' }" @click="currentTab = 'events' ">
+                    <div class="nav-item" :class="{ active: currentTab === 'events' }" @click="currentTab = 'events'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-calendar-multiple</v-icon>
                         <span>Événements</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentTab === 'orders' }" @click="currentTab = 'orders' ">
+                    <div class="nav-item" :class="{ active: currentTab === 'orders' }" @click="currentTab = 'orders'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-receipt</v-icon>
                         <span>Commandes</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentTab === 'marketing' }" @click="currentTab = 'marketing' ">
+                    <div class="nav-item" :class="{ active: currentTab === 'marketing' }" @click="currentTab = 'marketing'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-tag-multiple</v-icon>
                         <span>Promo & Marketing</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentTab === 'licences' }" @click="currentTab = 'licences' ">
+                    <div class="nav-item" :class="{ active: currentTab === 'licences' }" @click="currentTab = 'licences'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-certificate</v-icon>
                         <span>Licences & KYC</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentTab === 'finance' }" @click="currentTab = 'finance' ">
+                    <div class="nav-item" :class="{ active: currentTab === 'finance' }" @click="currentTab = 'finance'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-cash-multiple</v-icon>
                         <span>Comptabilité & Taxes</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentTab === 'broadcast' }" @click="currentTab = 'broadcast' ">
+                    <div class="nav-item" :class="{ active: currentTab === 'broadcast' }" @click="currentTab = 'broadcast'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-email-newsletter</v-icon>
                         <span>Communication</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentTab === 'config' }" @click="currentTab = 'config' ">
+                    <div class="nav-item" :class="{ active: currentTab === 'config' }" @click="currentTab = 'config'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-cog</v-icon>
                         <span>Configuration</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentTab === 'logs' }" @click="currentTab = 'logs' ">
+                    <div class="nav-item" :class="{ active: currentTab === 'logs' }" @click="currentTab = 'logs'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-history</v-icon>
                         <span>Logs & Audit</span>
                     </div>
@@ -338,9 +411,14 @@
             <!-- MAIN CONTENT -->
             <main class="main-content">
                 <header class="topbar">
-                    <div class="topbar-left">
-                        <h1>{{ tabTitles[currentTab] }}</h1>
-                        <p style="font-size: 0.85rem; color: var(--text-light); font-weight: 600;">{{ currentDate }}</p>
+                    <div class="topbar-left" style="display: flex; align-items: center; gap: 15px;">
+                        <button class="menu-toggle" @click="sidebarOpen = !sidebarOpen" style="display: none; width: 40px; height: 40px; border: 3px solid var(--border-dark); background: white; align-items: center; justify-content: center; cursor: pointer; box-shadow: 4px 4px 0 var(--border-dark);">
+                            <v-icon>mdi-menu</v-icon>
+                        </button>
+                        <div>
+                            <h1>{{ tabTitles[currentTab] }}</h1>
+                            <p style="font-size: 0.85rem; color: var(--text-light); font-weight: 600;">{{ currentDate }}</p>
+                        </div>
                     </div>
                     <div class="topbar-right">
                         <button class="btn-brutal sm" @click="toggleLang" style="margin-right: 10px;">
@@ -363,6 +441,14 @@
                     
                     <!-- TAB: DASHBOARD -->
                     <template v-if="currentTab === 'dashboard'">
+                        <div class="quick-actions">
+                            <div class="action-card" @click="currentTab = 'applications'"><v-icon color="var(--accent-coral)">mdi-account-clock</v-icon><span>Approbations</span></div>
+                            <div class="action-card" @click="currentTab = 'organizers'"><v-icon color="var(--accent-blue)">mdi-account-tie</v-icon><span>Organisateurs</span></div>
+                            <div class="action-card" @click="currentTab = 'broadcast'"><v-icon color="var(--accent-yellow)">mdi-bullhorn</v-icon><span>Broadcast</span></div>
+                            <div class="action-card" @click="currentTab = 'finance'"><v-icon color="var(--accent-mint)">mdi-cash-check</v-icon><span>Paiements</span></div>
+                            <div class="action-card" @click="currentTab = 'logs'"><v-icon color="var(--text-dark)">mdi-shield-history</v-icon><span>Audit Logs</span></div>
+                        </div>
+
                         <div class="stats-grid">
                             <div class="stat-card">
                                 <div class="stat-icon">💰</div>
@@ -383,6 +469,32 @@
                                 <div class="stat-icon">🌟</div>
                                 <div class="stat-value">{{ stats.activeOrganizers }}</div>
                                 <div class="stat-label">Orga. Actifs</div>
+                            </div>
+                        </div>
+
+                        <div class="bento-grid">
+                            <div class="bento-item" style="grid-column: span 8;">
+                                <div class="bento-header"><div class="bento-title">ÉTAT DU SYSTÈME</div><div class="live-indicator"></div></div>
+                                <div style="padding: 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                                    <div v-for="svc in systemStatus" :key="svc.name" style="text-align: center; padding: 15px; border: 2px solid #eee;">
+                                        <div style="font-size: 0.75rem; font-weight: 700; color: #666; margin-bottom: 8px;">{{ svc.name }}</div>
+                                        <div class="status-pill" :class="svc.status === 'UP' ? 'up' : 'down'">{{ svc.status }}</div>
+                                        <div style="font-size: 0.65rem; color: #999; margin-top: 8px;">Latence: {{ svc.latency }}ms</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bento-item" style="grid-column: span 4;">
+                                <div class="bento-header"><div class="bento-title">ALERTES RÉCENTES</div><v-icon color="var(--accent-red)">mdi-alert</v-icon></div>
+                                <div style="padding: 10px;">
+                                    <div v-for="alert in systemAlerts" :key="alert.id" style="padding:10px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 10px;">
+                                        <v-icon size="16" color="var(--accent-red)">mdi-alert-circle</v-icon>
+                                        <div style="font-size: 0.75rem;">
+                                            <div style="font-weight: 800;">{{ alert.title }}</div>
+                                            <div style="color: #666;">{{ alert.time }}</div>
+                                        </div>
+                                    </div>
+                                    <div v-if="!systemAlerts.length" style="padding: 31px; text-align: center; color: #ccc; font-size: 0.75rem; font-weight: 800;">AUCUNE ALERTE</div>
+                                </div>
                             </div>
                         </div>
 
@@ -979,6 +1091,13 @@
             </div>
         </div>
         </template>
+        <!-- NOTIFICATIONS -->
+        <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="4000" class="brutal-snackbar">
+            <span style="font-weight: 800; font-family: 'Syne';">{{ snackbar.text }}</span>
+            <template v-slot:action="{ attrs }">
+                <v-btn text v-bind="attrs" @click="snackbar.show = false">FERMER</v-btn>
+            </template>
+        </v-snackbar>
         </v-app>
     </div>
 
@@ -1039,6 +1158,20 @@
                     
                     showAppDetails: false,
                     activeApp: null,
+                    sidebarOpen: false,
+                    systemStatus: [
+                        { name: 'API Server', status: 'UP', latency: 45 },
+                        { name: 'Database', status: 'UP', latency: 12 },
+                        { name: 'Storage', status: 'UP', latency: 8 },
+                        { name: 'Mail Service', status: 'UP', latency: 120 },
+                        { name: 'SMS Gateway', status: 'WARN', latency: 850 },
+                        { name: 'Payments', status: 'UP', latency: 32 }
+                    ],
+                    systemAlerts: [
+                        { id: 1, title: 'SMS Gateway latency high', time: 'Il y a 5 mins', type: 'warn' },
+                        { id: 2, title: 'Failed payout org_782 (Retry)', time: 'Il y a 12 mins', type: 'crit' }
+                    ],
+                    snackbar: { show: false, text: '', color: 'black' },
                 };
             },
             computed: {
@@ -1092,6 +1225,7 @@
                     const hasToken = window.api && window.api.isLoggedIn();
                     if (!hasToken) {
                         console.log('[SuperAdmin] Pas de token, afficher login');
+                        this.renderGoogleButton();
                         this.checkingAuth = false;
                         return;
                     }
@@ -1131,27 +1265,67 @@
                 }
         },
         methods: {
+                notify(text, color = 'black') {
+                    this.snackbar.text = text;
+                    this.snackbar.color = color;
+                    this.snackbar.show = true;
+                },
                 async loginWithGoogle() {
                     if (this.loadingAuth) return;
                     this.loadingAuth = true;
+                    this.loginError = '';
+
+                    // ══ POLLING UI ══
+                    const authInterval = setInterval(() => {
+                        if (window.api && window.api.isLoggedIn() && !this.isLoggedIn) {
+                            console.log('[SuperAdmin] Polling detected login success!');
+                            clearInterval(authInterval);
+                            this.checkSessionAndInit();
+                        }
+                    }, 1000);
+                    setTimeout(() => clearInterval(authInterval), 60000);
+
                     try {
                         const result = await window.api.loginWithGoogle();
                         if (result.success) {
+                            clearInterval(authInterval);
                             if (result.user.email === 'sedrayiokoraz@gmail.com' || result.user.role === 'superadmin') {
                                 this.user = result.user;
                                 this.isLoggedIn = true;
                                 this.fetchData();
                             } else {
-                                alert("Accès refusé. Ce compte n'a pas les privilèges SuperAdmin.");
+                                this.loginError = "Accès refusé. Ce compte n'a pas les privilèges SuperAdmin.";
                                 window.api.logout();
                             }
                         } else if (!result.canceled) {
-                            alert(result.error || 'Erreur Google Auth');
+                            this.loginError = result.error || 'Erreur Google Auth';
                         }
                     } catch (e) {
                         console.error(e);
+                        this.loginError = 'Échec technique de la connexion Google';
                     } finally {
                         this.loadingAuth = false;
+                    }
+                },
+                async checkSessionAndInit() {
+                    this.checkingAuth = true;
+                    try {
+                        const res = await window.api.get('/auth/me');
+                        if (res && res.user && (res.user.email === 'sedrayiokoraz@gmail.com' || res.user.role === 'superadmin')) {
+                            this.user = res.user;
+                            this.isLoggedIn = true;
+                            localStorage.setItem('ticketmada_user', JSON.stringify(res.user));
+                            this.fetchData();
+                        }
+                    } catch (e) {
+                        const localUser = JSON.parse(localStorage.getItem('ticketmada_user') || 'null');
+                        if (localUser && (localUser.email === 'sedrayiokoraz@gmail.com' || localUser.role === 'superadmin')) {
+                            this.user = localUser;
+                            this.isLoggedIn = true;
+                            this.fetchData();
+                        }
+                    } finally {
+                        this.checkingAuth = false;
                     }
                 },
                 async handleLogin() {
@@ -1231,47 +1405,47 @@
                     } catch (e) { console.warn('[SuperAdmin] Broadcast logs fetch failed'); }
                 },
                 async sendBroadcast() {
-                    if (!this.broadcast.subject || !this.broadcast.content) return alert('Veuillez remplir le sujet et le message');
+                    if (!this.broadcast.subject || !this.broadcast.content) return this.notify('Veuillez remplir le sujet et le message', 'var(--accent-red)');
                     this.sendingBroadcast = true;
                     try {
                         await window.api.post('/superadmin/broadcast', this.broadcast);
-                        alert('Message envoyé avec succès !');
+                        this.notify('Message envoyé avec succès !', 'var(--accent-mint)');
                         this.broadcast.subject = '';
                         this.broadcast.content = '';
                         this.fetchData();
                     } catch (e) {
-                        alert('Erreur lors de l\'envoi du message');
+                        this.notify('Erreur lors de l\'envoi du message', 'var(--accent-red)');
                     } finally {
                         this.sendingBroadcast = false;
                     }
                 },
                 async addTaxRule() {
-                    if (!this.newTax.name || this.newTax.rate < 0) return alert('Données invalides');
+                    if (!this.newTax.name || this.newTax.rate < 0) return this.notify('Données invalides', 'var(--accent-red)');
                     try {
                         await window.api.post('/superadmin/taxes', this.newTax);
-                        alert('Règle fiscale ajoutée !');
+                        this.notify('Règle fiscale ajoutée !', 'var(--accent-mint)');
                         this.newTax = { name: '', rate: 0 };
                         this.fetchData();
                     } catch (e) {
-                        alert('Erreur lors de l\'ajout de la taxe');
+                        this.notify('Erreur lors de l\'ajout de la taxe', 'var(--accent-red)');
                     }
                 },
                 async approvePayout(payout) {
                     if (!confirm(`Confirmer le versement de ${this.formatMoney(payout.net)} à ${payout.organizer_name} ?`)) return;
                     try {
                         await window.api.put(`/superadmin/payouts/${payout.id}/approve`);
-                        alert('Versement marqué comme payé !');
+                        this.notify('Versement marqué comme payé !', 'var(--accent-mint)');
                         this.fetchData();
                     } catch (e) {
-                        alert('Erreur lors de la validation du payout');
+                        this.notify('Erreur lors de la validation du payout', 'var(--accent-red)');
                     }
                 },
                 async updateConfig(config) {
                     try {
                         await window.api.put('/superadmin/config', { key: config.key, value: config.value });
-                        alert(`Configuration ${config.key} mise à jour !`);
+                        this.notify(`Configuration ${config.key} mise à jour !`, 'var(--accent-mint)');
                     } catch (e) {
-                        alert('Erreur lors de la mise à jour de la config');
+                        this.notify('Erreur lors de la mise à jour de la config', 'var(--accent-red)');
                     }
                 },
                 exportOrdersCSV() {
@@ -1424,6 +1598,18 @@
                     } catch (err) {
                         alert("Erreur lors de la suppression.");
                     }
+                },
+                renderGoogleButton() {
+                    setTimeout(() => {
+                        const container = document.getElementById('superadmin-google-button');
+                        if (container && window.GoogleAuth && window.GoogleAuth.renderButton) {
+                            window.GoogleAuth.renderButton('superadmin-google-button', {
+                                width: 320,
+                                theme: 'outline',
+                                text: 'continue_with'
+                            });
+                        }
+                    }, 500);
                 }
             }
         }).use(vuetify).mount('#app');
