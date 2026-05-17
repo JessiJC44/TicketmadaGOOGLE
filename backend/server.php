@@ -181,6 +181,10 @@ try {
             require_once __DIR__ . '/organizer-applications.php';
             handleOrganizerApplications($method, $id, $action);
             break;
+        case 'admin':
+            require_once __DIR__ . '/admin.php';
+            handleAdmin($method, $id, $action);
+            break;
         default:
             jsonError('Route non trouvée', 404);
     }

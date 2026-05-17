@@ -449,10 +449,33 @@ function migrateAllTables() {
         // Event multi-dates
         "CREATE TABLE IF NOT EXISTS event_dates (id INTEGER PRIMARY KEY AUTOINCREMENT, event_id INTEGER NOT NULL, date_start DATETIME NOT NULL, date_end DATETIME, venue_override TEXT, capacity_override INTEGER, status TEXT DEFAULT 'active')",
         "CREATE TABLE IF NOT EXISTS event_series (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, organizer_id INTEGER NOT NULL, description TEXT, created_at DATETIME DEFAULT (datetime('now')))",
+
+        // Admin Tables
+        "CREATE TABLE IF NOT EXISTS scan_links (id INTEGER PRIMARY KEY AUTOINCREMENT, event_id INTEGER NOT NULL, token TEXT UNIQUE NOT NULL, name TEXT, created_at DATETIME DEFAULT (datetime('now')), FOREIGN KEY (event_id) REFERENCES events(id))",
+        "CREATE TABLE IF NOT EXISTS seatmaps (id INTEGER PRIMARY KEY AUTOINCREMENT, event_id INTEGER NOT NULL, data_json TEXT, created_at DATETIME DEFAULT (datetime('now')), FOREIGN KEY (event_id) REFERENCES events(id))",
+        "CREATE TABLE IF NOT EXISTS admin_actions (id INTEGER PRIMARY KEY AUTOINCREMENT, admin_id INTEGER NOT NULL, action TEXT NOT NULL, resource_type TEXT, resource_id INTEGER, details TEXT, created_at DATETIME DEFAULT (datetime('now')), FOREIGN KEY (admin_id) REFERENCES users(id))"
     ];
 
     foreach ($migrations as $sql) {
         try { $db->exec($sql); } catch (Exception $e) { /* table exists, ignore */ }
+    }
+
+    // Column migrations
+    $columnUpdates = [
+        ['tickets', 'qr_payload', 'TEXT'],
+        ['tickets', 'qr_blocked', 'INTEGER DEFAULT 0'],
+        ['tickets', 'qr_generated_at', 'DATETIME'],
+        ['users', 'is_blocked', 'INTEGER DEFAULT 0'],
+        ['users', 'stripe_account_id', 'TEXT'],
+        ['events', 'multi_date_json', 'TEXT'],
+    ];
+
+    foreach ($columnUpdates as $update) {
+        try {
+            $db->exec("ALTER TABLE {$update[0]} ADD COLUMN {$update[1]} {$update[2]}");
+        } catch (Exception $e) {
+            // Column likely exists
+        }
     }
 }
 

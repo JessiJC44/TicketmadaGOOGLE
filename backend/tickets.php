@@ -113,9 +113,10 @@ function purchaseTicket() {
                 $code = generateTicketCode();
             }
 
-            $stmt = $db->prepare("INSERT INTO tickets (id_code, event_id, buyer_id, type, price, status) VALUES (?, ?, ?, ?, ?, 'active')");
-            $stmt->execute([$code, $eventId, $user['id'], $type, $price]);
-            $tickets[] = ['id' => $db->lastInsertId(), 'id_code' => $code, 'type' => $type, 'price' => $price];
+            $payload = generateQRPayload($db->lastInsertId(), $code, $user['id']);
+            $stmt = $db->prepare("INSERT INTO tickets (id_code, event_id, buyer_id, type, price, status, qr_payload, qr_generated_at) VALUES (?, ?, ?, ?, ?, 'active', ?, datetime('now'))");
+            $stmt->execute([$code, $eventId, $user['id'], $type, $price, $payload]);
+            $tickets[] = ['id' => $db->lastInsertId(), 'id_code' => $code, 'type' => $type, 'price' => $price, 'qr_payload' => $payload];
         }
 
         // Update event stats
@@ -139,6 +140,7 @@ function purchaseTicket() {
 
 function scanTicket($id) {
     $user = requireAuth([ROLE_ORGANIZER, ROLE_ADMIN, ROLE_SUPERADMIN]);
+    $body = getBody();
     $db = getDB();
 
     $stmt = $db->prepare('SELECT t.*, e.organizer_id FROM tickets t LEFT JOIN events e ON t.event_id = e.id WHERE t.id = ? OR t.id_code = ?');
@@ -146,12 +148,21 @@ function scanTicket($id) {
     $ticket = $stmt->fetch();
 
     if (!$ticket) jsonError('Billet non trouvé', 404);
+    if ($ticket['qr_blocked']) jsonError('Billet bloqué (fraude detectée)', 403);
     if ($ticket['status'] === 'scanned') jsonError('Billet déjà scanné');
     if ($ticket['status'] !== 'active') jsonError('Billet non valide (statut: ' . $ticket['status'] . ')');
 
+    // HMAC validation (if payload is provided by scanner)
+    if (!empty($body['payload'])) {
+        $valid = validateQRPayload($body['payload']);
+        if (!$valid || $valid['code'] !== $ticket['id_code']) {
+            jsonError('QR Code invalide ou falsifié', 403);
+        }
+    }
+
     $db->prepare("UPDATE tickets SET status = 'scanned', scanned_at = datetime('now') WHERE id = ?")->execute([$ticket['id']]);
 
-    jsonResponse(['message' => 'Billet scanné avec succès', 'ticket_code' => $ticket['id_code']]);
+    jsonResponse(['message' => 'Billet scanné avec succès', 'ticket_code' => $ticket['id_code'], 'buyer' => $ticket['buyer_id']]);
 }
 
 function getTicketStats() {

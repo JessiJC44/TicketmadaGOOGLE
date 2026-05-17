@@ -1,0 +1,15 @@
+{
+    "name": "TicketMada",
+    "short_name": "TicketMada",
+    "description": "La billetterie de Madagascar — Achetez vos billets en ligne",
+    "start_url": "/User/ticketmada-landing.html",
+    "display": "standalone",
+    "background_color": "#FAF7F2",
+    "theme_color": "#FF6B4A",
+    "orientation": "portrait-primary",
+    "icons": [
+        { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+    ],
+    "categories": ["entertainment", "lifestyle"],
+    "lang": "fr"
+}

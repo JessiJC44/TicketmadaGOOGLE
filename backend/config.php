@@ -85,3 +85,32 @@ function generateToken() {
 function generateTicketCode() {
     return 'TKT-' . str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
 }
+
+// QR System
+define('QR_HMAC_SECRET', 'tm_secret_key_2026_mada');
+
+function generateQRPayload($ticketId, $code, $buyerId) {
+    $timestamp = time();
+    $data = "TKM:v2:$code:$buyerId:$timestamp";
+    $hmac = hash_hmac('sha256', $data, QR_HMAC_SECRET);
+    return "$data:$hmac";
+}
+
+function validateQRPayload($payload) {
+    $parts = explode(':', $payload);
+    if (count($parts) !== 7) return false;
+    
+    // Reverse the payload: TKM, v2, code, buyerId, timestamp, hmac
+    $data = implode(':', array_slice($parts, 0, 5));
+    $receivedHmac = $parts[6];
+    $expectedHmac = hash_hmac('sha256', $data, QR_HMAC_SECRET);
+    
+    if (!hash_equals($expectedHmac, $receivedHmac)) return false;
+    
+    // Check timestamp (optional: 5 minute window for scanning if desired, but here we just check signature)
+    return [
+        'code' => $parts[2],
+        'buyer_id' => $parts[3],
+        'timestamp' => $parts[4]
+    ];
+}

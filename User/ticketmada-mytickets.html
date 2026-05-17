@@ -157,12 +157,7 @@
             <div class="ticket-card" v-for="t in filteredTickets" :key="t.id">
                 <div class="ticket-qr">
                     <div class="qr-code">
-                        <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="2" y="2" width="14" height="14" fill="#1a1a1a"/><rect x="4" y="4" width="10" height="10" fill="white"/><rect x="6" y="6" width="6" height="6" fill="#1a1a1a"/>
-                            <rect x="34" y="2" width="14" height="14" fill="#1a1a1a"/><rect x="36" y="4" width="10" height="10" fill="white"/><rect x="38" y="6" width="6" height="6" fill="#1a1a1a"/>
-                            <rect x="2" y="34" width="14" height="14" fill="#1a1a1a"/><rect x="4" y="36" width="10" height="10" fill="white"/><rect x="6" y="38" width="6" height="6" fill="#1a1a1a"/>
-                            <rect v-for="dot in qrDots(t.id)" :key="dot.x+'-'+dot.y" :x="dot.x" :y="dot.y" width="3" height="3" fill="#1a1a1a"/>
-                        </svg>
+                        <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=' + encodeURIComponent(t.qr_payload || t.id_code)" :alt="t.id_code" />
                     </div>
                     <div class="ticket-code">{{ t.id_code }}</div>
                 </div>
