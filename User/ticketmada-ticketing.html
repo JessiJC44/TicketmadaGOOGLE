@@ -12,22 +12,8 @@
     <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
     
+    <link rel="stylesheet" href="../css/design-system.css">
     <style>
-        :root {
-            --bg-cream: #FAF7F2;
-            --bg-dark: #1a1a1a;
-            --accent-coral: #FF6B4A;
-            --accent-yellow: #FECA57;
-            --accent-mint: #00D9A5;
-            --accent-blue: #4A90FF;
-            --accent-purple: #9B59B6;
-            --text-dark: #1a1a1a;
-            --text-light: #666;
-            --border-dark: #1a1a1a;
-            --shadow-brutal: 6px 6px 0px #1a1a1a;
-            --shadow-brutal-lg: 10px 10px 0px #1a1a1a;
-        }
-        
         [v-cloak] { display: none !important; }
         .v-application { font-family: 'DM Sans', sans-serif !important; background: transparent !important; }
         .v-application__wrap { min-height: auto !important; }
@@ -249,43 +235,79 @@
 
     <div id="app" v-cloak>
         <v-app>
-            <nav class="navbar">
-            <div class="navbar-inner">
-                <a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
-                <ul class="nav-links">
-                    <li><a href="#fonctionnement">{{ t.nav.howItWorks }}</a></li>
-                    <li><a href="#options">{{ t.nav.options }}</a></li>
-                    <li><a href="#features">{{ t.nav.features }}</a></li>
-                    <li><a href="#tarifs">{{ t.nav.pricing }}</a></li>
-                </ul>
-                <div class="nav-cta">
-                    <button class="lang-toggle" @click="toggleLang" :title="lang === 'fr' ? 'Switch to English' : 'Passer en Français'">{{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}</button>
-                    <template v-if="!isLoggedIn">
-                        <a href="ticketmada-organisateur.html" class="brutal-btn brutal-btn-secondary">{{ t.nav.organizers }}</a>
-                        <a href="#" class="brutal-btn brutal-btn-primary" @click.prevent="openAuth('register')">{{ t.nav.getStarted }}</a>
-                    </template>
-                    <div class="profile-wrapper" v-else>
-                        <button class="profile-avatar-btn" @click="showProfileMenu = !showProfileMenu" v-html="profileAvatar"></button>
-                        <div class="profile-dropdown" :class="{ open: showProfileMenu }">
-                            <div class="profile-dropdown-header">
-                                <div class="profile-dropdown-avatar" v-html="profileAvatar"></div>
-                                <div class="profile-dropdown-info">
-                                    <div class="profile-dropdown-name">{{ profileName }}</div>
-                                    <div class="profile-dropdown-email">{{ profileEmail }}</div>
-                                    <span class="profile-dropdown-role" :class="profileRole">{{ profileRoleLabel }}</span>
-                                </div>
-                            </div>
-                            <div class="profile-dropdown-items">
-                                <a class="profile-dropdown-item" :href="dashboardUrl"><v-icon icon="mdi-view-dashboard" size="small"></v-icon> Dashboard</a>
-                                <a class="profile-dropdown-item" :href="dashboardUrl + '?page=events'"><v-icon icon="mdi-calendar-plus" size="small"></v-icon> {{ lang === 'fr' ? 'Créer un événement' : 'Create event' }}</a>
-                                <div class="profile-dropdown-divider"></div>
-                                <button class="profile-dropdown-item logout" @click="handleLogout"><v-icon icon="mdi-logout" size="small"></v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Logout' }}</button>
+            <nav class="navbar" :class="{ scrolled: isScrolled }">
+                <div class="navbar-inner">
+                    <a href="ticketmada-landing.html" class="logo">
+                        <div class="logo-box">🎫</div>
+                        <span class="logo-text">Ticket<span>Mada</span></span>
+                    </a>
+                    <ul class="nav-links">
+                        <li><a href="#fonctionnement">{{ t.nav.howItWorks }}</a></li>
+                        <li><a href="#options">{{ t.nav.options }}</a></li>
+                        <li><a href="#features">{{ t.nav.features }}</a></li>
+                        <li><a href="#tarifs">{{ t.nav.pricing }}</a></li>
+                    </ul>
+                    <div class="nav-cta">
+                        <button class="nav-icon-btn mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen" aria-label="Menu">
+                            <v-icon>{{ mobileMenuOpen ? 'mdi-close' : 'mdi-menu' }}</v-icon>
+                        </button>
+                        <button class="nav-icon-btn" @click="toggleLang" :title="lang === 'fr' ? 'Switch to English' : 'Passer en Français'">{{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}</button>
+                        
+                        <template v-if="!isLoggedIn">
+                            <a href="#" class="nav-auth-btn secondary" @click.prevent="openAuth('login')">
+                                <v-icon size="14">mdi-login</v-icon>
+                                <span class="auth-label">{{ lang === 'fr' ? 'Connexion' : 'Login' }}</span>
+                            </a>
+                        </template>
+
+                        <div v-else class="nav-profile" @click="showProfileMenu = !showProfileMenu">
+                            <div class="nav-profile-avatar" v-html="userAvatar"></div>
+                            <span class="nav-profile-name">{{ userName }}</span>
+                            <v-icon size="14">mdi-chevron-down</v-icon>
+                            <div v-if="showProfileMenu" class="nav-profile-dropdown" @click.stop>
+                                <a :href="dashboardUrl"><v-icon size="18">mdi-view-dashboard</v-icon> Dashboard</a>
+                                <div class="divider"></div>
+                                <button class="logout" @click.prevent="handleLogout"><v-icon size="18">mdi-logout</v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Log out' }}</button>
                             </div>
                         </div>
                     </div>
                 </div>
+            </nav>
+
+            <div class="mobile-drawer-overlay" :class="{ active: mobileMenuOpen }" @click="mobileMenuOpen = false"></div>
+            <div class="mobile-drawer" :class="{ open: mobileMenuOpen }">
+                <div class="mobile-drawer-header">
+                    <a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
+                    <div class="mobile-drawer-close" @click="mobileMenuOpen = false">✕</div>
+                </div>
+                <a href="#fonctionnement" class="mobile-nav-item" @click="mobileMenuOpen = false">
+                    <v-icon>mdi-help-circle-outline</v-icon> {{ t.nav.howItWorks }}
+                </a>
+                <a href="#options" class="mobile-nav-item" @click="mobileMenuOpen = false">
+                    <v-icon>mdi-tune</v-icon> {{ t.nav.options }}
+                </a>
+                <a href="#features" class="mobile-nav-item" @click="mobileMenuOpen = false">
+                    <v-icon>mdi-star-outline</v-icon> {{ t.nav.features }}
+                </a>
+                <a href="#tarifs" class="mobile-nav-item" @click="mobileMenuOpen = false">
+                    <v-icon>mdi-tag-outline</v-icon> {{ t.nav.pricing }}
+                </a>
+                <div style="margin-top: 20px; border-top: 3px solid var(--border-dark); padding-top: 20px;">
+                    <template v-if="!isLoggedIn">
+                        <div class="mobile-nav-item" @click="openAuth('login'); mobileMenuOpen = false">
+                            <v-icon>mdi-login</v-icon> {{ lang === 'fr' ? 'Connexion' : 'Login' }}
+                        </div>
+                    </template>
+                    <template v-else>
+                        <a :href="dashboardUrl" class="mobile-nav-item">
+                            <v-icon>mdi-view-dashboard</v-icon> Dashboard
+                        </a>
+                        <div class="mobile-nav-item" @click="handleLogout(); mobileMenuOpen = false" style="color: #e74c3c;">
+                            <v-icon>mdi-logout</v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Log out' }}
+                        </div>
+                    </template>
+                </div>
             </div>
-        </nav>
         
         <v-main>
         
@@ -530,12 +552,16 @@
                     authStartTime: 0,
                     authForm: { name: '', email: '', password: '' },
                     authError: '',
-                    isLoggedIn: false, showProfileMenu: false
+                    isLoggedIn: false,
+                    showProfileMenu: false,
+                    isScrolled: false,
+                    mobileMenuOpen: false
                 };
             },
             computed: {
                 t() { return translations[this.lang]; },
-                profileName() { const u = window.api?.getUser(); return u ? u.name : ''; },
+                userName() { const u = window.api?.getUser(); return u ? (u.displayName || u.name || u.email.split('@')[0]) : ''; },
+                userAvatar() { return window.ProfileMenu?.getAvatarSVG(this.userName) || ''; },
                 profileEmail() { const u = window.api?.getUser(); return u ? u.email : ''; },
                 profileRole() { return window.api?.getUserRole() || 'buyer'; },
                 profileRoleLabel() { return { superadmin: 'Super Admin', admin: 'Admin', organizer: 'Organisateur', buyer: 'Membre' }[this.profileRole] || 'Membre'; },
@@ -634,12 +660,17 @@
             },
             mounted() {
                 document.documentElement.lang = this.lang;
+                window.addEventListener('scroll', () => {
+                    this.isScrolled = window.scrollY > 50;
+                });
                 // Check login state
                 if (window.api && window.api.isLoggedIn()) { this.isLoggedIn = true; }
                 // Inject profile menu styles
                 if (window.ProfileMenu) window.ProfileMenu.injectStyles();
                 // Close profile dropdown on outside click
-                document.addEventListener('click', e => { if (!e.target.closest('.profile-wrapper')) this.showProfileMenu = false; });
+                document.addEventListener('click', e => { 
+                    if (!e.target.closest('.nav-profile')) this.showProfileMenu = false; 
+                });
                 document.addEventListener('keydown', e => { if (e.key === 'Escape') { this.showAuth = false; this.showProfileMenu = false; } });
             }
         });

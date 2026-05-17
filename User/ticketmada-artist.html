@@ -14,15 +14,6 @@
         :root { --bg-cream:#FAF7F2;--bg-dark:#1a1a1a;--accent-coral:#FF6B4A;--accent-yellow:#FECA57;--accent-mint:#00D9A5;--accent-blue:#4A90FF;--accent-purple:#9B59B6;--text-dark:#1a1a1a;--text-light:#666;--border-dark:#1a1a1a;--shadow-brutal:6px 6px 0px #1a1a1a;--shadow-brutal-sm:4px 4px 0px #1a1a1a;--shadow-brutal-lg:10px 10px 0px #1a1a1a; }
         * { margin:0;padding:0;box-sizing:border-box; }
         body { font-family:'DM Sans',sans-serif;background:var(--bg-cream);color:var(--text-dark); }
-        .navbar { position:fixed;top:0;left:0;right:0;z-index:1000;padding:16px 40px;background:var(--bg-cream);border-bottom:3px solid var(--border-dark); }
-        .navbar-inner { max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between; }
-        .logo { display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text-dark); }
-        .logo-box { width:42px;height:42px;background:var(--accent-coral);border:3px solid var(--border-dark);display:flex;align-items:center;justify-content:center;font-size:1.2rem;transform:rotate(-3deg); }
-        .logo-text { font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem; }
-        .logo-text span { color:var(--accent-coral); }
-        .nav-back { display:flex;align-items:center;gap:6px;font-family:'Syne',sans-serif;font-weight:600;font-size:0.85rem;color:var(--text-dark);text-decoration:none;padding:10px 16px;border:3px solid var(--border-dark);background:white;box-shadow:var(--shadow-brutal-sm);transition:all 0.15s; }
-        .nav-back:hover { transform:translate(-2px,-2px);box-shadow:6px 6px 0px #1a1a1a; }
-        .lang-toggle { width:42px;height:42px;background:white;border:3px solid var(--border-dark);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.3rem;box-shadow:3px 3px 0px #1a1a1a; }
 
         /* Hero banner */
         .artist-hero { margin-top:77px;padding:60px 40px 50px;background:var(--bg-dark);color:white;border-bottom:3px solid var(--border-dark);position:relative;overflow:hidden; }
@@ -85,15 +76,72 @@
 <script src="../js/site-config.js"></script>
 
 <div id="app">
-    <nav class="navbar">
+    <nav class="navbar" :class="{ scrolled: isScrolled }">
         <div class="navbar-inner">
-            <a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
-            <a href="ticketmada-search.html" class="nav-back"><v-icon size="small">mdi-arrow-left</v-icon> {{ lang === 'fr' ? 'Recherche' : 'Search' }}</a>
-            <div style="display:flex;gap:12px;align-items:center;">
-                <button class="lang-toggle" @click="toggleLang">{{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}</button>
+            <a href="ticketmada-landing.html" class="logo">
+                <div class="logo-box">🎫</div>
+                <span class="logo-text">Ticket<span>Mada</span></span>
+            </a>
+            <div class="nav-cta">
+                <button class="nav-icon-btn mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen" aria-label="Menu">
+                    <v-icon>{{ mobileMenuOpen ? 'mdi-close' : 'mdi-menu' }}</v-icon>
+                </button>
+                <button class="nav-icon-btn" @click="toggleLang" aria-label="Change language">
+                    {{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}
+                </button>
+                <a href="ticketmada-search.html" class="nav-icon-btn" aria-label="Search">
+                    <v-icon size="20">mdi-magnify</v-icon>
+                </a>
+
+                <template v-if="!isLoggedIn">
+                    <a href="#" class="nav-auth-btn secondary" @click.prevent="openAuth('login')">
+                        <v-icon size="14">mdi-login</v-icon>
+                        <span class="auth-label">{{ lang === 'fr' ? 'Connexion' : 'Login' }}</span>
+                    </a>
+                </template>
+
+                <div v-else class="nav-profile" @click="showProfileMenu = !showProfileMenu">
+                    <div class="nav-profile-avatar" v-html="userAvatar"></div>
+                    <span class="nav-profile-name">{{ userName }}</span>
+                    <v-icon size="14">mdi-chevron-down</v-icon>
+                    <div v-if="showProfileMenu" class="nav-profile-dropdown" @click.stop>
+                        <a href="ticketmada-mytickets.html"><v-icon size="18">mdi-ticket</v-icon> {{ lang === 'fr' ? 'Mes billets' : 'My tickets' }}</a>
+                        <div class="divider"></div>
+                        <button class="logout" @click.prevent="handleLogout"><v-icon size="18">mdi-logout</v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Log out' }}</button>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
+
+    <div class="mobile-drawer-overlay" :class="{ active: mobileMenuOpen }" @click="mobileMenuOpen = false"></div>
+    <div class="mobile-drawer" :class="{ open: mobileMenuOpen }">
+        <div class="mobile-drawer-header">
+            <a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
+            <div class="mobile-drawer-close" @click="mobileMenuOpen = false">✕</div>
+        </div>
+        <a href="ticketmada-landing.html#events" class="mobile-nav-item" @click="mobileMenuOpen = false">
+            <v-icon>mdi-calendar-star</v-icon> {{ lang === 'fr' ? 'Événements' : 'Events' }}
+        </a>
+        <a href="ticketmada-organisateur.html" class="mobile-nav-item" @click="mobileMenuOpen = false">
+            <v-icon>mdi-account-star</v-icon> {{ lang === 'fr' ? 'Organisateurs' : 'Organizers' }}
+        </a>
+        <div style="margin-top: 20px; border-top: 3px solid var(--border-dark); padding-top: 20px;">
+            <template v-if="!isLoggedIn">
+                <div class="mobile-nav-item" @click="openAuth('login'); mobileMenuOpen = false">
+                    <v-icon>mdi-login</v-icon> {{ lang === 'fr' ? 'Connexion' : 'Login' }}
+                </div>
+            </template>
+            <template v-else>
+                <a href="ticketmada-mytickets.html" class="mobile-nav-item">
+                    <v-icon>mdi-ticket</v-icon> {{ lang === 'fr' ? 'Mes billets' : 'My tickets' }}
+                </a>
+                <div class="mobile-nav-item" @click="handleLogout(); mobileMenuOpen = false" style="color: #e74c3c;">
+                    <v-icon>mdi-logout</v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Log out' }}
+                </div>
+            </template>
+        </div>
+    </div>
 
     <!-- Artist Hero -->
     <div class="artist-hero">
@@ -196,16 +244,24 @@ const app = createApp({
             lang: localStorage.getItem('ticketmada-lang') || 'fr',
             artist: { name: '', emoji: '🎫', category: '', bio: '', venues: 0 },
             artistEvents: [],
-            showAlertPopup: false
+            showAlertPopup: false,
+            isScrolled: false,
+            mobileMenuOpen: false,
+            isLoggedIn: false,
+            showProfileMenu: false
         };
     },
     computed: {
+        userName() { const u = window.api?.getUser(); return u ? (u.displayName || u.name || u.email.split('@')[0]) : ''; },
+        userAvatar() { return window.ProfileMenu?.getAvatarSVG(this.userName) || ''; },
         totalTicketsSold() {
             return this.artistEvents.reduce((s, e) => s + (e.tickets_sold || 0), 0).toLocaleString();
         }
     },
     methods: {
         toggleLang() { this.lang = this.lang === 'fr' ? 'en' : 'fr'; localStorage.setItem('ticketmada-lang', this.lang); },
+        async handleLogout() { await window.api.logout(); this.isLoggedIn = false; this.showProfileMenu = false; },
+        openAuth(mode) { window.location.href = `ticketmada-landing.html?auth=${mode}`; },
         capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; },
         formatDate(d) { if (!d) return ''; return new Date(d).toLocaleDateString(this.lang === 'fr' ? 'fr-FR' : 'en-US', { day:'numeric',month:'short',year:'numeric' }); },
         formatPrice(p) { return p ? p.toLocaleString('fr-FR') : '0'; },
@@ -273,6 +329,15 @@ const app = createApp({
     },
     mounted() {
         document.documentElement.lang = this.lang;
+        window.addEventListener('scroll', () => {
+            this.isScrolled = window.scrollY > 50;
+        });
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.nav-profile')) this.showProfileMenu = false;
+        });
+        if (window.api && window.api.isLoggedIn()) {
+            this.isLoggedIn = true;
+        }
         this.loadArtist();
     }
 });

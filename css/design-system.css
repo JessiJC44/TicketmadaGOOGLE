@@ -275,3 +275,411 @@ body {
 .gap-sm { gap: var(--space-sm); }
 .gap-md { gap: var(--space-md); }
 .gap-lg { gap: var(--space-lg); }
+
+/* ═══════════════════════════════════════════════════════
+   NAVBAR V2 — PROFESSIONNELLE, RESPONSIVE, TOUS ÉCRANS
+   ═══════════════════════════════════════════════════════ */
+
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: var(--z-navbar);
+    padding: 0 24px;
+    background: rgba(250, 247, 242, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 3px solid var(--border-dark);
+    transition: box-shadow 0.3s ease;
+}
+.navbar.scrolled {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.navbar-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    gap: 20px;
+}
+
+/* ── Logo ── */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-dark);
+    flex-shrink: 0;
+}
+.logo-box {
+    width: 38px;
+    height: 38px;
+    background: var(--accent-coral);
+    border: 3px solid var(--border-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    transform: rotate(-3deg);
+    box-shadow: 2px 2px 0 var(--border-dark);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+.logo:hover .logo-box {
+    transform: rotate(-6deg) scale(1.05);
+}
+.logo-text {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 1.3rem;
+    white-space: nowrap;
+    letter-spacing: -0.5px;
+}
+.logo-text span { color: var(--accent-coral); }
+
+/* ── Nav Links (desktop only) ── */
+.nav-links {
+    display: flex;
+    gap: 4px;
+    list-style: none;
+    align-items: center;
+    flex-shrink: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+}
+.nav-links li {
+    flex-shrink: 0;
+    list-style: none;
+}
+.nav-links a {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--text-dark);
+    text-decoration: none;
+    padding: 6px 12px;
+    border: 2px solid transparent;
+    background: transparent;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.3px;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    display: inline-block;
+}
+.nav-links a:hover {
+    background: var(--accent-yellow);
+    border-color: var(--border-dark);
+    box-shadow: 2px 2px 0 var(--border-dark);
+    transform: translate(-1px, -1px);
+}
+.nav-links a.active {
+    background: var(--accent-coral);
+    color: white;
+    border-color: var(--border-dark);
+    box-shadow: 2px 2px 0 var(--border-dark);
+}
+
+/* ── Nav CTA container (right side) ── */
+.nav-cta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* ── Icon buttons (hamburger, lang, search) ── */
+.nav-icon-btn {
+    width: 36px;
+    height: 36px;
+    background: white;
+    border: 2px solid var(--border-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 0.95rem;
+    box-shadow: 2px 2px 0 var(--border-dark);
+    flex-shrink: 0;
+    padding: 0;
+    color: var(--text-dark);
+    line-height: 1;
+}
+.nav-icon-btn:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 var(--border-dark);
+    background: var(--accent-yellow);
+}
+.nav-icon-btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: 0 0 0 var(--border-dark);
+}
+/* Vuetify icon inside nav-icon-btn — force smaller size */
+.nav-icon-btn .v-icon {
+    font-size: 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+}
+
+/* ── Auth buttons (Connexion / S'inscrire) ── */
+.nav-auth-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border: 2px solid var(--border-dark);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    white-space: nowrap;
+    line-height: 1;
+}
+.nav-auth-btn.secondary {
+    background: white;
+    color: var(--text-dark);
+    box-shadow: 2px 2px 0 var(--border-dark);
+}
+.nav-auth-btn.primary {
+    background: var(--accent-coral);
+    color: white;
+    box-shadow: 2px 2px 0 var(--border-dark);
+}
+.nav-auth-btn:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 var(--border-dark);
+}
+.nav-auth-btn .v-icon {
+    font-size: 14px !important;
+    width: 14px !important;
+    height: 14px !important;
+}
+
+/* ── Profile (logged in user) ── */
+.nav-profile {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 4px 10px 4px 4px;
+    border: 2px solid transparent;
+    transition: all 0.15s;
+    position: relative;
+    flex-shrink: 0;
+}
+.nav-profile:hover {
+    border-color: var(--border-dark);
+    background: white;
+    box-shadow: 2px 2px 0 var(--border-dark);
+}
+.nav-profile-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--border-dark);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+}
+/* Force the SVG avatar from ProfileMenu to fit */
+.nav-profile-avatar svg {
+    width: 32px !important;
+    height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+}
+.nav-profile-name {
+    font-weight: 600;
+    font-size: 0.8rem;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.nav-profile .v-icon {
+    font-size: 14px !important;
+    opacity: 0.5;
+}
+
+/* Profile dropdown menu */
+.nav-profile-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: white;
+    border: 3px solid var(--border-dark);
+    box-shadow: var(--shadow-lg, 6px 6px 0 #1a1a1a);
+    min-width: 200px;
+    z-index: 100;
+    overflow: hidden;
+}
+.nav-profile-dropdown a,
+.nav-profile-dropdown button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 18px;
+    width: 100%;
+    color: var(--text-dark);
+    text-decoration: none;
+    font-size: 0.84rem;
+    font-weight: 500;
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: background 0.15s;
+    text-align: left;
+    font-family: inherit;
+}
+.nav-profile-dropdown a:hover,
+.nav-profile-dropdown button:hover {
+    background: #fef9f0;
+}
+.nav-profile-dropdown .divider {
+    height: 1px;
+    background: #eee;
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+.nav-profile-dropdown .logout {
+    color: #e74c3c;
+}
+
+/* ── Hamburger — hidden by default, shown via media query ── */
+.mobile-menu-btn {
+    display: none !important;
+}
+
+/* ════════════════════════════════════
+   NAVBAR RESPONSIVE BREAKPOINTS
+   ════════════════════════════════════ */
+
+/* > 1200px : full navbar with links — everything visible */
+
+/* ≤ 1200px : hide nav-links, show hamburger */
+@media (max-width: 1200px) {
+    .nav-links { display: none !important; }
+    .mobile-menu-btn { display: flex !important; }
+}
+
+/* ≤ 900px : hide auth button text labels, keep icons only */
+@media (max-width: 900px) {
+    .nav-auth-btn .auth-label { display: none; }
+    .nav-auth-btn { padding: 7px 10px; }
+    .nav-profile-name { display: none; }
+}
+
+/* ≤ 600px : hide auth buttons entirely (they're in the mobile drawer) */
+@media (max-width: 600px) {
+    .navbar { padding: 0 16px; }
+    .navbar-inner { height: 52px; gap: 6px; }
+    .logo-text { font-size: 1.1rem; }
+    .logo-box { width: 32px; height: 32px; font-size: 0.9rem; }
+    .nav-icon-btn { width: 32px; height: 32px; }
+    .nav-icon-btn .v-icon { font-size: 16px !important; }
+    .nav-auth-btn { display: none !important; }
+    .nav-profile-avatar { width: 28px; height: 28px; }
+    .nav-profile-avatar svg { width: 28px !important; height: 28px !important; max-width: 28px !important; max-height: 28px !important; }
+}
+
+/* ≤ 400px : ultra compact */
+@media (max-width: 400px) {
+    .navbar { padding: 0 10px; }
+    .navbar-inner { gap: 4px; }
+    .logo-box { width: 28px; height: 28px; font-size: 0.8rem; border-width: 2px; }
+    .logo-text { font-size: 1rem; }
+    .nav-icon-btn { width: 30px; height: 30px; border-width: 2px; box-shadow: 1px 1px 0 var(--border-dark); }
+}
+
+/* ═══ MOBILE DRAWER ═══ */
+.mobile-drawer-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: var(--z-drawer);
+}
+.mobile-drawer-overlay.active { display: block; }
+
+.mobile-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 85vw;
+    background: var(--bg-cream);
+    border-right: 3px solid var(--border-dark);
+    z-index: var(--z-overlay);
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    padding: 24px;
+    overflow-y: auto;
+}
+.mobile-drawer.open { transform: translateX(0); }
+
+.mobile-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid var(--border-dark);
+}
+.mobile-drawer-close {
+    width: 36px;
+    height: 36px;
+    background: white;
+    border: 2px solid var(--border-dark);
+    box-shadow: 2px 2px 0 var(--border-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.mobile-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    margin-bottom: 6px;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    background: white;
+    border: 2px solid var(--border-dark);
+    box-shadow: 3px 3px 0 var(--border-dark);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
+}
+.mobile-nav-item:hover,
+.mobile-nav-item:active {
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 var(--border-dark);
+}
+.mobile-nav-item.primary {
+    background: var(--accent-coral);
+    color: white;
+}
+.mobile-nav-item .v-icon {
+    font-size: 20px !important;
+}

@@ -21,41 +21,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'DM Sans', sans-serif; background: var(--bg-cream); color: var(--text-dark); }
 
-        /* ── Navbar ── */
-        .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 16px 40px; background: var(--bg-cream); border-bottom: 3px solid var(--border-dark); }
-        .navbar-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; gap: 24px; }
-        .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-dark); flex-shrink: 0; }
-        .logo-box { width: 42px; height: 42px; background: var(--accent-coral); border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transform: rotate(-3deg); }
-        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; }
-        .logo-text span { color: var(--accent-coral); }
-
-        /* Inline search bar */
-        .nav-search-bar { flex: 1; max-width: 600px; position: relative; }
-        .nav-search-input { width: 100%; padding: 12px 20px 12px 44px; border: 3px solid var(--border-dark); font-family: 'DM Sans', sans-serif; font-size: 1rem; background: white; box-shadow: var(--shadow-brutal-sm); transition: box-shadow 0.15s; }
-        .nav-search-input:focus { outline: none; box-shadow: 6px 6px 0px var(--accent-coral); }
-        .nav-search-input::placeholder { color: #bbb; }
-        .nav-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
-
-        /* Autocomplete dropdown */
-        .autocomplete { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 3px solid var(--border-dark); border-top: none; box-shadow: 0 8px 0px #1a1a1a; max-height: 400px; overflow-y: auto; z-index: 100; }
-        .ac-section { padding: 10px 16px 6px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light); border-top: 2px solid #eee; }
-        .ac-section:first-child { border-top: none; }
-        .ac-item { padding: 12px 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: background 0.1s; }
-        .ac-item:hover { background: #fef9f0; }
-        .ac-item-icon { width: 40px; height: 40px; border: 2px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
-        .ac-item-info { flex: 1; min-width: 0; }
-        .ac-item-name { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .ac-item-name mark { background: var(--accent-yellow); font-weight: 800; }
-        .ac-item-detail { font-size: 0.78rem; color: var(--text-light); display: flex; gap: 12px; }
-        .ac-item-price { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.9rem; flex-shrink: 0; }
-        .ac-view-all { padding: 14px 16px; text-align: center; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; color: var(--accent-coral); cursor: pointer; border-top: 2px solid #eee; }
-        .ac-view-all:hover { background: #fff5f0; }
-
-        .nav-cta { display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
-        .lang-toggle { width: 42px; height: 42px; background: white; border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.3rem; box-shadow: 3px 3px 0px #1a1a1a; transition: all 0.2s; }
-        .lang-toggle:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0px #1a1a1a; }
-        .nav-back { display: flex; align-items: center; gap: 6px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.85rem; color: var(--text-dark); text-decoration: none; padding: 10px 16px; border: 3px solid var(--border-dark); background: white; box-shadow: var(--shadow-brutal-sm); transition: all 0.15s; }
-        .nav-back:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
 
         /* ── Page Header ── */
         .page-header { margin-top: 80px; padding: 40px 40px 30px; border-bottom: 3px solid var(--border-dark); background: white; }
@@ -138,14 +103,14 @@
 <body>
 
 <div id="app">
-    <!-- Navbar with inline search -->
-    <nav class="navbar">
+    <nav class="navbar" :class="{ scrolled: isScrolled }">
         <div class="navbar-inner">
             <a href="ticketmada-landing.html" class="logo">
                 <div class="logo-box">🎫</div>
                 <span class="logo-text">Ticket<span>Mada</span></span>
             </a>
-            <div class="nav-search-bar">
+
+            <div class="nav-search-bar" v-if="!isMobile">
                 <v-icon class="nav-search-icon" size="small">mdi-magnify</v-icon>
                 <input class="nav-search-input"
                        :placeholder="lang === 'fr' ? 'Rechercher artiste, événement, lieu...' : 'Search artist, event, venue...'"
@@ -155,10 +120,9 @@
                        @keydown.enter="doSearch"
                        @keydown.esc="showAutocomplete = false"
                        ref="searchInput">
-                <!-- Autocomplete -->
                 <div class="autocomplete" v-if="showAutocomplete && (acEvents.length || acCategories.length || searchQuery.length >= 2)">
                     <template v-if="acEvents.length">
-                        <div class="ac-section">{{ lang === 'fr' ? '��vénements' : 'Events' }}</div>
+                        <div class="ac-section">{{ lang === 'fr' ? 'Événements' : 'Events' }}</div>
                         <div class="ac-item" v-for="ev in acEvents" :key="ev.id" @mousedown.prevent="goToEvent(ev.id)">
                             <div class="ac-item-icon" :style="{ background: categoryColors[ev.category] || '#f0f0f0' }">{{ ev.emoji || '🎫' }}</div>
                             <div class="ac-item-info">
@@ -184,14 +148,100 @@
                     <div class="ac-view-all" v-if="searchQuery.length >= 2" @mousedown.prevent="doSearch">
                         {{ lang === 'fr' ? 'Voir tous les résultats pour' : 'View all results for' }} "{{ searchQuery }}" →
                     </div>
-                    <div v-if="!acEvents.length && !acCategories.length && searchQuery.length >= 2" style="padding:20px;text-align:center;color:var(--text-light);font-size:0.85rem;">
-                        {{ lang === 'fr' ? 'Aucune suggestion' : 'No suggestions' }}
+                </div>
+            </div>
+
+            <v-spacer v-if="isMobile"></v-spacer>
+
+            <div class="nav-cta">
+                <button class="nav-icon-btn mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen" aria-label="Menu">
+                    <v-icon>{{ mobileMenuOpen ? 'mdi-close' : 'mdi-menu' }}</v-icon>
+                </button>
+                <button class="nav-icon-btn" @click="toggleLang" aria-label="Change language">
+                    {{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}
+                </button>
+                <button class="nav-icon-btn" v-if="isMobile" @click="showMobileSearch = !showMobileSearch" aria-label="Search">
+                    <v-icon size="18">mdi-magnify</v-icon>
+                </button>
+
+                <template v-if="!isLoggedIn">
+                    <a href="#" class="nav-auth-btn secondary" @click.prevent="openAuth('login')">
+                        <v-icon size="14">mdi-login</v-icon>
+                        <span class="auth-label">{{ lang === 'fr' ? 'Connexion' : 'Login' }}</span>
+                    </a>
+                </template>
+
+                <div v-else class="nav-profile" @click="showProfileMenu = !showProfileMenu">
+                    <div class="nav-profile-avatar" v-html="userAvatar"></div>
+                    <span class="nav-profile-name">{{ userName }}</span>
+                    <v-icon size="14">mdi-chevron-down</v-icon>
+                    <div v-if="showProfileMenu" class="nav-profile-dropdown" @click.stop>
+                        <a href="ticketmada-mytickets.html"><v-icon size="18">mdi-ticket</v-icon> {{ lang === 'fr' ? 'Mes billets' : 'My tickets' }}</a>
+                        <div class="divider"></div>
+                        <button class="logout" @click.prevent="handleLogout"><v-icon size="18">mdi-logout</v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Log out' }}</button>
                     </div>
                 </div>
             </div>
-            <div class="nav-cta">
-                <button class="lang-toggle" @click="toggleLang">{{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}</button>
-                <a href="ticketmada-landing.html" class="nav-back"><v-icon size="small">mdi-arrow-left</v-icon> {{ lang === 'fr' ? 'Accueil' : 'Home' }}</a>
+        </div>
+
+        <!-- Mobile search overlay -->
+        <div v-if="showMobileSearch && isMobile" class="nav-mobile-search">
+            <div class="nav-search-bar" style="max-width: 100%;">
+                <v-icon class="nav-search-icon" size="small">mdi-magnify</v-icon>
+                <input class="nav-search-input"
+                       :placeholder="lang === 'fr' ? 'Artiste, événement, lieu...' : 'Artist, event, venue...'"
+                       v-model="searchQuery"
+                       @input="onSearchInput"
+                       @focus="showAutocomplete = true"
+                       @keydown.enter="doSearch(); showMobileSearch = false"
+                       @keydown.esc="showMobileSearch = false"
+                       ref="mobileSearchInput">
+                <v-icon class="nav-mobile-search-close" @click="showMobileSearch = false">mdi-close</v-icon>
+            </div>
+            <!-- Autocomplete for mobile -->
+            <div class="autocomplete" v-if="showAutocomplete && (acEvents.length || acCategories.length || searchQuery.length >= 2)">
+                <div class="ac-item" v-for="ev in acEvents" :key="ev.id" @mousedown.prevent="goToEvent(ev.id)">
+                    <div class="ac-item-icon">{{ ev.emoji || '🎫' }}</div>
+                    <div class="ac-item-info">
+                        <div class="ac-item-name" v-html="highlightMatch(ev.name)"></div>
+                        <div class="ac-item-detail">{{ ev.venue }}</div>
+                    </div>
+                </div>
+                <div class="ac-view-all" @mousedown.prevent="doSearch(); showMobileSearch = false">
+                    {{ lang === 'fr' ? 'Voir tous les résultats' : 'View all results' }}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="mobile-drawer-overlay" :class="{ active: mobileMenuOpen }" @click="mobileMenuOpen = false"></div>
+    <div class="mobile-drawer" :class="{ open: mobileMenuOpen }">
+        <div class="mobile-drawer-header">
+            <a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
+            <div class="mobile-drawer-close" @click="mobileMenuOpen = false">✕</div>
+        </div>
+        <a href="ticketmada-landing.html#events" class="mobile-nav-item" @click="mobileMenuOpen = false">
+            <v-icon>mdi-calendar-star</v-icon> {{ lang === 'fr' ? 'Événements' : 'Events' }}
+        </a>
+        <a href="ticketmada-organisateur.html" class="mobile-nav-item" @click="mobileMenuOpen = false">
+            <v-icon>mdi-account-star</v-icon> {{ lang === 'fr' ? 'Organisateurs' : 'Organizers' }}
+        </a>
+        <div style="margin-top: 20px; border-top: 3px solid var(--border-dark); padding-top: 20px;">
+            <template v-if="!isLoggedIn">
+                <div class="mobile-nav-item" @click="openAuth('login'); mobileMenuOpen = false">
+                    <v-icon>mdi-login</v-icon> {{ lang === 'fr' ? 'Connexion' : 'Login' }}
+                </div>
+            </template>
+            <template v-else>
+                <a href="ticketmada-mytickets.html" class="mobile-nav-item">
+                    <v-icon>mdi-ticket</v-icon> {{ lang === 'fr' ? 'Mes billets' : 'My tickets' }}
+                </a>
+                <div class="mobile-nav-item" @click="handleLogout(); mobileMenuOpen = false" style="color: #e74c3c;">
+                    <v-icon>mdi-logout</v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Log out' }}
+                </div>
+            </template>
+        </div>
+    </div>
             </div>
         </div>
     </nav>
@@ -336,12 +386,20 @@ const app = createApp({
             acEvents: [],
             acCategories: [],
             acDebounce: null,
+            isScrolled: false,
+            mobileMenuOpen: false,
+            showMobileSearch: false,
+            isMobile: window.innerWidth <= 1200,
+            isLoggedIn: false,
+            showProfileMenu: false,
             categoryColors: {
                 concerts: '#FF6B4A20', festivals: '#9B59B620', sports: '#4A90FF20', theatre: '#FECA5720'
             }
         };
     },
     computed: {
+        userName() { const u = window.api?.getUser(); return u ? (u.displayName || u.name || u.email.split('@')[0]) : ''; },
+        userAvatar() { return window.ProfileMenu?.getAvatarSVG(this.userName) || ''; },
         filteredResults() {
             let list = [...this.allEvents];
             if (this.activeCategory) {
@@ -364,6 +422,8 @@ const app = createApp({
             this.lang = this.lang === 'fr' ? 'en' : 'fr';
             localStorage.setItem('ticketmada-lang', this.lang);
         },
+        async handleLogout() { await window.api.logout(); this.isLoggedIn = false; this.showProfileMenu = false; },
+        openAuth(mode) { window.location.href = `ticketmada-landing.html?auth=${mode}`; },
         formatDate(d) {
             if (!d) return '—';
             return new Date(d).toLocaleDateString(this.lang === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -487,6 +547,19 @@ const app = createApp({
     },
     async mounted() {
         document.documentElement.lang = this.lang;
+        window.addEventListener('resize', () => {
+            this.isMobile = window.innerWidth <= 1200;
+        });
+        window.addEventListener('scroll', () => {
+            this.isScrolled = window.scrollY > 50;
+        });
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.nav-search-bar') && !e.target.closest('.nav-mobile-search')) this.showAutocomplete = false;
+            if (!e.target.closest('.nav-profile')) this.showProfileMenu = false;
+        });
+        if (window.api && window.api.isLoggedIn()) {
+            this.isLoggedIn = true;
+        }
         // Read URL params
         const params = new URLSearchParams(window.location.search);
         this.searchQuery = params.get('q') || '';

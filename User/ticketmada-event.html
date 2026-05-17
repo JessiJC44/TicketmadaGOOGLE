@@ -50,18 +50,6 @@
         .sp-fire { animation: sp-wiggle 2s infinite; display: inline-block; }
         @keyframes sp-wiggle { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-5deg); } 75% { transform: rotate(5deg); } }
 
-        /* ── Navbar ── */
-        .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 16px 40px; background: var(--bg-cream); border-bottom: 3px solid var(--border-dark); }
-        .navbar-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
-        .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); }
-        .logo-box { width: 45px; height: 45px; background: var(--accent-coral); border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; transform: rotate(-3deg); }
-        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.5rem; }
-        .logo-text span { color: var(--accent-coral); }
-        .nav-back { display: flex; align-items: center; gap: 8px; font-family: 'Syne', sans-serif; font-weight: 600; color: var(--text-dark); text-decoration: none; padding: 10px 20px; border: 3px solid var(--border-dark); background: white; box-shadow: var(--shadow-brutal-sm); transition: all 0.15s ease; }
-        .nav-back:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #1a1a1a; }
-        .nav-cta { display: flex; gap: 12px; align-items: center; }
-        .lang-toggle { width: 42px; height: 42px; background: white; border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.3rem; box-shadow: 3px 3px 0px #1a1a1a; transition: all 0.2s; }
-        .lang-toggle:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0px #1a1a1a; }
 
         /* ── Event Hero ── */
         .event-hero { position: relative; height: 350px; background: var(--bg-dark); overflow: hidden; margin-top: 80px; border-bottom: 3px solid var(--border-dark); }
@@ -342,30 +330,65 @@
                 <span class="logo-text">Ticket<span>Mada</span></span>
             </a>
             <div class="nav-cta">
-                <button class="nav-icon-btn mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen">
+                <button class="nav-icon-btn mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen" aria-label="Menu">
                     <v-icon>{{ mobileMenuOpen ? 'mdi-close' : 'mdi-menu' }}</v-icon>
                 </button>
-                <button class="nav-icon-btn" @click="toggleLang">{{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}</button>
+                <button class="nav-icon-btn" @click="toggleLang" aria-label="Change language">
+                    {{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}
+                </button>
+                <a href="ticketmada-search.html" class="nav-icon-btn" aria-label="Search">
+                    <v-icon size="20">mdi-magnify</v-icon>
+                </a>
+
                 <template v-if="!isLoggedIn">
                     <a href="#" class="nav-auth-btn secondary" @click.prevent="openAuth('login')">
-                        <v-icon size="16">mdi-login</v-icon> <span class="auth-label">{{ lang === 'fr' ? 'Connexion' : 'Login' }}</span>
+                        <v-icon size="14">mdi-login</v-icon>
+                        <span class="auth-label">{{ lang === 'fr' ? 'Connexion' : 'Login' }}</span>
                     </a>
                 </template>
-                <template v-else>
-                    <div class="nav-profile" @click="showProfileMenu = !showProfileMenu">
-                        <div class="nav-profile-avatar" v-html="userAvatar"></div>
-                        <span class="nav-profile-name">{{ userName }}</span>
-                        <v-icon size="14">mdi-chevron-down</v-icon>
-                        <div v-if="showProfileMenu" class="nav-profile-dropdown" @click.stop>
-                            <a href="ticketmada-mytickets.html"><v-icon size="18">mdi-ticket</v-icon> {{ lang === 'fr' ? 'Mes billets' : 'My tickets' }}</a>
-                            <div class="divider"></div>
-                            <button class="logout" @click.prevent="handleLogout"><v-icon size="18">mdi-logout</v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Logout' }}</button>
-                        </div>
+
+                <div v-else class="nav-profile" @click="showProfileMenu = !showProfileMenu">
+                    <div class="nav-profile-avatar" v-html="userAvatar"></div>
+                    <span class="nav-profile-name">{{ userName }}</span>
+                    <v-icon size="14">mdi-chevron-down</v-icon>
+                    <div v-if="showProfileMenu" class="nav-profile-dropdown" @click.stop>
+                        <a href="ticketmada-mytickets.html"><v-icon size="18">mdi-ticket</v-icon> {{ lang === 'fr' ? 'Mes billets' : 'My tickets' }}</a>
+                        <div class="divider"></div>
+                        <button class="logout" @click.prevent="handleLogout"><v-icon size="18">mdi-logout</v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Log out' }}</button>
                     </div>
-                </template>
+                </div>
             </div>
         </div>
     </nav>
+
+    <div class="mobile-drawer-overlay" :class="{ active: mobileMenuOpen }" @click="mobileMenuOpen = false"></div>
+    <div class="mobile-drawer" :class="{ open: mobileMenuOpen }">
+        <div class="mobile-drawer-header">
+            <a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
+            <div class="mobile-drawer-close" @click="mobileMenuOpen = false">✕</div>
+        </div>
+        <a href="ticketmada-landing.html#events" class="mobile-nav-item" @click="mobileMenuOpen = false">
+            <v-icon>mdi-calendar-star</v-icon> {{ lang === 'fr' ? 'Événements' : 'Events' }}
+        </a>
+        <a href="ticketmada-organisateur.html" class="mobile-nav-item" @click="mobileMenuOpen = false">
+            <v-icon>mdi-account-star</v-icon> {{ lang === 'fr' ? 'Organisateurs' : 'Organizers' }}
+        </a>
+        <div style="margin-top: 20px; border-top: 3px solid var(--border-dark); padding-top: 20px;">
+            <template v-if="!isLoggedIn">
+                <div class="mobile-nav-item" @click="openAuth('login'); mobileMenuOpen = false">
+                    <v-icon>mdi-login</v-icon> {{ lang === 'fr' ? 'Connexion' : 'Login' }}
+                </div>
+            </template>
+            <template v-else>
+                <a href="ticketmada-mytickets.html" class="mobile-nav-item">
+                    <v-icon>mdi-ticket</v-icon> {{ lang === 'fr' ? 'Mes billets' : 'My tickets' }}
+                </a>
+                <div class="mobile-nav-item" @click="handleLogout(); mobileMenuOpen = false" style="color: #e74c3c;">
+                    <v-icon>mdi-logout</v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Log out' }}
+                </div>
+            </template>
+        </div>
+    </div>
 
     <!-- Auth Modal -->
     <div class="auth-modal" :class="{ active: showAuth }" @click.self="showAuth = false">
@@ -799,7 +822,9 @@ const app = createApp({
             authForm: { name: '', email: '', password: '' },
             showProfileMenu: false,
             userName: '',
-            userPhoto: ''
+            userPhoto: '',
+            isScrolled: false,
+            mobileMenuOpen: false
         };
     },
     computed: {
@@ -1385,10 +1410,6 @@ const app = createApp({
         // Load related events
         this.loadRelatedEvents();
 
-        window.addEventListener('scroll', () => {
-            this.isScrolled = window.scrollY > 20;
-        });
-
         // Initialize wishlist status
         const wishlist = JSON.parse(localStorage.getItem('ticketmada_wishlist') || '[]');
         this.isWishlisted = wishlist.includes(this.event.id || this.eventId);
@@ -1396,6 +1417,24 @@ const app = createApp({
         // Countdown timer
         this.updateCountdown();
         setInterval(() => this.updateCountdown(), 60000);
+
+        window.addEventListener('scroll', () => {
+            this.isScrolled = window.scrollY > 50;
+        });
+        
+        document.addEventListener('click', e => { 
+            if (!e.target.closest('.nav-profile')) {
+                this.showProfileMenu = false;
+            }
+        });
+        if (window.api && window.api.isLoggedIn()) {
+            this.isLoggedIn = true;
+            const user = window.api.getUser();
+            if (user) {
+                this.userName = user.name || user.displayName || user.email.split('@')[0];
+                this.userPhoto = user.photo || user.picture || '';
+            }
+        }
 
         // Social proof simulation
         this.viewersCount = Math.floor(Math.random() * 25) + 12;
