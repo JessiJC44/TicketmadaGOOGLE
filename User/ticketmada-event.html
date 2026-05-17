@@ -4,12 +4,20 @@
     <meta charset="UTF-8">
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TicketMada - Choisir vos places</title>
+    <title>TicketMada — {{ event.name || 'Chargement...' }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/design-system.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
+
+    <!-- Open Graph for Event -->
+    <meta property="og:type" content="article">
+    <meta property="og:title" :content="event.name + ' — TicketMada'">
+    <meta property="og:description" :content="formatDate(event.date_start) + ' at ' + event.venue">
+    <meta property="og:image" :content="event.image_url">
     <style>
         :root {
             --bg-cream: #FAF7F2;
@@ -327,33 +335,32 @@
     </div>
 
     <!-- Navbar -->
-    <nav class="navbar">
+    <nav class="navbar" :class="{ scrolled: isScrolled }">
         <div class="navbar-inner">
             <a href="ticketmada-landing.html" class="logo">
                 <div class="logo-box">🎫</div>
                 <span class="logo-text">Ticket<span>Mada</span></span>
             </a>
-            <a href="ticketmada-landing.html" class="nav-back">
-                <v-icon icon="mdi-arrow-left" size="small"></v-icon>
-                {{ lang === 'fr' ? 'Retour aux événements' : 'Back to events' }}
-            </a>
             <div class="nav-cta">
-                <button class="lang-toggle" @click="toggleLang" style="margin-right: 12px;">{{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}</button>
+                <button class="nav-icon-btn mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen">
+                    <v-icon>{{ mobileMenuOpen ? 'mdi-close' : 'mdi-menu' }}</v-icon>
+                </button>
+                <button class="nav-icon-btn" @click="toggleLang">{{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}</button>
                 <template v-if="!isLoggedIn">
-                    <button class="nav-back" style="margin: 0; box-shadow: 4px 4px 0 #1a1a1a;" @click="showAuth = true">{{ lang === 'fr' ? 'Connexion' : 'Login' }}</button>
+                    <a href="#" class="nav-auth-btn secondary" @click.prevent="openAuth('login')">
+                        <v-icon size="16">mdi-login</v-icon> <span class="auth-label">{{ lang === 'fr' ? 'Connexion' : 'Login' }}</span>
+                    </a>
                 </template>
                 <template v-else>
-                    <div style="display:flex;align-items:center;gap:10px;cursor:pointer;position:relative;" @click="showProfileMenu = !showProfileMenu">
-                        <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;border:2px solid #1a1a1a; background: white; display: flex; align-items: center; justify-content: center;">
-                            <img v-if="userPhoto" :src="userPhoto" style="width:100%;height:100%;object-fit:cover;">
-                            <span v-else style="font-weight: 800; font-size: 0.8rem;">{{ userName.slice(0,2).toUpperCase() }}</span>
+                    <div class="nav-profile" @click="showProfileMenu = !showProfileMenu">
+                        <div class="nav-profile-avatar" v-html="userAvatar"></div>
+                        <span class="nav-profile-name">{{ userName }}</span>
+                        <v-icon size="14">mdi-chevron-down</v-icon>
+                        <div v-if="showProfileMenu" class="nav-profile-dropdown" @click.stop>
+                            <a href="ticketmada-mytickets.html"><v-icon size="18">mdi-ticket</v-icon> {{ lang === 'fr' ? 'Mes billets' : 'My tickets' }}</a>
+                            <div class="divider"></div>
+                            <button class="logout" @click.prevent="handleLogout"><v-icon size="18">mdi-logout</v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Logout' }}</button>
                         </div>
-                        <span style="font-weight:600;font-size:0.85rem; display: none; sm: block;">{{ userName }}</span>
-                    </div>
-                    <div v-if="showProfileMenu" style="position:absolute;top:60px;right:0px;background:white;border:3px solid #1a1a1a;box-shadow:6px 6px 0 #1a1a1a;padding:10px 0;z-index:2100;min-width:180px;">
-                        <a href="ticketmada-mytickets.html" style="display:block;padding:10px 20px;color:#1a1a1a;text-decoration:none;font-size:0.85rem;font-weight:500;">🎟️ {{ lang === 'fr' ? 'Mes billets' : 'My tickets' }}</a>
-                        <div style="height:1px;background:#eee;margin:4px 0;"></div>
-                        <a href="#" @click.prevent="handleLogout" style="display:block;padding:10px 20px;color:#e74c3c;text-decoration:none;font-size:0.85rem;font-weight:500;">🚪 {{ lang === 'fr' ? 'Déconnexion' : 'Logout' }}</a>
                     </div>
                 </template>
             </div>
@@ -381,19 +388,45 @@
     </div>
 
     <!-- Event Hero -->
-    <div class="event-hero">
+    <div class="event-hero" v-if="!loading">
         <img :src="event.image_url || 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=1200'" class="hero-banner" alt="">
-        <div class="hero-content-overlay" v-if="!loading">
+        <div class="hero-content-overlay">
             <div class="hero-event-info">
-                <img :src="event.image_url || 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=300'" class="hero-poster" alt="">
                 <div class="hero-text">
+                    <nav class="breadcrumbs" aria-label="Fil d'Ariane" style="margin-bottom: 20px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
+                        <a href="ticketmada-landing.html" style="color: white; opacity: 0.8;">{{ lang === 'fr' ? 'Accueil' : 'Home' }}</a>
+                        <span class="breadcrumb-sep" style="color: white; opacity: 0.5;">›</span>
+                        <a href="ticketmada-landing.html#events" style="color: white; opacity: 0.8;">{{ event.category }}</a>
+                        <span class="breadcrumb-sep" style="color: white; opacity: 0.5;">›</span>
+                        <span class="breadcrumb-current" style="color: white; font-weight: 800;">{{ event.name }}</span>
+                    </nav>
+
                     <h1>{{ event.name }}</h1>
                     <div class="hero-meta">
                         <span><v-icon icon="mdi-calendar" color="white"></v-icon> {{ formatDate(event.date_start) }}</span>
                         <span><v-icon icon="mdi-map-marker" color="white"></v-icon> {{ event.venue }}</span>
-                        <span><v-icon icon="mdi-account-group" color="white"></v-icon> {{ event.capacity ? event.capacity.toLocaleString() : '—' }} {{ lang === 'fr' ? 'places' : 'seats' }}</span>
+                        <span><v-icon icon="mdi-tag" color="white"></v-icon> {{ event.category }}</span>
+                    </div>
+
+                    <!-- Countdown -->
+                    <div class="event-countdown" v-if="countdown" style="display: flex; gap: 15px; margin-top: 30px; background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); padding: 15px 25px; border-left: 4px solid var(--accent-coral);">
+                        <div style="text-align: center;"><div style="font-size: 1.5rem; font-weight: 800; font-family: 'Syne';">{{ countdown.days }}</div><div style="font-size:0.65rem; text-transform: uppercase;">{{ lang === 'fr' ? 'Jours' : 'Days' }}</div></div>
+                        <div style="font-size: 1.5rem; font-weight: 800; font-family: 'Syne';">:</div>
+                        <div style="text-align: center;"><div style="font-size: 1.5rem; font-weight: 800; font-family: 'Syne';">{{ countdown.hours }}</div><div style="font-size:0.65rem; text-transform: uppercase;">{{ lang === 'fr' ? 'Heures' : 'Hours' }}</div></div>
+                        <div style="font-size: 1.5rem; font-weight: 800; font-family: 'Syne';">:</div>
+                        <div style="text-align: center;"><div style="font-size: 1.5rem; font-weight: 800; font-family: 'Syne';">{{ countdown.minutes }}</div><div style="font-size:0.65rem; text-transform: uppercase;">Min</div></div>
                     </div>
                 </div>
+            </div>
+            
+            <!-- Wishlist & Share -->
+            <div style="position: absolute; top: 40px; right: 40px; display: flex; gap: 10px;">
+                <button class="nav-icon-btn" @click="toggleWishlist" :style="isWishlisted ? 'background: var(--accent-coral); color: white;' : ''" title="Favori">
+                    <v-icon>{{ isWishlisted ? 'mdi-heart' : 'mdi-heart-outline' }}</v-icon>
+                </button>
+                <button class="nav-icon-btn" @click="shareEvent" title="Partager">
+                    <v-icon>mdi-share-variant</v-icon>
+                </button>
             </div>
         </div>
     </div>
@@ -720,6 +753,10 @@ const app = createApp({
         return {
             lang: localStorage.getItem('ticketmada-lang') || 'fr',
             loading: true,
+            isScrolled: false,
+            mobileMenuOpen: false,
+            isWishlisted: false,
+            countdown: null,
             // Real API data
             eventProducts: [],
             eventCategories: [],
@@ -766,6 +803,11 @@ const app = createApp({
         };
     },
     computed: {
+        userAvatar() {
+            const name = this.userName || 'User';
+            if (window.ProfileMenu) { const g = window.ProfileMenu.detectGender(name); return window.ProfileMenu.getAvatarSVG(name, g, 36); }
+            return name.slice(0, 2).toUpperCase();
+        },
         svgViewBox() { return '0 0 700 500'; },
         viewStagePoints() {
             const z = this.selectedZone;
@@ -870,6 +912,39 @@ const app = createApp({
         canvasZoomIn() { if (this.venueCanvas) this.venueCanvas.zoomIn(); },
         canvasZoomOut() { if (this.venueCanvas) this.venueCanvas.zoomOut(); },
         canvasReset() { if (this.venueCanvas) { this.venueCanvas.resetView(); this.focusedZone = null; this.selectedZone = null; } },
+        toggleWishlist() {
+            const wishlist = JSON.parse(localStorage.getItem('ticketmada_wishlist') || '[]');
+            const id = this.event.id || this.eventId;
+            const idx = wishlist.indexOf(id);
+            if (idx > -1) { wishlist.splice(idx, 1); this.isWishlisted = false; Toast.info(this.lang === 'fr' ? 'Retiré des favoris' : 'Removed from favorites'); }
+            else { wishlist.push(id); this.isWishlisted = true; Toast.success(this.lang === 'fr' ? 'Ajouté aux favoris !' : 'Added to favorites!'); }
+            localStorage.setItem('ticketmada_wishlist', JSON.stringify(wishlist));
+        },
+        async shareEvent() {
+            const shareData = {
+                title: this.event.name,
+                text: `${this.event.name} — ${this.formatDate(this.event.date_start)} à ${this.event.venue}`,
+                url: window.location.href
+            };
+            if (navigator.share) {
+                try { await navigator.share(shareData); } catch(e) { }
+            } else {
+                navigator.clipboard.writeText(window.location.href);
+                Toast.success(this.lang === 'fr' ? 'Lien copié !' : 'Link copied!');
+            }
+        },
+        updateCountdown() {
+            if (!this.event.date_start) return;
+            const target = new Date(this.event.date_start).getTime();
+            const now = new Date().getTime();
+            const diff = target - now;
+            if (diff <= 0) { this.countdown = null; return; }
+            this.countdown = {
+                days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+                hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+                minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+            };
+        },
         zoomToZone(zoneId) {
             this.focusedZone = this.focusedZone === zoneId ? null : zoneId;
             this.selectedZone = this.focusedZone;
@@ -1309,6 +1384,18 @@ const app = createApp({
 
         // Load related events
         this.loadRelatedEvents();
+
+        window.addEventListener('scroll', () => {
+            this.isScrolled = window.scrollY > 20;
+        });
+
+        // Initialize wishlist status
+        const wishlist = JSON.parse(localStorage.getItem('ticketmada_wishlist') || '[]');
+        this.isWishlisted = wishlist.includes(this.event.id || this.eventId);
+
+        // Countdown timer
+        this.updateCountdown();
+        setInterval(() => this.updateCountdown(), 60000);
 
         // Social proof simulation
         this.viewersCount = Math.floor(Math.random() * 25) + 12;

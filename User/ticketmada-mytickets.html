@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TicketMada - Mes Billets</title>
+    <title>TicketMada — {{ lang === 'fr' ? 'Mes Billets' : 'My Tickets' }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/design-system.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -93,10 +95,28 @@
 <div id="app" v-cloak>
     <v-app>
     <v-main>
-    <nav class="navbar">
+    <nav class="navbar" :class="{ scrolled: isScrolled }">
         <div class="navbar-inner">
-            <a href="ticketmada-landing.html" class="logo"><div class="logo-box">🎫</div><span class="logo-text">Ticket<span>Mada</span></span></a>
-            <a href="ticketmada-landing.html" class="nav-back"><v-icon icon="mdi-arrow-left" size="small"></v-icon> {{ lang === 'fr' ? 'Accueil' : 'Home' }}</a>
+            <a href="ticketmada-landing.html" class="logo">
+                <div class="logo-box">🎫</div>
+                <span class="logo-text">Ticket<span>Mada</span></span>
+            </a>
+            <div class="nav-cta">
+                <button class="nav-icon-btn mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen">
+                    <v-icon>{{ mobileMenuOpen ? 'mdi-close' : 'mdi-menu' }}</v-icon>
+                </button>
+                <button class="nav-icon-btn" @click="toggleLang">{{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}</button>
+                <div class="nav-profile" @click="showProfileMenu = !showProfileMenu">
+                    <div class="nav-profile-avatar" v-html="userAvatar"></div>
+                    <span class="nav-profile-name">{{ userName }}</span>
+                    <v-icon size="14">mdi-chevron-down</v-icon>
+                    <div v-if="showProfileMenu" class="nav-profile-dropdown" @click.stop>
+                        <a href="ticketmada-mytickets.html" class="active"><v-icon size="18">mdi-ticket</v-icon> {{ lang === 'fr' ? 'Mes billets' : 'My tickets' }}</a>
+                        <div class="divider"></div>
+                        <button class="logout" @click.prevent="handleLogout"><v-icon size="18">mdi-logout</v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Logout' }}</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -195,11 +215,19 @@ const app = createApp({
         return {
             lang: localStorage.getItem('ticketmada-lang') || 'fr',
             activeTab: 'all',
+            isScrolled: false,
+            mobileMenuOpen: false,
+            showProfileMenu: false,
             tickets: [],
             userName: ''
         };
     },
     computed: {
+        userAvatar() {
+            const name = this.userName || 'User';
+            if (window.ProfileMenu) { const g = window.ProfileMenu.detectGender(name); return window.ProfileMenu.getAvatarSVG(name, g, 36); }
+            return name.slice(0, 2).toUpperCase();
+        },
         activeCount() { return this.tickets.filter(t => t.status === 'active').length; },
         scannedCount() { return this.tickets.filter(t => t.status === 'scanned').length; },
         refundedCount() { return this.tickets.filter(t => t.status === 'refunded').length; },
@@ -212,6 +240,15 @@ const app = createApp({
     methods: {
         formatDate(d) { if (!d) return ''; return new Date(d).toLocaleDateString(this.lang === 'fr' ? 'fr-FR' : 'en-US', { day:'numeric',month:'short',year:'numeric' }); },
         formatPrice(p) { return p ? p.toLocaleString('fr-FR') : '0'; },
+        toggleLang() {
+            this.lang = this.lang === 'fr' ? 'en' : 'fr';
+            localStorage.setItem('ticketmada-lang', this.lang);
+            document.documentElement.lang = this.lang;
+        },
+        async handleLogout() {
+            if (window.api) await window.api.logout();
+            window.location.assign('ticketmada-landing.html');
+        },
         statusLabel(s) {
             const labels = { active: { fr:'Actif', en:'Active' }, scanned: { fr:'Utilisé', en:'Used' }, refunded: { fr:'Remboursé', en:'Refunded' } };
             return (labels[s] || labels.active)[this.lang];
@@ -251,6 +288,9 @@ const app = createApp({
     },
     mounted() {
         document.documentElement.lang = this.lang;
+        window.addEventListener('scroll', () => {
+            this.isScrolled = window.scrollY > 20;
+        });
         this.loadTickets();
     }
 });

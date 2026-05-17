@@ -3,14 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TicketMada - Plateforme de Billetterie Événementielle</title>
+    <title>TicketMada — Billetterie Événementielle Madagascar</title>
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+
+    <meta name="description" content="TicketMada — La plateforme de billetterie #1 à Madagascar. Réservez vos billets pour concerts, festivals, sports et événements. Paiement sécurisé, billets instantanés.">
+    <meta name="keywords" content="billetterie, Madagascar, concert, festival, sport, billet, ticket, événement, Antananarivo, Tana">
+    <link rel="canonical" href="https://ticketmada.mg/">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="TicketMada — Billetterie Événementielle Madagascar">
+    <meta property="og:description" content="Découvrez et réservez vos billets pour les meilleurs événements à Madagascar.">
+    <meta property="og:image" content="https://ticketmada.mg/images/og-image.jpg">
+    <meta property="og:url" content="https://ticketmada.mg/">
+    <meta property="og:site_name" content="TicketMada">
+    <meta property="og:locale" content="fr_MG">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="TicketMada — Billetterie Madagascar">
+    <meta name="twitter:description" content="Concerts, festivals, sports — réservez en un clic.">
+    <meta name="twitter:image" content="https://ticketmada.mg/images/og-image.jpg">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="../css/design-system.css">
     
     <style>
         [v-cloak] { display: none !important; }
@@ -373,44 +394,81 @@
 <body>
     <div id="app" v-cloak>
         <v-app>
-            <nav class="navbar">
-            <div class="navbar-inner">
-                <a href="ticketmada-landing.html" class="logo">
-                    <div class="logo-box">🎫</div>
-                    <span class="logo-text">Ticket<span>Mada</span></span>
-                </a>
-                <ul class="nav-links">
-                    <li><a href="#events" :class="{ active: activeCategory === 'all' }" @click.prevent="activeCategory = 'all'; scrollToEvents();">{{ t.nav.events }}</a></li>
-                    <li><a href="#events" :class="{ active: activeCategory === 'concerts' }" @click.prevent="activeCategory = 'concerts'; scrollToEvents();">{{ t.nav.concerts }}</a></li>
-                    <li><a href="#events" :class="{ active: activeCategory === 'festivals' }" @click.prevent="activeCategory = 'festivals'; scrollToEvents();">{{ t.nav.festivals }}</a></li>
-                    <li><a href="#events" :class="{ active: activeCategory === 'sports' }" @click.prevent="activeCategory = 'sports'; scrollToEvents();">{{ t.nav.sports }}</a></li>
-                    <li><a href="ticketmada-organisateur.html">{{ t.nav.organizers }}</a></li>
-                </ul>
-                <div class="nav-cta">
-                    <button class="mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen">
-                        <v-icon>mdi-menu</v-icon>
-                    </button>
-                    <button class="lang-toggle" @click="toggleLang" :title="lang === 'fr' ? 'Switch to English' : 'Passer en Français'">{{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}</button>
-                    <button class="nav-search" @click="showSearch = true"><v-icon icon="mdi-magnify"></v-icon></button>
-                    <template v-if="!isLoggedIn">
-                        <a href="#" class="brutal-btn brutal-btn-secondary brutal-btn-small" @click.prevent="openAuth('login')">{{ t.nav.login }}</a>
-                        <a href="#" class="brutal-btn brutal-btn-primary brutal-btn-small" @click.prevent="openAuth('register')">{{ t.nav.signup }}</a>
-                    </template>
-                    <template v-else>
-                        <div style="display:flex;align-items:center;gap:10px;cursor:pointer;position:relative;" @click="showProfileMenu = !showProfileMenu">
-                            <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;border:2px solid #1a1a1a;" v-html="userAvatar"></div>
-                            <span style="font-weight:600;font-size:0.85rem;">{{ userName }}</span>
+            <nav class="navbar" :class="{ scrolled: isScrolled }">
+                <div class="navbar-inner">
+                    <!-- Logo -->
+                    <a href="ticketmada-landing.html" class="logo">
+                        <div class="logo-box">🎫</div>
+                        <span class="logo-text">Ticket<span>Mada</span></span>
+                    </a>
+
+                    <!-- Nav Links (desktop only, hidden <1200px) -->
+                    <ul class="nav-links">
+                        <li><a href="#events" :class="{ active: activeCategory === 'all' }" @click.prevent="activeCategory = 'all'; scrollToEvents();">{{ t.nav.events }}</a></li>
+                        <li><a href="#events" :class="{ active: activeCategory === 'concerts' }" @click.prevent="activeCategory = 'concerts'; scrollToEvents();">{{ t.nav.concerts }}</a></li>
+                        <li><a href="#events" :class="{ active: activeCategory === 'festivals' }" @click.prevent="activeCategory = 'festivals'; scrollToEvents();">{{ t.nav.festivals }}</a></li>
+                        <li><a href="#events" :class="{ active: activeCategory === 'sports' }" @click.prevent="activeCategory = 'sports'; scrollToEvents();">{{ t.nav.sports }}</a></li>
+                        <li><a href="ticketmada-organisateur.html">{{ t.nav.organizers }}</a></li>
+                    </ul>
+
+                    <!-- Right side actions -->
+                    <div class="nav-cta">
+                        <!-- Hamburger (shown <1200px) -->
+                        <button class="nav-icon-btn mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen" aria-label="Menu">
+                            <v-icon>{{ mobileMenuOpen ? 'mdi-close' : 'mdi-menu' }}</v-icon>
+                        </button>
+
+                        <!-- Language toggle -->
+                        <button class="nav-icon-btn" @click="toggleLang" :title="lang === 'fr' ? 'Switch to English' : 'Passer en Français'" aria-label="Change language">
+                            {{ lang === 'fr' ? '🇬🇧' : '🇫🇷' }}
+                        </button>
+
+                        <!-- Search -->
+                        <button class="nav-icon-btn" @click="showSearch = true" aria-label="Search">
+                            <v-icon size="18">mdi-magnify</v-icon>
+                        </button>
+
+                        <!-- Auth buttons (not logged in) -->
+                        <template v-if="!isLoggedIn">
+                            <a href="#" class="nav-auth-btn secondary" @click.prevent="openAuth('login')">
+                                <v-icon size="16">mdi-login</v-icon>
+                                <span class="auth-label">{{ t.nav.login }}</span>
+                            </a>
+                            <a href="#" class="nav-auth-btn primary" @click.prevent="openAuth('register')">
+                                <v-icon size="16">mdi-account-plus</v-icon>
+                                <span class="auth-label">{{ t.nav.signup }}</span>
+                            </a>
+                        </template>
+
+                        <!-- Profile (logged in) -->
+                        <div v-else class="nav-profile" @click="showProfileMenu = !showProfileMenu">
+                            <div class="nav-profile-avatar" v-html="userAvatar"></div>
+                            <span class="nav-profile-name">{{ userName }}</span>
+                            <v-icon size="14">mdi-chevron-down</v-icon>
+
+                            <!-- Dropdown -->
+                            <div v-if="showProfileMenu" class="nav-profile-dropdown" @click.stop>
+                                <a href="ticketmada-mytickets.html">
+                                    <v-icon size="18">mdi-ticket</v-icon> {{ lang === 'fr' ? 'Mes billets' : 'My tickets' }}
+                                </a>
+                                <a href="ticketmada-search.html">
+                                    <v-icon size="18">mdi-magnify</v-icon> {{ lang === 'fr' ? 'Recherche' : 'Search' }}
+                                </a>
+                                <a v-if="userRole === 'organizer'" href="../Admin/ticketmada-dashboard.html">
+                                    <v-icon size="18">mdi-view-dashboard</v-icon> Dashboard
+                                </a>
+                                <a v-if="userRole === 'superadmin' || userRole === 'admin'" href="../Admin/ticketmada-superadmin.html">
+                                    <v-icon size="18">mdi-shield-crown</v-icon> Admin
+                                </a>
+                                <div class="divider"></div>
+                                <button class="logout" @click.prevent="handleLogout">
+                                    <v-icon size="18">mdi-logout</v-icon> {{ lang === 'fr' ? 'Déconnexion' : 'Log out' }}
+                                </button>
+                            </div>
                         </div>
-                        <div v-if="showProfileMenu" style="position:absolute;top:60px;right:20px;background:white;border:3px solid #1a1a1a;box-shadow:6px 6px 0 #1a1a1a;padding:10px 0;z-index:100;min-width:180px;">
-                            <a href="ticketmada-mytickets.html" style="display:block;padding:10px 20px;color:#1a1a1a;text-decoration:none;font-size:0.85rem;font-weight:500;">🎟️ Mes billets</a>
-                            <a href="ticketmada-search.html" style="display:block;padding:10px 20px;color:#1a1a1a;text-decoration:none;font-size:0.85rem;font-weight:500;">🔍 Recherche</a>
-                            <div style="height:1px;background:#eee;margin:4px 0;"></div>
-                            <a href="#" @click.prevent="handleLogout" style="display:block;padding:10px 20px;color:#e74c3c;text-decoration:none;font-size:0.85rem;font-weight:500;">🚪 Déconnexion</a>
-                        </div>
-                    </template>
+                    </div>
                 </div>
-            </div>
-        </nav>
+            </nav>
 
         <!-- Mobile Drawer -->
         <div class="mobile-drawer-overlay" :class="{ active: mobileMenuOpen }" @click="mobileMenuOpen = false"></div>
@@ -490,6 +548,19 @@
                 </div>
             </div>
         </section>
+
+        <section class="trust-strip">
+            <div class="trust-strip-inner">
+                <p class="trust-strip-label">{{ lang === 'fr' ? 'ILS NOUS FONT CONFIANCE' : 'TRUSTED BY' }}</p>
+                <div class="trust-logos">
+                    <div class="trust-logo">🏟️ <span>CCI Ivato</span></div>
+                    <div class="trust-logo">🎵 <span>Mozika Festival</span></div>
+                    <div class="trust-logo">⚽ <span>Barea FC</span></div>
+                    <div class="trust-logo">🎭 <span>IFM</span></div>
+                    <div class="trust-logo">🎪 <span>Cabaret Vert</span></div>
+                </div>
+            </div>
+        </section>
         
         <section class="categories">
             <div class="categories-inner">
@@ -550,6 +621,28 @@
                 </div>
             </div>
         </section>
+
+        <section class="testimonials">
+            <div class="testimonials-inner">
+                <div class="section-header">
+                    <div class="section-badge" style="background: var(--accent-blue); color: white;">{{ lang === 'fr' ? 'Témoignages' : 'Testimonials' }}</div>
+                    <h2 class="section-title">{{ lang === 'fr' ? 'Ce qu\'ils en disent' : 'What people say' }}</h2>
+                </div>
+                <div class="testimonials-grid">
+                    <div class="testimonial-card brutal-card-static" v-for="(review, i) in testimonials" :key="i">
+                        <div class="testimonial-stars">{{ '⭐'.repeat(review.stars) }}</div>
+                        <p class="testimonial-text">"{{ review.text }}"</p>
+                        <div class="testimonial-author">
+                            <div class="testimonial-avatar">{{ review.initials }}</div>
+                            <div>
+                                <div class="testimonial-name">{{ review.name }}</div>
+                                <div class="testimonial-role">{{ review.role }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
         
         <section class="cta">
             <div class="cta-container">
@@ -562,6 +655,21 @@
                     <a href="#events" class="brutal-btn brutal-btn-secondary" v-if="lang === 'fr'">Explorer</a>
                     <a href="#events" class="brutal-btn brutal-btn-secondary" v-else>Explore</a>
                 </div>
+            </div>
+        </section>
+
+        <section class="newsletter">
+            <div class="newsletter-inner">
+                <div class="newsletter-content">
+                    <h3>{{ lang === 'fr' ? '📬 Ne ratez aucun événement' : '📬 Never miss an event' }}</h3>
+                    <p>{{ lang === 'fr' ? 'Inscrivez-vous et recevez les meilleurs événements de Madagascar chaque semaine.' : 'Subscribe and receive the best events in Madagascar every week.' }}</p>
+                </div>
+                <form class="newsletter-form" @submit.prevent="subscribeNewsletter">
+                    <input type="email" class="brutal-input" :placeholder="lang === 'fr' ? 'votre@email.com' : 'your@email.com'" v-model="newsletterEmail" required>
+                    <button type="submit" class="brutal-btn brutal-btn-primary">
+                        {{ lang === 'fr' ? 'S\'inscrire' : 'Subscribe' }}
+                    </button>
+                </form>
             </div>
         </section>
 
@@ -738,6 +846,7 @@
                 return {
                     lang: localStorage.getItem('ticketmada-lang') || 'fr',
                     isLoggedIn: false, showProfileMenu: false,
+                    isScrolled: false,
                     showSearch: false, showAuth: false, authMode: 'login', searchQuery: '', activeCategory: 'all',
                     showMobileMenu: false, mobileMenuOpen: false,
                     loadingAuth: false, authStartTime: 0,
@@ -745,11 +854,17 @@
                     suggestions: [],
                     currentPage: 1,
                     itemsPerPage: 20,
+                    newsletterEmail: '',
                     authForm: { name: '', email: '', password: '' },
                     featureIcons: ['🎫', '🔒', '📱', '💬', '🔄', '⭐'],
                     featuredEvents: [],
                     categories: [{ icon: '🎸', countNum: 156 },{ icon: '🎪', countNum: 42 },{ icon: '⚽', countNum: 89 },{ icon: '🎭', countNum: 34 }],
-                    events: []
+                    events: [],
+                    testimonials: [
+                        { name: 'Andry R.', initials: 'AR', role: (localStorage.getItem('ticketmada-lang') || 'fr') === 'fr' ? 'Organisateur, Mozika Festival' : 'Organizer, Mozika Festival', stars: 5, text: (localStorage.getItem('ticketmada-lang') || 'fr') === 'fr' ? 'TicketMada a transformé notre gestion des billets. Le QR scanner est génial !' : 'TicketMada transformed our ticket management. The QR scanner is amazing!' },
+                        { name: 'Naina T.', initials: 'NT', role: (localStorage.getItem('ticketmada-lang') || 'fr') === 'fr' ? 'Festivalière' : 'Festival goer', stars: 5, text: (localStorage.getItem('ticketmada-lang') || 'fr') === 'fr' ? 'Super facile de réserver. J\'ai reçu mon billet en 2 secondes par email.' : 'Super easy to book. Got my ticket in 2 seconds by email.' },
+                        { name: 'Hery F.', initials: 'HF', role: (localStorage.getItem('ticketmada-lang') || 'fr') === 'fr' ? 'Manager, Barea Events' : 'Manager, Barea Events', stars: 4, text: (localStorage.getItem('ticketmada-lang') || 'fr') === 'fr' ? 'Le dashboard organisateur est complet. On voit les ventes en temps réel.' : 'The organizer dashboard is complete. We see sales in real time!' }
+                    ],
                 };
             },
             computed: {
@@ -782,6 +897,10 @@
                 await this.loadEvents();
                 animateCounters();
 
+                window.addEventListener('scroll', () => {
+                    this.isScrolled = window.scrollY > 20;
+                });
+
                 // Check for login query param
                 const params = new URLSearchParams(window.location.search);
                 if (params.get('login')) {
@@ -802,6 +921,41 @@
                         }
                     }
                 }, 4000);
+
+                // Swipe/Drag support for carousel
+                const carousel = document.getElementById('landing-carousel');
+                if (carousel) {
+                    let startX = 0;
+                    let scrollLeft = 0;
+                    let isDragging = false;
+
+                    carousel.addEventListener('touchstart', (e) => {
+                        startX = e.touches[0].pageX;
+                        scrollLeft = carousel.scrollLeft;
+                    }, { passive: true });
+
+                    carousel.addEventListener('touchmove', (e) => {
+                        const x = e.touches[0].pageX;
+                        const walk = (startX - x) * 1.5;
+                        carousel.scrollLeft = scrollLeft + walk;
+                    }, { passive: true });
+
+                    // Mouse drag support
+                    carousel.addEventListener('mousedown', (e) => {
+                        isDragging = true;
+                        startX = e.pageX;
+                        scrollLeft = carousel.scrollLeft;
+                        carousel.style.cursor = 'grabbing';
+                    });
+                    carousel.addEventListener('mousemove', (e) => {
+                        if (!isDragging) return;
+                        const walk = (startX - e.pageX) * 1.5;
+                        carousel.scrollLeft = scrollLeft + walk;
+                    });
+                    carousel.addEventListener('mouseup', () => { isDragging = false; carousel.style.cursor = 'grab'; });
+                    carousel.addEventListener('mouseleave', () => { isDragging = false; carousel.style.cursor = 'grab'; });
+                    carousel.style.cursor = 'grab';
+                }
             },
             methods: {
                 scrollToEvents() {
@@ -997,7 +1151,13 @@
                     return new Date(d).toLocaleDateString(this.lang === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' });
                 },
                 formatPrice(p) { return window.TICKETMADA_CONFIG.formatPrice(p); },
-                async handleLogout() { if (window.api) await window.api.logout(); this.isLoggedIn = false; }
+                async handleLogout() { if (window.api) await window.api.logout(); this.isLoggedIn = false; },
+                subscribeNewsletter() {
+                    if (this.newsletterEmail) {
+                        Toast.success(this.lang === 'fr' ? 'Merci pour votre inscription !' : 'Thank you for subscribing!');
+                        this.newsletterEmail = '';
+                    }
+                }
             },
             watch: { 
                 showSearch(val) { if (val) this.$nextTick(() => this.$refs.searchInput?.focus()); },
