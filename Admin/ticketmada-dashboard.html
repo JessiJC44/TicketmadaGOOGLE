@@ -20,6 +20,7 @@
     <script src="../js/seatmap-engine.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         [v-cloak] { display: none !important; }
@@ -625,13 +626,13 @@
                             <div class="stat-card" style="padding:20px;">
                                 <h3 style="font-family:'Syne',sans-serif; margin-bottom:16px;">Ventes</h3>
                                 <div style="height: 250px; position: relative;">
-                                    <v-sparkline :value="salesChartData.length > 0 ? salesChartData : [0,0,0]" color="var(--accent-coral)" line-width="2" padding="16" type="bar" auto-draw></v-sparkline>
+                                    <canvas id="salesChart"></canvas>
                                 </div>
                             </div>
                             <div class="stat-card" style="padding:20px;">
                                 <h3 style="font-family:'Syne',sans-serif; margin-bottom:16px;">Billets</h3>
                                 <div style="height: 250px; position: relative;">
-                                    <v-sparkline :value="ticketsChartData.length > 0 ? ticketsChartData : [0,0,0]" color="var(--accent-mint)" line-width="2" padding="16" type="trend" auto-draw fill></v-sparkline>
+                                    <canvas id="ticketsChart"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -671,6 +672,7 @@
                                             <td>
                                                 <div style="display:flex; gap:6px;">
                                                     <button class="action-btn" @click="editingEvent = JSON.parse(JSON.stringify(evt)); showEditModal = true" title="Modifier"><v-icon size="x-small">mdi-pencil</v-icon></button>
+                                                    <button class="action-btn" @click="duplicateEvent(evt)" title="Dupliquer"><v-icon size="x-small">mdi-content-copy</v-icon></button>
                                                     <button class="action-btn" @click="selectedEvent = evt; currentPage = 'analytics'" title="Stats"><v-icon size="x-small">mdi-chart-line</v-icon></button>
                                                 </div>
                                             </td>
@@ -717,7 +719,7 @@
                         <div class="section">
                             <div class="section-header"><div class="section-title"><v-icon size="small">mdi-ticket</v-icon> Dernières ventes</div><button class="btn btn-secondary btn-sm" @click="exportSales()"><v-icon size="x-small">mdi-download</v-icon> Exporter</button></div>
                             <div class="filters-bar"><div class="filter-group"><span class="filter-label">Événement:</span><select class="filter-select"><option>Tous</option><option v-for="e in myEvents" :key="e.id">{{ e.name }}</option></select></div><div class="filter-group"><span class="filter-label">Statut:</span><select class="filter-select"><option>Tous</option><option>Validé</option><option>Scanné</option></select></div></div>
-                            <div class="table-container"><table><thead><tr><th>ID</th><th>Événement</th><th>Acheteur</th><th>Type</th><th>Prix</th><th>Statut</th><th>Date</th></tr></thead><tbody><tr v-for="t in myTickets" :key="t.id"><td><code style="background: #f5f5f5; padding: 2px 6px; font-size: 0.75rem;">{{ t.id }}</code></td><td>{{ t.event }}</td><td>{{ t.buyer }}</td><td>{{ t.type }}</td><td>{{ formatCurrency(t.price) }}</td><td><span class="status-badge" :class="'status-' + t.status">{{ t.statusLabel }}</span></td><td>{{ t.date }}</td></tr></tbody></table></div>
+                            <div class="table-container"><table><thead><tr><th>ID</th><th>Événement</th><th>Acheteur</th><th>Type</th><th>Prix</th><th>Statut</th><th>Date</th><th>Actions</th></tr></thead><tbody><tr v-for="t in myTickets" :key="t.id"><td><code style="background: #f5f5f5; padding: 2px 6px; font-size: 0.75rem;">{{ t.id }}</code></td><td>{{ t.event }}</td><td>{{ t.buyer }}</td><td>{{ t.type }}</td><td>{{ formatCurrency(t.price) }}</td><td><span class="status-badge" :class="'status-' + t.status">{{ t.statusLabel }}</span></td><td>{{ t.date }}</td><td><button class="action-btn" v-if="t.status !== 'cancelled' && t.status !== 'refunded'" @click="cancelTicket(t)" style="color:var(--accent-red);"><v-icon size="x-small">mdi-cancel</v-icon></button></td></tr></tbody></table></div>
                         </div>
                     </template>
                     
@@ -1790,7 +1792,8 @@
                     seatmapTemplates: [],
                     seatmapCurvedRows: false,
                     seatmapCurrentTemplate: null,
-                    seatmapGenerated: null
+                    seatmapGenerated: null,
+                    charts: { sales: null, tickets: null }
                 };
             },
             computed: {
@@ -1993,14 +1996,77 @@
                 formatMoney(v) { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MGA', maximumFractionDigits: 0 }).format(v).replace('MGA', 'Ar'); },
                 setPeriodType(p) { this.periodType = p; this.currentPeriodOffset = 0; this.loadDashboardData(); },
                 navigatePeriod(dir) { this.currentPeriodOffset += dir; this.loadDashboardData(); },
-                loadDashboardData() {
+                async loadCharts(data) {
+                    if (!window.Chart) return;
+                    await this.$nextTick();
+
+                    const ctxSales = document.getElementById('salesChart');
+                    const ctxTickets = document.getElementById('ticketsChart');
+
+                    if (!ctxSales || !ctxTickets) return;
+
+                    // Destroy old charts
+                    if (this.charts.sales) this.charts.sales.destroy();
+                    if (this.charts.tickets) this.charts.tickets.destroy();
+
+                    const labels = data.labels || [];
+                    const salesData = data.sales || [];
+                    const ticketsData = data.tickets || [];
+
+                    this.charts.sales = new Chart(ctxSales, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Ventes (Ar)',
+                                data: salesData,
+                                backgroundColor: '#FF6B4A',
+                                borderColor: '#1a1a1a',
+                                borderWidth: 2
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                    });
+
+                    this.charts.tickets = new Chart(ctxTickets, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Billets',
+                                data: ticketsData,
+                                borderColor: '#00D9A5',
+                                backgroundColor: 'rgba(0, 217, 165, 0.1)',
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 3
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                    });
+                },
+                async loadDashboardData() {
                     // Logic to fetch stats based on periodType and currentPeriodOffset
                     console.log('Fetching data for', this.periodType, 'offset', this.currentPeriodOffset);
-                    // Mock data update
-                    this.salesPeriod = Math.floor(Math.random() * 20000000);
-                    this.ticketsPeriod = Math.floor(Math.random() * 500);
-                    this.salesChartData = Array.from({length: 12}, () => Math.floor(Math.random() * 100));
-                    this.ticketsChartData = Array.from({length: 12}, () => Math.floor(Math.random() * 100));
+                    
+                    try {
+                        const data = await window.api.get(`/analytics/charts?period=${this.periodType}&offset=${this.currentPeriodOffset}`);
+                        if (data && !data.error) {
+                            this.salesChartData = data.sales || [];
+                            this.ticketsChartData = data.tickets || [];
+                            this.loadCharts(data);
+                        }
+                    } catch(e) {
+                        // Mock data update as fallback
+                        this.salesPeriod = Math.floor(Math.random() * 20000000);
+                        this.ticketsPeriod = Math.floor(Math.random() * 500);
+                        const mockData = {
+                            labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+                            sales: Array.from({length: 7}, () => Math.floor(Math.random() * 1000000)),
+                            tickets: Array.from({length: 7}, () => Math.floor(Math.random() * 50))
+                        };
+                        this.loadCharts(mockData);
+                    }
                 },
                 async handleLogout() { 
                     if (window.api) {
@@ -2137,6 +2203,8 @@
                             this.myTickets = (data.myTickets || []).map(t => ({ id: t.id_code || 'TKT-' + t.id, event: t.event_name, buyer: t.buyer_name || 'Client', type: t.type, price: t.price, status: t.status === 'scanned' ? 'completed' : t.status, statusLabel: tLabels[t.status] || t.status, date: new Date(t.created_at).toLocaleDateString('fr-FR') }));
                             this.myPayouts = (data.myPayouts || []).map(p => ({ id: p.id_code || 'PAY-' + p.id, amount: p.amount, commission: p.commission, net: p.net, method: p.method, status: p.status, statusLabel: p.status === 'completed' ? 'Effectué' : 'En cours', date: new Date(p.created_at).toLocaleDateString('fr-FR') }));
                             
+                            this.loadDashboardData();
+
                             // Load additional mock data for specialized pages
                             this.mockProducts = [
                                 { id: 1, name: 'Pass VIP 2 Jours', type: 'ticket', price: 250000, sold: 45, stock: 100 },
@@ -2262,6 +2330,28 @@
                 async createEvent() {
                     const result = await window.api.post('/events', this.newEvent);
                     if (!result.error) { this.showCreateModal = false; this.newEvent = { name: '', date_start: '', date_end: '', venue: '', category: 'concerts', capacity: '', description: '' }; this.loadDashboard(); }
+                },
+                async duplicateEvent(event) {
+                    if (confirm(`Voulez-vous vraiment dupliquer l'événement "${event.name}" ?`)) {
+                        try {
+                            const result = await window.api.post(`/events/${event.id}/duplicate`);
+                            if (!result.error) {
+                                alert('Événement dupliqué !');
+                                this.loadDashboard();
+                            }
+                        } catch(e) { alert('Erreur lors de la duplication'); }
+                    }
+                },
+                async cancelTicket(ticket) {
+                    if (confirm(`Voulez-vous vraiment annuler le billet ${ticket.id} ?`)) {
+                        try {
+                            const result = await window.api.put(`/tickets/${ticket.id}/cancel`);
+                            if (!result.error) {
+                                alert('Billet annulé !');
+                                this.loadDashboard();
+                            }
+                        } catch(e) { alert('Erreur lors de l\'annulation'); }
+                    }
                 },
                 // Scan methods
                 copyScanLink(event) {

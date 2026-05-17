@@ -16,6 +16,7 @@ function handleEvents($method, $id, $action) {
             $id ? getEvent($id) : listEvents();
             break;
         case 'POST':
+            if ($action === 'duplicate' && $id) { duplicateEvent($id); return; }
             createEvent();
             break;
         case 'PUT':
@@ -200,4 +201,35 @@ function deleteEvent($id) {
     $db->prepare("UPDATE events SET status = 'cancelled' WHERE id = ?")->execute([$id]);
 
     jsonResponse(['message' => 'Événement supprimé']);
+}
+
+function duplicateEvent($id) {
+    $user = requireAuth([ROLE_ORGANIZER, ROLE_ADMIN, ROLE_SUPERADMIN]);
+    $db = getDB();
+
+    $event = $db->prepare('SELECT * FROM events WHERE id = ?');
+    $event->execute([$id]);
+    $event = $event->fetch();
+    if (!$event) jsonError('Événement non trouvé', 404);
+
+    $body = getBody();
+    $newName = $body['name'] ?? $event['name'] . ' (copie)';
+    $newDate = $body['date_start'] ?? $event['date_start'];
+
+    $stmt = $db->prepare("INSERT INTO events (organizer_id, name, category, description, emoji, date_start, date_end, venue, capacity, image_url, status)
+                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')");
+    $stmt->execute([
+        $user['id'],
+        $newName,
+        $event['category'],
+        $event['description'],
+        $event['emoji'],
+        $newDate,
+        $event['date_end'],
+        $event['venue'],
+        $event['capacity'],
+        $event['image_url']
+    ]);
+
+    jsonResponse(['id' => $db->lastInsertId(), 'message' => 'Événement dupliqué'], 201);
 }

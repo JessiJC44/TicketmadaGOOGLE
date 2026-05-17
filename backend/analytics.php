@@ -11,6 +11,9 @@ function handleAnalytics($method, $action, $subAction) {
         case 'superadmin':
             getSuperAdminDashboard();
             break;
+        case 'charts':
+            getChartData();
+            break;
         default:
             jsonError('Route analytics non trouvée', 404);
     }
@@ -229,4 +232,60 @@ function getRecentActivity() {
     }
 
     jsonResponse(['activities' => $activities]);
+}
+
+function getChartData() {
+    $user = requireAuth([ROLE_ORGANIZER, ROLE_ADMIN, ROLE_SUPERADMIN]);
+    $db = getDB();
+    $orgId = $_GET['organizer_id'] ?? $user['id'];
+    $period = $_GET['period'] ?? 'month'; // day, week, month
+
+    // Revenue par jour/semaine/mois
+    $groupBy = "strftime('%Y-%m-%d', t.created_at)";
+    $limit = 30;
+    if ($period === 'week') { $groupBy = "strftime('%Y-%W', t.created_at)"; $limit = 12; }
+    if ($period === 'month') { $groupBy = "strftime('%Y-%m', t.created_at)"; $limit = 12; }
+
+    $isAdmin = in_array($user['role'], [ROLE_ADMIN, ROLE_SUPERADMIN]);
+    $where = $isAdmin ? '1=1' : 'e.organizer_id = ?';
+    $params = $isAdmin ? [] : [$orgId];
+
+    $revenue = $db->prepare("
+        SELECT $groupBy as period_key,
+               SUM(t.price) as revenue,
+               COUNT(*) as tickets_sold
+        FROM tickets t
+        JOIN events e ON t.event_id = e.id
+        WHERE $where AND t.created_at >= date('now', '-365 days')
+        GROUP BY period_key
+        ORDER BY period_key ASC
+        LIMIT $limit
+    ");
+    $revenue->execute($params);
+
+    // Tickets par statut dans le temps
+    $statusBreakdown = $db->prepare("
+        SELECT t.status, COUNT(*) as count
+        FROM tickets t
+        JOIN events e ON t.event_id = e.id
+        WHERE $where
+        GROUP BY t.status
+    ");
+    $statusBreakdown->execute($params);
+
+    // Top events par revenue
+    $topEvents = $db->prepare("
+        SELECT e.name, e.revenue, e.tickets_sold, e.capacity
+        FROM events e
+        WHERE " . ($isAdmin ? '1=1' : 'e.organizer_id = ?') . "
+        ORDER BY e.revenue DESC LIMIT 5
+    ");
+    $topEvents->execute($isAdmin ? [] : [$orgId]);
+
+    jsonResponse([
+        'revenue_chart' => $revenue->fetchAll(),
+        'status_breakdown' => $statusBreakdown->fetchAll(),
+        'top_events' => $topEvents->fetchAll(),
+        'period' => $period
+    ]);
 }

@@ -76,6 +76,13 @@ try {
             break;
         case 'tickets':
             require_once __DIR__ . '/tickets.php';
+            // PDF route
+            if ($action === 'pdf' && $method === 'GET' && $id) {
+                if (file_exists(__DIR__ . '/pdf-ticket.php')) {
+                    require_once __DIR__ . '/pdf-ticket.php';
+                    generateTicketPDF($id);
+                }
+            }
             handleTickets($method, $id, $action);
             break;
         case 'refunds':
@@ -122,6 +129,10 @@ try {
             require_once __DIR__ . '/products.php';
             handleProducts($method, $id, $action);
             break;
+        case 'pos':
+            require_once __DIR__ . '/pos.php';
+            handlePOS($method, $id, $action);
+            break;
         case 'purchase-intents':
             require_once __DIR__ . '/purchase-intents.php';
             handlePurchaseIntents($method, $id, $action);
@@ -138,21 +149,29 @@ try {
             require_once __DIR__ . '/fulfillment.php';
             handleFulfillment($method, $id, $action);
             break;
-        case 'settings':
-            require_once __DIR__ . '/settings.php';
-            handleSettings($method, $action);
+        case 'pricing':
+            require_once __DIR__ . '/dynamic-pricing.php';
+            handleDynamicPricing($method, $id, $action);
             break;
         case 'waitlist':
             require_once __DIR__ . '/waitlist.php';
             handleWaitlist($method, $id, $action);
             break;
-        case 'transfers':
-            require_once __DIR__ . '/transfers.php';
-            handleTransfers($method, $id, $action);
+        case 'resale':
+            require_once __DIR__ . '/resale.php';
+            handleResale($method, $id, $action);
             break;
-        case 'pricing-rules':
-            require_once __DIR__ . '/pricing.php';
-            handlePricingRules($method, $id, $action);
+        case 'settings':
+            require_once __DIR__ . '/settings.php';
+            handleSettings($method, $id, $action);
+            break;
+        case 'email-templates':
+            require_once __DIR__ . '/email-templates.php';
+            handleEmailTemplates($method, $id, $action);
+            break;
+        case 'transfers':
+            require_once __DIR__ . '/resale.php';
+            handleResale($method, $id, $action);
             break;
         case 'superadmin':
             require_once __DIR__ . '/superadmin.php';

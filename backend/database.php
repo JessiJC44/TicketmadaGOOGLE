@@ -415,4 +415,46 @@ function initDatabase() {
     seedDatabase($db);
 }
 
+function migrateAllTables() {
+    $db = getDB();
+
+    $migrations = [
+        // Products (Updated schema)
+        "CREATE TABLE IF NOT EXISTS products_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, organizer_id INTEGER NOT NULL, event_id INTEGER, name TEXT NOT NULL, description TEXT, category TEXT DEFAULT 'merchandise', price INTEGER NOT NULL DEFAULT 0, stock INTEGER DEFAULT -1, image_url TEXT, status TEXT DEFAULT 'active', created_at DATETIME DEFAULT (datetime('now')), updated_at DATETIME, FOREIGN KEY (organizer_id) REFERENCES users(id))",
+        "CREATE TABLE IF NOT EXISTS product_variants (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER NOT NULL, name TEXT NOT NULL, price INTEGER NOT NULL DEFAULT 0, stock INTEGER DEFAULT -1, FOREIGN KEY (product_id) REFERENCES products(id))",
+        
+        // POS
+        "CREATE TABLE IF NOT EXISTS pos_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, token TEXT UNIQUE NOT NULL, event_id INTEGER NOT NULL, operator_id INTEGER NOT NULL, cash_start INTEGER DEFAULT 0, cash_end INTEGER DEFAULT 0, total_sales INTEGER DEFAULT 0, tx_count INTEGER DEFAULT 0, status TEXT DEFAULT 'open', created_at DATETIME DEFAULT (datetime('now')), closed_at DATETIME)",
+        "CREATE TABLE IF NOT EXISTS pos_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, session_id INTEGER, operator_id INTEGER NOT NULL, event_id INTEGER NOT NULL, items_json TEXT, total_amount INTEGER NOT NULL DEFAULT 0, payment_method TEXT DEFAULT 'cash', created_at DATETIME DEFAULT (datetime('now')))",
+
+        // Fulfillment
+        "CREATE TABLE IF NOT EXISTS fulfillments (id INTEGER PRIMARY KEY AUTOINCREMENT, ticket_id INTEGER NOT NULL, event_id INTEGER NOT NULL, buyer_id INTEGER NOT NULL, delivery_method TEXT DEFAULT 'e_ticket', delivery_address TEXT, tracking_code TEXT, status TEXT DEFAULT 'pending', delivered_at DATETIME, created_at DATETIME DEFAULT (datetime('now')), updated_at DATETIME)",
+
+        // Dynamic Pricing
+        "CREATE TABLE IF NOT EXISTS pricing_rules (id INTEGER PRIMARY KEY AUTOINCREMENT, event_id INTEGER NOT NULL, name TEXT NOT NULL, rule_type TEXT NOT NULL, threshold REAL, threshold_max REAL, adjustment_type TEXT DEFAULT 'percent', adjustment_value INTEGER DEFAULT 10, priority INTEGER DEFAULT 0, status TEXT DEFAULT 'active', created_at DATETIME DEFAULT (datetime('now')))",
+
+        // Waitlist
+        "CREATE TABLE IF NOT EXISTS waitlist (id INTEGER PRIMARY KEY AUTOINCREMENT, event_id INTEGER NOT NULL, user_id INTEGER NOT NULL, ticket_type TEXT DEFAULT 'Standard', position INTEGER NOT NULL, status TEXT DEFAULT 'waiting', notified_at DATETIME, converted_at DATETIME, created_at DATETIME DEFAULT (datetime('now')))",
+
+        // Resale
+        "CREATE TABLE IF NOT EXISTS resale_listings (id INTEGER PRIMARY KEY AUTOINCREMENT, ticket_id INTEGER NOT NULL, seller_id INTEGER NOT NULL, buyer_id INTEGER, event_id INTEGER NOT NULL, original_price INTEGER NOT NULL, asking_price INTEGER NOT NULL, status TEXT DEFAULT 'active', sold_at DATETIME, created_at DATETIME DEFAULT (datetime('now')))",
+        "CREATE TABLE IF NOT EXISTS ticket_transfers (id INTEGER PRIMARY KEY AUTOINCREMENT, ticket_id INTEGER NOT NULL, from_user_id INTEGER NOT NULL, to_user_id INTEGER NOT NULL, old_code TEXT, new_code TEXT, transfer_type TEXT DEFAULT 'transfer', sale_price INTEGER, created_at DATETIME DEFAULT (datetime('now')))",
+
+        // Settings
+        "CREATE TABLE IF NOT EXISTS org_settings (id INTEGER PRIMARY KEY AUTOINCREMENT, organizer_id INTEGER UNIQUE NOT NULL, org_name TEXT, org_email TEXT, org_phone TEXT, org_address TEXT, org_logo_url TEXT, org_website TEXT, org_description TEXT, currency TEXT DEFAULT 'MGA', timezone TEXT DEFAULT 'Indian/Antananarivo', language TEXT DEFAULT 'fr', ticket_prefix TEXT DEFAULT 'TKT', commission_rate REAL DEFAULT 3.0, auto_approve_refunds INTEGER DEFAULT 0, max_tickets_per_order INTEGER DEFAULT 10, enable_resale INTEGER DEFAULT 1, enable_transfer INTEGER DEFAULT 1, enable_waitlist INTEGER DEFAULT 1, email_notifications INTEGER DEFAULT 1, webhook_url TEXT, webhook_secret TEXT, custom_css TEXT, google_analytics_id TEXT, created_at DATETIME DEFAULT (datetime('now')), updated_at DATETIME)",
+
+        // Email Templates
+        "CREATE TABLE IF NOT EXISTS email_templates (id INTEGER PRIMARY KEY AUTOINCREMENT, organizer_id INTEGER NOT NULL, template_type TEXT NOT NULL, subject TEXT NOT NULL, body_html TEXT NOT NULL, created_at DATETIME DEFAULT (datetime('now')), updated_at DATETIME)",
+
+        // Event multi-dates
+        "CREATE TABLE IF NOT EXISTS event_dates (id INTEGER PRIMARY KEY AUTOINCREMENT, event_id INTEGER NOT NULL, date_start DATETIME NOT NULL, date_end DATETIME, venue_override TEXT, capacity_override INTEGER, status TEXT DEFAULT 'active')",
+        "CREATE TABLE IF NOT EXISTS event_series (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, organizer_id INTEGER NOT NULL, description TEXT, created_at DATETIME DEFAULT (datetime('now')))",
+    ];
+
+    foreach ($migrations as $sql) {
+        try { $db->exec($sql); } catch (Exception $e) { /* table exists, ignore */ }
+    }
+}
+
 initDatabase();
+migrateAllTables();

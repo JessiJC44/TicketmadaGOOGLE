@@ -10,6 +10,15 @@ function handleTickets($method, $id, $action) {
         scanTicket($id);
         return;
     }
+    if ($action === 'transfer' && $method === 'POST') {
+        require_once __DIR__ . '/resale.php';
+        transferTicket();
+        return;
+    }
+    if ($action === 'cancel' && $method === 'PUT' && $id) {
+        cancelTicket($id);
+        return;
+    }
     if ($action === 'stats' || ($id === 'stats' && !$action)) {
         getTicketStats();
         return;
@@ -174,4 +183,31 @@ function getTicketStats() {
     $stats['scan_rate'] = $stats['total'] > 0 ? round(($stats['scanned'] / $stats['total']) * 100) : 0;
 
     jsonResponse(['stats' => $stats]);
+}
+
+function cancelTicket($id) {
+    $user = requireAuth();
+    $db = getDB();
+
+    $ticket = $db->prepare("SELECT t.*, e.organizer_id FROM tickets t LEFT JOIN events e ON t.event_id = e.id WHERE (t.id = ? OR t.id_code = ?) AND t.status = 'active'");
+    $ticket->execute([$id, $id]);
+    $ticket = $ticket->fetch();
+
+    if (!$ticket) jsonError('Billet non trouvé ou non annulable');
+
+    // Only buyer, organizer, or superadmin can cancel
+    if ($ticket['buyer_id'] != $user['id'] && $ticket['organizer_id'] != $user['id'] && $user['role'] !== ROLE_SUPERADMIN) {
+        jsonError('Non autorisé à annuler ce billet', 403);
+    }
+
+    $db->prepare("UPDATE tickets SET status = 'cancelled' WHERE id = ?")->execute([$ticket['id']]);
+
+    // Update event stats
+    $db->prepare('UPDATE events SET tickets_sold = MAX(0, tickets_sold - 1), revenue = MAX(0, revenue - ?) WHERE id = ?')
+       ->execute([$ticket['price'], $ticket['event_id']]);
+
+    $db->prepare("INSERT INTO activity_log (type, icon, text, user_id) VALUES ('cancel', 'mdi-ticket-outline', ?, ?)")
+       ->execute(['<strong>Annulation</strong> ' . $ticket['id_code'], $user['id']]);
+
+    jsonResponse(['message' => 'Billet annulé']);
 }
