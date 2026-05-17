@@ -117,4 +117,16 @@ function seedDatabase($db) {
     foreach ($activities as $a) {
         $stmt->execute($a);
     }
+
+    // === ORGANIZER APPLICATIONS ===
+    $apps = [
+        [1, 'Concert Pro MG', 'pro@concert.mg', '+261 34 11 222 33', 'Antananarivo', 'Nous souhaitons professionnaliser la vente de billets à Madagascar.', 'Concert Pro Madagascar', 'Agence événementielle spécialisée dans le rock.', 'pending'],
+        [2, 'Mada Show', 'info@madashow.mg', '+261 32 44 555 66', 'Mahajanga', 'Organisateur de festivals sur la côte ouest.', 'Mada Show Ent.', 'Production de spectacles tropicaux.', 'pending'],
+        [3, 'Elite Events', 'elite@gmail.com', '+261 33 66 777 88', 'Antsirabe', 'Je souhaite utiliser une plateforme sécurisée.', null, 'Organisation de mariages et soirées privées.', 'approved'],
+    ];
+
+    $stmt = $db->prepare('INSERT INTO organizer_applications (id, fullName, email, phone, city, motivation, organizationName, organizationDescription, status) VALUES (?,?,?,?,?,?,?,?,?)');
+    foreach ($apps as $app) {
+        $stmt->execute($app);
+    }
 }

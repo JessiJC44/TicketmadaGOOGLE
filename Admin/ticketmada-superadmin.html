@@ -46,16 +46,18 @@
             z-index: 100;
             border-right: 3px solid var(--border-dark);
         }
-        .sidebar-header { padding: 25px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .sidebar-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: white; margin-bottom: 8px; }
+        .sidebar-header { padding: 25px 15px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; }
+        .sidebar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; margin-bottom: 12px; width: 100%; justify-content: center; overflow: visible; }
         .logo-box { 
-            width: 38px; height: 38px; 
+            width: 34px; height: 34px; 
             background: var(--accent-coral); 
             border: 2px solid white; 
             display: flex; align-items: center; justify-content: center; 
-            font-size: 1.1rem; transform: rotate(-3deg);
+            font-size: 1rem; transform: rotate(-3deg); flex-shrink: 0;
+            box-shadow: 3px 3px 0px rgba(0,0,0,0.3);
         }
-        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; }
+        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.15rem; white-space: nowrap; letter-spacing: 0.1px; }
+        .logo-text span { color: var(--accent-coral); }
         .admin-badge { 
             display: inline-block; 
             background: var(--accent-coral); 
@@ -121,7 +123,7 @@
 
         .bento-card { 
             background: white; border: 3px solid var(--border-dark); 
-            box-shadow: var(--shadow-brutal); overflow: hidden;
+            box-shadow: var(--shadow-brutal);
         }
         .card-header { padding: 20px 25px; border-bottom: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: space-between; background: #fff; }
         .card-title { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
@@ -143,7 +145,7 @@
             display: inline-block; padding: 4px 10px; 
             font-size: 0.7rem; font-weight: 800; 
             text-transform: uppercase; border: 1.5px solid var(--border-dark);
-            border-radius: 4px;
+            border-radius: 4px; white-space: nowrap;
         }
         .badge-pending { background: var(--accent-yellow); color: var(--bg-dark); }
         .badge-active, .badge-approved { background: var(--accent-mint); color: var(--bg-dark); }
@@ -329,12 +331,12 @@
         </div>
 
         <template v-if="isLoggedIn || checkingAuth">
-            <div v-if="checkingAuth" class="auth-screen">
-            <div style="text-align: center;">
-                <v-progress-circular indeterminate color="var(--accent-coral)" size="64"></v-progress-circular>
-                <p style="margin-top: 20px; font-weight: 800; font-family: 'Syne', sans-serif;">VÉRIFICATION DES ACCÈS...</p>
+                <div v-if="checkingAuth" class="auth-screen">
+                <div style="text-align: center; padding: 40px; border: 4px solid var(--border-dark); background: white; box-shadow: 10px 10px 0 var(--border-dark);">
+                    <v-progress-circular indeterminate color="var(--accent-coral)" size="64" width="7"></v-progress-circular>
+                    <p style="margin-top: 20px; font-weight: 800; font-family: 'Syne', sans-serif; font-size: 1.2rem;">VÉRIFICATION DES ACCÈS...</p>
+                </div>
             </div>
-        </div>
 
         <div class="dashboard-layout" v-if="isLoggedIn">
             <div class="sidebar-overlay" :class="{ active: sidebarOpen }" @click="sidebarOpen = false"></div>
@@ -351,58 +353,58 @@
                 <div class="sidebar-nav">
                     <div class="nav-item" :class="{ active: currentTab === 'dashboard' }" @click="currentTab = 'dashboard'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-view-dashboard-variant</v-icon>
-                        <span>Tableau de bord</span>
+                        <span>{{ menuLabels.dashboard }}</span>
                     </div>
                     <div class="nav-item" :class="{ active: currentTab === 'organizers' }" @click="currentTab = 'organizers'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-account-star</v-icon>
-                        <span>Organisateurs</span>
+                        <span>{{ menuLabels.organizers }}</span>
                     </div>
                     <div class="nav-item" :class="{ active: currentTab === 'applications' }" @click="currentTab = 'applications'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-file-account</v-icon>
-                        <span>Demandes</span>
+                        <span>{{ menuLabels.applications }}</span>
                         <span class="nav-item-badge" v-if="stats.pendingApplications > 0">{{ stats.pendingApplications }}</span>
                     </div>
                     <div class="nav-item" :class="{ active: currentTab === 'users' }" @click="currentTab = 'users'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-account-group</v-icon>
-                        <span>Utilisateurs</span>
+                        <span>{{ menuLabels.users }}</span>
                     </div>
                     <div class="nav-item" :class="{ active: currentTab === 'events' }" @click="currentTab = 'events'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-calendar-multiple</v-icon>
-                        <span>Événements</span>
+                        <span>{{ menuLabels.events }}</span>
                     </div>
                     <div class="nav-item" :class="{ active: currentTab === 'orders' }" @click="currentTab = 'orders'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-receipt</v-icon>
-                        <span>Commandes</span>
+                        <span>{{ menuLabels.orders }}</span>
                     </div>
                     <div class="nav-item" :class="{ active: currentTab === 'marketing' }" @click="currentTab = 'marketing'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-tag-multiple</v-icon>
-                        <span>Promo & Marketing</span>
+                        <span>{{ menuLabels.marketing }}</span>
                     </div>
                     <div class="nav-item" :class="{ active: currentTab === 'licences' }" @click="currentTab = 'licences'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-certificate</v-icon>
-                        <span>Licences & KYC</span>
+                        <span>{{ menuLabels.licences }}</span>
                     </div>
                     <div class="nav-item" :class="{ active: currentTab === 'finance' }" @click="currentTab = 'finance'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-cash-multiple</v-icon>
-                        <span>Comptabilité & Taxes</span>
+                        <span>{{ menuLabels.finance }}</span>
                     </div>
                     <div class="nav-item" :class="{ active: currentTab === 'broadcast' }" @click="currentTab = 'broadcast'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-email-newsletter</v-icon>
-                        <span>Communication</span>
+                        <span>{{ menuLabels.broadcast }}</span>
                     </div>
                     <div class="nav-item" :class="{ active: currentTab === 'config' }" @click="currentTab = 'config'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-cog</v-icon>
-                        <span>Configuration</span>
+                        <span>{{ menuLabels.config }}</span>
                     </div>
                     <div class="nav-item" :class="{ active: currentTab === 'logs' }" @click="currentTab = 'logs'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-history</v-icon>
-                        <span>Logs & Audit</span>
+                        <span>{{ menuLabels.logs }}</span>
                     </div>
                     
                     <div style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
                         <div class="nav-item" @click="handleLogout">
                             <v-icon class="nav-item-icon">mdi-logout</v-icon>
-                            <span>Déconnexion</span>
+                            <span>{{ menuLabels.logout }}</span>
                         </div>
                     </div>
                 </div>
@@ -425,7 +427,7 @@
                             {{ lang === 'fr' ? 'EN' : 'FR' }}
                         </button>
                         <button class="btn-brutal sm" @click="fetchData">
-                            <v-icon size="16">mdi-refresh</v-icon> ACTUALISER
+                            <v-icon size="16">mdi-refresh</v-icon> {{ topbarLabels.refresh }}
                         </button>
                         <div style="display: flex; align-items: center; gap: 10px; margin-left: 10px; padding-left: 20px; border-left: 2px solid #eee;">
                             <div style="text-align: right;">
@@ -442,10 +444,10 @@
                     <!-- TAB: DASHBOARD -->
                     <template v-if="currentTab === 'dashboard'">
                         <div class="quick-actions">
-                            <div class="action-card" @click="currentTab = 'applications'"><v-icon color="var(--accent-coral)">mdi-account-clock</v-icon><span>Approbations</span></div>
-                            <div class="action-card" @click="currentTab = 'organizers'"><v-icon color="var(--accent-blue)">mdi-account-tie</v-icon><span>Organisateurs</span></div>
+                            <div class="action-card" @click="currentTab = 'applications'"><v-icon color="var(--accent-coral)">mdi-account-clock</v-icon><span>{{ uiLabels.approvals }}</span></div>
+                            <div class="action-card" @click="currentTab = 'organizers'"><v-icon color="var(--accent-blue)">mdi-account-tie</v-icon><span>{{ uiLabels.activeOrgs }}</span></div>
                             <div class="action-card" @click="currentTab = 'broadcast'"><v-icon color="var(--accent-yellow)">mdi-bullhorn</v-icon><span>Broadcast</span></div>
-                            <div class="action-card" @click="currentTab = 'finance'"><v-icon color="var(--accent-mint)">mdi-cash-check</v-icon><span>Paiements</span></div>
+                            <div class="action-card" @click="currentTab = 'finance'"><v-icon color="var(--accent-mint)">mdi-cash-check</v-icon><span>{{ uiLabels.payouts }}</span></div>
                             <div class="action-card" @click="currentTab = 'logs'"><v-icon color="var(--text-dark)">mdi-shield-history</v-icon><span>Audit Logs</span></div>
                         </div>
 
@@ -453,28 +455,28 @@
                             <div class="stat-card">
                                 <div class="stat-icon">💰</div>
                                 <div class="stat-value">{{ formatMoney(stats.totalRevenue) }}</div>
-                                <div class="stat-label">Chiffre d'affaires</div>
+                                <div class="stat-label">{{ uiLabels.revenue }}</div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-icon">🎟️</div>
                                 <div class="stat-value">{{ formatNumber(stats.totalTicketsSold) }}</div>
-                                <div class="stat-label">Billets vendus</div>
+                                <div class="stat-label">{{ uiLabels.ticketsSold }}</div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-icon">📊</div>
                                 <div class="stat-value">{{ formatMoney(stats.totalCommission) }}</div>
-                                <div class="stat-label">Commission (3%)</div>
+                                <div class="stat-label">{{ uiLabels.commission }}</div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-icon">🌟</div>
                                 <div class="stat-value">{{ stats.activeOrganizers }}</div>
-                                <div class="stat-label">Orga. Actifs</div>
+                                <div class="stat-label">{{ uiLabels.activeOrgs }}</div>
                             </div>
                         </div>
 
                         <div class="bento-grid">
                             <div class="bento-item" style="grid-column: span 8;">
-                                <div class="bento-header"><div class="bento-title">ÉTAT DU SYSTÈME</div><div class="live-indicator"></div></div>
+                                <div class="bento-header"><div class="bento-title">{{ uiLabels.systemStatus }}</div><div class="live-indicator"></div></div>
                                 <div style="padding: 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
                                     <div v-for="svc in systemStatus" :key="svc.name" style="text-align: center; padding: 15px; border: 2px solid #eee;">
                                         <div style="font-size: 0.75rem; font-weight: 700; color: #666; margin-bottom: 8px;">{{ svc.name }}</div>
@@ -484,7 +486,7 @@
                                 </div>
                             </div>
                             <div class="bento-item" style="grid-column: span 4;">
-                                <div class="bento-header"><div class="bento-title">ALERTES RÉCENTES</div><v-icon color="var(--accent-red)">mdi-alert</v-icon></div>
+                                <div class="bento-header"><div class="bento-title">{{ uiLabels.recentAlerts }}</div><v-icon color="var(--accent-red)">mdi-alert</v-icon></div>
                                 <div style="padding: 10px;">
                                     <div v-for="alert in systemAlerts" :key="alert.id" style="padding:10px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 10px;">
                                         <v-icon size="16" color="var(--accent-red)">mdi-alert-circle</v-icon>
@@ -493,7 +495,7 @@
                                             <div style="color: #666;">{{ alert.time }}</div>
                                         </div>
                                     </div>
-                                    <div v-if="!systemAlerts.length" style="padding: 31px; text-align: center; color: #ccc; font-size: 0.75rem; font-weight: 800;">AUCUNE ALERTE</div>
+                                    <div v-if="!systemAlerts.length" style="padding: 31px; text-align: center; color: #ccc; font-size: 0.75rem; font-weight: 800;">{{ uiLabels.noAlerts }}</div>
                                 </div>
                             </div>
                         </div>
@@ -501,7 +503,7 @@
                         <div class="grid-2">
                             <div class="bento-card">
                                 <div class="card-header">
-                                    <div class="card-title"><v-icon>mdi-chart-areaspline</v-icon> Performance Mensuelle (Ariary)</div>
+                                    <div class="card-title"><v-icon>mdi-chart-areaspline</v-icon> {{ uiLabels.monthlyPerf }} (Ariary)</div>
                                 </div>
                                 <div class="chart-mock">
                                     <div v-for="m in stats.monthlyRevenue" :key="m.month" class="chart-bar" 
@@ -512,12 +514,12 @@
                             </div>
                             <div class="bento-card">
                                 <div class="card-header">
-                                    <div class="card-title"><v-icon>mdi-fire</v-icon> Performance Globale</div>
+                                    <div class="card-title"><v-icon>mdi-fire</v-icon> {{ uiLabels.globalPerf }}</div>
                                 </div>
                                 <div class="table-responsive">
                                     <table>
                                         <thead>
-                                            <tr><th>Événement</th><th>Date</th><th>Ventes</th><th>Revenus</th></tr>
+                                            <tr><th>{{ uiLabels.eventName }}</th><th>{{ uiLabels.date }}</th><th>{{ uiLabels.sales }}</th><th>{{ uiLabels.revenue }}</th></tr>
                                         </thead>
                                         <tbody>
                                             <tr v-for="e in stats.topEventsPerformance" :key="e.id">
@@ -537,17 +539,17 @@
                     <template v-if="currentTab === 'licences'">
                         <div class="bento-card" style="margin-bottom: 30px;">
                             <div class="card-header">
-                                <div class="card-title"><v-icon>mdi-account-check</v-icon> Demandes de Vérification & Licences</div>
+                                <div class="card-title"><v-icon>mdi-account-check</v-icon> {{ uiLabels.licences }} & KYC</div>
                             </div>
                             <div class="table-responsive">
                                 <table>
                                     <thead>
                                         <tr>
-                                            <th>Organisateur</th>
-                                            <th>Licence Actuelle</th>
-                                            <th>Statut KYC</th>
-                                            <th>Inscrit le</th>
-                                            <th>Action</th>
+                                            <th>{{ uiLabels.organizer }}</th>
+                                            <th>{{ uiLabels.license }}</th>
+                                            <th>{{ uiLabels.kycStatus }}</th>
+                                            <th>{{ uiLabels.joined }}</th>
+                                            <th>{{ uiLabels.actions }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -564,7 +566,7 @@
                                             </td>
                                             <td>
                                                 <span class="badge" :class="o.status === 'active' ? 'badge-approved' : 'badge-pending'">
-                                                    {{ o.status === 'active' ? 'VÉRIFIÉ' : 'À VÉRIFIER' }}
+                                                    {{ o.status === 'active' ? uiLabels.status === 'active' ? 'VERIFIED' : 'VÉRIFIÉ' : uiLabels.status === 'pending' ? 'PENDING' : 'À VÉRIFIER' }}
                                                 </span>
                                             </td>
                                             <td>{{ formatDate(o.created_at) }}</td>
@@ -588,13 +590,13 @@
                                 <table>
                                     <thead>
                                         <tr>
-                                            <th>Organisateur</th>
-                                            <th>Email</th>
+                                            <th>{{ uiLabels.organizer }}</th>
+                                            <th>{{ uiLabels.email }}</th>
                                             <th>Events</th>
-                                            <th>CA Total</th>
-                                            <th>Commission</th>
-                                            <th>Statut</th>
-                                            <th>Actions</th>
+                                            <th>{{ uiLabels.caTotal }}</th>
+                                            <th>{{ uiLabels.commission }}</th>
+                                            <th>{{ uiLabels.status }}</th>
+                                            <th>{{ uiLabels.actions }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -606,12 +608,12 @@
                                             <td><div style="color: var(--accent-coral); font-weight: 700;">{{ formatMoney(o.total_commission) }}</div></td>
                                             <td><span class="badge" :class="'badge-' + o.status">{{ o.status }}</span></td>
                                             <td>
-                                                <button class="btn-brutal sm yellow" @click="viewAsOrganizer(o)">VOIR</button>
+                                                <button class="btn-brutal sm yellow" @click="viewAsOrganizer(o)">{{ uiLabels.details }}</button>
                                                 <button v-if="o.status === 'active'" class="btn-brutal sm" style="background: #ffebee; color: #c62828; margin-left: 5px;" @click="suspendOrganizer(o)">
-                                                    SUSPENDRE
+                                                    {{ uiLabels.suspend }}
                                                 </button>
                                                 <button v-else class="btn-brutal sm mint" @click="reactivateOrganizer(o)">
-                                                    RÉACTIVER
+                                                    {{ uiLabels.reactivate }}
                                                 </button>
                                                 <button class="btn-brutal sm" style="border-color: #eee; background: white; margin-left: 5px;" @click="confirmDeleteOrganizer(o)">
                                                     <v-icon size="14">mdi-delete</v-icon>
@@ -629,15 +631,15 @@
                         <div class="grid-1">
                             <div class="bento-card" v-for="app in applications" :key="app.id" style="margin-bottom: 20px;">
                                 <div style="display: flex; gap: 30px; padding: 25px; align-items: center;">
-                                    <div style="width: 80px; height: 80px; background: var(--accent-yellow); border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 2.5rem;">
-                                        {{ app.fullName[0] }}
+                                    <div style="width: 80px; height: 80px; background: var(--accent-yellow); border: 3px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; flex-shrink: 0;">
+                                        {{ (app.fullName || app.full_name || '?')[0] }}
                                     </div>
-                                    <div style="flex: 1;">
-                                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                            <div>
-                                                <h2 style="font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem;">{{ app.fullName }}</h2>
-                                                <div style="font-weight: 600; color: var(--text-light); margin-top: 4px;">
-                                                    {{ app.organizationName || 'Particulier' }} · {{ app.city }} · {{ app.phone }}
+                                    <div style="flex: 1; min-width: 0;">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+                                            <div style="min-width: 0;">
+                                                <h2 style="font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ app.fullName || app.full_name }}</h2>
+                                                <div style="font-weight: 600; color: var(--text-light); margin-top: 4px; font-size: 0.8rem;">
+                                                    {{ app.organizationName || app.organization_name || 'Particulier' }} · {{ app.city }} · {{ app.phone }}
                                                 </div>
                                             </div>
                                             <span class="badge" :class="'badge-' + app.status">{{ app.status }}</span>
@@ -647,13 +649,13 @@
                                         </div>
                                         <div v-if="app.status === 'pending'" style="margin-top: 20px; display: flex; gap: 15px;">
                                             <button class="btn-brutal mint" @click="approveApp(app)">
-                                                <v-icon>mdi-check-bold</v-icon> APPROUVER
+                                                <v-icon>mdi-check-bold</v-icon> {{ uiLabels.approve }}
                                             </button>
                                             <button class="btn-brutal" style="background: #ffebee; color: #c62828; border-color: #c62828;" @click="promptReject(app)">
-                                                <v-icon>mdi-close-thick</v-icon> REJETER
+                                                <v-icon>mdi-close-thick</v-icon> {{ uiLabels.reject }}
                                             </button>
                                             <button class="btn-brutal yellow" @click="viewAppDetails(app)">
-                                                VOIR DÉTAILS
+                                                {{ uiLabels.details }}
                                             </button>
                                         </div>
                                     </div>
@@ -661,7 +663,7 @@
                             </div>
                             <div v-if="applications.length === 0" class="empty-state">
                                 <v-icon size="64" color="#ccc">mdi-file-outline</v-icon>
-                                <p style="margin-top: 20px; font-weight: 600;">Aucune demande d'organisateur pour le moment.</p>
+                                <p style="margin-top: 20px; font-weight: 600;">{{ uiLabels.noAlerts }}</p>
                             </div>
                         </div>
                     </template>
@@ -673,13 +675,13 @@
                                 <table>
                                     <thead>
                                         <tr>
-                                            <th>Utilisateur</th>
-                                            <th>Achats</th>
-                                            <th>Dépense Totale</th>
-                                            <th>Dernier Achat</th>
-                                            <th>Inscrit le</th>
-                                            <th>Statut</th>
-                                            <th>Actions</th>
+                                            <th>{{ uiLabels.buyer }}</th>
+                                            <th>{{ uiLabels.ticketsSold }}</th>
+                                            <th>{{ uiLabels.spent }}</th>
+                                            <th>{{ uiLabels.lastPurchase }}</th>
+                                            <th>{{ uiLabels.joined }}</th>
+                                            <th>{{ uiLabels.status }}</th>
+                                            <th>{{ uiLabels.actions }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -695,10 +697,10 @@
                                             <td><span class="badge" :class="'badge-' + u.status">{{ u.status }}</span></td>
                                             <td>
                                                 <button v-if="u.status === 'active'" class="btn-brutal sm" style="background: #ffebee; color: #c62828;" @click="blockUser(u)">
-                                                    BLOQUER
+                                                    {{ uiLabels.block }}
                                                 </button>
                                                 <button v-else class="btn-brutal sm mint" @click="unblockUser(u)">
-                                                    DÉBLOQUER
+                                                    {{ uiLabels.unblock }}
                                                 </button>
                                                 <button class="btn-brutal sm" style="border-color: #eee; background: white; margin-left: 5px;" @click="confirmDeleteUser(u)">
                                                     <v-icon size="14">mdi-delete</v-icon>
@@ -718,13 +720,13 @@
                                 <table>
                                     <thead>
                                         <tr>
-                                            <th>Événement</th>
-                                            <th>Organisateur</th>
-                                            <th>Ventes</th>
-                                            <th>Revenus</th>
-                                            <th>Statut</th>
-                                            <th>Date Création</th>
-                                            <th>Actions</th>
+                                            <th>{{ uiLabels.eventName }}</th>
+                                            <th>{{ uiLabels.organizer }}</th>
+                                            <th>{{ uiLabels.sales }}</th>
+                                            <th>{{ uiLabels.revenue }}</th>
+                                            <th>{{ uiLabels.status }}</th>
+                                            <th>{{ uiLabels.created }}</th>
+                                            <th>{{ uiLabels.actions }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -741,10 +743,10 @@
                                             <td>
                                                 <div style="display: flex; gap: 5px;">
                                                     <button v-if="e.status === 'active'" class="btn-brutal sm" style="background: #ffebee; color: #c62828;" @click="suspendEvent(e)">
-                                                        SUSPENDRE
+                                                        {{ uiLabels.suspend }}
                                                     </button>
                                                     <button v-if="e.status === 'suspended'" class="btn-brutal sm mint" @click="reactivateEvent(e)">
-                                                        RÉACTIVER
+                                                        {{ uiLabels.reactivate }}
                                                     </button>
                                                     <button class="btn-brutal sm" style="border-color: #eee; background: white;" @click="confirmDeleteEvent(e)">
                                                         <v-icon size="14">mdi-delete</v-icon>
@@ -762,7 +764,7 @@
                     <template v-if="currentTab === 'orders'">
                         <div class="bento-card">
                             <div class="card-header">
-                                <div class="card-title"><v-icon>mdi-receipt</v-icon> Toutes les Commandes de la Plateforme</div>
+                                <div class="card-title"><v-icon>mdi-receipt</v-icon> {{ uiLabels.orders }}</div>
                                 <div class="card-actions">
                                     <button class="btn-brutal sm mint" @click="exportOrdersCSV">
                                         <v-icon>mdi-file-export</v-icon> EXPORTER TOUT (CSV)
@@ -773,12 +775,12 @@
                                 <table>
                                     <thead>
                                         <tr>
-                                            <th>Date</th>
-                                            <th>Ticket ID</th>
-                                            <th>Événement</th>
-                                            <th>Acheteur</th>
-                                            <th>Prix</th>
-                                            <th>Statut</th>
+                                            <th>{{ uiLabels.date }}</th>
+                                            <th>{{ uiLabels.id }}</th>
+                                            <th>{{ uiLabels.eventName }}</th>
+                                            <th>{{ uiLabels.buyer }}</th>
+                                            <th>{{ uiLabels.price }}</th>
+                                            <th>{{ uiLabels.status }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1211,9 +1213,182 @@
                     };
                     return t[this.lang] || t.fr;
                 },
+                menuLabels() {
+                    const labels = {
+                        fr: {
+                            dashboard: 'Tableau de bord',
+                            organizers: 'Organisateurs',
+                            applications: 'Demandes',
+                            users: 'Utilisateurs',
+                            events: 'Événements',
+                            orders: 'Commandes',
+                            marketing: 'Promo & Marketing',
+                            licences: 'Licences & KYC',
+                            finance: 'Comptabilité',
+                            broadcast: 'Communication',
+                            config: 'Configuration',
+                            logs: 'Logs & Audit',
+                            logout: 'Déconnexion'
+                        },
+                        en: {
+                            dashboard: 'Dashboard',
+                            organizers: 'Organizers',
+                            applications: 'Applications',
+                            users: 'Users',
+                            events: 'Events',
+                            orders: 'Orders',
+                            marketing: 'Marketing',
+                            licences: 'Licenses & KYC',
+                            finance: 'Finance',
+                            broadcast: 'Broadcast',
+                            config: 'Settings',
+                            logs: 'Audit Logs',
+                            logout: 'Logout'
+                        }
+                    };
+                    return labels[this.lang] || labels.fr;
+                },
+                topbarLabels() {
+                    const l = {
+                        fr: {
+                            refresh: 'ACTUALISER'
+                        },
+                        en: {
+                            refresh: 'REFRESH'
+                        }
+                    };
+                    return l[this.lang] || l.fr;
+                },
+                uiLabels() {
+                    const l = {
+                        fr: {
+                            welcome: 'Bienvenue',
+                            revenue: 'Chiffre d\'affaires',
+                            ticketsSold: 'Billets vendus',
+                            commission: 'Commission (3%)',
+                            activeOrgs: 'Orga. Actifs',
+                            systemStatus: 'ÉTAT DU SYSTÈME',
+                            recentAlerts: 'ALERTES RÉCENTES',
+                            noAlerts: 'AUCUNE ALERTE',
+                            monthlyPerf: 'Performance Mensuelle',
+                            globalPerf: 'Performance Globale',
+                            eventName: 'Événement',
+                            date: 'Date',
+                            sales: 'Ventes',
+                            actions: 'Actions',
+                            organizer: 'Organisateur',
+                            license: 'Licence',
+                            kycStatus: 'Statut KYC',
+                            joined: 'Inscrit le',
+                            email: 'Email',
+                            caTotal: 'CA Total',
+                            status: 'Statut',
+                            buyer: 'Acheteur',
+                            spent: 'Dépense Totale',
+                            lastPurchase: 'Dernier Achat',
+                            category: 'Catégorie',
+                            venue: 'Lieu',
+                            created: 'Créé le',
+                            id: 'ID',
+                            price: 'Prix',
+                            code: 'Code',
+                            discount: 'Réduction',
+                            uses: 'Utilisations',
+                            validity: 'Validité',
+                            subject: 'Sujet',
+                            target: 'Cible',
+                            message: 'Message',
+                            send: 'ENVOYER LE MESSAGE',
+                            sending: 'ENVOI...',
+                            history: 'Historique',
+                            volume: 'Volume Total',
+                            payoutsPending: 'Paiements en attente',
+                            commissions: 'Commissions',
+                            brut: 'Montant Brut',
+                            net: 'Net',
+                            config: 'Configuration',
+                            save: 'ENREGISTRER',
+                            motivation: 'Motivation',
+                            approve: 'APPROUVER',
+                            reject: 'REJETER',
+                            details: 'VOIR DÉTAILS',
+                            allUsers: 'Tous les utilisateurs',
+                            orgsOnly: 'Organisateurs uniquement',
+                            systemBroadcast: 'Message Global',
+                            block: 'BLOQUER',
+                            unblock: 'DÉBLOQUER',
+                            suspend: 'SUSPENDRE',
+                            reactivate: 'RÉACTIVER',
+                            approvals: 'Approbations',
+                            payouts: 'Paiements',
+                        },
+                        en: {
+                            welcome: 'Welcome',
+                            revenue: 'Revenue',
+                            ticketsSold: 'Tickets Sold',
+                            commission: 'Commission (3%)',
+                            activeOrgs: 'Active Orgs',
+                            systemStatus: 'SYSTEM STATUS',
+                            recentAlerts: 'RECENT ALERTS',
+                            noAlerts: 'NO ALERTS',
+                            monthlyPerf: 'Monthly Performance',
+                            globalPerf: 'Global Performance',
+                            eventName: 'Event',
+                            date: 'Date',
+                            sales: 'Sales',
+                            actions: 'Actions',
+                            organizer: 'Organizer',
+                            license: 'License',
+                            kycStatus: 'KYC Status',
+                            joined: 'Joined on',
+                            email: 'Email',
+                            caTotal: 'Total Rev',
+                            status: 'Status',
+                            buyer: 'Buyer',
+                            spent: 'Total Spent',
+                            lastPurchase: 'Last Purchase',
+                            category: 'Category',
+                            venue: 'Venue',
+                            created: 'Created on',
+                            id: 'ID',
+                            price: 'Price',
+                            code: 'Code',
+                            discount: 'Discount',
+                            uses: 'Uses',
+                            validity: 'Validity',
+                            subject: 'Subject',
+                            target: 'Target',
+                            message: 'Message',
+                            send: 'SEND MESSAGE',
+                            sending: 'SENDING...',
+                            history: 'History',
+                            volume: 'Total Volume',
+                            payoutsPending: 'Pending Payouts',
+                            commissions: 'Commissions',
+                            brut: 'Gross Amount',
+                            net: 'Net',
+                            config: 'Configuration',
+                            save: 'SAVE',
+                            motivation: 'Motivation',
+                            approve: 'APPROVE',
+                            reject: 'REJECT',
+                            details: 'VIEW DETAILS',
+                            allUsers: 'All users',
+                            orgsOnly: 'Organizers only',
+                            systemBroadcast: 'Global Message',
+                            block: 'BLOCK',
+                            unblock: 'UNBLOCK',
+                            suspend: 'SUSPEND',
+                            reactivate: 'REACTIVATE',
+                            approvals: 'Approvals',
+                            payouts: 'Payments',
+                        }
+                    };
+                    return l[this.lang] || l.fr;
+                },
                 maxMonthlyRevenue() {
-                    if (!this.stats.monthlyRevenue.length) return 1;
-                    return Math.max(...this.stats.monthlyRevenue.map(m => m.revenue));
+                    if (!this.stats || !this.stats.monthlyRevenue || !Array.isArray(this.stats.monthlyRevenue) || !this.stats.monthlyRevenue.length) return 1;
+                    return Math.max(...this.stats.monthlyRevenue.map(m => m.revenue || 0)) || 1;
                 }
             },
             async mounted() {

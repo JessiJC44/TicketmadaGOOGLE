@@ -102,6 +102,66 @@ try {
             require_once __DIR__ . '/analytics.php';
             handleActivity($method, $id, $action);
             break;
+        case 'transactions':
+            require_once __DIR__ . '/transactions.php';
+            handleTransactions($method, $id, $action);
+            break;
+        case 'customers':
+            require_once __DIR__ . '/customers.php';
+            handleCustomers($method, $id, $action);
+            break;
+        case 'subscriptions':
+            require_once __DIR__ . '/subscriptions.php';
+            handleSubscriptions($method, $id, $action);
+            break;
+        case 'discounts':
+            require_once __DIR__ . '/discounts.php';
+            handleDiscounts($method, $id, $action);
+            break;
+        case 'products':
+            require_once __DIR__ . '/products.php';
+            handleProducts($method, $id, $action);
+            break;
+        case 'purchase-intents':
+            require_once __DIR__ . '/purchase-intents.php';
+            handlePurchaseIntents($method, $id, $action);
+            break;
+        case 'accounting':
+            require_once __DIR__ . '/accounting.php';
+            handleAccounting($method, $action, $parts[3] ?? null);
+            break;
+        case 'security':
+            require_once __DIR__ . '/security.php';
+            handleSecurity($method, $action, $parts[3] ?? null);
+            break;
+        case 'fulfillment':
+            require_once __DIR__ . '/fulfillment.php';
+            handleFulfillment($method, $id, $action);
+            break;
+        case 'settings':
+            require_once __DIR__ . '/settings.php';
+            handleSettings($method, $action);
+            break;
+        case 'waitlist':
+            require_once __DIR__ . '/waitlist.php';
+            handleWaitlist($method, $id, $action);
+            break;
+        case 'transfers':
+            require_once __DIR__ . '/transfers.php';
+            handleTransfers($method, $id, $action);
+            break;
+        case 'pricing-rules':
+            require_once __DIR__ . '/pricing.php';
+            handlePricingRules($method, $id, $action);
+            break;
+        case 'superadmin':
+            require_once __DIR__ . '/superadmin.php';
+            handleSuperAdmin($method, $action, $parts[3] ?? null);
+            break;
+        case 'organizer-applications':
+            require_once __DIR__ . '/organizer-applications.php';
+            handleOrganizerApplications($method, $id, $action);
+            break;
         default:
             jsonError('Route non trouvée', 404);
     }

@@ -673,6 +673,23 @@ const TicketMadaAPI = (() => {
         async searchEvents(query) { return this.get('/search?q=' + encodeURIComponent(query)); }
         async getMyTickets() { return this.get('/orders'); }
 
+        // --- Organizer Applications ---
+        async getOrganizerApplications(status) { 
+            return this.get(`/organizer-applications${status ? '?status=' + status : ''}`); 
+        }
+        async submitOrganizerApplication(data) { return this.post('/organizer-applications', data); }
+        async approveOrganizerApplication(id) { return this.put(`/organizer-applications/${id}/approve`); }
+        async rejectOrganizerApplication(id, reason) { return this.put(`/organizer-applications/${id}/reject`, { reason }); }
+
+        // --- SuperAdmin ---
+        async getSuperAdminStats() { return this.get('/superadmin/dashboard'); }
+        async getSuperAdminOrganizers() { return this.get('/superadmin/organizers'); }
+        async getSuperAdminUsers() { return this.get('/superadmin/users'); }
+        async getSuperAdminEvents() { return this.get('/superadmin/events'); }
+        async getSuperAdminOrders() { return this.get('/superadmin/orders'); }
+        async getSuperAdminFinance() { return this.get('/superadmin/finance'); }
+        async broadcastMessage(data) { return this.post('/superadmin/broadcast', data); }
+
     }
 
     return SmartAPI;
