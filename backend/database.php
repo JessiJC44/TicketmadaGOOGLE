@@ -66,6 +66,8 @@ function initDatabase() {
             type TEXT NOT NULL DEFAULT 'Standard',
             price INTEGER NOT NULL DEFAULT 0,
             status TEXT NOT NULL DEFAULT 'active',
+            qr_payload TEXT,
+            qr_blocked INTEGER DEFAULT 0,
             scanned_at DATETIME,
             created_at DATETIME DEFAULT (datetime('now')),
             FOREIGN KEY (event_id) REFERENCES events(id),
@@ -131,6 +133,43 @@ function initDatabase() {
             expires_at DATETIME NOT NULL,
             created_at DATETIME DEFAULT (datetime('now')),
             FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            short_id TEXT UNIQUE NOT NULL,
+            buyer_id INTEGER NOT NULL,
+            event_id INTEGER NOT NULL,
+            total_before_fees INTEGER NOT NULL DEFAULT 0,
+            total_fees INTEGER NOT NULL DEFAULT 0,
+            total_gross INTEGER NOT NULL DEFAULT 0,
+            status TEXT NOT NULL DEFAULT 'pending',
+            payment_method TEXT,
+            customer_info_json TEXT,
+            expires_at DATETIME NOT NULL,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (buyer_id) REFERENCES users(id),
+            FOREIGN KEY (event_id) REFERENCES events(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS order_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER NOT NULL,
+            type TEXT NOT NULL,
+            price INTEGER NOT NULL,
+            seat TEXT,
+            ticket_id INTEGER,
+            FOREIGN KEY (order_id) REFERENCES orders(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS scan_access_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id INTEGER NOT NULL,
+            token TEXT UNIQUE NOT NULL,
+            device_info_json TEXT,
+            status TEXT DEFAULT 'pending',
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (event_id) REFERENCES events(id)
         );
 
         -- VIVENU FEATURE PARITY TABLES --
@@ -449,12 +488,6 @@ function migrateAllTables() {
         // Event multi-dates
         "CREATE TABLE IF NOT EXISTS event_dates (id INTEGER PRIMARY KEY AUTOINCREMENT, event_id INTEGER NOT NULL, date_start DATETIME NOT NULL, date_end DATETIME, venue_override TEXT, capacity_override INTEGER, status TEXT DEFAULT 'active')",
         "CREATE TABLE IF NOT EXISTS event_series (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, organizer_id INTEGER NOT NULL, description TEXT, created_at DATETIME DEFAULT (datetime('now')))",
-
-        // Subscriptions
-        "CREATE TABLE IF NOT EXISTS subscriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, plan_id TEXT, status TEXT, next_billing DATETIME, created_at DATETIME DEFAULT (datetime('now')), FOREIGN KEY (user_id) REFERENCES users(id))",
-        
-        // Purchase Intents
-        "CREATE TABLE IF NOT EXISTS purchase_intents (id INTEGER PRIMARY KEY AUTOINCREMENT, event_id INTEGER NOT NULL, user_id INTEGER, details_json TEXT, status TEXT, created_at DATETIME DEFAULT (datetime('now')), FOREIGN KEY (event_id) REFERENCES events(id))",
 
         // Admin Tables
         "CREATE TABLE IF NOT EXISTS scan_links (id INTEGER PRIMARY KEY AUTOINCREMENT, event_id INTEGER NOT NULL, token TEXT UNIQUE NOT NULL, name TEXT, created_at DATETIME DEFAULT (datetime('now')), FOREIGN KEY (event_id) REFERENCES events(id))",

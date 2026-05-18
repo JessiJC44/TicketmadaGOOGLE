@@ -155,9 +155,12 @@
         <!-- Ticket list -->
         <div v-if="filteredTickets.length">
             <div class="ticket-card" v-for="t in filteredTickets" :key="t.id">
-                <div class="ticket-qr">
+                <div class="ticket-qr" style="position:relative;">
                     <div class="qr-code">
                         <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=' + encodeURIComponent(t.qr_payload || t.id_code)" :alt="t.id_code" />
+                    </div>
+                    <div v-if="t.qr_blocked" style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(231,76,60,0.85);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:0.7rem;">
+                        BLOQUÉ
                     </div>
                     <div class="ticket-code">{{ t.id_code }}</div>
                 </div>
@@ -168,7 +171,17 @@
                         <span><v-icon icon="mdi-seat" size="x-small"></v-icon> {{ t.type }}</span>
                         <span v-if="t.scanned_at"><v-icon icon="mdi-qrcode-scan" size="x-small"></v-icon> {{ lang === 'fr' ? 'Scanné' : 'Scanned' }} {{ formatDate(t.scanned_at) }}</span>
                     </div>
-                    <span class="ticket-type" :class="'type-' + t.type.toLowerCase()">{{ t.type }}</span>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <span class="ticket-type" :class="'type-' + t.type.toLowerCase()">{{ t.type }}</span>
+                        <div class="ticket-actions" style="display:flex;gap:8px;">
+                            <a :href="(window.api?.baseURL || '/api') + '/pdf-ticket/' + t.id" target="_blank" class="btn-brutal sm" style="text-decoration:none;font-size:0.75rem;">
+                                <v-icon size="14">mdi-download</v-icon> PDF
+                            </a>
+                            <button class="btn-brutal sm" @click="transferTicket(t)" v-if="t.status === 'active'" style="font-size:0.75rem;">
+                                <v-icon size="14">mdi-swap-horizontal</v-icon> {{ lang === 'fr' ? 'Transférer' : 'Transfer' }}
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="ticket-status-col">
                     <div class="ticket-status" :class="'status-' + t.status">
@@ -240,17 +253,19 @@ const app = createApp({
             const labels = { active: { fr:'Actif', en:'Active' }, scanned: { fr:'Utilisé', en:'Used' }, refunded: { fr:'Remboursé', en:'Refunded' } };
             return (labels[s] || labels.active)[this.lang];
         },
-        qrDots(id) {
-            // Generate pseudo-random QR pattern from ticket ID
-            const dots = [];
-            const seed = typeof id === 'number' ? id : (id || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-            for (let i = 0; i < 40; i++) {
-                const x = 18 + ((seed * (i + 1) * 7) % 28);
-                const y = 18 + ((seed * (i + 1) * 13) % 28);
-                if (x < 34 || y < 16 || (x < 16 && y > 32)) continue;
-                dots.push({ x, y });
+        async transferTicket(ticket) {
+            const email = prompt(this.lang === 'fr' ? 'Email du destinataire:' : 'Recipient email:');
+            if (!email) return;
+            try {
+                await window.api.post('/transfers', {
+                    ticket_id: ticket.id,
+                    recipient_email: email
+                });
+                alert(this.lang === 'fr' ? 'Billet transféré !' : 'Ticket transferred!');
+                this.loadTickets();
+            } catch(e) {
+                alert(e.message || 'Erreur de transfert');
             }
-            return dots;
         },
         async loadTickets() {
             const user = window.api?.getUser();

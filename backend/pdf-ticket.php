@@ -46,7 +46,7 @@ function generateTicketPDF($ticketId) {
             </div>
             <div class="ticket-stub">
                 <div class="qr-placeholder">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=<?php echo urlencode($ticket['id_code']); ?>" />
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=<?php echo urlencode($ticket['qr_payload'] ?: $ticket['id_code']); ?>" />
                 </div>
                 <div style="font-size: 10px; text-align: center;">SCANNEZ-MOI À L'ENTRÉE</div>
             </div>

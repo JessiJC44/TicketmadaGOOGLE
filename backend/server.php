@@ -74,6 +74,10 @@ try {
             require_once __DIR__ . '/events.php';
             handleEvents($method, $id, $action);
             break;
+        case 'orders':
+            require_once __DIR__ . '/orders.php';
+            handleOrders($method, $id, $action);
+            break;
         case 'tickets':
             require_once __DIR__ . '/tickets.php';
             // PDF route
@@ -173,9 +177,9 @@ try {
             require_once __DIR__ . '/resale.php';
             handleResale($method, $id, $action);
             break;
-        case 'subscriptions':
-            require_once __DIR__ . '/subscriptions.php';
-            handleSubscriptions($method, $id, $action);
+        case 'scan':
+            require_once __DIR__ . '/scan.php';
+            handleScan($method, $id, $action);
             break;
         case 'superadmin':
             require_once __DIR__ . '/superadmin.php';
@@ -184,6 +188,10 @@ try {
         case 'organizer-applications':
             require_once __DIR__ . '/organizer-applications.php';
             handleOrganizerApplications($method, $id, $action);
+            break;
+        case 'pdf-ticket':
+            require_once __DIR__ . '/pdf-ticket.php';
+            generateTicketPDF($id);
             break;
         case 'admin':
             require_once __DIR__ . '/admin.php';

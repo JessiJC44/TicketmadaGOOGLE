@@ -1,6 +1,6 @@
 {
   "name": "TicketMada",
   "description": "Plateforme de billetterie #1 à Madagascar - Gestion d'événements, CRM, Marketing & Analytics avancés.",
-  "requestFramePermissions": ["camera", "geolocation"],
+  "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

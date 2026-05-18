@@ -127,14 +127,51 @@ function handleSuperAdmin($method, $action = null, $id = null) {
             jsonResponse($finance);
             break;
 
-        case 'orders':
-            // All orders globally
-            $stmt = $db->query("SELECT t.*, e.name as event_name, u.name as buyer_name, u.email as buyer_email
-                                FROM tickets t 
-                                JOIN events e ON t.event_id = e.id 
-                                JOIN users u ON t.buyer_id = u.id
-                                ORDER BY t.created_at DESC LIMIT 100");
+        case 'applications':
+            $stmt = $db->query("SELECT * FROM organizer_applications ORDER BY created_at DESC");
             jsonResponse($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
+
+        case 'subscriptions':
+            $stmt = $db->query("SELECT s.*, u.name as user_name FROM subscriptions s JOIN users u ON s.user_id = u.id ORDER BY s.created_at DESC");
+            jsonResponse($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
+
+        case 'purchase-intents':
+            $stmt = $db->query("SELECT p.*, e.name as event_name, u.name as user_name FROM purchase_intents p JOIN events e ON p.event_id = e.id LEFT JOIN users u ON p.user_id = u.id ORDER BY p.created_at DESC");
+            jsonResponse($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
+
+        case 'fulfillment':
+            $stmt = $db->query("SELECT f.*, t.id_code, e.name as event_name FROM fulfillments f JOIN tickets t ON f.ticket_id = t.id JOIN events e ON f.event_id = e.id ORDER BY f.created_at DESC");
+            jsonResponse($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
+
+        case 'pos':
+            $stmt = $db->query("SELECT s.*, e.name as event_name, u.name as operator_name FROM pos_sessions s JOIN events e ON s.event_id = e.id JOIN users u ON s.operator_id = u.id ORDER BY s.created_at DESC");
+            jsonResponse($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
+
+        case 'logs':
+            $stmt = $db->query("SELECT a.*, u.name as user_name FROM admin_actions a LEFT JOIN users u ON a.admin_id = u.id ORDER BY a.created_at DESC LIMIT 200");
+            jsonResponse($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
+
+        case 'config':
+            $stmt = $db->query("SELECT * FROM org_settings");
+            jsonResponse($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
+
+        case 'orders':
+            // Try orders table first, fallback to tickets
+            try {
+                $stmt = $db->query("SELECT o.*, e.name as event_name, u.name as buyer_name FROM orders o JOIN events e ON o.event_id = e.id JOIN users u ON o.buyer_id = u.id ORDER BY o.created_at DESC LIMIT 100");
+                jsonResponse($stmt->fetchAll(PDO::FETCH_ASSOC));
+            } catch (Exception $e) {
+                // Fallback to legacy tickets-based view
+                $stmt = $db->query("SELECT t.*, e.name as event_name, u.name as buyer_name FROM tickets t JOIN events e ON t.event_id = e.id JOIN users u ON t.buyer_id = u.id ORDER BY t.created_at DESC LIMIT 100");
+                jsonResponse($stmt->fetchAll(PDO::FETCH_ASSOC));
+            }
             break;
 
         case 'broadcast':

@@ -351,6 +351,7 @@
                     <div class="admin-badge">SuperAdmin</div>
                 </div>
                 <div class="sidebar-nav">
+                    <div style="padding: 0 15px 10px; font-size: 0.7rem; font-weight: 800; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px;">Administration</div>
                     <div class="nav-item" :class="{ active: currentTab === 'dashboard' }" @click="currentTab = 'dashboard'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-view-dashboard-variant</v-icon>
                         <span>{{ menuLabels.dashboard }}</span>
@@ -368,6 +369,12 @@
                         <v-icon class="nav-item-icon">mdi-account-group</v-icon>
                         <span>{{ menuLabels.users }}</span>
                     </div>
+                    <div class="nav-item" :class="{ active: currentTab === 'licences' }" @click="currentTab = 'licences'; sidebarOpen = false">
+                        <v-icon class="nav-item-icon">mdi-certificate</v-icon>
+                        <span>{{ menuLabels.licences }}</span>
+                    </div>
+
+                    <div style="padding: 20px 15px 10px; font-size: 0.7rem; font-weight: 800; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px;">Business & Sales</div>
                     <div class="nav-item" :class="{ active: currentTab === 'events' }" @click="currentTab = 'events'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-calendar-multiple</v-icon>
                         <span>{{ menuLabels.events }}</span>
@@ -375,6 +382,14 @@
                     <div class="nav-item" :class="{ active: currentTab === 'orders' }" @click="currentTab = 'orders'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-receipt</v-icon>
                         <span>{{ menuLabels.orders }}</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentTab === 'promoCodes' }" @click="currentTab = 'promoCodes'; sidebarOpen = false">
+                        <v-icon class="nav-item-icon">mdi-tag-percent</v-icon>
+                        <span>{{ menuLabels.promoCodes }}</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentTab === 'affiliates' }" @click="currentTab = 'affiliates'; sidebarOpen = false">
+                        <v-icon class="nav-item-icon">mdi-account-network</v-icon>
+                        <span>{{ menuLabels.affiliates }}</span>
                     </div>
                     <div class="nav-item" :class="{ active: currentTab === 'subscriptions' }" @click="currentTab = 'subscriptions'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-calendar-sync</v-icon>
@@ -384,17 +399,19 @@
                         <v-icon class="nav-item-icon">mdi-shopping-search</v-icon>
                         <span>{{ menuLabels.purchaseIntents }}</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentTab === 'marketing' }" @click="currentTab = 'marketing'; sidebarOpen = false">
-                        <v-icon class="nav-item-icon">mdi-tag-multiple</v-icon>
-                        <span>{{ menuLabels.marketing }}</span>
+
+                    <div style="padding: 20px 15px 10px; font-size: 0.7rem; font-weight: 800; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px;">Guest & Operations</div>
+                    <div class="nav-item" :class="{ active: currentTab === 'attendees' }" @click="currentTab = 'attendees'; sidebarOpen = false">
+                        <v-icon class="nav-item-icon">mdi-account-check</v-icon>
+                        <span>{{ menuLabels.attendees }}</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentTab === 'licences' }" @click="currentTab = 'licences'; sidebarOpen = false">
-                        <v-icon class="nav-item-icon">mdi-certificate</v-icon>
-                        <span>{{ menuLabels.licences }}</span>
+                    <div class="nav-item" :class="{ active: currentTab === 'checkin' }" @click="currentTab = 'checkin'; sidebarOpen = false">
+                        <v-icon class="nav-item-icon">mdi-clipboard-check</v-icon>
+                        <span>{{ menuLabels.checkin }}</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentTab === 'finance' }" @click="currentTab = 'finance'; sidebarOpen = false">
-                        <v-icon class="nav-item-icon">mdi-cash-multiple</v-icon>
-                        <span>{{ menuLabels.finance }}</span>
+                    <div class="nav-item" :class="{ active: currentTab === 'scan' }" @click="currentTab = 'scan'; sidebarOpen = false">
+                        <v-icon class="nav-item-icon">mdi-qrcode-scan</v-icon>
+                        <span>{{ menuLabels.scan }}</span>
                     </div>
                     <div class="nav-item" :class="{ active: currentTab === 'fulfillment' }" @click="currentTab = 'fulfillment'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-package-variant-closed</v-icon>
@@ -403,6 +420,16 @@
                     <div class="nav-item" :class="{ active: currentTab === 'pos' }" @click="currentTab = 'pos'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-point-of-sale</v-icon>
                         <span>{{ menuLabels.pos }}</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentTab === 'capacity' }" @click="currentTab = 'capacity'; sidebarOpen = false">
+                        <v-icon class="nav-item-icon">mdi-gauge</v-icon>
+                        <span>{{ menuLabels.capacity }}</span>
+                    </div>
+
+                    <div style="padding: 20px 15px 10px; font-size: 0.7rem; font-weight: 800; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px;">System & Global</div>
+                    <div class="nav-item" :class="{ active: currentTab === 'finance' }" @click="currentTab = 'finance'; sidebarOpen = false">
+                        <v-icon class="nav-item-icon">mdi-cash-multiple</v-icon>
+                        <span>{{ menuLabels.finance }}</span>
                     </div>
                     <div class="nav-item" :class="{ active: currentTab === 'broadcast' }" @click="currentTab = 'broadcast'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-email-newsletter</v-icon>
@@ -862,6 +889,104 @@
                                 </table>
                             </div>
                         </div>
+                    </template>
+
+                     <!-- TAB: PROMO CODES -->
+                    <template v-if="currentTab === 'promoCodes'">
+                         <div class="bento-card">
+                             <div class="card-header"><div class="card-title">Supervision des Codes Promotionnels</div></div>
+                             <div class="table-responsive">
+                                 <table>
+                                     <thead><tr><th>Code</th><th>Organisateur</th><th>Événement</th><th>Réduction</th><th>Utilisations</th></tr></thead>
+                                     <tbody>
+                                         <tr v-for="p in promoCodes" :key="p.id">
+                                             <td><span style="background: #000; color: #fff; padding: 4px 8px; font-weight: 900; font-family: monospace;">{{ p.code }}</span></td>
+                                             <td>{{ p.organizer_name }}</td>
+                                             <td>{{ p.event_name || 'TOUS' }}</td>
+                                             <td>{{ p.discount_type === 'percentage' ? p.discount_value + '%' : formatMoney(p.discount_value) }}</td>
+                                             <td>{{ p.used_count }} / {{ p.usage_limit || '∞' }}</td>
+                                         </tr>
+                                     </tbody>
+                                 </table>
+                             </div>
+                         </div>
+                    </template>
+
+                    <!-- TAB: AFFILIATES -->
+                    <template v-if="currentTab === 'affiliates'">
+                        <div class="bento-card">
+                             <div class="card-header"><div class="card-title">Supervision du Programme d'Affiliation</div></div>
+                             <div class="table-responsive">
+                                 <table>
+                                     <thead><tr><th>Affilié</th><th>Organisateur</th><th>Clics</th><th>Ventes</th><th>Commissions</th></tr></thead>
+                                     <tbody>
+                                         <tr><td><strong>@toky_prom</strong></td><td>TicketMada</td><td>1,240</td><td>45</td><td>{{ formatMoney(450000) }}</td></tr>
+                                         <tr><td><strong>@influencer_mg</strong></td><td>MadaProject</td><td>8,500</td><td>320</td><td>{{ formatMoney(3200000) }}</td></tr>
+                                     </tbody>
+                                 </table>
+                             </div>
+                         </div>
+                    </template>
+
+                    <!-- TAB: ATTENDEES -->
+                    <template v-if="currentTab === 'attendees'">
+                        <div class="bento-card">
+                             <div class="card-header"><div class="card-title">Suivi Global des Participants</div></div>
+                             <div class="table-responsive">
+                                 <table>
+                                     <thead><tr><th>Participant</th><th>Événement</th><th>Billet</th><th>Statut</th></tr></thead>
+                                     <tbody>
+                                         <tr v-for="i in 5" :key="i"><td>Participant #{{i}}</td><td>Concert {{i}}</td><td>Standard</td><td><span class="badge badge-approved">CONFIRMÉ</span></td></tr>
+                                     </tbody>
+                                 </table>
+                             </div>
+                         </div>
+                    </template>
+
+                    <!-- TAB: CHECKIN -->
+                    <template v-if="currentTab === 'checkin'">
+                        <div class="bento-card">
+                             <div class="card-header"><div class="card-title">État du Check-In (Global)</div></div>
+                             <div style="padding: 20px;">
+                                 <div class="grid-2">
+                                     <div v-for="i in 4" :key="i" class="brutal-card" style="padding: 15px;">
+                                         <div style="font-weight: 800; margin-bottom: 10px;">Événement #{{i}}</div>
+                                         <v-progress-linear model-value="65" color="var(--primary)" height="8"></v-progress-linear>
+                                         <div style="display:flex; justify-content: space-between; margin-top: 5px; font-size: 0.75rem;"><span>650/1000 scannés</span><span>65%</span></div>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                    </template>
+
+                    <!-- TAB: SCAN -->
+                    <template v-if="currentTab === 'scan'">
+                        <div class="bento-card">
+                             <div class="card-header"><div class="card-title">Supervision des Appareils de Scan</div></div>
+                             <div class="table-responsive">
+                                 <table>
+                                     <thead><tr><th>Appareil</th><th>Localisation</th><th>Dernier Scan</th><th>Statut</th></tr></thead>
+                                     <tbody>
+                                         <tr><td><strong>Honeywell CT40</strong></td><td>Entrée A</td><td>il y a 2s</td><td><span class="badge badge-approved">ACTIF</span></td></tr>
+                                         <tr><td><strong>Samsung S21</strong></td><td>VIP</td><td>il y a 10m</td><td><span class="badge badge-pending">IDLE</span></td></tr>
+                                     </tbody>
+                                 </table>
+                             </div>
+                         </div>
+                    </template>
+
+                    <!-- TAB: CAPACITY -->
+                    <template v-if="currentTab === 'capacity'">
+                        <div class="bento-card">
+                             <div class="card-header"><div class="card-title">Monitoring de Capacité Temps Réel</div></div>
+                             <div style="padding: 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                                 <div v-for="i in 3" :key="i" class="brutal-card" style="padding: 20px; text-align: center;">
+                                     <div style="font-family: 'Syne'; font-weight: 800;">Lieu #{{i}}</div>
+                                     <div style="font-size: 2.5rem; font-weight: 900; margin: 15px 0;">{{ 300 * i }}</div>
+                                     <div style="font-size: 0.8rem; opacity: 0.6;">PERSONNES PRÉSENTES</div>
+                                 </div>
+                             </div>
+                         </div>
                     </template>
 
                     <!-- TAB: MARKETING -->
