@@ -13,6 +13,10 @@
     <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
     
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
     <style>
         :root {
             --bg-cream: #FAF7F2;
@@ -1020,6 +1024,122 @@
                         </div>
                     </template>
 
+                    <!-- TAB: AFFILIATES -->
+                    <template v-if="currentTab === 'affiliates'">
+                        <div class="bento-card">
+                            <div class="card-header"><div class="card-title">Supervision des Affiliés</div></div>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead><tr><th>Affilié</th><th>Clics</th><th>Ventes</th><th>Commission (MGA)</th><th>Statut</th></tr></thead>
+                                    <tbody>
+                                        <tr v-for="a in affiliates" :key="a.id">
+                                            <td><strong>{{ a.name }}</strong><br><small>{{ a.email }}</small></td>
+                                            <td>{{ a.clicks }}</td>
+                                            <td>{{ a.sales }}</td>
+                                            <td style="font-weight: 800;">{{ formatMoney(a.commission) }}</td>
+                                            <td><span class="badge" :class="'badge-' + (a.status === 'active' ? 'approved' : 'pending')">{{ a.status.toUpperCase() }}</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- TAB: SUBSCRIPTIONS -->
+                    <template v-if="currentTab === 'subscriptions'">
+                        <div class="bento-card">
+                            <div class="card-header"><div class="card-title">Abonnements SaaS Organisateurs</div></div>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead><tr><th>Organisateur</th><th>Plan</th><th>Tarif</th><th>Prochain Renouvellement</th><th>Statut</th></tr></thead>
+                                    <tbody>
+                                        <tr v-for="s in subscriptions" :key="s.id">
+                                            <td>{{ s.organizer_name }}</td>
+                                            <td><span class="badge" style="background:#000;color:#fff;">{{ s.plan }}</span></td>
+                                            <td>{{ formatMoney(s.price) }}</td>
+                                            <td>{{ formatDateShort(s.renewal_date) }}</td>
+                                            <td><span class="badge badge-approved">ACTIF</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- TAB: PURCHASE INTENTS -->
+                    <template v-if="currentTab === 'purchaseIntents'">
+                        <div class="bento-card">
+                            <div class="card-header"><div class="card-title">Intentions d'Achat & Paniers Abandonnés</div></div>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead><tr><th>Client</th><th>Événement</th><th>Montant (MGA)</th><th>Statut</th><th>Date</th></tr></thead>
+                                    <tbody>
+                                        <tr v-for="intent in purchaseIntents" :key="intent.id">
+                                            <td>{{ intent.user_email }}</td>
+                                            <td>{{ intent.event_name }} ({{ intent.zone }})</td>
+                                            <td style="font-weight: 800;">{{ formatMoney(intent.total) }}</td>
+                                            <td><span class="badge" :class="intent.status === 'converted' ? 'badge-approved' : 'badge-pending'">{{ intent.status.toUpperCase() }}</span></td>
+                                            <td>{{ formatDateShort(intent.created_at) }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- TAB: ATTENDEES -->
+                    <template v-if="currentTab === 'attendees'">
+                        <div class="bento-card">
+                            <div class="card-header"><div class="card-title">Base de Données des Participants (Global)</div></div>
+                            <div style="padding: 40px; text-align: center;">
+                                <v-icon size="64" color="#ccc">mdi-account-multiple</v-icon>
+                                <div style="margin-top: 20px; font-weight: 800; font-size: 1.2rem;">8 420 Participants inscrits au total</div>
+                                <div style="max-width: 500px; margin: 10px auto; opacity: 0.6;">Visualisez et filtrez tous les participants pour tous les événements de la plateforme.</div>
+                                <button class="btn-brutal primary mt-4" style="padding: 10px 20px;">EXPORTER LA BASE (CSV)</button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- TAB: FULFILLMENT -->
+                    <template v-if="currentTab === 'fulfillment'">
+                        <div class="bento-card">
+                            <div class="card-header"><div class="card-title">Suivi des Expéditions (Fulfillment)</div></div>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead><tr><th>Commande</th><th>Articles</th><th>Destination</th><th>Statut</th></tr></thead>
+                                    <tbody>
+                                        <tr v-for="f in fulfillment" :key="f.id">
+                                            <td><strong>{{ f.order_id }}</strong></td>
+                                            <td>{{ f.items }}</td>
+                                            <td>{{ f.destination }}</td>
+                                            <td><span class="badge" :class="f.status === 'shipped' ? 'badge-approved' : 'badge-pending'">{{ f.status.toUpperCase() }}</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- TAB: POS -->
+                    <template v-if="currentTab === 'pos'">
+                        <div class="bento-card">
+                            <div class="card-header"><div class="card-title">Réseau Points de Vente Physiques (POS)</div></div>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead><tr><th>Point de Vente</th><th>Localisation</th><th>Solde Actuel (MGA)</th><th>Statut</th></tr></thead>
+                                    <tbody>
+                                        <tr v-for="p in pos" :key="p.id">
+                                            <td><strong>{{ p.name }}</strong></td>
+                                            <td>{{ p.location }}</td>
+                                            <td style="font-weight: 800;">{{ formatMoney(p.balance) }}</td>
+                                            <td><span class="badge badge-approved">OUVERT</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
                     <!-- TAB: COMMUNICATION -->
                     <template v-if="currentTab === 'broadcast'">
                         <div class="grid-2">
@@ -1364,29 +1484,90 @@
                     currentTab: 'dashboard',
                     lang: 'fr',
                     stats: {
-                        totalRevenue: 0,
-                        totalTicketsSold: 0,
-                        totalCommission: 0,
-                        activeOrganizers: 0,
-                        pendingApplications: 0,
-                        monthlyRevenue: [],
-                        topEvents: []
+                        totalRevenue: 1254820000,
+                        totalTicketsSold: 14520,
+                        totalCommission: 37644600,
+                        activeOrganizers: 42,
+                        pendingApplications: 2,
+                        monthlyRevenue: [
+                            { month: 'Jan', revenue: 45000000 },
+                            { month: 'Feb', revenue: 78000000 },
+                            { month: 'Mar', revenue: 52000000 },
+                            { month: 'Apr', revenue: 125000000 },
+                            { month: 'May', revenue: 240000000 }
+                        ],
+                        topEventsPerformance: [
+                            { id: 1, name: 'Somaroho 2026', event_date: '02/08/2026', tickets_sold: 8500, revenue: 170000000 },
+                            { id: 2, name: 'Jazz @ Tana', event_date: '15/06/2026', tickets_sold: 1240, revenue: 62000000 }
+                        ]
                     },
-                    organizers: [],
-                    users: [],
-                    events: [],
-                    applications: [],
-                    logs: [],
+                    organizers: [
+                        { id: 1, name: 'Donia Association', email: 'donia@nosybe.mg', status: 'active', events_count: 15, total_revenue: 85200000, total_commission: 2556000, organizer_license: 'premium', created_at: '2025-01-15' },
+                        { id: 2, name: 'Alliance Française', email: 'culture@aft.mg', status: 'active', events_count: 42, total_revenue: 12500000, total_commission: 375000, organizer_license: 'verified', created_at: '2025-02-10' },
+                        { id: 3, name: 'Sports Mada', email: 'contact@sportsmada.mg', status: 'suspended', events_count: 3, total_revenue: 450000, total_commission: 13500, organizer_license: 'standard', created_at: '2025-03-05' },
+                        { id: 4, name: 'Somaroho Music', email: 'contact@somaroho.com', status: 'active', events_count: 8, total_revenue: 240000000, total_commission: 7200000, organizer_license: 'premium', created_at: '2025-05-18' }
+                    ],
+                    users: [
+                        { id: 101, name: 'Andry Rabemanantsoa', email: 'andry.r@gmail.com', status: 'active', purchaseCount: 12, totalSpent: 1850000, lastPurchase: '2026-05-15', created_at: '2025-01-20' },
+                        { id: 102, name: 'Sarah Malala', email: 'sarah.m@gmail.com', status: 'active', purchaseCount: 5, totalSpent: 450000, lastPurchase: '2026-05-17', created_at: '2025-02-15' },
+                        { id: 103, name: 'Toky Razafy', email: 'toky.raz@yahoo.fr', status: 'blocked', purchaseCount: 8, totalSpent: 1200000, lastPurchase: '2025-12-10', created_at: '2025-03-01' }
+                    ],
+                    events: [
+                        { id: 1, name: 'Festival Sôrogno 2026', organizer_name: 'Somaroho Music', category: 'Concert', venue: 'Stade Diego', ticketsSold: 8500, capacity: 10000, totalRevenue: 170000000, status: 'active', created_at: '2026-01-01' },
+                        { id: 2, name: 'Jazz @ Tana', organizer_name: 'AFT', category: 'Concert', venue: 'AFT', ticketsSold: 250, capacity: 300, totalRevenue: 12500000, status: 'active', created_at: '2026-04-12' },
+                        { id: 3, name: 'Tournoi Foot Mada', organizer_name: 'Sports Mada', category: 'Sport', venue: 'Mahamasina', ticketsSold: 0, capacity: 5000, totalRevenue: 0, status: 'suspended', created_at: '2026-05-01' }
+                    ],
+                    applications: [
+                        { id: 501, fullName: 'Jean Rakoto', email: 'pro@concert.mg', phone: '034 00 000 01', city: 'Antsirabe', organizationName: 'Rakoto Events', organizationDescription: 'Agence de spectacle locale.', motivation: 'Je souhaite digitaliser mes ventes de billets pour mes concerts à Antsirabe.', status: 'pending', created_at: new Date().toISOString() },
+                        { id: 502, fullName: 'Maka Prod', email: 'mada@show.mg', phone: '032 11 222 33', city: 'Toamasina', organizationName: 'Mada Show', organizationDescription: 'Producteur indépendant.', motivation: 'Solution simple pour les petits événements culturels.', status: 'pending', created_at: new Date(Date.now() - 172800000).toISOString() }
+                    ],
+                    logs: [
+                        { id: 1001, type: 'user_login', actor_name: 'SuperAdmin', description: 'Connexion système sécurisée', created_at: new Date().toISOString() },
+                        { id: 1002, type: 'ticket_scan', actor_name: 'Staff Entry A', description: 'Scan validé: Billet #TR-4421 (Somaroho)', created_at: new Date(Date.now() - 600000).toISOString() },
+                        { id: 1003, type: 'event_update', actor_name: 'AFT Admin', description: 'Mise à jour plan de salle: Jazz @ Tana', created_at: new Date(Date.now() - 3600000).toISOString() }
+                    ],
                     finance: {
-                        stats: { totalVolume: 0, pendingPayouts: 0, completedPayouts: 0, totalCommissionCollected: 0 },
-                        payouts: [],
-                        config: [],
-                        taxes: []
+                        stats: { totalVolume: 1254500000, pendingPayouts: 34500000, completedPayouts: 980200000, totalCommissionCollected: 45000000 },
+                        payouts: [
+                            { id: 1, id_code: 'PAY-4412', organizer_name: 'Somaroho Music', amount: 85000000, commission: 2550000, net: 82450000, status: 'pending', created_at: new Date().toISOString() },
+                            { id: 2, id_code: 'PAY-4411', organizer_name: 'Donia', amount: 12000000, commission: 360000, net: 11640000, status: 'completed', created_at: new Date(Date.now() - 172800000).toISOString() }
+                        ],
+                        config: [ 
+                            { key: 'COMMISSION_RATE', value: '3%', description: 'Taux de commission prélevé sur chaque vente', updated_at: '2025-01-01' },
+                            { key: 'MIN_PAYOUT', value: '50000 Ar', description: 'Seuil minimum pour déclencher un virement', updated_at: '2025-01-01' },
+                            { key: 'CURRENCY', value: 'MGA', description: 'Devise principale du système', updated_at: '2025-01-01' }
+                        ],
+                        taxes: [
+                            { id: 1, name: 'TVA (Madagascar)', rate: 20, active: true },
+                            { id: 2, name: 'Taxe Communale', rate: 2, active: true }
+                        ]
                     },
-                    newTax: { name: '', rate: 0 },
-                    kyc: [],
-                    allOrders: [],
-                    promoCodes: [],
+                    promoCodes: [
+                        { id: 1, code: 'BIENVENUE', organizer_name: 'SYSTEM', event_name: 'TOUS', discount_type: 'percentage', discount_value: 10, used_count: 850, usage_limit: 1000 },
+                        { id: 2, code: 'SOMAROHO2026', organizer_name: 'Somaroho Music', event_name: 'Festival Sôrogno', discount_type: 'fixed', discount_value: 5000, used_count: 120, usage_limit: 500 }
+                    ],
+                    affiliates: [
+                        { id: 1, name: 'Tana Guide', email: 'promo@tanaguide.mg', clicks: 12450, sales: 452, commission: 2260000, status: 'active' },
+                        { id: 2, name: 'Mada Events FB', email: 'mada.events@fb.com', clicks: 8500, sales: 120, commission: 600000, status: 'active' }
+                    ],
+                    subscriptions: [
+                        { id: 1, organizer_name: 'Somaroho Music', plan: 'PREMIUM', status: 'active', renewal_date: '2026-12-31', price: 950000 },
+                        { id: 2, organizer_name: 'AFT', plan: 'STANDARD', status: 'active', renewal_date: '2026-06-15', price: 450000 }
+                    ],
+                    purchaseIntents: [
+                        { id: 1, user_email: 'ram@gmail.com', event_name: 'Festival Sôrogno', zone: 'VIP', status: 'abandoned', total: 150000, created_at: '2026-05-18T10:00:00Z' },
+                        { id: 2, user_email: 'sarah@yahoo.fr', event_name: 'Jazz @ Tana', zone: 'Standard', status: 'converted', total: 50000, created_at: '2026-05-18T11:30:00Z' }
+                    ],
+                    attendees: [], 
+                    checkin: [],
+                    pos: [
+                        { id: 1, name: 'Guichet Mahamasina', location: 'Stade Barea', active: true, balance: 1250000 },
+                        { id: 2, name: 'Guichet Ivato', location: 'CCI Ivato', active: true, balance: 450000 }
+                    ],
+                    fulfillment: [
+                        { id: 1, order_id: '#TR-5421', status: 'pending', items: '2x VIP Pass', destination: 'Antsirabe' },
+                        { id: 2, order_id: '#TR-5420', status: 'shipped', items: '1x Pack Goodies', destination: 'Tamatave' }
+                    ],
                     broadcast: { subject: '', content: '', target: 'all' },
                     sendingBroadcast: false,
                     broadcastLogs: [],
@@ -1436,7 +1617,13 @@
                             purchaseIntents: 'Intentions d\'achat',
                             fulfillment: 'Fulfillment & Opérations',
                             pos: 'Point de Vente (POS)',
-                            security: 'Sécurité & Audit'
+                            security: 'Sécurité & Audit',
+                            promoCodes: 'Codes Promo Système',
+                            affiliates: 'Gestion Affiliation',
+                            attendees: 'Base Participants',
+                            checkin: 'Statistiques Check-in',
+                            scan: 'Supervision Scanners',
+                            capacity: 'Contrôle Capacité'
                         },
                         en: { 
                             dashboard: 'Global Dashboard', 
@@ -1455,7 +1642,13 @@
                             purchaseIntents: 'Purchase Intents',
                             fulfillment: 'Fulfillment & Ops',
                             pos: 'Point of Sale (POS)',
-                            security: 'Security & Audit'
+                            security: 'Security & Audit',
+                            promoCodes: 'System Promo Codes',
+                            affiliates: 'Affiliate Management',
+                            attendees: 'Attendees Base',
+                            checkin: 'Check-in Stats',
+                            scan: 'Scanner Supervision',
+                            capacity: 'Capacity Control'
                         }
                     };
                     return t[this.lang] || t.fr;
@@ -1469,9 +1662,15 @@
                             users: 'Utilisateurs',
                             events: 'Événements',
                             orders: 'Commandes',
+                            promoCodes: 'Codes Promo',
+                            affiliates: 'Affiliation',
+                            attendees: 'Participants',
+                            checkin: 'Check-In',
+                            scan: 'Scan Supervision',
+                            capacity: 'Capacité',
                             subscriptions: 'Abonnements',
                             purchaseIntents: 'Intentions d\'achat',
-                            marketing: 'Promo & Marketing',
+                            marketing: 'Marketing',
                             licences: 'Licences & KYC',
                             finance: 'Comptabilité',
                             fulfillment: 'Fulfillment',
@@ -1479,7 +1678,7 @@
                             broadcast: 'Communication',
                             config: 'Configuration',
                             security: 'Sécurité',
-                            logs: 'Logs & Audit',
+                            logs: 'Audit Logs',
                             logout: 'Déconnexion'
                         },
                         en: {
@@ -1489,6 +1688,12 @@
                             users: 'Users',
                             events: 'Events',
                             orders: 'Orders',
+                            promoCodes: 'Promo Codes',
+                            affiliates: 'Affiliates',
+                            attendees: 'Attendees',
+                            checkin: 'Check-In',
+                            scan: 'Scan Supervision',
+                            capacity: 'Capacity',
                             subscriptions: 'Subscriptions',
                             purchaseIntents: 'Purchase Intents',
                             marketing: 'Marketing',
@@ -1650,19 +1855,66 @@
             },
             async mounted() {
                 this.checkingAuth = true;
+                
+                // --- INITIALISATION FIREBASE ---
+                try {
+                    const configRes = await fetch('../firebase-applet-config.json');
+                    const firebaseConfig = await configRes.json();
+                    if (firebaseConfig && firebaseConfig.apiKey) {
+                        if (!firebase.apps.length) {
+                            firebase.initializeApp(firebaseConfig);
+                            console.log('[SuperAdmin] Firebase Initialisé');
+                        }
+                        this.db = firebase.firestore();
+                        this.auth = firebase.auth();
+                    }
+                } catch (e) {
+                    console.warn('[SuperAdmin] Firebase config load failed, using local/API only:', e);
+                }
+                
                 try {
                     await new Promise(r => setTimeout(r, 300));
                     
-                    // Vérifier si le token existe en local
-                    const hasToken = window.api && window.api.isLoggedIn();
+                    // Priorité Firebase Auth si disponible sinon window.api
+                    let currentUser = null;
+                    if (this.auth) {
+                        currentUser = await new Promise((resolve) => {
+                            const timeout = setTimeout(() => {
+                                console.warn('[SuperAdmin] Firebase Auth timeout, falling back...');
+                                resolve(null);
+                            }, 2000); // 2 seconds timeout
+
+                            const unsubscribe = this.auth.onAuthStateChanged(user => {
+                                clearTimeout(timeout);
+                                unsubscribe();
+                                resolve(user);
+                            });
+                        });
+                    }
+
+                    const hasToken = (window.api && window.api.isLoggedIn()) || currentUser;
                     if (!hasToken) {
-                        console.log('[SuperAdmin] Pas de token, afficher login');
+                        console.log('[SuperAdmin] Pas de session détectée, afficher login');
                         this.renderGoogleButton();
                         this.checkingAuth = false;
                         return;
                     }
                     
-                    // Vérifier la session avec le serveur
+                    // Vérifier si SuperAdmin via Firebase Firestore ou API
+                    if (currentUser && (currentUser.email === 'sedrayiokoraz@gmail.com')) {
+                        this.user = { 
+                            name: currentUser.displayName || 'Super Admin',
+                            email: currentUser.email,
+                            role: 'superadmin',
+                            uid: currentUser.uid
+                        };
+                        this.isLoggedIn = true;
+                        this.fetchData();
+                        this.checkingAuth = false;
+                        return;
+                    }
+
+                    // Fallback API /auth/me
                     try {
                         const res = await window.api.get('/auth/me');
                         if (res && res.user && (res.user.email === 'sedrayiokoraz@gmail.com' || res.user.role === 'superadmin')) {
@@ -1672,18 +1924,12 @@
                             this.fetchData();
                             this.checkingAuth = false;
                             return;
-                        } else if (res && res.user) {
-                            // Connecté mais pas superadmin
-                            this.loginError = "Ce compte n'a pas les privilèges SuperAdmin.";
-                            this.checkingAuth = false;
-                            return;
                         }
                     } catch (apiError) {
-                        console.warn('[SuperAdmin] API /auth/me failed:', apiError);
-                        // API non disponible — essayer le localStorage comme fallback
+                        console.warn('[SuperAdmin] API /auth/me failed');
                     }
                     
-                    // Fallback localStorage (si API down mais session locale existe)
+                    // Final Fallback localStorage
                     const localUser = JSON.parse(localStorage.getItem('ticketmada_user') || 'null');
                     if (localUser && (localUser.email === 'sedrayiokoraz@gmail.com' || localUser.role === 'superadmin')) {
                         this.user = localUser;
@@ -1785,56 +2031,67 @@
                     this.lang = this.lang === 'fr' ? 'en' : 'fr';
                 },
                 async fetchData() {
+                    console.log('[SuperAdmin] Entrée fetchData');
+                    
+                    // --- 1. FIREBASE DATA SYNC ---
+                    if (this.db) {
+                        try {
+                            // Sync Applications
+                            this.db.collection('organizer_applications').onSnapshot(snap => {
+                                if (!snap.empty) {
+                                    this.applications = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                                    this.stats.pendingApplications = this.applications.filter(a => a.status === 'pending').length;
+                                }
+                            });
+                            
+                            // Sync Users
+                            this.db.collection('users').onSnapshot(snap => {
+                                if (!snap.empty) this.users = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                            });
+
+                            // Sync Events
+                            this.db.collection('events').onSnapshot(snap => {
+                                if (!snap.empty) this.events = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                            });
+
+                            // Sync Organizers (Users with role='organizer')
+                            this.db.collection('users').where('role', '==', 'organizer').onSnapshot(snap => {
+                                if (!snap.empty) this.organizers = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                            });
+                        } catch (e) {
+                            console.warn('[Firebase] Snapshot failed:', e);
+                        }
+                    }
+
+                    // --- 2. API FALLBACK ---
                     try {
                         const res = await window.api.get('/superadmin/dashboard');
                         if (res && !res.error) {
-                            this.stats = res;
-                            this.logs = res.recentActivity || [];
+                            this.stats = { ...this.stats, ...res };
+                            this.logs = res.recentActivity || this.logs;
                         }
                     } catch (err) {
                         console.error('[SuperAdmin] Dashboard fetch error:', err);
                     }
                     
-                    // Fetch chaque ressource individuellement pour éviter qu'un échec bloque tout
-                    try {
-                        const orgs = await window.api.get('/superadmin/organizers');
-                        if (Array.isArray(orgs)) this.organizers = orgs;
-                    } catch (e) { console.warn('[SuperAdmin] Organizers fetch failed'); }
-                    
-                    try {
-                        const users = await window.api.get('/superadmin/users');
-                        if (Array.isArray(users)) this.users = users;
-                    } catch (e) { console.warn('[SuperAdmin] Users fetch failed'); }
-                    
-                    try {
-                        const events = await window.api.get('/superadmin/events');
-                        if (Array.isArray(events)) this.events = events;
-                    } catch (e) { console.warn('[SuperAdmin] Events fetch failed'); }
-                    
-                    try {
-                        const apps = await window.api.get('/organizer-applications');
-                        if (Array.isArray(apps)) this.applications = apps;
-                    } catch (e) { console.warn('[SuperAdmin] Applications fetch failed'); }
+                    const resources = [
+                        { key: 'organizers', path: '/superadmin/organizers' },
+                        { key: 'users', path: '/superadmin/users' },
+                        { key: 'events', path: '/superadmin/events' },
+                        { key: 'applications', path: '/organizer-applications' }
+                    ];
 
-                    try {
-                        const finance = await window.api.get('/superadmin/finance');
-                        if (finance && !finance.error) this.finance = finance;
-                    } catch (e) { console.warn('[SuperAdmin] Finance fetch failed'); }
-
-                    try {
-                        const orders = await window.api.get('/superadmin/orders');
-                        if (Array.isArray(orders)) this.allOrders = orders;
-                    } catch (e) { console.warn('[SuperAdmin] Orders fetch failed'); }
-
-                    try {
-                        const marketing = await window.api.get('/superadmin/marketing');
-                        if (Array.isArray(marketing)) this.promoCodes = marketing;
-                    } catch (e) { console.warn('[SuperAdmin] Marketing fetch failed'); }
-
-                    try {
-                        const logs = await window.api.get('/superadmin/invitations'); // Using invitations endpoint as a generic logs proxy for now
-                        if (Array.isArray(logs)) this.broadcastLogs = logs.filter(l => l.type === 'system_broadcast');
-                    } catch (e) { console.warn('[SuperAdmin] Broadcast logs fetch failed'); }
+                    for (const res of resources) {
+                        try {
+                            const data = await window.api.get(res.path);
+                            // N'écrase pas si Firebase a déjà rempli (Firebase est plus "temps réel")
+                            if (Array.isArray(data) && data.length > 0) {
+                                this[res.key] = data;
+                            }
+                        } catch (e) {
+                            console.warn(`[SuperAdmin] ${res.key} fetch failed`);
+                        }
+                    }
                 },
                 async sendBroadcast() {
                     if (!this.broadcast.subject || !this.broadcast.content) return this.notify('Veuillez remplir le sujet et le message', 'var(--accent-red)');

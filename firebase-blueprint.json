@@ -8,7 +8,6 @@
         "uid": { "type": "string", "description": "Firebase Auth UID" },
         "name": { "type": "string" },
         "email": { "type": "string", "format": "email" },
-        "photo": { "type": "string", "format": "uri" },
         "role": { "type": "string", "enum": ["user", "organizer", "admin", "superadmin", "buyer"] },
         "provider": { "type": "string" },
         "lastLogin": { "type": "string", "format": "date-time" },
@@ -16,6 +15,42 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "name", "email", "role"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "Event details",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "organizerId": { "type": "string" },
+        "organizerName": { "type": "string" },
+        "category": { "type": "string" },
+        "venue": { "type": "string" },
+        "city": { "type": "string" },
+        "dateStart": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["active", "draft", "cancelled", "finished"] },
+        "capacity": { "type": "number" },
+        "ticketsSold": { "type": "number" },
+        "totalRevenue": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "organizerId", "status"]
+    },
+    "Ticket": {
+      "title": "Event Ticket",
+      "description": "A ticket purchased by a user for an event",
+      "type": "object",
+      "properties": {
+        "id_code": { "type": "string" },
+        "userId": { "type": "string" },
+        "eventId": { "type": "string" },
+        "eventName": { "type": "string" },
+        "price": { "type": "number" },
+        "status": { "type": "string", "enum": ["valid", "used", "cancelled", "refunded"] },
+        "scannedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id_code", "userId", "eventId", "status"]
     },
     "OrganizerApplication": {
       "title": "Organizer Application",
@@ -26,51 +61,50 @@
         "fullName": { "type": "string" },
         "email": { "type": "string" },
         "phone": { "type": "string" },
-        "city": { "type": "string" },
-        "organizationType": { "type": "string" },
         "organizationName": { "type": "string" },
-        "organizationDescription": { "type": "string" },
-        "socialFacebook": { "type": "string" },
-        "socialInstagram": { "type": "string" },
-        "eventTypes": { "type": "array", "items": { "type": "string" } },
-        "preferredPayment": { "type": "string" },
-        "idDocumentNumber": { "type": "string" },
-        "motivation": { "type": "string" },
         "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "fullName", "email", "status"]
     },
-    "Ticket": {
-      "title": "Event Ticket",
-      "description": "A ticket purchased by a user for an event",
+    "PromoCode": {
+      "title": "Promo Code",
+      "description": "Discount code",
       "type": "object",
       "properties": {
-        "id_code": { "type": "string", "description": "Unique ticket code (QR)" },
-        "userId": { "type": "string" },
+        "code": { "type": "string" },
+        "organizerId": { "type": "string" },
         "eventId": { "type": "string" },
-        "eventName": { "type": "string" },
-        "zoneName": { "type": "string" },
-        "seatInfo": { "type": "string" },
-        "price": { "type": "number" },
-        "status": { "type": "string", "enum": ["valid", "used", "cancelled"] },
+        "discountType": { "type": "string", "enum": ["percentage", "fixed"] },
+        "discountValue": { "type": "number" },
+        "usageLimit": { "type": "number" },
+        "usedCount": { "type": "number" },
+        "active": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id_code", "userId", "eventId", "status"]
+      "required": ["code", "discountType", "discountValue", "active"]
     }
   },
   "firestore": {
     "/users/{userId}": {
       "schema": "User",
-      "description": "Public and private user profile data"
+      "description": "User profiles"
+    },
+    "/events/{eventId}": {
+      "schema": "Event",
+      "description": "Event records"
     },
     "/tickets/{ticketId}": {
       "schema": "Ticket",
-      "description": "Individual ticket records"
+      "description": "Ticket records"
     },
     "/organizer_applications/{applicationId}": {
       "schema": "OrganizerApplication",
-      "description": "Requests to become an organizer"
+      "description": "Organizer signups"
+    },
+    "/promo_codes/{promoId}": {
+      "schema": "PromoCode",
+      "description": "Discount codes"
     }
   }
 }
