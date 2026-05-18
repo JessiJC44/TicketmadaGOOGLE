@@ -173,6 +173,10 @@ try {
             require_once __DIR__ . '/resale.php';
             handleResale($method, $id, $action);
             break;
+        case 'subscriptions':
+            require_once __DIR__ . '/subscriptions.php';
+            handleSubscriptions($method, $id, $action);
+            break;
         case 'superadmin':
             require_once __DIR__ . '/superadmin.php';
             handleSuperAdmin($method, $action, $parts[3] ?? null);

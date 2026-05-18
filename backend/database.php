@@ -450,6 +450,12 @@ function migrateAllTables() {
         "CREATE TABLE IF NOT EXISTS event_dates (id INTEGER PRIMARY KEY AUTOINCREMENT, event_id INTEGER NOT NULL, date_start DATETIME NOT NULL, date_end DATETIME, venue_override TEXT, capacity_override INTEGER, status TEXT DEFAULT 'active')",
         "CREATE TABLE IF NOT EXISTS event_series (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, organizer_id INTEGER NOT NULL, description TEXT, created_at DATETIME DEFAULT (datetime('now')))",
 
+        // Subscriptions
+        "CREATE TABLE IF NOT EXISTS subscriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, plan_id TEXT, status TEXT, next_billing DATETIME, created_at DATETIME DEFAULT (datetime('now')), FOREIGN KEY (user_id) REFERENCES users(id))",
+        
+        // Purchase Intents
+        "CREATE TABLE IF NOT EXISTS purchase_intents (id INTEGER PRIMARY KEY AUTOINCREMENT, event_id INTEGER NOT NULL, user_id INTEGER, details_json TEXT, status TEXT, created_at DATETIME DEFAULT (datetime('now')), FOREIGN KEY (event_id) REFERENCES events(id))",
+
         // Admin Tables
         "CREATE TABLE IF NOT EXISTS scan_links (id INTEGER PRIMARY KEY AUTOINCREMENT, event_id INTEGER NOT NULL, token TEXT UNIQUE NOT NULL, name TEXT, created_at DATETIME DEFAULT (datetime('now')), FOREIGN KEY (event_id) REFERENCES events(id))",
         "CREATE TABLE IF NOT EXISTS seatmaps (id INTEGER PRIMARY KEY AUTOINCREMENT, event_id INTEGER NOT NULL, data_json TEXT, created_at DATETIME DEFAULT (datetime('now')), FOREIGN KEY (event_id) REFERENCES events(id))",

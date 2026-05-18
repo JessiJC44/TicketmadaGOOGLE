@@ -376,6 +376,14 @@
                         <v-icon class="nav-item-icon">mdi-receipt</v-icon>
                         <span>{{ menuLabels.orders }}</span>
                     </div>
+                    <div class="nav-item" :class="{ active: currentTab === 'subscriptions' }" @click="currentTab = 'subscriptions'; sidebarOpen = false">
+                        <v-icon class="nav-item-icon">mdi-calendar-sync</v-icon>
+                        <span>{{ menuLabels.subscriptions }}</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentTab === 'purchaseIntents' }" @click="currentTab = 'purchaseIntents'; sidebarOpen = false">
+                        <v-icon class="nav-item-icon">mdi-shopping-search</v-icon>
+                        <span>{{ menuLabels.purchaseIntents }}</span>
+                    </div>
                     <div class="nav-item" :class="{ active: currentTab === 'marketing' }" @click="currentTab = 'marketing'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-tag-multiple</v-icon>
                         <span>{{ menuLabels.marketing }}</span>
@@ -388,6 +396,14 @@
                         <v-icon class="nav-item-icon">mdi-cash-multiple</v-icon>
                         <span>{{ menuLabels.finance }}</span>
                     </div>
+                    <div class="nav-item" :class="{ active: currentTab === 'fulfillment' }" @click="currentTab = 'fulfillment'; sidebarOpen = false">
+                        <v-icon class="nav-item-icon">mdi-package-variant-closed</v-icon>
+                        <span>{{ menuLabels.fulfillment }}</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentTab === 'pos' }" @click="currentTab = 'pos'; sidebarOpen = false">
+                        <v-icon class="nav-item-icon">mdi-point-of-sale</v-icon>
+                        <span>{{ menuLabels.pos }}</span>
+                    </div>
                     <div class="nav-item" :class="{ active: currentTab === 'broadcast' }" @click="currentTab = 'broadcast'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-email-newsletter</v-icon>
                         <span>{{ menuLabels.broadcast }}</span>
@@ -395,6 +411,10 @@
                     <div class="nav-item" :class="{ active: currentTab === 'config' }" @click="currentTab = 'config'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-cog</v-icon>
                         <span>{{ menuLabels.config }}</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentTab === 'security' }" @click="currentTab = 'security'; sidebarOpen = false">
+                        <v-icon class="nav-item-icon">mdi-shield-lock</v-icon>
+                        <span>{{ menuLabels.security }}</span>
                     </div>
                     <div class="nav-item" :class="{ active: currentTab === 'logs' }" @click="currentTab = 'logs'; sidebarOpen = false">
                         <v-icon class="nav-item-icon">mdi-history</v-icon>
@@ -801,6 +821,49 @@
                         </div>
                     </template>
 
+                    <!-- TAB: SUBSCRIPTIONS -->
+                    <template v-if="currentTab === 'subscriptions'">
+                        <div class="stats-grid">
+                            <div class="stat-card"><div class="stat-label">Total Abonnés</div><div class="stat-value">5,820</div></div>
+                            <div class="stat-card"><div class="stat-label">Revenu Récurrent (MRR)</div><div class="stat-value" style="color:var(--accent-mint);">{{ formatMoney(124000000) }}</div></div>
+                            <div class="stat-card"><div class="stat-label">Organisateurs Souscrits</div><div class="stat-value">124</div></div>
+                        </div>
+                        <div class="bento-card">
+                            <div class="card-header"><div class="card-title">Abonnements Organisateurs & Utilisateurs</div></div>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead><tr><th>Entité</th><th>Type</th><th>Plan</th><th>Prochain Paiement</th><th>Status</th></tr></thead>
+                                    <tbody>
+                                        <tr><td><strong>Festival Sôrogno</strong></td><td>Organisateur</td><td>PREMIUM MONTHLY</td><td>20/05/2026</td><td><span class="badge badge-approved">ACTIF</span></td></tr>
+                                        <tr><td><strong>Rindra Sahondra</strong></td><td>Utilisateur</td><td>PASS FAN ANNUEL</td><td>12/12/2026</td><td><span class="badge badge-approved">ACTIF</span></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- TAB: PURCHASE INTENTS -->
+                    <template v-if="currentTab === 'purchaseIntents'">
+                        <div class="bento-card">
+                            <div class="card-header"><div class="card-title">Intentions d'Achat Globales (B2B)</div></div>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead><tr><th>Organisateur</th><th>Client Final</th><th>Événement</th><th>Volume</th><th>Statut</th><th>Dernière Action</th></tr></thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>Madaproject</strong></td>
+                                            <td>Ambatovy BTM</td>
+                                            <td>Concert Jazz</td>
+                                            <td>{{ formatMoney(15000000) }}</td>
+                                            <td><span class="badge badge-pending">EN ATTENTE</span></td>
+                                            <td>{{ formatDateTime(Date.now()) }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
                     <!-- TAB: MARKETING -->
                     <template v-if="currentTab === 'marketing'">
                         <div class="bento-card">
@@ -973,6 +1036,35 @@
                         </div>
                     </template>
 
+                    <!-- TAB: FULFILLMENT -->
+                    <template v-if="currentTab === 'fulfillment'">
+                        <div class="bento-card">
+                            <div class="card-header"><div class="card-title">Supervision Logistique & Expéditions</div></div>
+                            <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+                                <div class="stat-card"><div class="stat-label">À expédier (Global)</div><div class="stat-value">1,450</div></div>
+                                <div class="stat-card"><div class="stat-label">En transit</div><div class="stat-value">220</div></div>
+                                <div class="stat-card"><div class="stat-label">Anomalies</div><div class="stat-value" style="color:var(--accent-red);">12</div></div>
+                                <div class="stat-card"><div class="stat-label">Assets Prêts</div><div class="stat-value">5,000</div></div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- TAB: POS -->
+                    <template v-if="currentTab === 'pos'">
+                        <div class="bento-card">
+                            <div class="card-header"><div class="card-title">Points de Vente Physiques (POS)</div></div>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead><tr><th>Terminal ID / Nom</th><th>Lieu</th><th>Opérateur</th><th>CA Session</th><th>Status</th></tr></thead>
+                                    <tbody>
+                                        <tr><td><strong>POS-TANA-01</strong></td><td>Palais des Sports</td><td>Andry R.</td><td>{{ formatMoney(2500000) }}</td><td><span class="badge badge-approved">OUVERT</span></td></tr>
+                                        <tr><td><strong>POS-TAM-02</strong></td><td>Toamasina Port</td><td>Lova K.</td><td>{{ formatMoney(1200000) }}</td><td><span class="badge badge-approved">OUVERT</span></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
                     <!-- TAB: CONFIGURATION -->
                     <template v-if="currentTab === 'config'">
                         <div class="bento-card" style="max-width: 800px;">
@@ -991,6 +1083,26 @@
                                     <div style="display: flex; gap: 10px;">
                                         <input type="text" class="input-brutal" v-model="c.value" style="margin-bottom: 0; padding: 8px 15px; flex: 1;">
                                         <button class="btn-brutal mint sm" @click="updateConfig(c)">ENREGISTRER</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- TAB: SECURITY -->
+                    <template v-if="currentTab === 'security'">
+                        <div class="bento-card">
+                            <div class="card-header"><div class="card-title">Sécurité Globale & Détection de Fraude</div></div>
+                            <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                                <div class="brutal-card" style="padding:20px;background:#ffebee;">
+                                    <h3 style="font-family:'Syne';font-weight:800;">Tentatives Suspectes</h3>
+                                    <p style="font-size:3rem;font-weight:900;">0</p>
+                                    <div style="font-size:0.75rem;color:#666;">Aucune anomalie détectée sur les 24h</div>
+                                </div>
+                                <div class="brutal-card" style="padding:20px;">
+                                    <h3 style="font-family:'Syne';font-weight:800;">Sessions SuperAdmin</h3>
+                                    <div style="font-size:0.85rem;">
+                                        <div style="display:flex;justify-content:space-between;"><span>Vrai Superadmin</span><span>Tana / Chrome</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -1194,7 +1306,12 @@
                             finance: 'Comptabilité & Taxes', 
                             broadcast: 'Communication Broadcast', 
                             config: 'Configuration Système', 
-                            logs: 'Logs & Audit Sync' 
+                            logs: 'Logs & Audit Sync',
+                            subscriptions: 'Abonnements Globaux',
+                            purchaseIntents: 'Intentions d\'achat',
+                            fulfillment: 'Fulfillment & Opérations',
+                            pos: 'Point de Vente (POS)',
+                            security: 'Sécurité & Audit'
                         },
                         en: { 
                             dashboard: 'Global Dashboard', 
@@ -1208,7 +1325,12 @@
                             finance: 'Accounting & Taxes', 
                             broadcast: 'Broadcast Center', 
                             config: 'System Config', 
-                            logs: 'Audit Logs' 
+                            logs: 'Audit Logs',
+                            subscriptions: 'Global Subscriptions',
+                            purchaseIntents: 'Purchase Intents',
+                            fulfillment: 'Fulfillment & Ops',
+                            pos: 'Point of Sale (POS)',
+                            security: 'Security & Audit'
                         }
                     };
                     return t[this.lang] || t.fr;
@@ -1222,11 +1344,16 @@
                             users: 'Utilisateurs',
                             events: 'Événements',
                             orders: 'Commandes',
+                            subscriptions: 'Abonnements',
+                            purchaseIntents: 'Intentions d\'achat',
                             marketing: 'Promo & Marketing',
                             licences: 'Licences & KYC',
                             finance: 'Comptabilité',
+                            fulfillment: 'Fulfillment',
+                            pos: 'Point de Vente',
                             broadcast: 'Communication',
                             config: 'Configuration',
+                            security: 'Sécurité',
                             logs: 'Logs & Audit',
                             logout: 'Déconnexion'
                         },
@@ -1237,11 +1364,16 @@
                             users: 'Users',
                             events: 'Events',
                             orders: 'Orders',
+                            subscriptions: 'Subscriptions',
+                            purchaseIntents: 'Purchase Intents',
                             marketing: 'Marketing',
                             licences: 'Licenses & KYC',
                             finance: 'Finance',
+                            fulfillment: 'Fulfillment',
+                            pos: 'POS',
                             broadcast: 'Broadcast',
                             config: 'Settings',
+                            security: 'Security',
                             logs: 'Audit Logs',
                             logout: 'Logout'
                         }
