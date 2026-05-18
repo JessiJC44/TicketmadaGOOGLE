@@ -780,7 +780,49 @@
                         </div>
                     </template>
                     
-                    <!-- Analytics -->
+                    <!-- Accounting & Taxes -->
+                    <template v-if="currentPage === 'accounting'">
+                        <div class="section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <v-icon size="small">mdi-calculator-variant</v-icon> 
+                                    <span>Comptabilité & Taxes</span>
+                                </div>
+                                <button class="btn btn-secondary btn-sm" @click="exportSales()">
+                                    <v-icon size="x-small">mdi-download</v-icon> Rapport fiscal
+                                </button>
+                            </div>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Période</th>
+                                            <th>Ventes Brutes</th>
+                                            <th>Commissions TicketMada</th>
+                                            <th>Taxes (TVA)</th>
+                                            <th>Revenu Net</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Mai 2026</td>
+                                            <td>{{ formatCurrency(8820000) }}</td>
+                                            <td style="color:var(--accent-coral);">{{ formatCurrency(441000) }}</td>
+                                            <td>{{ formatCurrency(1764000) }}</td>
+                                            <td style="font-weight:900; color:var(--accent-mint);">{{ formatCurrency(6615000) }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Avril 2026</td>
+                                            <td>{{ formatCurrency(12400000) }}</td>
+                                            <td style="color:var(--accent-coral);">{{ formatCurrency(620000) }}</td>
+                                            <td>{{ formatCurrency(2480000) }}</td>
+                                            <td style="font-weight:900; color:var(--accent-mint);">{{ formatCurrency(9300000) }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
                     <template v-if="currentPage === 'analytics'">
                         <div class="stats-grid">
                             <div class="stat-card"><div class="stat-card-header"><div class="stat-icon">📊</div></div><div class="stat-value">12.4k</div><div class="stat-label">Visites totales</div></div>
@@ -1552,25 +1594,6 @@
                        </div>
                     </template>
 
-                    <!-- Accounting -->
-                    <template v-if="currentPage === 'accounting'">
-                       <div class="section">
-                           <div class="section-header">
-                               <div class="section-title"><v-icon size="small">mdi-calculator-variant</v-icon> Comptabilité & Taxes</div>
-                               <button class="btn btn-secondary btn-sm"><v-icon size="x-small">mdi-download</v-icon> Rapport fiscal</button>
-                           </div>
-                           <div class="table-container">
-                               <table>
-                                   <thead><tr><th>Période</th><th>Ventes Brutes</th><th>Commissions TicketMada</th><th>Taxes (TVA)</th><th>Revenu Net</th></tr></thead>
-                                   <tbody>
-                                       <tr><td>Mai 2026</td><td>{{ formatCurrency(8820000) }}</td><td>{{ formatCurrency(441000) }}</td><td>{{ formatCurrency(1764000) }}</td><td style="font-weight:800;">{{ formatCurrency(6615000) }}</td></tr>
-                                       <tr><td>Avril 2026</td><td>{{ formatCurrency(12400000) }}</td><td>{{ formatCurrency(620000) }}</td><td>{{ formatCurrency(2480000) }}</td><td style="font-weight:800;">{{ formatCurrency(9300000) }}</td></tr>
-                                   </tbody>
-                               </table>
-                           </div>
-                       </div>
-                    </template>
-
                     <!-- Payouts Detail (Duplicate Removed) -->
                      
                      <!-- Integrations -->
@@ -1776,12 +1799,6 @@
                                     <button class="btn btn-secondary" @click="currentPage = 'help'">ANNULER</button>
                                     <button class="btn btn-primary" @click="createSupportTicket(); currentPage = 'help'">ENVOYER LE TICKET</button>
                                 </div>
-                            </div>
-                        </div>
-                    </template>
-                                        </tr>
-                                    </tbody>
-                                </table>
                             </div>
                         </div>
                     </template>
