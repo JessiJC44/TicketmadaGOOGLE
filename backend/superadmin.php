@@ -1,13 +1,17 @@
 <?php
 // backend/superadmin.php
+require_once __DIR__ . '/permissions.php';
 
 function handleSuperAdmin($method, $action = null, $id = null) {
     global $db;
     
-    // Auth Check: SuperAdmin required
-    $user = getCurrentUser();
-    if (!$user || $user['role'] !== 'superadmin') {
-        jsonError('Non autorisé', 403);
+    // Auth Check: SuperAdmin required (now using Tier checks)
+    if ($method === 'GET') {
+        $user = requireActionPermission('view_dashboard'); 
+    } elseif ($action === 'broadcast') {
+        $user = requireActionPermission('broadcast_notification');
+    } else {
+        $user = requireActionPermission('manage_platform_config');
     }
 
     switch ($action) {
@@ -176,6 +180,7 @@ function handleSuperAdmin($method, $action = null, $id = null) {
 
         case 'broadcast':
             if ($method === 'POST') {
+                $user = requireActionPermission('broadcast_notification');
                 $data = getBody();
                 // Mock broadcast logic: log the notification
                 $stmt = $db->prepare("INSERT INTO audit_log (details_json, action) VALUES (?, 'system_broadcast')");
@@ -187,4 +192,121 @@ function handleSuperAdmin($method, $action = null, $id = null) {
         default:
             jsonError('Action superadmin non reconnue', 400);
     }
+}
+
+// ═══════════════════════════════════════════
+// NEW HELPER FUNCTIONS (Part 6B, 8.3)
+// ═══════════════════════════════════════════
+
+function approveEvent($eventId) {
+    $user = requireActionPermission('approve_event');
+    $db = getDB();
+
+    $stmt = $db->prepare("SELECT * FROM events WHERE id = :id");
+    $stmt->bindValue(':id', $eventId, SQLITE3_INTEGER);
+    $event = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+
+    if (!$event) {
+        jsonError('Événement non trouvé', 404);
+    }
+
+    $stmt = $db->prepare("
+        UPDATE events SET status = 'active', requires_approval = 0,
+        approved_by = :admin_id, approval_note = :note
+        WHERE id = :id
+    ");
+    $stmt->bindValue(':admin_id', $user['id'], SQLITE3_INTEGER);
+    $stmt->bindValue(':note', $_POST['note'] ?? 'Approuvé', SQLITE3_TEXT);
+    $stmt->bindValue(':id', $eventId, SQLITE3_INTEGER);
+    $stmt->execute();
+
+    // Notify organizer
+    require_once __DIR__ . '/messaging.php';
+    createNotification(
+        $event['organizer_id'],
+        'event_approved',
+        'Événement approuvé !',
+        'Votre événement "' . $event['name'] . '" a été approuvé et est maintenant en ligne.',
+        '/events/' . $eventId
+    );
+
+    jsonResponse(['success' => true]);
+}
+
+function rejectEvent($eventId) {
+    $user = requireActionPermission('reject_event');
+    $db = getDB();
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    $reason = $data['reason'] ?? 'Aucune raison fournie';
+
+    $stmt = $db->prepare("SELECT * FROM events WHERE id = :id");
+    $stmt->bindValue(':id', $eventId, SQLITE3_INTEGER);
+    $event = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+
+    if (!$event) {
+        jsonError('Événement non trouvé', 404);
+    }
+
+    $stmt = $db->prepare("
+        UPDATE events SET status = 'rejected', requires_approval = 0,
+        approved_by = :admin_id, approval_note = :note
+        WHERE id = :id
+    ");
+    $stmt->bindValue(':admin_id', $user['id'], SQLITE3_INTEGER);
+    $stmt->bindValue(':note', $reason, SQLITE3_TEXT);
+    $stmt->bindValue(':id', $eventId, SQLITE3_INTEGER);
+    $stmt->execute();
+
+    // Notify organizer
+    require_once __DIR__ . '/messaging.php';
+    createNotification(
+        $event['organizer_id'],
+        'event_rejected',
+        'Événement refusé',
+        'Votre événement "' . $event['name'] . '" a été refusé. Raison : ' . $reason,
+        '/events/' . $eventId
+    );
+
+    jsonResponse(['success' => true]);
+}
+
+function updateOrganizerLicense($organizerId) {
+    $user = requireActionPermission('manage_licences');
+    $db = getDB();
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    $newLicense = $data['license'] ?? null;
+    $validLicenses = ['starter', 'pro', 'enterprise'];
+
+    if (!$newLicense || !in_array($newLicense, $validLicenses)) {
+        jsonError('Licence invalide. Valeurs acceptées : starter, pro, enterprise');
+    }
+
+    $stmt = $db->prepare("
+        UPDATE users SET organizer_license = :license,
+        license_updated_at = datetime('now'),
+        license_updated_by = :admin_id
+        WHERE id = :id AND role = 'organizer'
+    ");
+    $stmt->bindValue(':license', $newLicense, SQLITE3_TEXT);
+    $stmt->bindValue(':admin_id', $user['id'], SQLITE3_INTEGER);
+    $stmt->bindValue(':id', $organizerId, SQLITE3_INTEGER);
+    $stmt->execute();
+
+    if ($db->changes() === 0) {
+        jsonError('Organisateur non trouvé', 404);
+    }
+
+    // Notify the organizer
+    require_once __DIR__ . '/messaging.php';
+    createNotification(
+        $organizerId,
+        'license_upgrade',
+        'Licence mise à jour !',
+        'Votre licence a été mise à jour vers : ' . ucfirst($newLicense) . '. Profitez de vos nouvelles fonctionnalités !',
+        '/settings'
+    );
+
+    jsonResponse(['success' => true, 'new_license' => $newLicense]);
 }

@@ -492,11 +492,33 @@ function migrateAllTables() {
         // Admin Tables
         "CREATE TABLE IF NOT EXISTS scan_links (id INTEGER PRIMARY KEY AUTOINCREMENT, event_id INTEGER NOT NULL, token TEXT UNIQUE NOT NULL, name TEXT, created_at DATETIME DEFAULT (datetime('now')), FOREIGN KEY (event_id) REFERENCES events(id))",
         "CREATE TABLE IF NOT EXISTS seatmaps (id INTEGER PRIMARY KEY AUTOINCREMENT, event_id INTEGER NOT NULL, data_json TEXT, created_at DATETIME DEFAULT (datetime('now')), FOREIGN KEY (event_id) REFERENCES events(id))",
-        "CREATE TABLE IF NOT EXISTS admin_actions (id INTEGER PRIMARY KEY AUTOINCREMENT, admin_id INTEGER NOT NULL, action TEXT NOT NULL, resource_type TEXT, resource_id INTEGER, details TEXT, created_at DATETIME DEFAULT (datetime('now')), FOREIGN KEY (admin_id) REFERENCES users(id))"
+        "CREATE TABLE IF NOT EXISTS admin_actions (id INTEGER PRIMARY KEY AUTOINCREMENT, admin_id INTEGER NOT NULL, action TEXT NOT NULL, resource_type TEXT, resource_id INTEGER, details TEXT, created_at DATETIME DEFAULT (datetime('now')), FOREIGN KEY (admin_id) REFERENCES users(id))",
+
+        // Messaging & Support Tables
+        "CREATE TABLE IF NOT EXISTS conversations (id INTEGER PRIMARY KEY AUTOINCREMENT, participant_1 INTEGER NOT NULL, participant_2 INTEGER NOT NULL, subject TEXT, last_message_at DATETIME, created_at DATETIME DEFAULT (datetime('now')), FOREIGN KEY (participant_1) REFERENCES users(id), FOREIGN KEY (participant_2) REFERENCES users(id))",
+        "CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, conversation_id INTEGER NOT NULL, sender_id INTEGER NOT NULL, content TEXT NOT NULL, read_at DATETIME, created_at DATETIME DEFAULT (datetime('now')), FOREIGN KEY (conversation_id) REFERENCES conversations(id), FOREIGN KEY (sender_id) REFERENCES users(id))",
+        "CREATE TABLE IF NOT EXISTS support_tickets (id INTEGER PRIMARY KEY AUTOINCREMENT, organizer_id INTEGER NOT NULL, assigned_admin_id INTEGER, subject TEXT NOT NULL, category TEXT NOT NULL DEFAULT 'general', priority TEXT DEFAULT 'normal', status TEXT DEFAULT 'open', created_at DATETIME DEFAULT (datetime('now')), updated_at DATETIME, closed_at DATETIME, FOREIGN KEY (organizer_id) REFERENCES users(id))",
+        "CREATE TABLE IF NOT EXISTS support_ticket_messages (id INTEGER PRIMARY KEY AUTOINCREMENT, ticket_id INTEGER NOT NULL, sender_id INTEGER NOT NULL, content TEXT NOT NULL, attachment_url TEXT, created_at DATETIME DEFAULT (datetime('now')), FOREIGN KEY (ticket_id) REFERENCES support_tickets(id), FOREIGN KEY (sender_id) REFERENCES users(id))",
+        "CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, type TEXT NOT NULL, title TEXT NOT NULL, body TEXT, link TEXT, is_read INTEGER DEFAULT 0, created_at DATETIME DEFAULT (datetime('now')), FOREIGN KEY (user_id) REFERENCES users(id))"
     ];
 
     foreach ($migrations as $sql) {
         try { $db->exec($sql); } catch (Exception $e) { /* table exists, ignore */ }
+    }
+
+    // New Indexes
+    $indexes = [
+        "CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id)",
+        "CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_id)",
+        "CREATE INDEX IF NOT EXISTS idx_conversations_participants ON conversations(participant_1, participant_2)",
+        "CREATE INDEX IF NOT EXISTS idx_support_tickets_organizer ON support_tickets(organizer_id)",
+        "CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON support_tickets(status)",
+        "CREATE INDEX IF NOT EXISTS idx_ticket_messages_ticket ON support_ticket_messages(ticket_id)",
+        "CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id)",
+        "CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id, is_read)"
+    ];
+    foreach ($indexes as $sql) {
+        try { $db->exec($sql); } catch (Exception $e) { }
     }
 
     // Column migrations
@@ -507,6 +529,12 @@ function migrateAllTables() {
         ['users', 'is_blocked', 'INTEGER DEFAULT 0'],
         ['users', 'stripe_account_id', 'TEXT'],
         ['events', 'multi_date_json', 'TEXT'],
+        ['users', 'organizer_license', 'TEXT DEFAULT "starter"'],
+        ['users', 'license_updated_at', 'DATETIME'],
+        ['users', 'license_updated_by', 'INTEGER'],
+        ['events', 'requires_approval', 'INTEGER DEFAULT 0'],
+        ['events', 'approved_by', 'INTEGER'],
+        ['events', 'approval_note', 'TEXT'],
     ];
 
     foreach ($columnUpdates as $update) {

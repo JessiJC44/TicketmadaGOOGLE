@@ -72,11 +72,30 @@ try {
             break;
         case 'events':
             require_once __DIR__ . '/events.php';
+            if ($action === 'approve') {
+                require_once __DIR__ . '/superadmin.php';
+                approveEvent($id);
+            } elseif ($action === 'reject') {
+                require_once __DIR__ . '/superadmin.php';
+                rejectEvent($id);
+            }
             handleEvents($method, $id, $action);
             break;
         case 'orders':
             require_once __DIR__ . '/orders.php';
             handleOrders($method, $id, $action);
+            break;
+        case 'messaging':
+            require_once __DIR__ . '/messaging.php';
+            handleMessaging($method, $id, $action);
+            break;
+        case 'support-tickets':
+            require_once __DIR__ . '/messaging.php';
+            handleSupportTickets($method, $id, $action);
+            break;
+        case 'notifications':
+            require_once __DIR__ . '/messaging.php';
+            handleNotifications($method, $id, $action);
             break;
         case 'tickets':
             require_once __DIR__ . '/tickets.php';

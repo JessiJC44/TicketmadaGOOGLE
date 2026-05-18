@@ -1,20 +1,49 @@
 <?php
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/permissions.php';
 
 function handleAdmin($method, $id, $action) {
-    requireAuth([ROLE_SUPERADMIN]);
-
     switch ($action) {
-        case 'dashboard': getGlobalDashboard(); break;
-        case 'organizers': listOrganizers(); break;
-        case 'organizer-details': if ($id) getOrganizerDetails($id); break;
-        case 'block-user': if ($id) blockUser($id); break;
-        case 'unblock-user': if ($id) unblockUser($id); break;
-        case 'block-ticket': if ($id) blockTicket($id); break;
-        case 'unblock-ticket': if ($id) unblockTicket($id); break;
-        case 'scan-links': handleScanLinks($method, $id); break;
-        case 'seatmaps': handleSeatmaps($method, $id); break;
-        case 'audit-log': getAdminAuditLog(); break;
+        case 'dashboard': 
+            requireActionPermission('view_dashboard');
+            getGlobalDashboard(); 
+            break;
+        case 'organizers': 
+            requireActionPermission('view_organizers');
+            listOrganizers(); 
+            break;
+        case 'organizer-details': 
+            requireActionPermission('view_organizers');
+            if ($id) getOrganizerDetails($id); 
+            break;
+        case 'block-user': 
+            requireActionPermission('block_user');
+            if ($id) blockUser($id); 
+            break;
+        case 'unblock-user': 
+            requireActionPermission('unblock_user');
+            if ($id) unblockUser($id); 
+            break;
+        case 'block-ticket': 
+            requireActionPermission('block_user');
+            if ($id) blockTicket($id); 
+            break;
+        case 'unblock-ticket': 
+            requireActionPermission('unblock_user');
+            if ($id) unblockTicket($id); 
+            break;
+        case 'scan-links': 
+            requireActionPermission('manage_scan_links');
+            handleScanLinks($method, $id); 
+            break;
+        case 'seatmaps': 
+            requireActionPermission('manage_seatmaps');
+            handleSeatmaps($method, $id); 
+            break;
+        case 'audit-log': 
+            requireActionPermission('view_audit_logs');
+            getAdminAuditLog(); 
+            break;
         default: jsonError('Action admin non reconnue', 404);
     }
 }

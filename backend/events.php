@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/permissions.php';
 
 function handleEvents($method, $id, $action) {
     if ($action === 'featured' && !$id) {
@@ -115,6 +116,14 @@ function getCategories() {
 
 function createEvent() {
     $user = requireAuth([ROLE_ORGANIZER, ROLE_ADMIN, ROLE_SUPERADMIN]);
+    
+    // Check if organizer can create more events
+    if ($user['role'] === ROLE_ORGANIZER && !canCreateEvent($user)) {
+        $tier = getOrganizerTier($user);
+        $limits = getOrganizerLimits($tier);
+        jsonError('Limite atteinte : votre plan ' . $tier . ' permet maximum ' . $limits['max_active_events'] . ' événements actifs. Demandez un upgrade pour en créer plus.', 403);
+    }
+
     $body = getBody();
 
     $required = ['name', 'category', 'date_start', 'venue', 'capacity'];
@@ -140,6 +149,27 @@ function createEvent() {
     ]);
 
     $eventId = $db->lastInsertId();
+
+    // Check if organizer is on Starter plan — requires approval
+    $organizerTier = getOrganizerTier($user);
+    if ($user['role'] === ROLE_ORGANIZER && $organizerTier === 'starter') {
+        // Mark event as requiring approval
+        $stmt = $db->prepare("UPDATE events SET requires_approval = 1, status = 'pending_approval' WHERE id = ?");
+        $stmt->execute([$eventId]);
+
+        // Create notification for all admins
+        $admins = $db->query("SELECT id FROM users WHERE role IN ('admin', 'superadmin')");
+        while ($admin = $admins->fetchArray()) {
+            require_once __DIR__ . '/messaging.php';
+            createNotification(
+                $admin['id'],
+                'event_review',
+                'Événement en attente de validation',
+                'Nouvel événement de ' . ($user['name'] ?? $user['email']) . ' : ' . $body['name'],
+                '/events/' . $eventId
+            );
+        }
+    }
 
     // Log activity
     $db->prepare("INSERT INTO activity_log (type, icon, text, user_id) VALUES ('event', 'mdi-calendar-plus', ?, ?)")->execute([

@@ -24,13 +24,13 @@
     
     <style>
         [v-cloak] { display: none !important; }
-        :root { --bg-cream: #FAF7F2; --bg-dark: #1a1a1a; --bg-sidebar: #0f0f0f; --accent-coral: #FF6B4A; --accent-yellow: #FECA57; --accent-mint: #00D9A5; --accent-blue: #4A90FF; --accent-purple: #9B59B6; --accent-red: #E74C3C; --text-dark: #1a1a1a; --text-light: #666; --border-dark: #1a1a1a; --shadow-brutal: 4px 4px 0px #1a1a1a; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'DM Sans', sans-serif; background: #f5f5f5; color: var(--text-dark); }
-        .dashboard-layout { display: flex; min-height: 100vh; }
-        
-        .sidebar { width: 240px; background: var(--bg-sidebar); color: white; position: fixed; height: 100vh; overflow-y: auto; z-index: 100; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .sidebar-header { padding: 25px 15px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; }
+         :root { --bg-cream: #FAF7F2; --bg-dark: #1a1a1a; --bg-sidebar: #0f0f0f; --accent-coral: #FF6B4A; --accent-yellow: #FECA57; --accent-mint: #00D9A5; --accent-blue: #4A90FF; --accent-purple: #9B59B6; --accent-red: #E74C3C; --text-dark: #1a1a1a; --text-light: #666; --border-dark: #1a1a1a; --shadow-brutal: 6px 6px 0px #1a1a1a; --radius-brutal: 0px; }
+         * { margin: 0; padding: 0; box-sizing: border-box; }
+         body { font-family: 'DM Sans', sans-serif; background: #fdfdfd; color: var(--text-dark); }
+         .dashboard-layout { display: flex; min-height: 100vh; }
+         
+         .sidebar { width: 260px; background: var(--bg-sidebar); color: white; position: fixed; height: 100vh; overflow-y: auto; z-index: 100; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-right: 4px solid var(--border-dark); }
+         .sidebar-header { padding: 30px 20px; border-bottom: 2px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; }
         .sidebar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; margin-bottom: 12px; width: 100%; justify-content: center; overflow: visible; }
         .logo-box { 
             width: 34px; height: 34px; 
@@ -89,8 +89,12 @@
         .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
         
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 25px; }
-        .stat-card { background: white; border: 3px solid var(--border-dark); padding: 20px; box-shadow: var(--shadow-brutal); transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .stat-card:hover { transform: scale(1.03) translateY(-5px); box-shadow: 8px 8px 0px #1a1a1a; }
+        .stat-card { background: white; border: 3px solid var(--border-dark); padding: 25px; box-shadow: var(--shadow-brutal); transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; overflow: hidden; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 10px 10px 0px #1a1a1a; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--accent-coral); }
+        .stat-card:nth-child(2)::before { background: var(--accent-mint); }
+        .stat-card:nth-child(3)::before { background: var(--accent-yellow); }
+        .stat-card:nth-child(4)::before { background: var(--accent-blue); }
         .stats-chart-container { display: flex; height: 60px; align-items: flex-end; gap: 4px; margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px; }
         .stats-chart-bar { flex: 1; background: var(--accent-coral); opacity: 0.3; border-radius: 4px 4px 0 0; transition: all 0.3s ease; }
         .stats-chart-bar:last-child { opacity: 1; background: var(--accent-coral); }
@@ -139,16 +143,15 @@
         .status-ended { background: #f5f5f5; color: #666; }
         .status-pending { background: #fff3e0; color: #e65100; }
         
-        .section { background: white; border: 3px solid var(--border-dark); margin-bottom: 20px; box-shadow: var(--shadow-brutal); }
-        .section-header { padding: 15px 20px; border-bottom: 2px solid var(--border-dark); display: flex; justify-content: space-between; align-items: center; }
-        .section-title { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-        .section-actions { display: flex; gap: 8px; }
-        
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.85rem; }
-        th { background: #f9f9f9; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); }
-        tr:hover { background: #fafafa; }
+         .section { background: white; border: 4px solid var(--border-dark); margin-bottom: 30px; box-shadow: 10px 10px 0px var(--border-dark); }
+         .section-header { padding: 25px; border-bottom: 4px solid var(--border-dark); display: flex; justify-content: space-between; align-items: center; background: #fafafa; }
+         .section-title { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 12px; letter-spacing: 1px; }
+         .table-container { overflow-x: auto; background: white; }
+         table { width: 100%; border-collapse: collapse; background: white; }
+         th, td { padding: 18px 25px; text-align: left; border-bottom: 2px solid #eee; font-size: 0.9rem; }
+         th { background: #fdfdfd; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #1a1a1a; border-bottom: 4px solid #1a1a1a; }
+         tr:last-child td { border-bottom: none; }
+         tr:hover td { background: #f9f9f9; }
         .status-badge { display: inline-block; padding: 3px 10px; border-radius: 15px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
         .status-active { background: rgba(0, 217, 165, 0.15); color: #00a878; }
         .status-pending { background: rgba(254, 202, 87, 0.3); color: #c9940a; }
@@ -516,9 +519,13 @@
                             <v-icon class="nav-item-icon">mdi-printer</v-icon>
                             <span>{{ menuLabels.printing }}</span>
                         </div>
-                        <div class="nav-item" @click="currentPage = 'help'; sidebarOpen = false">
-                            <v-icon class="nav-item-icon">mdi-help-circle</v-icon>
-                            <span>{{ menuLabels.help }}</span>
+                        <div class="nav-item" :class="{ active: currentPage === 'help' }" @click="currentPage = 'help'; sidebarOpen = false" style="position:relative;">
+                            <v-icon class="nav-item-icon">mdi-headset</v-icon>
+                            <span>SUPPORT & AIDE</span>
+                            <div v-if="unreadNotificationsCount > 0" 
+                                 style="position:absolute; right:15px; background:var(--accent-coral); color:white; font-size:10px; padding:2px 6px; border-radius:10px; font-weight:900;">
+                                {{ unreadNotificationsCount }}
+                            </div>
                         </div>
                     </div>
                 </nav>
@@ -570,6 +577,27 @@
 
                 <main class="dashboard-content">
                     <div class="content-container">
+
+                    <!-- Dynamic Upgrade/Status Banner -->
+                    <div v-if="tier === 'starter'" class="upgrade-banner">
+                        <div style="display:flex;align-items:center;gap:15px;">
+                            <div style="font-size:1.8rem;">💎</div>
+                            <div>
+                                <h3>Passez à la vitesse supérieure</h3>
+                                <p>Le plan STARTER est limité à {{ tierLimits.event_count }} événement. Débloquez les plans de salle et l'équipe avec le plan PRO.</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-white" @click="showProUpgrade = true">VOIR LES PLANS</button>
+                    </div>
+
+                    <!-- Pending Events Notice -->
+                    <div v-if="myEvents.some(e => e.status === 'pending_approval')" class="section" style="background:#fff3e0;border-color:#e65100;margin-bottom:25px;padding:15px;display:flex;align-items:center;gap:15px;">
+                        <v-icon color="#e65100">mdi-clock-alert</v-icon>
+                        <div style="flex:1;">
+                            <div style="font-weight:800;color:#e65100;">Événements en attente d'approbation</div>
+                            <div style="font-size:0.85rem;">Certains de vos événements sont en cours de vérification par notre équipe. Ils seront publiés sous 24h.</div>
+                        </div>
+                    </div>
                     
                     <!-- Dashboard -->
                     <template v-if="currentPage === 'dashboard'">
@@ -1543,47 +1571,9 @@
                        </div>
                     </template>
 
-                    <!-- Payouts Detail -->
-                    <template v-if="currentPage === 'payouts'">
-                       <div class="stats-grid">
-                           <div class="stat-card" style="background:var(--accent-mint);"><div class="stat-label">Disponible</div><div class="stat-value">{{ formatCurrency(availableBalance) }}</div></div>
-                           <div class="stat-card"><div class="stat-label">En attente</div><div class="stat-value">{{ formatCurrency(pendingBalance) }}</div></div>
-                           <div class="stat-card"><div class="stat-label">Déjà versé</div><div class="stat-value">{{ formatCurrency(paidOut) }}</div></div>
-                       </div>
-                       <div class="section" style="margin-top:25px;">
-                           <div class="section-header"><div class="section-title">Demander un virement</div></div>
-                           <div style="padding:20px;display:flex;gap:20px;align-items:flex-end;">
-                               <div style="flex:1;">
-                                   <label class="form-label">Montant à retirer (Max: {{ formatCurrency(availableBalance) }})</label>
-                                   <input type="number" class="form-input" :max="availableBalance" value="1000000">
-                               </div>
-                               <div style="flex:1;">
-                                   <label class="form-label">Méthode</label>
-                                   <select class="form-input"><option>Virement Bancaire (BNI)</option><option>Mobile Money (MVola)</option></select>
-                               </div>
-                               <button class="btn btn-primary" style="padding:14px 30px;" @click="alert('Demande de virement envoyée !')">Confirmer le retrait</button>
-                           </div>
-                       </div>
-                       <div class="section">
-                           <div class="section-header"><div class="section-title">Historique des versements</div></div>
-                           <div class="table-container">
-                               <table>
-                                   <thead><tr><th>ID</th><th>Date</th><th>Montant</th><th>Méthode</th><th>Statut</th></tr></thead>
-                                   <tbody>
-                                       <tr v-for="p in myPayouts" :key="p.id">
-                                           <td style="font-family:monospace;">{{ p.id }}</td>
-                                           <td>{{ p.date }}</td>
-                                           <td style="font-weight:800;">{{ formatCurrency(p.amount) }}</td>
-                                           <td>{{ p.method }}</td>
-                                           <td><span class="status-badge" :class="'status-' + p.status">{{ p.statusLabel }}</span></td>
-                                       </tr>
-                                   </tbody>
-                               </table>
-                           </div>
-                       </div>
-                    </template>
-
-                    <!-- Integrations -->
+                    <!-- Payouts Detail (Duplicate Removed) -->
+                     
+                     <!-- Integrations -->
                     <template v-if="currentPage === 'widget-embed'">
                        <div class="section">
                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-code-tags</v-icon> Intégration Widget</div></div>
@@ -1663,25 +1653,131 @@
                         </div>
                     </template>
 
-                    <!-- Help -->
+                    <!-- Webhooks -->
+                    <template v-if="currentPage === 'webhooks'">
+                        <div class="section">
+                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-webhook</v-icon> Webhooks</div></div>
+                            <div style="padding:40px; text-align:center;">
+                                <v-icon size="80" color="#eee">mdi-code-braces</v-icon>
+                                <p class="mt-4">Automatisez vos process en recevant les notifications de vente sur vos serveurs.</p>
+                                <button class="btn btn-primary mt-6" @click="showInviteModal = true">CRÉER UN WEBHOOK</button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Ticket Designer -->
+                    <template v-if="currentPage === 'ticket-designer'">
+                        <div class="section">
+                            <div class="section-header"><div class="section-title"><v-icon size="small">mdi-ticket-outline</v-icon> Ticket Designer</div></div>
+                            <div style="padding:40px; display:flex; gap:40px;">
+                                <div style="flex:1; border:4px solid var(--border-dark); padding:30px; background:white; box-shadow:8px 8px 0 var(--border-dark);">
+                                    <div style="font-family:'Syne'; font-weight:800; border-bottom:2px solid #eee; padding-bottom:15px; margin-bottom:15px;">TICKETMADA PREVIEW</div>
+                                    <div style="height:200px; background:#f5f5f5; border:2px dashed #ccc; display:flex; align-items:center; justify-content:center;">IMAGE ÉVÉNEMENT</div>
+                                    <div style="margin-top:20px; font-weight:800;">DAMA LIVE — Tournée 2026</div>
+                                    <div style="margin-top:5px; font-size:0.8rem; opacity:0.6;">Stade Barea, Antananarivo</div>
+                                    <div style="margin-top:30px; display:flex; justify-content:space-between; align-items:flex-end;">
+                                        <div><div style="font-size:0.6rem; opacity:0.6;">NOM DU PARTICIPANT</div><div style="font-weight:700;">ANDRY RAKOTOMANANA</div></div>
+                                        <div style="width:60px; height:60px; background:black;"></div>
+                                    </div>
+                                </div>
+                                <div style="width:300px;">
+                                    <div class="form-group"><label>Couleur du texte</label><input type="color" class="form-input" style="height:45px;"></div>
+                                    <div class="form-group"><label>Logo de l'événement</label><button class="btn btn-secondary w-full">UPLOAD LOGO</button></div>
+                                    <div class="form-group"><label>Afficher le code QR</label><v-switch color="primary" :input-value="true"></v-switch></div>
+                                    <button class="btn btn-primary w-full mt-4">SAUVEGARDER LE TEMPLATE</button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Help & Support -->
                     <template v-if="currentPage === 'help'">
-                       <div class="section" style="max-width:800px;margin:0 auto;">
-                           <div class="section-header"><div class="section-title">Centre d'aide</div></div>
-                           <div style="padding:20px;">
-                               <div v-for="h in [{q:'Comment créer un plan de salle ?',a:'Utilisez l\'onglet Plans de salle dans le menu de gauche...'},{q:'Quels sont les frais de service ?',a:'TicketMada prélève une commission de 5% sur chaque billet vendu.'}]" :key="h.q" style="margin-bottom:20px;">
-                                   <h4 style="font-family:'Syne';font-weight:800;margin-bottom:8px;">{{ h.q }}</h4>
-                                   <p style="font-size:0.9rem;color:#666;">{{ h.a }}</p>
-                               </div>
-                               <div style="margin-top:40px;background:var(--bg-cream);padding:20px;border:2px solid #1a1a1a;display:flex;align-items:center;gap:20px;">
-                                   <v-icon size="40">mdi-headset</v-icon>
-                                   <div>
-                                       <div style="font-weight:800;">Besoin d'assistance directe ?</div>
-                                       <div style="font-size:0.85rem;">Contactez-nous sur WhatsApp au +261 34 00 000 00</div>
-                                   </div>
-                                   <button class="btn btn-primary" style="margin-left:auto;">Chat Direct</button>
-                               </div>
-                           </div>
-                       </div>
+                        <div class="stats-grid">
+                            <div class="stat-card" style="background:var(--accent-mint);color:white;">
+                                <div class="stat-label" style="color:rgba(255,255,255,0.8);">SLA de réponse</div>
+                                <div class="stat-value">< 1h</div>
+                                <div style="font-size:0.7rem;">7j/7 - 24h/24</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Tickets ouverts</div>
+                                <div class="stat-value">{{ supportTickets.filter(t => t.status !== 'closed').length }}</div>
+                                <div style="font-size:0.7rem;color:#999;">Sur {{ supportTickets.length }} total</div>
+                            </div>
+                        </div>
+
+                        <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:20px;">
+                            <div class="bento-card">
+                                <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+                                    <div class="card-title"><v-icon>mdi-help-box</v-icon> Vos Tickets</div>
+                                    <button class="btn btn-primary btn-sm" @click="currentPage = 'support-new'">NOUVEAU TICKET</button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Sujet</th>
+                                                <th>Priorité</th>
+                                                <th>Statut</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="t in supportTickets" :key="t.id">
+                                                <td><div style="font-weight:700;">{{ t.subject }}</div><div style="font-size:0.75rem;color:#999;">{{ t.category }}</div></td>
+                                                <td><span class="badge" :style="{ background: t.priority === 'urgent' ? 'var(--accent-red)' : '#eee' }">{{ t.priority }}</span></td>
+                                                <td><span class="status-badge" :class="'status-' + t.status">{{ t.status }}</span></td>
+                                                <td><button class="btn btn-secondary btn-sm" @click="openTicket(t)">VOIR</button></td>
+                                            </tr>
+                                            <tr v-if="!supportTickets.length"><td colspan="4" style="text-align:center;padding:40px;color:#999;">Vous n'avez aucun ticket</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="bento-card">
+                                <div class="card-header">
+                                    <div class="card-title"><v-icon>mdi-chat</v-icon> Conversations</div>
+                                </div>
+                                <div class="card-content" style="padding:0;">
+                                    <div v-for="c in conversations" :key="c.id" 
+                                         @click="openConversation(c)"
+                                         style="padding:15px;border-bottom:1px solid #eee;cursor:pointer;display:flex;gap:12px;"
+                                         onmouseover="this.style.background='#f9f9f9'" onmouseout="this.style.background='white'">
+                                        <div style="width:40px;height:40px;background:#1a1a1a;color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-family:'Syne';flex-shrink:0;">
+                                            S
+                                        </div>
+                                        <div style="flex:1;min-width:0;">
+                                            <div style="display:flex;justify-content:space-between;">
+                                                <div style="font-weight:800;font-size:0.9rem;">SUPPORT TICKETMADA</div>
+                                                <div style="font-size:0.7rem;color:#999;">{{ c.last_message_at }}</div>
+                                            </div>
+                                            <div style="font-size:0.8rem;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ c.last_message }}</div>
+                                        </div>
+                                        <div v-if="c.unread_count > 0" style="width:20px;height:20px;background:var(--accent-coral);color:white;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:0.65rem;font-weight:900;">{{ c.unread_count }}</div>
+                                    </div>
+                                    <div v-if="!conversations.length" style="padding:40px;text-align:center;color:#999;">Aucune conversation</div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- New Ticket -->
+                    <template v-if="currentPage === 'support-new'">
+                        <div class="section" style="max-width:600px;margin:0 auto;">
+                            <div class="section-header"><div class="section-title">Ouvrir un nouveau ticket</div></div>
+                            <div style="padding:20px;">
+                                <div class="form-group"><label class="form-label">Sujet</label><input type="text" class="form-input" v-model="newTicket.subject" placeholder="Ex: Problème avec les remboursements"></div>
+                                <div class="form-row">
+                                    <div class="form-group"><label class="form-label">Catégorie</label><select class="form-input" v-model="newTicket.category"><option value="technical">Technique</option><option value="finance">Finance</option><option value="general">Général</option></select></div>
+                                    <div class="form-group"><label class="form-label">Priorité</label><select class="form-input" v-model="newTicket.priority"><option value="low">Basse</option><option value="medium">Moyenne</option><option value="high">Haute</option><option value="urgent">Urgent</option></select></div>
+                                </div>
+                                <div class="form-group"><label class="form-label">Message</label><textarea class="form-input" rows="5" v-model="newTicket.content"></textarea></div>
+                                <div style="display:flex;gap:12px;margin-top:20px;">
+                                    <button class="btn btn-secondary" @click="currentPage = 'help'">ANNULER</button>
+                                    <button class="btn btn-primary" @click="createSupportTicket(); currentPage = 'help'">ENVOYER LE TICKET</button>
+                                </div>
+                            </div>
+                        </div>
                     </template>
                                         </tr>
                                     </tbody>
@@ -1896,6 +1992,58 @@
             </div>
         </v-dialog>
 
+        <!-- Support Ticket Modal -->
+        <v-dialog v-model="showTicketModal" max-width="700">
+            <div class="modal-card">
+                <div class="modal-header"><h3>Ticket: {{ activeTicket?.ticket?.subject }}</h3><button class="btn-icon" @click="showTicketModal = false"><v-icon>mdi-close</v-icon></button></div>
+                <div class="modal-body" v-if="activeTicket">
+                    <div style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f9f9f9; border: 2px solid var(--border-dark); margin-bottom: 20px;">
+                        <div v-for="m in activeTicket.messages" :key="m.id" style="margin-bottom: 20px;">
+                            <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#999; margin-bottom:5px;">
+                                <span>{{ m.sender_role === 'superadmin' ? 'SUPPORT TICKETMADA' : 'VOUS' }}</span>
+                                <span>{{ m.created_at }}</span>
+                            </div>
+                            <div :style="{ background: m.sender_role === 'superadmin' ? '#e3f2fd' : 'white', padding:'12px', border: '2px solid var(--border-dark)', fontWeight: 600 }">
+                                {{ m.content }}
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="activeTicket.ticket.status !== 'closed'">
+                        <textarea class="form-input" v-model="ticketReplyContent" placeholder="Votre réponse..." rows="3"></textarea>
+                        <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+                            <button class="btn btn-primary" @click="replyToTicket">RÉPONDRE</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </v-dialog>
+
+        <!-- Chat Modal -->
+        <v-dialog v-model="showChatModal" max-width="500">
+            <div class="modal-card">
+                <div class="modal-header"><h3>Chat Support</h3><button class="btn-icon" @click="showChatModal = false"><v-icon>mdi-close</v-icon></button></div>
+                <div class="modal-body" v-if="activeConversation">
+                    <div style="height: 400px; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px;">
+                        <div v-for="m in activeConversation.messages" :key="m.id" :style="{ alignSelf: m.sender_role === 'superadmin' ? 'flex-start' : 'flex-end', maxWidth: '85%' }">
+                            <div :style="{ 
+                                background: m.sender_role === 'superadmin' ? 'white' : 'var(--accent-coral)', 
+                                color: m.sender_role === 'superadmin' ? 'black' : 'white', 
+                                padding: '10px 15px', 
+                                border: '2px solid var(--border-dark)', 
+                                boxShadow: '3px 3px 0 var(--border-dark)' 
+                            }">
+                                {{ m.content }}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:20px;">
+                        <input type="text" class="form-input" v-model="chatContent" placeholder="Votre message..." @keyup.enter="sendChatMessage">
+                        <button class="btn btn-primary" @click="sendChatMessage">ENVOYER</button>
+                    </div>
+                </div>
+            </div>
+        </v-dialog>
+
         </v-app>
     </div>
     
@@ -1999,6 +2147,28 @@
                     seatmapCurvedRows: false,
                     seatmapCurrentTemplate: null,
                     seatmapGenerated: null,
+
+                    // Support & Messaging
+                    supportTickets: [],
+                    conversations: [],
+                    unreadNotificationsCount: 0,
+                    notifications: [],
+                    activeTicket: null,
+                    showTicketModal: false,
+                    showChatModal: false,
+                    newTicket: { subject: '', category: 'technical', priority: 'medium', content: '' },
+                    ticketReplyContent: '',
+                    activeConversation: null,
+                    chatContent: '',
+                    
+                    // Tier & limits
+                    tier: 'starter',
+                    tierLimits: {
+                        event_count: 1,
+                        team_members: 0,
+                        features: []
+                    },
+
                     charts: { sales: null, tickets: null }
                 };
             },
@@ -2238,7 +2408,14 @@
                 }
             },
             methods: {
-                formatCurrency(v) { if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M Ar'; if (v >= 1000) return (v / 1000).toFixed(0) + 'K Ar'; return v.toLocaleString() + ' Ar'; },
+                formatCurrency(v) { 
+                    if (v === null || v === undefined) return '0 Ar'; 
+                    const val = Number(v);
+                    if (isNaN(val)) return '0 Ar';
+                    if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M Ar'; 
+                    if (val >= 1000) return (val / 1000).toFixed(0) + 'K Ar'; 
+                    return val.toLocaleString() + ' Ar'; 
+                },
                 formatMoney(v) { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MGA', maximumFractionDigits: 0 }).format(v).replace('MGA', 'Ar'); },
                 setPeriodType(p) { this.periodType = p; this.currentPeriodOffset = 0; this.loadDashboardData(); },
                 navigatePeriod(dir) { this.currentPeriodOffset += dir; this.loadDashboardData(); },
@@ -2449,6 +2626,8 @@
                             this.myTickets = (data.myTickets || []).map(t => ({ id: t.id_code || 'TKT-' + t.id, event: t.event_name, buyer: t.buyer_name || 'Client', type: t.type, price: t.price, status: t.status === 'scanned' ? 'completed' : t.status, statusLabel: tLabels[t.status] || t.status, date: new Date(t.created_at).toLocaleDateString('fr-FR') }));
                             this.myPayouts = (data.myPayouts || []).map(p => ({ id: p.id_code || 'PAY-' + p.id, amount: p.amount, commission: p.commission, net: p.net, method: p.method, status: p.status, statusLabel: p.status === 'completed' ? 'Effectué' : 'En cours', date: new Date(p.created_at).toLocaleDateString('fr-FR') }));
                             
+                            this.fetchTierLimits();
+                            this.fetchSupportData();
                             this.loadDashboardData();
 
                             // Load additional mock data for specialized pages
@@ -2688,6 +2867,87 @@
                         lastActivity: 'Il y a ' + (Math.floor(Math.random() * 30) + 1) + ' min'
                     }));
                 },
+                // ══════════════════════════════════
+                // SUPPORT, MESSAGING & TIER METHODS
+                // ══════════════════════════════════
+                async fetchSupportData() {
+                    if (this.isSuperAdminViewing) return;
+                    try {
+                        const tickets = await window.api.get('/support-tickets');
+                        this.supportTickets = (tickets && Array.isArray(tickets.tickets)) ? tickets.tickets : [];
+                        
+                        const convs = await window.api.get('/messaging');
+                        this.conversations = (convs && Array.isArray(convs.conversations)) ? convs.conversations : [];
+                        
+                        const unread = await window.api.get('/notifications/unread-count');
+                        this.unreadNotificationsCount = unread.unread_count || 0;
+                        
+                        const notifs = await window.api.get('/notifications');
+                        this.notifications = Array.isArray(notifs) ? notifs : [];
+                    } catch (e) {
+                         console.error('Support fetch error:', e);
+                    }
+                },
+                async openTicket(ticket) {
+                    try {
+                        const res = await window.api.get(`/support-tickets/${ticket.id}`);
+                        this.activeTicket = res;
+                        this.showTicketModal = true;
+                    } catch (e) { alert('Erreur chargement ticket'); }
+                },
+                async createSupportTicket() {
+                    if (!this.newTicket.subject || !this.newTicket.content) return;
+                    try {
+                        await window.api.post('/support-tickets', this.newTicket);
+                        this.newTicket = { subject: '', category: 'technical', priority: 'medium', content: '' };
+                        this.fetchSupportData();
+                        alert('Ticket créé avec succès ! Nous vous répondrons bientôt.');
+                    } catch (e) { alert('Erreur création ticket'); }
+                },
+                async replyToTicket() {
+                    if (!this.ticketReplyContent.trim()) return;
+                    try {
+                        await window.api.post(`/support-tickets/${this.activeTicket.ticket.id}/reply`, { content: this.ticketReplyContent });
+                        this.ticketReplyContent = '';
+                        this.openTicket(this.activeTicket.ticket);
+                        this.fetchSupportData();
+                    } catch (e) { alert('Erreur envoi réponse'); }
+                },
+                async openConversation(conv) {
+                    try {
+                        const res = await window.api.get(`/messaging/${conv.id}`);
+                        this.activeConversation = res;
+                        this.showChatModal = true;
+                    } catch (e) { alert('Erreur chargement conversation'); }
+                },
+                async sendChatMessage() {
+                    if (!this.chatContent.trim()) return;
+                    try {
+                        await window.api.post('/messaging', { conversation_id: this.activeConversation.conversation.id, content: this.chatContent });
+                        this.chatContent = '';
+                        this.openConversation(this.activeConversation.conversation);
+                        this.fetchSupportData();
+                    } catch (e) { alert('Erreur envoi message'); }
+                },
+                async markNotificationAsRead(id) {
+                    try {
+                        await window.api.put(`/notifications/${id}/read`);
+                        this.fetchSupportData();
+                    } catch (e) {}
+                },
+                async fetchTierLimits() {
+                    if (this.isSuperAdminViewing) {
+                        this.tier = (this.viewingOrgLicense || 'starter').toLowerCase();
+                        return;
+                    }
+                    try {
+                        const res = await window.api.get('/auth/me');
+                        this.tier = (res && res.user && res.user.organizer_license) ? res.user.organizer_license.toLowerCase() : 'starter';
+                        const limits = await window.api.get('/organizer/limits');
+                        this.tierLimits = limits;
+                    } catch (e) {}
+                },
+
                 // Seat map methods
                 loadSeatmapTemplates() {
                     if (!window.SeatmapEngine) return;

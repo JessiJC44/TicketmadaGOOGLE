@@ -498,6 +498,7 @@
                     <template v-if="currentTab === 'dashboard'">
                         <div class="quick-actions">
                             <div class="action-card" @click="currentTab = 'applications'"><v-icon color="var(--accent-coral)">mdi-account-clock</v-icon><span>{{ uiLabels.approvals }}</span></div>
+                            <div class="action-card" @click="currentTab = 'support'"><v-icon color="var(--accent-red)">mdi-help-box</v-icon><span>Support</span><span class="badge" v-if="unreadNotificationsCount > 0" style="background:var(--accent-red);color:white;border:none;">{{ unreadNotificationsCount }}</span></div>
                             <div class="action-card" @click="currentTab = 'organizers'"><v-icon color="var(--accent-blue)">mdi-account-tie</v-icon><span>{{ uiLabels.activeOrgs }}</span></div>
                             <div class="action-card" @click="currentTab = 'broadcast'"><v-icon color="var(--accent-yellow)">mdi-bullhorn</v-icon><span>Broadcast</span></div>
                             <div class="action-card" @click="currentTab = 'finance'"><v-icon color="var(--accent-mint)">mdi-cash-check</v-icon><span>{{ uiLabels.payouts }}</span></div>
@@ -583,6 +584,75 @@
                                             </tr>
                                         </tbody>
                                     </table>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- TAB: SUPPORT & MESSAGING -->
+                    <template v-if="currentTab === 'support'">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <!-- Tickets Section -->
+                            <div class="bento-card">
+                                <div class="card-header">
+                                    <div class="card-title"><v-icon>mdi-help-box</v-icon> Tickets de Support</div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Sujet</th>
+                                                <th>Organisateur</th>
+                                                <th>Priorité</th>
+                                                <th>Statut</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="t in supportTickets" :key="t.id">
+                                                <td><div style="font-weight: 700;">{{ t.subject }}</div><div style="font-size: 0.75rem; color: #999;">{{ t.category }}</div></td>
+                                                <td>{{ t.organizer_name }}</td>
+                                                <td>
+                                                    <span class="badge" :style="{ background: t.priority === 'urgent' ? 'var(--accent-red)' : (t.priority === 'high' ? 'var(--accent-coral)' : '#eee'), color: t.priority === 'urgent' || t.priority === 'high' ? 'white' : 'black', border: 'none' }">
+                                                        {{ t.priority }}
+                                                    </span>
+                                                </td>
+                                                <td><span class="status-pill" :class="t.status">{{ t.status }}</span></td>
+                                                <td><button class="btn-brutal btn-sm" @click="openTicket(t)">VOIR</button></td>
+                                            </tr>
+                                            <tr v-if="!supportTickets.length"><td colspan="5" style="text-align: center; padding: 40px; color: #999;">Aucun ticket ouvert</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Conversations Section -->
+                            <div class="bento-card">
+                                <div class="card-header">
+                                    <div class="card-title"><v-icon>mdi-chat</v-icon> Messages Directs</div>
+                                </div>
+                                <div class="card-content" style="padding: 0;">
+                                    <div v-for="c in conversations" :key="c.id" 
+                                         @click="openConversation(c)"
+                                         style="padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; gap: 12px; transition: 0.2s;"
+                                         onmouseover="this.style.background='#f9f9f9'" onmouseout="this.style.background='white'">
+                                        <div style="width: 40px; height: 40px; background: #eee; border: 2px solid var(--border-dark); display: flex; align-items: center; justify-content: center; font-weight: 800; font-family: 'Syne'; flex-shrink: 0;">
+                                            {{ (c.other_participant.name || 'U').charAt(0) }}
+                                        </div>
+                                        <div style="flex: 1; min-width: 0;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                <div style="font-weight: 800; font-size: 0.9rem;">{{ c.other_participant.name }}</div>
+                                                <div style="font-size: 0.7rem; color: #999;">{{ formatDateShort(c.last_message_at) }}</div>
+                                            </div>
+                                            <div style="font-size: 0.8rem; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                {{ c.last_message || 'Pas de message' }}
+                                            </div>
+                                        </div>
+                                        <div v-if="c.unread_count > 0" style="width: 20px; height: 20px; background: var(--accent-coral); color: white; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.65rem; font-weight: 900;">
+                                            {{ c.unread_count }}
+                                        </div>
+                                    </div>
+                                    <div v-if="!conversations.length" style="padding: 40px; text-align: center; color: #999;">Aucune conversation</div>
                                 </div>
                             </div>
                         </div>
@@ -795,6 +865,12 @@
                                             <td>{{ formatDate(e.created_at) }}</td>
                                             <td>
                                                 <div style="display: flex; gap: 5px;">
+                                                    <button v-if="e.status === 'pending_approval' || e.status === 'pending' || e.requires_approval" class="btn-brutal sm mint" @click="handleApproveEvent(e)">
+                                                        {{ uiLabels.approve }}
+                                                    </button>
+                                                    <button v-if="e.status === 'pending_approval' || e.status === 'pending' || e.requires_approval" class="btn-brutal sm" style="background: #ffebee; color: #c62828;" @click="handleRejectEvent(e)">
+                                                        {{ uiLabels.reject }}
+                                                    </button>
                                                     <button v-if="e.status === 'active'" class="btn-brutal sm" style="background: #ffebee; color: #c62828;" @click="suspendEvent(e)">
                                                         {{ uiLabels.suspend }}
                                                     </button>
@@ -1451,6 +1527,78 @@
                 </div>
             </div>
         </div>
+
+        <!-- TICKET MODAL -->
+        <div class="modal-overlay" v-if="showTicketModal" @click.self="showTicketModal = false">
+            <div class="modal-card" style="max-width: 700px;">
+                <span class="modal-close" @click="showTicketModal = false">&times;</span>
+                <div class="modal-body" v-if="activeTicket">
+                    <h2 style="font-family: 'Syne', sans-serif; font-weight: 800; margin-bottom: 20px;">
+                        Ticket: {{ activeTicket.ticket.subject }}
+                    </h2>
+                    <div style="display:flex; justify-content: space-between; margin-bottom: 20px;">
+                        <span>Organisateur: <strong>{{ activeTicket.ticket.organizer_name }}</strong></span>
+                        <span class="status-pill" :class="activeTicket.ticket.status">{{ activeTicket.ticket.status }}</span>
+                    </div>
+
+                    <div style="max-height: 400px; overflow-y: auto; padding: 10px; border: 2px solid var(--border-dark); background: #f9f9f9; margin-bottom: 20px;">
+                        <div v-for="m in activeTicket.messages" :key="m.id" style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #999; margin-bottom: 4px;">
+                                <span>{{ m.sender_name }} ({{ m.sender_role }})</span>
+                                <span>{{ formatDateTime(m.created_at) }}</span>
+                            </div>
+                            <div :style="{ background: m.sender_role === 'superadmin' ? '#e3f2fd' : 'white', padding: '12px', border: '2px solid' + (m.sender_role === 'superadmin' ? 'var(--accent-blue)' : 'var(--border-dark)'), fontWeight: 600 }">
+                                {{ m.content }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="activeTicket.ticket.status !== 'closed'">
+                        <textarea class="input-brutal" v-model="ticketReplyContent" placeholder="Votre réponse..." style="min-height: 100px; margin-bottom: 10px;"></textarea>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button class="btn-brutal sm" @click="updateTicketStatus('resolved')">RÉSOLU</button>
+                            <button class="btn-brutal sm" style="background:var(--accent-red); color:white;" @click="updateTicketStatus('closed')">FERMER</button>
+                            <button class="btn-brutal sm mint" @click="replyToTicket">RÉPONDRE</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHAT MODAL -->
+        <div class="modal-overlay" v-if="showChatModal" @click.self="showChatModal = false">
+            <div class="modal-card" style="max-width: 500px;">
+                <span class="modal-close" @click="showChatModal = false">&times;</span>
+                <div class="modal-body" v-if="activeConversation">
+                    <h3 style="font-family: 'Syne'; font-weight: 800; margin-bottom: 20px; border-bottom: 2px solid var(--border-dark); padding-bottom: 10px;">
+                        Chat avec {{ activeConversation.conversation.other_participant.name }}
+                    </h3>
+                    
+                    <div style="height: 400px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                        <div v-for="m in activeConversation.messages" :key="m.id" 
+                             :style="{ alignSelf: m.sender_role === 'superadmin' ? 'flex-end' : 'flex-start', maxWidth: '80%' }">
+                            <div style="font-size: 0.65rem; color: #999; margin-bottom: 2px; text-align: right;" v-if="m.sender_role === 'superadmin'">Vous</div>
+                            <div style="font-size: 0.65rem; color: #999; margin-bottom: 2px;" v-else>{{ activeConversation.conversation.other_participant.name }}</div>
+                            <div :style="{ 
+                                background: m.sender_role === 'superadmin' ? 'var(--accent-blue)' : 'white', 
+                                color: m.sender_role === 'superadmin' ? 'white' : 'black',
+                                padding: '10px 15px', 
+                                border: '2px solid var(--border-dark)',
+                                boxShadow: '3px 3px 0 var(--border-dark)',
+                                borderRadius: '4px'
+                            }">
+                                {{ m.content }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" class="input-brutal" v-model="chatContent" placeholder="Message..." @keyup.enter="sendChatMessage" style="flex: 1;">
+                        <button class="btn-brutal sm mint" @click="sendChatMessage">ENVOYER</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         </template>
         <!-- NOTIFICATIONS -->
         <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="4000" class="brutal-snackbar">
@@ -1573,6 +1721,17 @@
                     broadcast: { subject: '', content: '', target: 'all' },
                     sendingBroadcast: false,
                     broadcastLogs: [],
+
+                    // Support & Messaging
+                    supportTickets: [],
+                    conversations: [],
+                    unreadNotificationsCount: 0,
+                    activeTicket: null,
+                    showTicketModal: false,
+                    ticketReplyContent: '',
+                    activeConversation: null,
+                    showChatModal: false,
+                    chatContent: '',
                     
                     showRejectModal: false,
                     rejectReason: '',
@@ -1858,20 +2017,24 @@
             async mounted() {
                 this.checkingAuth = true;
                 
-                // 1. FORCED SESSION RECOVERY (SHARING WITH ORGANIZATEUR)
-                try {
-                    const savedUser = JSON.parse(localStorage.getItem('ticketmada_user') || 'null');
-                    const savedToken = localStorage.getItem('ticketmada_token');
+                // 1. FORCED SESSION RECOVERY (SHARING WITH ORGANIZATEUR) - AGGRESSIVE
+                const performSessionRecovery = () => {
+                    try {
+                        const savedUser = JSON.parse(localStorage.getItem('ticketmada_user') || 'null');
+                        if (savedUser && (savedUser.email === 'sedrayiokoraz@gmail.com' || savedUser.role === 'superadmin')) {
+                                console.log('[SuperAdmin] Session restaurée via LocalStorage');
+                            this.user = savedUser;
+                            this.isLoggedIn = true;
+                            this.checkingAuth = false;
+                            this.fetchData();
+                            return true;
+                        }
+                    } catch (e) { console.error(e); }
+                    return false;
+                };
 
-                    if (savedUser && savedUser.email === 'sedrayiokoraz@gmail.com') {
-                        console.log('[SuperAdmin] Session restaurée via LocalStorage');
-                        this.user = savedUser;
-                        this.isLoggedIn = true;
-                        this.checkingAuth = false;
-                        this.fetchData();
-                        // Pas de return, on laisse Firebase/API confirmer en arrière-plan si besoin
-                    }
-                } catch (e) {}
+                const recovered = performSessionRecovery();
+                window.addEventListener('api-ready', () => { if (!this.isLoggedIn) performSessionRecovery(); });
 
                 // Safety timeout: forced splash screen removal after 3s
                 setTimeout(() => { if (this.checkingAuth) this.checkingAuth = false; }, 3000);
@@ -2072,6 +2235,8 @@
                     } catch (err) {
                         console.error('[SuperAdmin] Dashboard fetch error:', err);
                     }
+
+                    this.fetchSupportData();
                     
                     const resources = [
                         { key: 'organizers', path: '/superadmin/organizers' },
@@ -2292,6 +2457,79 @@
                         alert("Erreur lors de la suppression.");
                     }
                 },
+
+                // ══════════════════════════════════
+                // SUPPORT & MESSAGING METHODS
+                // ══════════════════════════════════
+                async fetchSupportData() {
+                    try {
+                        const tickets = await window.api.get('/support-tickets');
+                        this.supportTickets = (tickets && Array.isArray(tickets.tickets)) ? tickets.tickets : [];
+                        
+                        const convs = await window.api.get('/messaging');
+                        this.conversations = (convs && Array.isArray(convs.conversations)) ? convs.conversations : [];
+                        
+                        const unread = await window.api.get('/notifications/unread-count');
+                        this.unreadNotificationsCount = unread.unread_count || 0;
+                    } catch (e) { console.error('Support fetch error:', e); }
+                },
+                async openTicket(ticket) {
+                    try {
+                        const res = await window.api.get(`/support-tickets/${ticket.id}`);
+                        this.activeTicket = res;
+                        this.showTicketModal = true;
+                    } catch (e) { alert('Erreur chargement ticket'); }
+                },
+                async replyToTicket() {
+                    if (!this.ticketReplyContent.trim()) return;
+                    try {
+                        await window.api.post(`/support-tickets/${this.activeTicket.ticket.id}/reply`, { content: this.ticketReplyContent });
+                        this.ticketReplyContent = '';
+                        this.openTicket(this.activeTicket.ticket);
+                        this.fetchSupportData();
+                    } catch (e) { alert('Erreur envoi réponse'); }
+                },
+                async updateTicketStatus(status) {
+                    try {
+                        await window.api.put(`/support-tickets/${this.activeTicket.ticket.id}/status`, { status });
+                        this.openTicket(this.activeTicket.ticket);
+                        this.fetchSupportData();
+                    } catch (e) { alert('Erreur mise à jour statut'); }
+                },
+                async openConversation(conv) {
+                    try {
+                        const res = await window.api.get(`/messaging/${conv.id}`);
+                        this.activeConversation = res;
+                        this.showChatModal = true;
+                    } catch (e) { alert('Erreur chargement conversation'); }
+                },
+                async sendChatMessage() {
+                    if (!this.chatContent.trim()) return;
+                    try {
+                        await window.api.post('/messaging', { conversation_id: this.activeConversation.conversation.id, content: this.chatContent });
+                        this.chatContent = '';
+                        this.openConversation(this.activeConversation.conversation);
+                        this.fetchSupportData();
+                    } catch (e) { alert('Erreur envoi message'); }
+                },
+                async handleApproveEvent(event) {
+                    if (!confirm(`Approuver l'événement "${event.name}" ?`)) return;
+                    try {
+                        await window.api.post(`/events/${event.id}/approve`);
+                        alert('Événement approuvé !');
+                        this.fetchData();
+                    } catch (e) { alert('Erreur approbation'); }
+                },
+                async handleRejectEvent(event) {
+                    const reason = prompt('Raison du rejet:');
+                    if (!reason) return;
+                    try {
+                        await window.api.post(`/events/${event.id}/reject`, { reason });
+                        alert('Événement rejeté');
+                        this.fetchData();
+                    } catch (e) { alert('Erreur rejet'); }
+                },
+
                 renderGoogleButton() {
                     setTimeout(() => {
                         const container = document.getElementById('superadmin-google-button');
