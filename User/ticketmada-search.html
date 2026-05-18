@@ -301,7 +301,7 @@
         <!-- Results list -->
         <div class="results-list" v-else-if="filteredResults.length">
             <div class="result-card" v-for="ev in filteredResults" :key="ev.id" @click="goToEvent(ev.id)">
-                <img :src="ev.image_url || 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400'" class="result-image" :alt="ev.name">
+                <img :src="ev.image_url || 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400'" class="result-image" :alt="ev.name" @error="handleImageError($event, ev.category)">
                 <div class="result-info">
                     <div class="result-category">{{ ev.category }}</div>
                     <div class="result-title">{{ ev.emoji }} {{ ev.name }} <a v-if="ev.organizer_name" :href="'ticketmada-artist.html?name=' + encodeURIComponent(ev.organizer_name || ev.name.split(' ')[0])" @click.stop style="font-size:0.75rem;color:var(--accent-coral);text-decoration:none;font-family:Syne;font-weight:600;margin-left:8px;">{{ lang === 'fr' ? 'Voir l\'artiste →' : 'View artist →' }}</a></div>
@@ -432,6 +432,23 @@ const app = createApp({
         capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; },
         categoryEmoji(cat) {
             return { concerts: '🎤', festivals: '🎪', sports: '⚽', theatre: '🎭' }[cat] || '🎫';
+        },
+        handleImageError(e, category) {
+            e.target.src = this.getFallbackImage(category);
+        },
+        getFallbackImage(category) {
+            const CATEGORY_IMAGES = {
+                concerts: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800',
+                concert: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800',
+                festival: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
+                festivals: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
+                sports: 'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800',
+                sport: 'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800',
+                theatre: 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=800',
+                humour: 'https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=800',
+                exhibition: 'https://images.unsplash.com/photo-1531058020387-3be344556be6?w=800'
+            };
+            return CATEGORY_IMAGES[category] || 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800';
         },
         getMinPrice(ev) {
             // Estimate from revenue/tickets or use zone defaults

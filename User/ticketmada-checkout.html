@@ -367,7 +367,7 @@
         <div class="summary-panel" v-if="order">
             <div class="summary-card">
                 <div class="summary-header">
-                    <img :src="order.event_image || 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=100'" class="summary-poster">
+                    <img :src="order.event_image || 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=100'" class="summary-poster" @error="handleImageError($event)">
                     <div class="summary-event-info">
                         <h3>{{ order.event_name }}</h3>
                         <p><v-icon size="x-small">mdi-calendar</v-icon> {{ formatDate(order.event_date) }} · <v-icon size="x-small">mdi-map-marker</v-icon> {{ order.event_venue }}</p>
@@ -551,6 +551,9 @@ const app = createApp({
             if (!d) return '—';
             const dt = new Date(d);
             return dt.toLocaleDateString(this.lang === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'short', day: 'numeric', month: 'long' });
+        },
+        handleImageError(event) {
+            event.target.src = 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=100';
         },
         startTimer() {
             this.timerInterval = setInterval(() => {

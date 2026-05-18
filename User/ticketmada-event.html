@@ -412,7 +412,7 @@
 
     <!-- Event Hero -->
     <div class="event-hero" v-if="!loading">
-        <img :src="event.image_url || 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=1200'" class="hero-banner" alt="">
+        <img :src="event.image_url || 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=1200'" class="hero-banner" alt="" @error="handleImageError($event, event.category)">
         <div class="hero-content-overlay">
             <div class="hero-event-info">
                 <div class="hero-text">
@@ -737,7 +737,7 @@
                    onmouseover="this.style.transform='translate(-2px, -2px)'; this.style.boxShadow='8px 8px 0 #1a1a1a'"
                    onmouseout="this.style.transform='none'; this.style.boxShadow='6px 6px 0 #1a1a1a'">
                     <div class="related-img" style="height: 160px; overflow: hidden; position: relative; background: #eee;">
-                        <img v-if="rel.image_url" :src="rel.image_url" style="width: 100%; height: 100%; object-fit: cover;">
+                        <img v-if="rel.image_url" :src="rel.image_url" style="width: 100%; height: 100%; object-fit: cover;" @error="handleImageError($event, rel.category)">
                         <div style="position: absolute; top: 10px; right: 10px; background: white; border: 2px solid #1a1a1a; padding: 4px 8px; font-weight: 800; font-size: 0.7rem; font-family: 'Syne';" v-if="rel.hot">🔥 POPULAIRE</div>
                     </div>
                     <div style="padding: 15px;">
@@ -890,6 +890,23 @@ const app = createApp({
         }
     },
     methods: {
+        handleImageError(e, category) {
+            e.target.src = this.getFallbackImage(category);
+        },
+        getFallbackImage(category) {
+            const CATEGORY_IMAGES = {
+                concerts: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800',
+                concert: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800',
+                festival: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
+                festivals: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
+                sports: 'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800',
+                sport: 'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800',
+                theatre: 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=800',
+                humour: 'https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=800',
+                exhibition: 'https://images.unsplash.com/photo-1531058020387-3be344556be6?w=800'
+            };
+            return CATEGORY_IMAGES[category] || 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800';
+        },
         toggleLang() {
             this.lang = this.lang === 'fr' ? 'en' : 'fr';
             localStorage.setItem('ticketmada-lang', this.lang);
