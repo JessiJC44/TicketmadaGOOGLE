@@ -2445,15 +2445,17 @@ const MIME_TYPES = {
 };
 
 function serveStatic(req, res) {
-    let urlPath = req.url.split('?')[0];
+    const url = new URL(req.url, 'http://localhost');
+    const urlPath = url.pathname;
+
     if (urlPath === '/' || urlPath === '') {
         res.writeHead(302, { 'Location': '/User/ticketmada-landing.html' });
         res.end();
         return true;
     }
     
-    // Normalize path to prevent traversal
-    const safePath = path.normalize(urlPath).replace(/^(\.\.[\/\\])+/, '');
+    // Normalize and remove leading slash for joining
+    const safePath = path.normalize(urlPath).replace(/^[\\\/]+/, '').replace(/^(\.\.[\/\\])+/, '');
     
     // Potential search paths
     const searchPaths = [
@@ -2464,12 +2466,12 @@ function serveStatic(req, res) {
     ];
 
     for (const filePath of searchPaths) {
-        // Extra check for security
-        if (!filePath.startsWith(PROJECT_ROOT)) continue;
-        
         if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-            const ext = path.extname(filePath);
-            res.writeHead(200, { 'Content-Type': MIME_TYPES[ext] || 'application/octet-stream' });
+            const ext = path.extname(filePath).toLowerCase();
+            res.writeHead(200, {
+                'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
+                'Cache-Control': 'public, max-age=3600'
+            });
             fs.createReadStream(filePath).pipe(res);
             return true;
         }
