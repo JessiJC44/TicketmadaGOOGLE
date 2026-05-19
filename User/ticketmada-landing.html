@@ -459,7 +459,7 @@
                             <p style="font-family:'Syne';font-weight:700;margin-top:15px;">Chargement des événements...</p>
                         </div>
                         <div class="event-card brutal-card" v-for="(event, index) in featuredEvents" :key="index">
-                            <img :src="event.image || event.image_url" :alt="event.title || event.name" class="event-card-image" @error="handleImageError($event, event.category)">
+                            <img :src="event.image || event.image_url" :alt="event.title || event.name" class="event-card-image" @error="handleImageError($event, event)">
                             <div class="event-card-content">
                                 <span class="event-card-date">{{ event.date || formatDate(event.date_start) }}</span>
                                 <h3 class="event-card-title">{{ event.title || event.name }}</h3>
@@ -516,7 +516,7 @@
                 <div class="events-grid">
                     <div class="event-item brutal-card" v-for="event in paginatedEvents" :key="event.id">
                         <div class="event-image-container">
-                            <img :src="event.image" :alt="event.title" @error="handleImageError($event, event.category)">
+                            <img :src="event.image" :alt="event.title" @error="handleImageError($event, event)">
                             <span class="event-badge" v-if="event.badgeKey">{{ t.badges[event.badgeKey] }}</span>
                             <button class="event-wishlist"><v-icon icon="mdi-heart-outline" size="small"></v-icon></button>
                         </div>
@@ -619,7 +619,7 @@
                 <div id="landing-carousel" style="display: flex; gap: 20px; overflow-x: auto; scroll-behavior: smooth; padding: 10px 10px 30px 0; -ms-overflow-style: none; scrollbar-width: none;">
                     <div v-for="event in events.slice(0, 10)" :key="event.id" class="suggestion-card brutal-card" style="min-width: 300px; flex-shrink: 0; cursor: pointer; background: white; transition: all 0.2s ease;" @click="goToEvent(event.id)" onmouseover="this.style.transform='translate(-3px, -3px)'; this.style.boxShadow='9px 9px 0px #1a1a1a'" onmouseout="this.style.transform='none'; this.style.boxShadow='6px 6px 0px #1a1a1a'">
                         <div class="card-image" :style="{ 'background-image': 'url(' + (event.image || event.image_url) + ')', 'height': '180px', 'background-size': 'cover', 'background-position': 'center', 'position': 'relative', 'border-bottom': '3px solid #1a1a1a' }">
-                            <div style="display:none"><img :src="event.image || event.image_url" @error="$event.target.closest('.card-image').style.backgroundImage = 'url(' + getFallbackImage(event.category) + ')'"></div>
+                            <div style="display:none"><img :src="event.image || event.image_url" @error="$event.target.closest('.card-image').style.backgroundImage = 'url(' + getFallbackImage(event) + ')'"></div>
                             <span v-if="event.badgeKey === 'popular' || event.hot" style="position: absolute; top: 12px; right: 12px; background: var(--accent-coral); color: white; border: 2px solid #1a1a1a; padding: 4px 10px; font-weight: 800; font-size: 0.7rem; font-family: 'Syne';">🔥 POPULAIRE</span>
                         </div>
                         <div style="padding: 20px;">
@@ -850,7 +850,7 @@
                             this.scrollCarousel(1);
                         }
                     }
-                }, 4000);
+                }, 2000);
 
                 // Swipe/Drag support for carousel
                 const carousel = document.getElementById('landing-carousel');
@@ -888,10 +888,32 @@
                 }
             },
             methods: {
-                handleImageError(e, category) {
-                    e.target.src = this.getFallbackImage(category);
+                handleImageError(e, event) {
+                    e.target.src = this.getFallbackImage(event);
                 },
-                getFallbackImage(category) {
+                getFallbackImage(event) {
+                    const category = (event.category || '').toLowerCase();
+                    const title = (event.title || event.name || '').toLowerCase();
+                    
+                    if (title.includes('rally') || title.includes('course') || title.includes('auto')) {
+                        return 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800'; // Sports car/Rally
+                    }
+                    if (title.includes('lemur') || title.includes('lemurien') || title.includes('maki')) {
+                        return 'https://images.unsplash.com/photo-1543324089-69335607cd7c?w=800'; // Lemur
+                    }
+                    if (title.includes('rugby') || title.includes('makis')) {
+                        return 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800'; // Rugby
+                    }
+                    if (title.includes('foot') || title.includes('barea') || title.includes('soccer')) {
+                        return 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800'; // Soccer
+                    }
+                    if (title.includes('basket') || title.includes('analamanga')) {
+                        return 'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800'; // Basketball
+                    }
+                    if (title.includes('danse') || title.includes('zumba') || title.includes('ballet')) {
+                        return 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=800'; // Dance
+                    }
+
                     const CATEGORY_IMAGES = {
                         concerts: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800',
                         concert: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800',

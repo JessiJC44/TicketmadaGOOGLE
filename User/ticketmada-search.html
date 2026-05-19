@@ -301,7 +301,7 @@
         <!-- Results list -->
         <div class="results-list" v-else-if="filteredResults.length">
             <div class="result-card" v-for="ev in filteredResults" :key="ev.id" @click="goToEvent(ev.id)">
-                <img :src="ev.image_url || 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400'" class="result-image" :alt="ev.name" @error="handleImageError($event, ev.category)">
+                <img :src="ev.image_url || 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400'" class="result-image" :alt="ev.name" @error="handleImageError($event, ev)">
                 <div class="result-info">
                     <div class="result-category">{{ ev.category }}</div>
                     <div class="result-title">{{ ev.emoji }} {{ ev.name }} <a v-if="ev.organizer_name" :href="'ticketmada-artist.html?name=' + encodeURIComponent(ev.organizer_name || ev.name.split(' ')[0])" @click.stop style="font-size:0.75rem;color:var(--accent-coral);text-decoration:none;font-family:Syne;font-weight:600;margin-left:8px;">{{ lang === 'fr' ? 'Voir l\'artiste →' : 'View artist →' }}</a></div>
@@ -433,10 +433,29 @@ const app = createApp({
         categoryEmoji(cat) {
             return { concerts: '🎤', festivals: '🎪', sports: '⚽', theatre: '🎭' }[cat] || '🎫';
         },
-        handleImageError(e, category) {
-            e.target.src = this.getFallbackImage(category);
+        handleImageError(e, event) {
+            e.target.src = this.getFallbackImage(event);
         },
-        getFallbackImage(category) {
+        getFallbackImage(event) {
+            const category = (event.category || '').toLowerCase();
+            const title = (event.name || event.title || '').toLowerCase();
+            
+            if (title.includes('rally') || title.includes('course') || title.includes('auto')) {
+                return 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800'; 
+            }
+            if (title.includes('lemur') || title.includes('lemurien') || title.includes('maki')) {
+                return 'https://images.unsplash.com/photo-1543324089-69335607cd7c?w=800';
+            }
+            if (title.includes('rugby') || title.includes('makis')) {
+                return 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800';
+            }
+            if (title.includes('foot') || title.includes('barea') || title.includes('soccer')) {
+                return 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800';
+            }
+            if (title.includes('danse') || title.includes('zumba') || title.includes('ballet')) {
+                return 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=800';
+            }
+
             const CATEGORY_IMAGES = {
                 concerts: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800',
                 concert: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800',
