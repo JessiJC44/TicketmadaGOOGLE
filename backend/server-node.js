@@ -623,6 +623,73 @@ function initDB() {
             FOREIGN KEY (actor_id) REFERENCES users(id)
         );
 
+        -- Fix 1.13: Support, Messaging, Notifications and Daily Stats
+        CREATE TABLE IF NOT EXISTS support_tickets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            subject TEXT NOT NULL,
+            category TEXT DEFAULT 'general',
+            priority TEXT DEFAULT 'normal',
+            status TEXT DEFAULT 'open',
+            created_at DATETIME DEFAULT (datetime('now')),
+            updated_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS support_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ticket_id INTEGER NOT NULL,
+            sender_id INTEGER NOT NULL,
+            content TEXT NOT NULL,
+            is_admin INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (ticket_id) REFERENCES support_tickets(id),
+            FOREIGN KEY (sender_id) REFERENCES users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS conversations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            participant_1 INTEGER NOT NULL,
+            participant_2 INTEGER NOT NULL,
+            last_message TEXT,
+            last_message_at DATETIME,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (participant_1) REFERENCES users(id),
+            FOREIGN KEY (participant_2) REFERENCES users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS conversation_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            conversation_id INTEGER NOT NULL,
+            sender_id INTEGER NOT NULL,
+            content TEXT NOT NULL,
+            read_at DATETIME,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (conversation_id) REFERENCES conversations(id),
+            FOREIGN KEY (sender_id) REFERENCES users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            type TEXT NOT NULL,
+            title TEXT NOT NULL,
+            message TEXT,
+            link TEXT,
+            is_read INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS event_daily_stats (
+            event_id INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            tickets_sold INTEGER DEFAULT 0,
+            sales_total INTEGER DEFAULT 0,
+            PRIMARY KEY (event_id, date),
+            FOREIGN KEY (event_id) REFERENCES events(id)
+        );
+
         -- ═══ NEW TABLES : SETTINGS & STATS ═══
         CREATE TABLE IF NOT EXISTS event_settings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1047,16 +1114,16 @@ function seedDB() {
 
     const insertEvent = db.prepare('INSERT INTO events (id, organizer_id, name, category, description, emoji, date_start, date_end, venue, capacity, tickets_sold, revenue, image_url, badge, status, review_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
     const events = [
-        [1, 6, 'Dama Live - Tournée Nationale 2026', 'concerts', 'Le plus grand concert de l\'année', '🎤', '2026-04-15', null, 'Antananarivo', 15000, 12500, 625000000, 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400', 'popular', 'active', 'published'],
-        [2, 5, 'Festival Donia 2026', 'festivals', 'Le festival incontournable de Nosy Be', '🎉', '2026-05-20', '2026-05-22', 'Nosy Be', 10000, 8500, 1020000000, 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400', 'festival', 'active', 'published'],
-        [3, 9, 'CNaPS vs Fosa Juniors', 'sports', 'Match de la saison', '⚽', '2026-03-28', null, 'Mahamasina', 8000, 5200, 78000000, 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400', 'popular', 'completed', 'published'],
-        [4, 6, 'Erick Manana Unplugged', 'concerts', 'Concert acoustique exceptionnel', '🎸', '2026-04-05', null, 'IFM Analakely', 800, 650, 22750000, 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400', 'soon', 'active', 'published'],
-        [5, 8, 'Madajazzcar 2026', 'festivals', 'Festival de jazz international', '🎷', '2026-10-10', '2026-10-15', 'Antananarivo', 5000, 0, 0, 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=400', 'soon', 'pending', 'pending_review'],
-        [6, 9, 'Course de Côte - Diego', 'sports', 'Compétition automobile', '🏎️', '2026-06-12', null, 'Diego Suarez', 3000, 1200, 30000000, 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=400', null, 'active', 'published'],
-        [7, 6, 'Jaojoby en Concert', 'concerts', 'Le roi du salegy en live', '🎵', '2026-05-18', null, 'Toamasina', 5000, 3800, 152000000, 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400', 'vip', 'active', 'published'],
-        [8, 5, 'Beach Festival Anakao', 'festivals', 'Festival sur la plage', '🏖️', '2026-07-01', '2026-07-03', 'Anakao', 2000, 500, 75000000, 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400', 'festival', 'active', 'published'],
-        [9, 5, 'Donia Beach Party', 'concerts', 'After party sur la plage', '🏖️', '2026-05-23', null, 'Ambatoloaka', 1000, 800, 40000000, null, null, 'active', 'published'],
-        [10, 5, 'Donia Sunset Session', 'concerts', 'Session acoustique au coucher du soleil', '🌅', '2026-05-19', null, 'Hell-Ville', 500, 0, 0, null, null, 'pending', 'pending_review'],
+        [1, 6, 'Dama Live - Tournée Nationale 2026', 'concerts', 'Le plus grand concert de l\'année', '🎤', '2026-04-15', null, 'Antananarivo', 15000, 12500, 625000000, 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800', 'popular', 'active', 'published'],
+        [2, 5, 'Festival Donia 2026', 'festivals', 'Le festival incontournable de Nosy Be', '🎉', '2026-05-20', '2026-05-22', 'Nosy Be', 10000, 8500, 1020000000, 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800', 'festival', 'active', 'published'],
+        [3, 9, 'CNaPS vs Fosa Juniors', 'sports', 'Match de la saison - Football', '⚽', '2026-03-28', null, 'Mahamasina', 8000, 5200, 78000000, 'https://images.unsplash.com/photo-1510279770292-c99933d740a6?w=800', 'popular', 'completed', 'published'],
+        [4, 6, 'Erick Manana Unplugged', 'concerts', 'Concert acoustique exceptionnel', '🎸', '2026-04-05', null, 'IFM Analakely', 800, 650, 22750000, 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800', 'soon', 'active', 'published'],
+        [5, 8, 'Madajazzcar 2026', 'festivals', 'Festival de jazz international', '🎷', '2026-10-10', '2026-10-15', 'Antananarivo', 5000, 0, 0, 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=800', 'soon', 'pending', 'pending_review'],
+        [6, 9, 'Rallye National - Diego', 'sports', 'Compétition automobile de muscle cars', '🏎️', '2026-06-12', null, 'Diego Suarez', 3000, 1200, 30000000, 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=800', null, 'active', 'published'],
+        [7, 6, 'Jaojoby en Concert', 'concerts', 'Le roi du salegy en live', '🎵', '2026-05-18', null, 'Toamasina', 5000, 3800, 152000000, 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800', 'vip', 'active', 'published'],
+        [8, 5, 'Rugby Championship MG', 'sports', 'Le choc des titans du rugby malgache', '🏉', '2026-07-01', '2026-07-03', 'Antananarivo', 2000, 500, 75000000, 'https://images.unsplash.com/photo-1508098662722-c99b43a406bc?w=800', 'popular', 'active', 'published'],
+        [9, 5, 'Donia Beach Party', 'concerts', 'After party sur la plage', '🏖️', '2026-05-23', null, 'Ambatoloaka', 1000, 800, 40000000, 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800', null, 'active', 'published'],
+        [10, 5, 'Donia Sunset Session', 'concerts', 'Session acoustique au coucher du soleil', '🌅', '2026-05-19', null, 'Hell-Ville', 500, 0, 0, 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800', null, 'pending', 'pending_review'],
     ];
     const insertManyE = db.transaction((items) => { for (const e of items) insertEvent.run(...e); });
     insertManyE(events);
@@ -2437,27 +2504,232 @@ async function handleActivity(req, res, parts) {
     return sendJSON(res, { activities });
 }
 
+// ══════════════════════════════════════════════════════════════════
+// SUPPORT TICKETS HANDLER
+// ══════════════════════════════════════════════════════════════════
+async function handleSupportTickets(req, res, parts) {
+    const user = requireAuth(req);
+    if (!user) return sendError(res, 'Authentification requise', 401);
+    const id = parts[2];
+    const action = parts[3]; // 'reply', 'status'
+
+    // GET /api/support-tickets — list tickets
+    if (!id && req.method === 'GET') {
+        let tickets;
+        if (user.role === 'superadmin') {
+            tickets = db.prepare(`
+                SELECT st.*, u.name as user_name, u.email as user_email,
+                    (SELECT COUNT(*) FROM support_messages WHERE ticket_id = st.id) as message_count
+                FROM support_tickets st
+                LEFT JOIN users u ON u.id = st.user_id
+                ORDER BY st.updated_at DESC
+            `).all();
+        } else {
+            tickets = db.prepare(`
+                SELECT st.*,
+                    (SELECT COUNT(*) FROM support_messages WHERE ticket_id = st.id) as message_count
+                FROM support_tickets st
+                WHERE st.user_id = ?
+                ORDER BY st.updated_at DESC
+            `).all(user.id);
+        }
+        return sendJSON(res, { tickets });
+    }
+
+    // POST /api/support-tickets — create ticket
+    if (!id && req.method === 'POST') {
+        const body = await parseBody(req);
+        if (!body.subject || !body.content) return sendError(res, 'Sujet et message requis');
+        const result = db.prepare(`
+            INSERT INTO support_tickets (user_id, subject, category, priority)
+            VALUES (?, ?, ?, ?)
+        `).run(user.id, body.subject, body.category || 'general', body.priority || 'normal');
+        const ticketId = result.lastInsertRowid;
+        db.prepare(`
+            INSERT INTO support_messages (ticket_id, sender_id, content, is_admin)
+            VALUES (?, ?, ?, 0)
+        `).run(ticketId, user.id, body.content);
+        logActivity('support_ticket_created', user.id, user.name, 'support', ticketId, body.subject, 'Nouveau ticket de support');
+        return sendJSON(res, { success: true, id: ticketId }, 201);
+    }
+
+    // GET /api/support-tickets/:id — get ticket with messages
+    if (id && !action && req.method === 'GET') {
+        const ticket = db.prepare("SELECT st.*, u.name as user_name, u.email as user_email FROM support_tickets st LEFT JOIN users u ON u.id = st.user_id WHERE st.id = ?").get(id);
+        if (!ticket) return sendError(res, 'Ticket non trouvé', 404);
+        if (user.role !== 'superadmin' && ticket.user_id !== user.id) return sendError(res, 'Accès refusé', 403);
+        const messages = db.prepare(`
+            SELECT sm.*, u.name as sender_name FROM support_messages sm
+            LEFT JOIN users u ON u.id = sm.sender_id
+            WHERE sm.ticket_id = ? ORDER BY sm.created_at ASC
+        `).all(id);
+        return sendJSON(res, { ticket, messages });
+    }
+
+    // POST /api/support-tickets/:id/reply — reply to ticket
+    if (id && action === 'reply' && req.method === 'POST') {
+        const body = await parseBody(req);
+        if (!body.content) return sendError(res, 'Message requis');
+        const ticket = db.prepare("SELECT * FROM support_tickets WHERE id = ?").get(id);
+        if (!ticket) return sendError(res, 'Ticket non trouvé', 404);
+        if (user.role !== 'superadmin' && ticket.user_id !== user.id) return sendError(res, 'Accès refusé', 403);
+        db.prepare(`
+            INSERT INTO support_messages (ticket_id, sender_id, content, is_admin)
+            VALUES (?, ?, ?, ?)
+        `).run(id, user.id, body.content, user.role === 'superadmin' ? 1 : 0);
+        db.prepare("UPDATE support_tickets SET updated_at = datetime('now') WHERE id = ?").run(id);
+        return sendJSON(res, { success: true });
+    }
+
+    // PUT /api/support-tickets/:id/status — update ticket status
+    if (id && action === 'status' && req.method === 'PUT') {
+        if (user.role !== 'superadmin') return sendError(res, 'SuperAdmin requis', 403);
+        const body = await parseBody(req);
+        db.prepare("UPDATE support_tickets SET status = ?, updated_at = datetime('now') WHERE id = ?").run(body.status, id);
+        return sendJSON(res, { success: true });
+    }
+
+    sendError(res, 'Route support non trouvée', 404);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// MESSAGING HANDLER
+// ══════════════════════════════════════════════════════════════════
+async function handleMessaging(req, res, parts) {
+    const user = requireAuth(req);
+    if (!user) return sendError(res, 'Authentification requise', 401);
+    const id = parts[2];
+
+    // GET /api/messaging — list conversations
+    if (!id && req.method === 'GET') {
+        const conversations = db.prepare(`
+            SELECT c.*, 
+                CASE WHEN c.participant_1 = ? THEN u2.name ELSE u1.name END as other_name,
+                CASE WHEN c.participant_1 = ? THEN u2.email ELSE u1.email END as other_email,
+                (SELECT COUNT(*) FROM conversation_messages cm WHERE cm.conversation_id = c.id AND cm.read_at IS NULL AND cm.sender_id != ?) as unread_count
+            FROM conversations c
+            LEFT JOIN users u1 ON u1.id = c.participant_1
+            LEFT JOIN users u2 ON u2.id = c.participant_2
+            WHERE c.participant_1 = ? OR c.participant_2 = ?
+            ORDER BY c.last_message_at DESC
+        `).all(user.id, user.id, user.id, user.id, user.id);
+        return sendJSON(res, { conversations });
+    }
+
+    // POST /api/messaging — send message (create conversation if needed)
+    if (!id && req.method === 'POST') {
+        const body = await parseBody(req);
+        if (!body.content) return sendError(res, 'Message requis');
+
+        let convId = body.conversation_id;
+        if (!convId && body.recipient_id) {
+            // Find or create conversation
+            let conv = db.prepare("SELECT id FROM conversations WHERE (participant_1 = ? AND participant_2 = ?) OR (participant_1 = ? AND participant_2 = ?)").get(user.id, body.recipient_id, body.recipient_id, user.id);
+            if (!conv) {
+                const r = db.prepare("INSERT INTO conversations (participant_1, participant_2, last_message_at) VALUES (?, ?, datetime('now'))").run(user.id, body.recipient_id);
+                convId = r.lastInsertRowid;
+            } else {
+                convId = conv.id;
+            }
+        }
+        if (!convId) return sendError(res, 'conversation_id ou recipient_id requis');
+
+        db.prepare("INSERT INTO conversation_messages (conversation_id, sender_id, content) VALUES (?, ?, ?)").run(convId, user.id, body.content);
+        db.prepare("UPDATE conversations SET last_message = ?, last_message_at = datetime('now') WHERE id = ?").run(body.content.substring(0, 100), convId);
+        return sendJSON(res, { success: true, conversation_id: convId });
+    }
+
+    // GET /api/messaging/:id — get conversation messages
+    if (id && req.method === 'GET') {
+        const conversation = db.prepare("SELECT * FROM conversations WHERE id = ?").get(id);
+        if (!conversation) return sendError(res, 'Conversation non trouvée', 404);
+        if (conversation.participant_1 !== user.id && conversation.participant_2 !== user.id && user.role !== 'superadmin') {
+            return sendError(res, 'Accès refusé', 403);
+        }
+        const messages = db.prepare(`
+            SELECT cm.*, u.name as sender_name FROM conversation_messages cm
+            LEFT JOIN users u ON u.id = cm.sender_id
+            WHERE cm.conversation_id = ? ORDER BY cm.created_at ASC
+        `).all(id);
+        // Mark as read
+        db.prepare("UPDATE conversation_messages SET read_at = datetime('now') WHERE conversation_id = ? AND sender_id != ? AND read_at IS NULL").run(id, user.id);
+        return sendJSON(res, { conversation, messages });
+    }
+
+    sendError(res, 'Route messaging non trouvée', 404);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// NOTIFICATIONS HANDLER
+// ══════════════════════════════════════════════════════════════════
+async function handleNotifications(req, res, parts) {
+    const user = requireAuth(req);
+    if (!user) return sendError(res, 'Authentification requise', 401);
+    const action = parts[2]; // 'unread-count', or notification id
+
+    // GET /api/notifications/unread-count
+    if (action === 'unread-count' && req.method === 'GET') {
+        const count = db.prepare("SELECT COUNT(*) as c FROM notifications WHERE user_id = ? AND is_read = 0").get(user.id);
+        return sendJSON(res, { unread_count: count.c });
+    }
+
+    // GET /api/notifications — list notifications
+    if (!action && req.method === 'GET') {
+        const url = new URL(req.url, 'http://localhost');
+        const limit = parseInt(url.searchParams.get('limit') || '20');
+        const notifications = db.prepare("SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT ?").all(user.id, limit);
+        return sendJSON(res, { notifications });
+    }
+
+    // PUT /api/notifications/:id/read — mark as read
+    if (action && parts[3] === 'read' && req.method === 'PUT') {
+        db.prepare("UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?").run(action, user.id);
+        return sendJSON(res, { success: true });
+    }
+
+    // PUT /api/notifications/read-all — mark all as read
+    if (action === 'read-all' && req.method === 'PUT') {
+        db.prepare("UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0").run(user.id);
+        return sendJSON(res, { success: true });
+    }
+
+    sendError(res, 'Route notifications non trouvée', 404);
+}
+
 // ============ STATIC FILES ============
 const MIME_TYPES = {
-    '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'application/javascript',
-    '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
-    '.gif': 'image/gif', '.svg': 'image/svg+xml', '.ico': 'image/x-icon',
+    '.html': 'text/html; charset=utf-8', 
+    '.css': 'text/css', 
+    '.js': 'text/javascript', // Changed from application/javascript
+    '.json': 'application/json', 
+    '.png': 'image/png', 
+    '.jpg': 'image/jpeg', 
+    '.jpeg': 'image/jpeg',
+    '.gif': 'image/gif', 
+    '.svg': 'image/svg+xml', 
+    '.ico': 'image/x-icon',
 };
 
 function serveStatic(req, res) {
     const url = new URL(req.url, 'http://localhost');
     const urlPath = url.pathname;
 
+    console.log(`[Static] Serving: ${urlPath}`);
+
     if (urlPath === '/' || urlPath === '') {
+        const landingPath = path.join(PROJECT_ROOT, 'User', 'ticketmada-landing.html');
+        if (fs.existsSync(landingPath)) {
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+            fs.createReadStream(landingPath).pipe(res);
+            return true;
+        }
         res.writeHead(302, { 'Location': '/User/ticketmada-landing.html' });
         res.end();
         return true;
     }
     
-    // Normalize and remove leading slash for joining
     const safePath = path.normalize(urlPath).replace(/^[\\\/]+/, '').replace(/^(\.\.[\/\\])+/, '');
     
-    // Potential search paths
     const searchPaths = [
         path.join(PROJECT_ROOT, safePath),
         path.join(PROJECT_ROOT, 'User', safePath),
@@ -2476,64 +2748,90 @@ function serveStatic(req, res) {
             return true;
         }
     }
+    console.warn(`[Static] Not found: ${urlPath} (Checked: ${searchPaths.join(', ')})`);
     return false;
 }
 
 // ============ SERVER ============
-initDB();
+console.log('--- TicketMada Server Starting ---');
+try {
+    console.log(`PROJECT_ROOT: ${PROJECT_ROOT}`);
+    console.log(`DB_PATH: ${DB_PATH}`);
 
-const server = http.createServer(async (req, res) => {
-    // CORS
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    if (req.method === 'OPTIONS') { res.writeHead(200); res.end(); return; }
+    if (!fs.existsSync(PROJECT_ROOT)) {
+        console.error(`❌ PROJECT_ROOT does not exist: ${PROJECT_ROOT}`);
+    }
 
-    const url = new URL(req.url, 'http://localhost');
-    const pathname = url.pathname;
-    const parts = pathname.split('/').filter(Boolean);
+    initDB();
+    console.log('✅ Database initialized');
 
-    // API routes
-    if (parts[0] === 'api') {
+    const server = http.createServer(async (req, res) => {
         try {
-            if (parts[1] === 'auth' && parts[2] === 'callback') {
-                return await handleOAuthCallback(req, res, parts);
-            }
-            switch (parts[1]) {
-                case 'auth': return await handleAuth(req, res, parts);
-                case 'events': return await handleEvents(req, res, parts);
-                case 'tickets': return await handleTickets(req, res, parts);
-                case 'refunds': return await handleRefunds(req, res, parts);
-                case 'payouts': return await handlePayouts(req, res, parts);
-                case 'clients': return await handleClients(req, res, parts);
-                case 'team': return await handleTeam(req, res, parts);
-                case 'analytics': return await handleAnalytics(req, res, parts);
-                case 'activity': return await handleActivity(req, res, parts);
-                case 'health': return sendJSON(res, { status: 'ok', time: new Date().toISOString() });
-                case 'organizer-applications':
-                case 'my-application': return await handleOrganizerApplications(req, res, parts);
-                case 'superadmin': return await handleSuperAdmin(req, res, parts);
-                case 'orders': return await handleOrders(req, res, parts);
-                case 'products':
-                case 'product-categories': return await handleOrganizerProducts(req, res, parts);
-                case 'scan-access-requests':
-                case 'scan-links':
-                case 'scan-devices':
-                case 'scan-logs': return await handleScanner(req, res, parts);
-                default: return sendError(res, 'Route non trouvée', 404);
-            }
-        } catch (err) {
-            console.error('Error:', err);
-            return sendError(res, 'Erreur serveur: ' + err.message, 500);
-        }
-    }
+            console.log(`[Server] ${req.method} ${req.url}`);
+            
+            // CORS
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+            if (req.method === 'OPTIONS') { res.writeHead(200); res.end(); return; }
 
-    // Static files
-    if (!serveStatic(req, res)) {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('404 Not Found');
-    }
-});
+            const url = new URL(req.url, 'http://localhost');
+            const pathname = url.pathname;
+            const parts = pathname.split('/').filter(Boolean);
+
+            // API routes
+            if (parts[0] === 'api') {
+                try {
+                    if (parts[1] === 'auth' && parts[2] === 'callback') return await handleOAuthCallback(req, res, parts);
+                    switch (parts[1]) {
+                        case 'auth': return await handleAuth(req, res, parts);
+                        case 'events': return await handleEvents(req, res, parts);
+                        case 'tickets': return await handleTickets(req, res, parts);
+                        case 'refunds': return await handleRefunds(req, res, parts);
+                        case 'payouts': return await handlePayouts(req, res, parts);
+                        case 'clients': return await handleClients(req, res, parts);
+                        case 'team': return await handleTeam(req, res, parts);
+                        case 'analytics': return await handleAnalytics(req, res, parts);
+                        case 'activity': return await handleActivity(req, res, parts);
+                        case 'health': return sendJSON(res, { status: 'ok', time: new Date().toISOString() });
+                        case 'organizer-applications':
+                        case 'my-application': return await handleOrganizerApplications(req, res, parts);
+                        case 'superadmin': return await handleSuperAdmin(req, res, parts);
+                        case 'orders': return await handleOrders(req, res, parts);
+                        case 'products':
+                        case 'product-categories': return await handleOrganizerProducts(req, res, parts);
+                        case 'support-tickets': return await handleSupportTickets(req, res, parts);
+                        case 'messaging': return await handleMessaging(req, res, parts);
+                        case 'notifications': return await handleNotifications(req, res, parts);
+                        default: return sendError(res, 'Route non trouvée', 404);
+                    }
+                } catch (apiErr) {
+                    console.error('[API Error]', apiErr);
+                    return sendError(res, 'Internal API Error: ' + apiErr.message, 500);
+                }
+            }
+
+            // Static files
+            if (!serveStatic(req, res)) {
+                res.writeHead(404, { 'Content-Type': 'text/plain' });
+                res.end('404 Not Found');
+            }
+        } catch (serverErr) {
+            console.error('[Critical Server Error]', serverErr);
+            if (!res.headersSent) {
+                res.writeHead(500, { 'Content-Type': 'text/plain' });
+                res.end('Critical Server Error');
+            }
+        }
+    });
+
+    server.listen(PORT, '0.0.0.0', () => {
+        console.log(`✅ Server live at http://localhost:${PORT}`);
+    });
+} catch (startupErr) {
+    console.error('❌ FATAL STARTUP ERROR:', startupErr);
+    process.exit(1);
+}
 
 // SUPERADMIN
 // ═══ Hiérarchie SuperAdmin ═══
@@ -2639,7 +2937,15 @@ async function handleSuperAdmin(req, res, parts) {
         };
         
         stats.totalCommission = Math.round(stats.totalRevenue * commissionRate);
-        stats.avgFillRate = 72;
+        
+        // Fix 1.7: Real avgFillRate
+        const fillRateData = db.prepare("SELECT AVG(CASE WHEN capacity > 0 THEN (tickets_sold * 100.0 / capacity) ELSE 0 END) as avg_fill FROM events WHERE status = 'active' AND capacity > 0").get();
+        stats.avgFillRate = Math.round(fillRateData.avg_fill || 0);
+
+        // Fix 1.8: Real conversionRate (simplified)
+        const totalBuyers = db.prepare("SELECT COUNT(DISTINCT buyer_id) as c FROM tickets").get().c;
+        const totalVisitorGuess = db.prepare("SELECT COUNT(*) as c FROM users WHERE role='buyer'").get().c;
+        stats.conversionRate = totalVisitorGuess > 0 ? Math.round((totalBuyers / totalVisitorGuess) * 100.0) : 0;
         
         return sendJSON(res, stats);
     }
@@ -2810,18 +3116,30 @@ async function handleSuperAdmin(req, res, parts) {
         return sendJSON(res, promos);
     }
 
+    // Fix 1.11: Promo code CRUD
+    if (resource === 'marketing' && req.method === 'POST') {
+        const body = await parseBody(req);
+        if (!body.code || body.discount_value === undefined) return sendError(res, 'Code et valeur requis');
+        const r = db.prepare("INSERT INTO promo_codes (code, event_id, discount_type, discount_value, usage_limit) VALUES (?, ?, ?, ?, ?)").run(
+            body.code.toUpperCase(), body.event_id || null, body.discount_type || 'percentage', body.discount_value, body.max_uses || null
+        );
+        logActivity('promo_created', user.id, user.name, 'promo', r.lastInsertRowid, body.code, `Code promo créé: ${body.code}`);
+        return sendJSON(res, { success: true, id: r.lastInsertRowid }, 201);
+    }
+
+    if (resource === 'marketing' && id && req.method === 'DELETE') {
+        db.prepare("DELETE FROM promo_codes WHERE id = ?").run(id);
+        logActivity('promo_deleted', user.id, user.name, 'promo', id, '', `Code promo supprimé`);
+        return sendJSON(res, { success: true });
+    }
+
     // ═══ TAXES SECTION ═══
     if (resource === 'taxes' && req.method === 'GET') {
         const taxes = db.prepare("SELECT * FROM tax_rules ORDER BY created_at DESC").all();
         return sendJSON(res, taxes);
     }
 
-    if (resource === 'taxes' && req.method === 'POST') {
-        const body = await parseBody(req);
-        db.prepare("INSERT INTO tax_rules (name, rate) VALUES (?, ?)").run(body.name, body.rate);
-        logActivity('tax_rule_created', user.id, user.name, 'tax', null, body.name, `Nouvelle taxe créée: ${body.name} (${body.rate}%)`);
-        return sendJSON(res, { success: true });
-    }
+    // Fix 1.10: Removed duplicate POST /taxes handler here
 
     // ═══ BROADCAST MESSAGING ═══
     if (resource === 'broadcast' && req.method === 'POST') {
@@ -2946,6 +3264,31 @@ async function handleSuperAdmin(req, res, parts) {
         // Le lien d'activation
         const activationLink = `${APP_URL}/api/superadmin/activate?token=${token}`;
         
+        // Fix 1.12: Send invitation email
+        try {
+            await emailTransporter.sendMail({
+                from: '"TicketMada Admin" <sedrayiokoraz@gmail.com>',
+                to: body.email,
+                subject: 'Invitation SuperAdmin - TicketMada',
+                html: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #FFF8F0; border: 3px solid #1a1a1a;">
+                    <div style="background: #FF6B4A; padding: 20px; border-bottom: 3px solid #1a1a1a;">
+                        <h1 style="color: white; margin: 0; font-size: 20px;">TicketMada - Invitation SuperAdmin</h1>
+                    </div>
+                    <div style="padding: 24px;">
+                        <p>Bonjour,</p>
+                        <p>Vous avez été invité(e) par <strong>${user.name}</strong> à rejoindre l'équipe d'administration de TicketMada en tant que <strong>SuperAdmin (${body.level})</strong>.</p>
+                        <div style="text-align: center; margin: 24px 0;">
+                            <a href="${activationLink}" style="display: inline-block; background: #FF6B4A; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; border: 2px solid #1a1a1a;">Accepter l'invitation</a>
+                        </div>
+                        <p style="font-size: 12px; color: #999;">Si vous n'avez pas demandé cette invitation, ignorez cet email.</p>
+                    </div>
+                </div>`
+            });
+        } catch (e) {
+            console.error('Failed to send invitation email:', e.message);
+        }
+
         return sendJSON(res, {
             success: true,
             invitation_token: token,
@@ -3433,10 +3776,27 @@ function runCronJobs() {
         }
     }, 5 * 60 * 1000);
 
-    // 2. Daily Stats aggregation
+    // Fix 1.9: Daily Stats aggregation - runs every hour
     setInterval(() => {
-        // Run daily at midnight ? Simplified: run every 24h
-    }, 24 * 60 * 60 * 1000);
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const events = db.prepare("SELECT id FROM events WHERE status = 'active'").all();
+            for (const event of events) {
+                const stats = db.prepare(`
+                    SELECT 
+                        COUNT(CASE WHEN date(created_at) = ? THEN 1 END) as sold,
+                        COALESCE(SUM(CASE WHEN date(created_at) = ? THEN price ELSE 0 END), 0) as sales
+                    FROM tickets WHERE event_id = ?
+                `).get(today, today, event.id);
+                
+                db.prepare(`
+                    INSERT OR REPLACE INTO event_daily_stats (event_id, date, tickets_sold, sales_total)
+                    VALUES (?, ?, ?, ?)
+                `).run(event.id, today, stats.sold, stats.sales);
+            }
+            console.log(`[CRON] Daily stats aggregated for ${events.length} events.`);
+        } catch (e) { console.error('[CRON] Daily stats error:', e.message); }
+    }, 60 * 60 * 1000);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

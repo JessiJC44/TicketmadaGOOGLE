@@ -403,6 +403,50 @@ const TicketMadaAPI = (() => {
                     return { success: true, attendees: [], checkinLists: [] };
                 }
 
+                // Fix 4.1: Support tickets mock
+                if (path.includes('/support-tickets')) {
+                    return { tickets: [] };
+                }
+
+                // Messaging mock
+                if (path.includes('/messaging')) {
+                    return { conversations: [] };
+                }
+
+                // Notifications mock
+                if (path.includes('/notifications/unread-count')) {
+                    return { unread_count: 0 };
+                }
+                if (path.includes('/notifications')) {
+                    return { notifications: [] };
+                }
+
+                // Analytics dashboard mock
+                if (path.includes('/analytics/dashboard')) {
+                    return { totalRevenue: 0, totalTickets: 0, activeEvents: 0, recentOrders: [] };
+                }
+
+                // Team mock
+                if (path.includes('/team')) {
+                    return [];
+                }
+
+                // Scan links/devices/logs mock
+                if (path.includes('/scan-links')) return [];
+                if (path.includes('/scan-devices')) return [];
+                if (path.includes('/scan-logs')) return [];
+                if (path.includes('/scan-access-requests')) return [];
+
+                // My application mock
+                if (path.includes('/my-application')) {
+                    return { status: 'none' };
+                }
+
+                // Organizer limits mock
+                if (path.includes('/organizer/limits')) {
+                    return { max_events: 50, max_team: 10, plan: 'starter' };
+                }
+
                 if (isEventPath) {
                     // Route mock responses based on path
                     if (path.match(/\/events\/(\d+)\/seats/)) {

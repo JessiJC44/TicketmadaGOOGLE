@@ -2260,7 +2260,11 @@
                     if (!this.broadcast.subject || !this.broadcast.content) return this.notify('Veuillez remplir le sujet et le message', 'var(--accent-red)');
                     this.sendingBroadcast = true;
                     try {
-                        await window.api.post('/superadmin/broadcast', this.broadcast);
+                        await window.api.post('/superadmin/broadcast', {
+                            subject: this.broadcast.subject,
+                            message: this.broadcast.content,
+                            target: this.broadcast.target || 'all'
+                        });
                         this.notify('Message envoyé avec succès !', 'var(--accent-mint)');
                         this.broadcast.subject = '';
                         this.broadcast.content = '';
@@ -2514,7 +2518,7 @@
                 async handleApproveEvent(event) {
                     if (!confirm(`Approuver l'événement "${event.name}" ?`)) return;
                     try {
-                        await window.api.post(`/events/${event.id}/approve`);
+                        await window.api.put(`/superadmin/events/${event.id}/approve`);
                         alert('Événement approuvé !');
                         this.fetchData();
                     } catch (e) { alert('Erreur approbation'); }
@@ -2523,7 +2527,7 @@
                     const reason = prompt('Raison du rejet:');
                     if (!reason) return;
                     try {
-                        await window.api.post(`/events/${event.id}/reject`, { reason });
+                        await window.api.put(`/superadmin/events/${event.id}/reject`, { reason });
                         alert('Événement rejeté');
                         this.fetchData();
                     } catch (e) { alert('Erreur rejet'); }

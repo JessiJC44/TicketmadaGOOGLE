@@ -176,9 +176,45 @@
                         </div>
                     </div>
 
-                    <!-- Step 3: Events -->
+                    <!-- Step 3: Web Presence -->
                     <div v-if="currentStep === 3">
-                        <label class="label">Types d'événements*</label>
+                        <div class="form-group">
+                            <label class="label">Site Web (optionnel)</label>
+                            <input type="url" v-model="form.website" class="input" placeholder="https://www.exemple.com">
+                        </div>
+                        <div class="label" style="margin-bottom: 12px;">Réseaux sociaux</div>
+                        <div class="grid">
+                            <div class="form-group">
+                                <label class="label">Facebook</label>
+                                <input type="text" v-model="form.social_facebook" class="input" placeholder="Lien vers page FB">
+                            </div>
+                            <div class="form-group">
+                                <label class="label">Instagram</label>
+                                <input type="text" v-model="form.social_instagram" class="input" placeholder="@compte">
+                            </div>
+                        </div>
+                        <div class="grid">
+                            <div class="form-group">
+                                <label class="label">TikTok</label>
+                                <input type="text" v-model="form.social_tiktok" class="input" placeholder="@compte">
+                            </div>
+                            <div class="form-group">
+                                <label class="label">Comment nous avez-vous trouvé ?</label>
+                                <select v-model="form.how_found_us" class="input">
+                                    <option value="">Sélectionner</option>
+                                    <option value="facebook">Facebook</option>
+                                    <option value="google">Google</option>
+                                    <option value="ads">Publicités</option>
+                                    <option value="friend">Recommandation</option>
+                                    <option value="other">Autre</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Planned Event -->
+                    <div v-if="currentStep === 4">
+                        <label class="label">Types d'événements que vous organisez*</label>
                         <div class="grid" style="margin-bottom: 20px;">
                             <div v-for="t in eventTypesList" :key="t.id">
                                 <label class="checkbox-group">
@@ -191,27 +227,31 @@
                         <span v-if="errors.event_types" class="error-msg" style="margin-bottom: 20px; display: block;">{{ errors.event_types }}</span>
 
                         <div style="background: #f5f5f5; padding: 20px; border: 2px dashed #1a1a1a; margin-bottom: 20px;">
-                            <h3 style="font-size: 0.9rem; margin-bottom: 15px;">Premier événement prévu</h3>
+                            <h3 style="font-size: 0.9rem; margin-bottom: 15px;">Détails du prochain événement</h3>
                             <div class="form-group">
-                                <label class="label">Nom de l'événement</label>
+                                <label class="label">Nom indicatif</label>
                                 <input type="text" v-model="form.first_event_name" class="input" placeholder="Ex: Concert Night">
+                            </div>
+                            <div class="form-group">
+                                <label class="label">Lieu prévu (Ville/Salle)</label>
+                                <input type="text" v-model="form.first_event_venue" class="input" placeholder="Ex: Palais des Sports Antananarivo">
                             </div>
                             <div class="grid">
                                 <div class="form-group">
-                                    <label class="label">Date (approx.)</label>
+                                    <label class="label">Date approx.</label>
                                     <input type="text" v-model="form.first_event_date" class="input" placeholder="MM/AAAA">
                                 </div>
                                 <div class="form-group">
-                                    <label class="label">Capacité (est.)</label>
+                                    <label class="label">Capacité estimée</label>
                                     <input type="number" v-model.number="form.first_event_capacity" class="input" placeholder="500">
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Step 4: Finalize -->
-                    <div v-if="currentStep === 4">
-                        <label class="label">Mode de paiement préféré*</label>
+                    <!-- Step 5: Terms & ID -->
+                    <div v-if="currentStep === 5">
+                        <label class="label">Mode de retrait des revenus*</label>
                         <div class="radio-grid">
                             <div class="radio-card" :class="{ active: form.preferred_payment === 'mobile_money' }" @click="form.preferred_payment = 'mobile_money'">Mobile Money</div>
                             <div class="radio-card" :class="{ active: form.preferred_payment === 'bank_transfer' }" @click="form.preferred_payment = 'bank_transfer'">Virement</div>
@@ -219,12 +259,12 @@
                         </div>
 
                         <div class="form-group" v-if="form.preferred_payment !== 'bank_transfer'">
-                            <label class="label">Numéro Mobile Money*</label>
+                            <label class="label">Numéro Mobile Money pour les paiements*</label>
                             <input type="text" v-model="form.mobile_money_number" class="input" placeholder="034 XX XXX XX">
                         </div>
 
                         <div class="form-group">
-                            <label class="label">Pièce d'identité (CIN/Passport/NIF)*</label>
+                            <label class="label">Justificatif d'identité (CIN/Passport/NIF)*</label>
                             <div class="grid">
                                 <select v-model="form.id_document_type" class="input">
                                     <option value="cin">CIN</option>
@@ -233,21 +273,18 @@
                                 </select>
                                 <input type="text" v-model="form.id_document_number" class="input" placeholder="Numéro du document">
                             </div>
-                            <span v-if="errors.id_document_number" class="error-msg">{{ errors.id_document_number }}</span>
                         </div>
 
                         <div class="form-group">
-                            <label class="label">Pourquoi voulez-vous utiliser TicketMada?*</label>
-                            <textarea v-model="form.motivation" class="input" rows="3" placeholder="Votre motivation..."></textarea>
-                            <span v-if="errors.motivation" class="error-msg">{{ errors.motivation }}</span>
+                            <label class="label">Motivation (pourquoi TicketMada ?)*</label>
+                            <textarea v-model="form.motivation" class="input" rows="3" placeholder="Description de vos besoins..."></textarea>
                         </div>
 
                         <label class="checkbox-group" style="margin-top: 30px;">
                             <input type="checkbox" v-model="form.accepts_terms">
                             <div class="checkbox-custom"><v-icon v-if="form.accepts_terms" icon="mdi-check" size="14" color="white"></v-icon></div>
-                            <span style="font-weight: 700; font-size: 0.85rem;">J'accepte les conditions d'utilisation et la commission de 3%</span>
+                            <span style="font-weight: 700; font-size: 0.85rem;">J'ai lu et j'accepte les conditions générales et la commission de 3%</span>
                         </label>
-                        <span v-if="errors.accepts_terms" class="error-msg">{{ errors.accepts_terms }}</span>
                     </div>
 
                     <div style="display: flex; gap: 15px; margin-top: 40px;">
@@ -297,14 +334,14 @@
             data() {
                 return {
                     currentStep: 1,
-                    totalSteps: 4,
+                    totalSteps: 5,
                     isLoggedIn: false,
                     user: null,
                     isSubmitting: false,
                     isSubmitted: false,
                     applicationId: null,
                     submitError: '',
-                    stepTitles: ['Informations personnelles', 'Votre organisation', 'Vos événements', 'Paiement & ID'],
+                    stepTitles: ['Profil', 'Organisation', 'Présence Web', 'Premier Événement', 'Validation & ID'],
                     form: {
                         full_name: '',
                         email: '',
@@ -387,11 +424,17 @@
                         if (!this.form.organization_description || this.form.organization_description.length < 10) this.errors.organization_description = 'Description trop courte';
                     }
                     if (step === 3) {
-                        if (this.form.event_types.length === 0) this.errors.event_types = 'Sélectionnez au moins un type';
+                        // Web presence step - mostly optional
+                        return true;
                     }
                     if (step === 4) {
-                        if (!this.form.id_document_number) this.errors.id_document_number = 'Numéro requis';
-                        if (!this.form.motivation || this.form.motivation.length < 20) this.errors.motivation = 'Expliquez davantage votre motivation';
+                        if (this.form.event_types.length === 0) this.errors.event_types = 'Sélectionnez au moins un type';
+                        if (!this.form.first_event_name) this.errors.first_event_name = 'Nom d\'événement requis';
+                    }
+                    if (step === 5) {
+                        if (!this.form.id_document_number) this.errors.id_document_number = 'Numéro de document requis';
+                        if (!this.form.motivation || this.form.motivation.length < 20) this.errors.motivation = 'Expliquez davantage votre motivation (min 20 caractères)';
+                        if (!this.form.accepts_terms) this.errors.accepts_terms = 'Vous devez accepter les conditions';
                     }
                     return Object.keys(this.errors).length === 0;
                 },
@@ -402,11 +445,7 @@
                     }
                 },
                 async submitApplication() {
-                    if (!this.validateStep(4)) return;
-                    if (!this.form.accepts_terms) {
-                        this.errors.accepts_terms = 'Vous devez accepter les conditions';
-                        return;
-                    }
+                    if (!this.validateStep(5)) return;
                     
                     this.isSubmitting = true;
                     this.submitError = '';
