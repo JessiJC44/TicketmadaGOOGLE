@@ -895,23 +895,26 @@
                     const category = (event.category || '').toLowerCase();
                     const title = (event.title || event.name || '').toLowerCase();
                     
-                    if (title.includes('rally') || title.includes('course') || title.includes('auto')) {
-                        return 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800'; // Sports car/Rally
+                    if (title.includes('rally') || title.includes('course') || title.includes('auto') || title.includes('muscle')) {
+                        return 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=800'; // Muscle Car / Rally
                     }
                     if (title.includes('lemur') || title.includes('lemurien') || title.includes('maki')) {
                         return 'https://images.unsplash.com/photo-1543324089-69335607cd7c?w=800'; // Lemur
                     }
-                    if (title.includes('rugby') || title.includes('makis')) {
+                    if (title.includes('rugby') || title.includes('makis') || category.includes('rugby')) {
                         return 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800'; // Rugby
                     }
-                    if (title.includes('foot') || title.includes('barea') || title.includes('soccer')) {
+                    if (title.includes('foot') || title.includes('barea') || title.includes('soccer') || category.includes('foot')) {
                         return 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800'; // Soccer
                     }
-                    if (title.includes('basket') || title.includes('analamanga')) {
+                    if (title.includes('basket') || title.includes('analamanga') || category.includes('basket')) {
                         return 'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800'; // Basketball
                     }
-                    if (title.includes('danse') || title.includes('zumba') || title.includes('ballet')) {
+                    if (title.includes('danse') || title.includes('zumba') || title.includes('ballet') || category.includes('danse')) {
                         return 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=800'; // Dance
+                    }
+                    if (title.includes('yoga' ) || category.includes('yoga') || category.includes('bien-être')) {
+                        return 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800'; // Yoga
                     }
 
                     const CATEGORY_IMAGES = {

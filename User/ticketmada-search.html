@@ -440,20 +440,23 @@ const app = createApp({
             const category = (event.category || '').toLowerCase();
             const title = (event.name || event.title || '').toLowerCase();
             
-            if (title.includes('rally') || title.includes('course') || title.includes('auto')) {
-                return 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800'; 
+            if (title.includes('rally') || title.includes('course') || title.includes('auto') || title.includes('muscle')) {
+                return 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=800'; 
             }
             if (title.includes('lemur') || title.includes('lemurien') || title.includes('maki')) {
                 return 'https://images.unsplash.com/photo-1543324089-69335607cd7c?w=800';
             }
-            if (title.includes('rugby') || title.includes('makis')) {
+            if (title.includes('rugby') || title.includes('makis') || category.includes('rugby')) {
                 return 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800';
             }
-            if (title.includes('foot') || title.includes('barea') || title.includes('soccer')) {
+            if (title.includes('foot') || title.includes('barea') || title.includes('soccer') || category.includes('foot')) {
                 return 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800';
             }
-            if (title.includes('danse') || title.includes('zumba') || title.includes('ballet')) {
+            if (title.includes('danse') || title.includes('zumba') || title.includes('ballet') || category.includes('danse')) {
                 return 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=800';
+            }
+            if (title.includes('yoga' ) || category.includes('yoga') || category.includes('bien-être')) {
+                return 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800';
             }
 
             const CATEGORY_IMAGES = {
