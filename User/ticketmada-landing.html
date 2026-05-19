@@ -618,8 +618,8 @@
 
                 <div id="landing-carousel" style="display: flex; gap: 20px; overflow-x: auto; scroll-behavior: smooth; padding: 10px 10px 30px 0; -ms-overflow-style: none; scrollbar-width: none;">
                     <div v-for="event in events.slice(0, 10)" :key="event.id" class="suggestion-card brutal-card" style="min-width: 300px; flex-shrink: 0; cursor: pointer; background: white; transition: all 0.2s ease;" @click="goToEvent(event.id)" onmouseover="this.style.transform='translate(-3px, -3px)'; this.style.boxShadow='9px 9px 0px #1a1a1a'" onmouseout="this.style.transform='none'; this.style.boxShadow='6px 6px 0px #1a1a1a'">
-                        <div class="card-image" :style="{ 'background-image': 'url(' + (event.image || event.image_url) + ')', 'height': '180px', 'background-size': 'cover', 'background-position': 'center', 'position': 'relative', 'border-bottom': '3px solid #1a1a1a' }">
-                            <div style="display:none"><img :src="event.image || event.image_url" @error="$event.target.closest('.card-image').style.backgroundImage = 'url(' + getFallbackImage(event) + ')'"></div>
+                        <div class="card-image" :style="{ 'background-image': 'url(' + (event.image || event.image_url || getFallbackImage(event)) + ')', 'height': '180px', 'background-size': 'cover', 'background-position': 'center', 'position': 'relative', 'border-bottom': '3px solid #1a1a1a' }">
+                            <div style="display:none"><img :src="event.image || event.image_url || 'NONE'" @error="$event.target.closest('.card-image').style.backgroundImage = 'url(' + getFallbackImage(event) + ')'"></div>
                             <span v-if="event.badgeKey === 'popular' || event.hot" style="position: absolute; top: 12px; right: 12px; background: var(--accent-coral); color: white; border: 2px solid #1a1a1a; padding: 4px 10px; font-weight: 800; font-size: 0.7rem; font-family: 'Syne';">🔥 POPULAIRE</span>
                         </div>
                         <div style="padding: 20px;">
@@ -939,25 +939,24 @@
                         const eventsData = await window.api.getEvents();
                         const eventsList = eventsData.events || (Array.isArray(eventsData) ? eventsData : []);
                         
-                        const CATEGORY_IMAGES = {
-                            concerts: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800',
-                            festival: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
-                            sports: 'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800',
-                            theatre: 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=800',
-                            humour: 'https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=800',
-                            exhibition: 'https://images.unsplash.com/photo-1531058020387-3be344556be6?w=800'
-                        };
-
-                        this.events = eventsList.map(e => ({
-                            id: e.id,
-                            title: e.name,
-                            date: new Date(e.date_start).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
-                            location: e.venue,
-                            price: e.capacity > 0 ? (e.zones ? e.zones[e.zones.length-1].price : 15000) : 0,
-                            category: e.category,
-                            badgeKey: (e.tickets_sold / e.capacity) > 0.7 ? 'popular' : (e.hot ? 'popular' : null),
-                            image: e.image_url || CATEGORY_IMAGES[e.category] || 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800'
-                        }));
+                        this.events = eventsList.map(e => {
+                            const eventObj = {
+                                id: e.id,
+                                name: e.name, // Important for getFallbackImage which checks e.name
+                                title: e.name,
+                                date: new Date(e.date_start).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
+                                location: e.venue,
+                                price: e.capacity > 0 ? (e.zones ? e.zones[e.zones.length-1].price : 15000) : 0,
+                                category: e.category,
+                                image_url: e.image_url,
+                                badgeKey: (e.tickets_sold / e.capacity) > 0.7 ? 'popular' : (e.hot ? 'popular' : null),
+                            };
+                            
+                            // Pre-calculate image with fallback logic
+                            eventObj.image = e.image_url || this.getFallbackImage(eventObj);
+                            
+                            return eventObj;
+                        });
                         
                         // Pick featured events (e.g. popular ones)
                         this.featuredEvents = this.events.filter(e => e.badgeKey === 'popular').slice(0, 3);

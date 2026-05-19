@@ -221,19 +221,6 @@ function initDB() {
             FOREIGN KEY (ticket_id) REFERENCES tickets(id),
             FOREIGN KEY (event_id) REFERENCES events(id)
         );
-        CREATE TABLE IF NOT EXISTS payouts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_code TEXT UNIQUE,
-            organizer_id INTEGER NOT NULL,
-            amount INTEGER NOT NULL DEFAULT 0,
-            commission INTEGER NOT NULL DEFAULT 0,
-            net INTEGER NOT NULL DEFAULT 0,
-            method TEXT NOT NULL DEFAULT 'Virement',
-            status TEXT NOT NULL DEFAULT 'pending',
-            created_at DATETIME DEFAULT (datetime('now')),
-            paid_at DATETIME,
-            FOREIGN KEY (organizer_id) REFERENCES users(id)
-        );
         CREATE TABLE IF NOT EXISTS team_members (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             organizer_id INTEGER NOT NULL,
@@ -465,6 +452,7 @@ function initDB() {
             amount REAL NOT NULL,
             commission REAL NOT NULL,
             net REAL NOT NULL,
+            method TEXT DEFAULT 'Mobile Money',
             status TEXT DEFAULT 'pending', -- 'pending', 'submitted', 'completed', 'failed'
             bank_details TEXT,
             paid_at DATETIME,
@@ -1129,6 +1117,10 @@ function seedProducts() {
 }
 
 // ============ HELPERS ============
+function generateCode(prefix = 'ID') {
+    return `${prefix}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+}
+
 function logActivity(type, actorId, actorName, targetType, targetId, targetName, description, metadata = null) {
     db.prepare(`
         INSERT INTO activity_logs (type, actor_id, actor_name, target_type, target_id, target_name, description, metadata)
@@ -1820,7 +1812,7 @@ async function handleTickets(req, res, parts) {
             for (let i = 0; i < qty; i++) {
                 let code;
                 do {
-                    code = 'TKT-' + String(Math.floor(Math.random() * 99999)).padStart(5, '0');
+                    code = generateCode('TKT');
                 } while (db.prepare('SELECT id FROM tickets WHERE id_code = ?').get(code));
                 db.prepare('INSERT INTO tickets (id_code, event_id, buyer_id, type, price, status) VALUES (?,?,?,?,?,?)').run(code, body.event_id, user.id, body.type || 'Standard', body.price, 'active');
                 tickets.push({ id_code: code, type: body.type || 'Standard', price: body.price });
@@ -2028,7 +2020,7 @@ async function handleRefunds(req, res, parts) {
             return sendError(res, 'Vous ne pouvez demander un remboursement que pour vos propres billets', 403);
         }
         
-        const code = 'REF-' + String(Math.floor(Math.random() * 999999)).padStart(6, '0');
+        const code = generateCode('REF');
         db.prepare('INSERT INTO refunds (id_code, ticket_id, event_id, client_name, amount, reason, status) VALUES (?,?,?,?,?,?,?)').run(code, body.ticket_id, ticket.event_id, user.name, ticket.price, body.reason || '', 'pending');
         return sendJSON(res, { refund: { id_code: code, status: 'pending' } }, 201);
     }
@@ -2038,13 +2030,26 @@ async function handleRefunds(req, res, parts) {
 
 // PAYOUTS
 async function handlePayouts(req, res, parts) {
+    const user = requireAuth(req);
+    if (!user) return sendError(res, 'Non authentifié', 401);
+
     const id = parts[2] && !isNaN(parts[2]) ? parseInt(parts[2]) : null;
     const action = id ? parts[3] : parts[2];
 
     if ((action === 'stats' || parts[2] === 'stats') && req.method === 'GET') {
         const url = new URL(req.url, 'http://localhost');
         let where = '1=1', params = [];
-        if (url.searchParams.get('organizer_id')) { where = 'organizer_id = ?'; params.push(parseInt(url.searchParams.get('organizer_id'))); }
+        
+        if (user.role === 'organizer') {
+            where = 'organizer_id = ?';
+            params.push(user.id);
+        } else if (user.role === 'superadmin' || user.role === 'admin') {
+            const orgId = url.searchParams.get('organizer_id');
+            if (orgId) { where = 'organizer_id = ?'; params.push(parseInt(orgId)); }
+        } else {
+            return sendError(res, 'Accès refusé', 403);
+        }
+
         const stats = db.prepare(`SELECT COALESCE(SUM(CASE WHEN status='completed' THEN net ELSE 0 END),0) as total_paid, COALESCE(SUM(CASE WHEN status='pending' THEN net ELSE 0 END),0) as pending_amount, COALESCE(SUM(commission),0) as total_commission, COUNT(CASE WHEN strftime('%Y-%m',created_at)=strftime('%Y-%m','now') THEN 1 END) as this_month_count FROM payouts WHERE ${where}`).get(...params);
         return sendJSON(res, { stats });
     }
@@ -2052,22 +2057,37 @@ async function handlePayouts(req, res, parts) {
     if (req.method === 'GET') {
         const url = new URL(req.url, 'http://localhost');
         let where = ['1=1'], params = [];
-        if (url.searchParams.get('organizer_id')) { where.push('p.organizer_id = ?'); params.push(parseInt(url.searchParams.get('organizer_id'))); }
+        
+        if (user.role === 'organizer') {
+            where.push('p.organizer_id = ?');
+            params.push(user.id);
+        } else if (user.role === 'superadmin' || user.role === 'admin') {
+            const orgId = url.searchParams.get('organizer_id');
+            if (orgId) { where.push('p.organizer_id = ?'); params.push(parseInt(orgId)); }
+        } else {
+            return sendError(res, 'Accès refusé', 403);
+        }
+
         if (url.searchParams.get('status')) { where.push('p.status = ?'); params.push(url.searchParams.get('status')); }
         const payouts = db.prepare(`SELECT p.*, u.name as organizer_name FROM payouts p LEFT JOIN users u ON p.organizer_id = u.id WHERE ${where.join(' AND ')} ORDER BY p.created_at DESC`).all(...params);
         return sendJSON(res, { payouts });
     }
 
     if (req.method === 'POST') {
-        const user = requireAuth(req, ['organizer', 'admin', 'superadmin']);
-        if (!user) return sendError(res, 'Non autorisé', 403);
+        if (user.role !== 'organizer') return sendError(res, 'Action réservée aux organisateurs', 403);
         const body = await parseBody(req);
         const amount = parseInt(body.amount || 0);
         if (!amount) return sendError(res, 'Montant requis');
+        
         const commission = Math.round(amount * COMMISSION_RATE);
         const net = amount - commission;
-        const code = 'PAY-' + String(Math.floor(Math.random() * 999999)).padStart(6, '0');
-        db.prepare('INSERT INTO payouts (id_code, organizer_id, amount, commission, net, method, status) VALUES (?,?,?,?,?,?,?)').run(code, body.organizer_id || user.id, amount, commission, net, body.method || 'Virement', 'pending');
+        const code = generateCode('PAY');
+        
+        db.prepare('INSERT INTO payouts (id_code, organizer_id, amount, commission, net, method, bank_details, status) VALUES (?,?,?,?,?,?,?,?)').run(
+            code, user.id, amount, commission, net, body.method || 'Virement', body.bank_details || '', 'pending'
+        );
+        
+        logActivity('payout_requested', user.id, user.name, 'payout', code, `${amount} Ar`, `${user.name} a demandé un virement de ${amount} Ar`);
         return sendJSON(res, { payout: { id_code: code, amount, commission, net, status: 'pending' } }, 201);
     }
 
@@ -2387,13 +2407,25 @@ async function handleScanner(req, res, parts) {
 
 // ACTIVITY
 async function handleActivity(req, res, parts) {
+    const user = requireAuth(req);
+    if (!user) return sendError(res, 'Non authentifié', 401);
+    
     if (req.method !== 'GET') return sendError(res, 'Méthode non autorisée', 405);
     const url = new URL(req.url, 'http://localhost');
     const limit = parseInt(url.searchParams.get('limit') || '10');
     const type = url.searchParams.get('type');
+    
     let where = '1=1', params = [];
-    if (type) { where = 'type = ?'; params.push(type); }
+    
+    // Only allow admins to see everything. Organizers see their own.
+    if (user.role !== 'superadmin' && user.role !== 'admin') {
+        where += ' AND (user_id = ? OR actor_id = ?)';
+        params.push(user.id, user.id);
+    }
+    
+    if (type) { where += ' AND type = ?'; params.push(type); }
     params.push(limit);
+    
     const activities = db.prepare(`SELECT * FROM activity_logs WHERE ${where} ORDER BY created_at DESC LIMIT ?`).all(...params);
     activities.forEach(a => {
         const diff = Math.floor((Date.now() - new Date(a.created_at).getTime()) / 1000);
@@ -2420,15 +2452,21 @@ function serveStatic(req, res) {
         return true;
     }
     
+    // Normalize path to prevent traversal
+    const safePath = path.normalize(urlPath).replace(/^(\.\.[\/\\])+/, '');
+    
     // Potential search paths
     const searchPaths = [
-        path.join(PROJECT_ROOT, urlPath),
-        path.join(PROJECT_ROOT, 'User', urlPath),
-        path.join(PROJECT_ROOT, 'Admin', urlPath),
-        path.join(PROJECT_ROOT, 'libs', urlPath)
+        path.join(PROJECT_ROOT, safePath),
+        path.join(PROJECT_ROOT, 'User', safePath),
+        path.join(PROJECT_ROOT, 'Admin', safePath),
+        path.join(PROJECT_ROOT, 'libs', safePath)
     ];
 
     for (const filePath of searchPaths) {
+        // Extra check for security
+        if (!filePath.startsWith(PROJECT_ROOT)) continue;
+        
         if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
             const ext = path.extname(filePath);
             res.writeHead(200, { 'Content-Type': MIME_TYPES[ext] || 'application/octet-stream' });
@@ -2786,9 +2824,34 @@ async function handleSuperAdmin(req, res, parts) {
     // ═══ BROADCAST MESSAGING ═══
     if (resource === 'broadcast' && req.method === 'POST') {
         const body = await parseBody(req);
-        // Simulation d'envoi global (email ou notification in-app)
+        if (!body.subject || !body.message) return sendError(res, 'Sujet et message requis');
+        
+        const users = db.prepare('SELECT email, name FROM users').all();
+        let successCount = 0;
+        
+        for (const targetUser of users) {
+             try {
+                await emailTransporter.sendMail({
+                    from: '"TicketMada Admin" <sedrayiokoraz@gmail.com>',
+                    to: targetUser.email,
+                    subject: `🎫 [TicketMada] ${body.subject}`,
+                    html: `
+                        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 3px solid #1a1a1a; padding: 24px;">
+                            <h2 style="color: #FF6B4A;">Message de TicketMada</h2>
+                            <p>Bonjour ${targetUser.name},</p>
+                            <div style="padding: 16px; background: #f4f4f4; border: 2px solid #1a1a1a; margin: 20px 0;">
+                                ${body.message.replace(/\n/g, '<br>')}
+                            </div>
+                            <p style="font-size: 12px; color: #666;">Vous recevez cet email car vous êtes inscrit sur TicketMada.</p>
+                        </div>
+                    `
+                });
+                successCount++;
+            } catch (err) { console.error(`Failed to send broadcast to ${targetUser.email}:`, err.message); }
+        }
+        
         logActivity('system_broadcast', user.id, user.name, 'broadcast', null, 'global', `Message global envoyé: ${body.subject}`);
-        return sendJSON(res, { success: true, count: db.prepare("SELECT COUNT(*) as count FROM users").get().count });
+        return sendJSON(res, { success: true, count: successCount });
     }
 
     // ═══ MAINTENANCE MODE ═══
